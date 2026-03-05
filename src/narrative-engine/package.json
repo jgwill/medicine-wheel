@@ -1,0 +1,39 @@
+{
+  "name": "medicine-wheel-narrative-engine",
+  "version": "0.1.1",
+  "description": "Beat sequencing, arc validation, and ceremonial cadence engine for the Medicine Wheel Developer Suite",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "narrative",
+    "indigenous",
+    "four-directions",
+    "beat-sequencing",
+    "ceremony"
+  ],
+  "author": "jgwill",
+  "license": "MIT",
+  "dependencies": {
+    "medicine-wheel-ontology-core": "^0.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
