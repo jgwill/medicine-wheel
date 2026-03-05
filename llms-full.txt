@@ -1,0 +1,1203 @@
+# Medicine Wheel — Complete LLM Reference
+
+> A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's (Respect, Reciprocity, Responsibility), and OCAP® data sovereignty principles.
+
+**Version:** 0.1.1  
+**Language:** TypeScript (ES2022, ESM, strict mode)  
+**Runtime:** Node.js  
+**Validation:** Zod ^3.23.0  
+**UI:** React ^18 || ^19  
+**License:** MIT  
+
+---
+
+## Table of Contents
+
+1. [Architecture Overview](#architecture-overview)
+2. [Core Concepts](#core-concepts)
+3. [Package 1: ontology-core](#package-1-ontology-core)
+4. [Package 2: ceremony-protocol](#package-2-ceremony-protocol)
+5. [Package 3: narrative-engine](#package-3-narrative-engine)
+6. [Package 4: graph-viz](#package-4-graph-viz)
+7. [Package 5: relational-query](#package-5-relational-query)
+8. [Package 6: prompt-decomposition](#package-6-prompt-decomposition)
+9. [Package 7: ui-components](#package-7-ui-components)
+10. [End-to-End Usage](#end-to-end-usage)
+11. [Specifications](#specifications)
+
+---
+
+## Architecture Overview
+
+```
+medicine-wheel-ontology-core          ← Foundation (everyone depends on this)
+    ├── medicine-wheel-ceremony-protocol    ← Ceremony state & governance
+    ├── medicine-wheel-narrative-engine     ← Beat sequencing & arc validation
+    ├── medicine-wheel-graph-viz            ← Circular layout & visualization
+    ├── medicine-wheel-relational-query     ← Query, traversal & audit
+    ├── medicine-wheel-prompt-decomposition ← Intent extraction & PDE
+    └── medicine-wheel-ui-components        ← React components
+```
+
+All packages compile to ES2022 with source maps and declaration files. No circular dependencies. All packages use `medicine-wheel-ontology-core` types as their shared vocabulary.
+
+---
+
+## Core Concepts
+
+### Four Directions
+
+| Direction | Ojibwe Name | Season | Color | Life Stage | Focus |
+|-----------|------------|--------|-------|-----------|-------|
+| East | Waabinong | Spring | #FFD700 | Good Life | Vision, intention, emergence |
+| South | Zhaawanong | Summer | #DC143C | Fast Life | Growth, learning, analysis |
+| West | Epangishmok | Fall | #1a1a2e | Truth & Planning | Reflection, validation, ceremony |
+| North | Kiiwedinong | Winter | #E8E8E8 | Elder | Wisdom, action, integration |
+
+Each direction has associated medicines, teachings, and practices (see `DIRECTIONS` constant).
+
+### Wilson's Three R's
+
+Every `Relation` carries an `AccountabilityTracking` object:
+- **Respect** (0–1): Honoring dignity and sovereignty
+- **Reciprocity** (0–1): Mutual benefit flowing through relationships
+- **Responsibility** (0–1): Maintaining obligations and commitments
+- **wilson_alignment** = average(respect, reciprocity, responsibility)
+
+### OCAP® Principles
+
+`OcapFlags` on every `Relation`:
+- **ownership**: Who owns this data/relation
+- **control**: Who controls access and use
+- **access**: `'community' | 'researchers' | 'public' | 'restricted'`
+- **possession**: `'on-premise' | 'community-server' | 'cloud-sovereign' | 'cloud-shared'`
+- **compliant**: boolean
+- **steward?**: optional data steward
+- **consent_given?**: boolean
+- **consent_scope?**: string
+
+### Structural Tension
+
+Three phases: `'germination' | 'assimilation' | 'completion'`
+
+### Ceremony Phases
+
+Four phases: `'opening' | 'council' | 'integration' | 'closure'`
+
+### Governance Access
+
+Four levels: `'open' | 'ceremony_required' | 'restricted' | 'sacred'`
+
+---
+
+## Package 1: ontology-core
+
+```bash
+npm install medicine-wheel-ontology-core
+```
+
+### Types (50+ interfaces)
+
+#### Core Types
+
+```typescript
+import type {
+  DirectionName,     // 'east' | 'south' | 'west' | 'north'
+  Direction,         // Full direction with ojibwe, season, color, medicines, teachings, practices
+  NodeType,          // 'human' | 'land' | 'spirit' | 'ancestor' | 'future' | 'knowledge'
+  RelationalNode,    // { id, name, type, direction?, metadata, created_at, updated_at }
+  RelationalEdge,    // { id, from_id, to_id, relationship_type, strength, ceremony_honored, obligations }
+  Relation,          // First-class relation with ceremony_context, obligations, ocap, accountability
+  OcapFlags,         // Ownership, Control, Access, Possession
+  AccountabilityTracking,  // Wilson's three R's + alignment score
+  ObligationCategory,      // 'human' | 'land' | 'spirit' | 'future'
+  RelationalObligation,    // { category, obligations[] }
+} from 'medicine-wheel-ontology-core';
+```
+
+#### Ceremony & Narrative Types
+
+```typescript
+import type {
+  CeremonyType,      // 'smudging' | 'talking_circle' | 'spirit_feeding' | 'opening' | 'closing'
+  CeremonyGuidance,  // { opening_practice, intention, protocol, medicines_used, timeline? }
+  CeremonyLog,       // { id, type, direction, participants, medicines_used, intentions, timestamp, ... }
+  NarrativeBeat,     // { id, direction, title, description, prose?, ceremonies[], learnings[], act, ... }
+  MedicineWheelCycle, // { id, research_question, start_date, current_direction, beats[], ... }
+  TensionPhase,       // 'germination' | 'assimilation' | 'completion'
+  StructuralTensionChart, // { id, desired_outcome, current_reality, action_steps[], phase, ... }
+  ActionStep,         // { id, title, description?, completed, direction?, due_date? }
+} from 'medicine-wheel-ontology-core';
+```
+
+#### RSIS Types
+
+```typescript
+import type {
+  SunName,            // 'NovelEmergence' | 'CreativeActualization' | 'WovenMeaning' | ...
+  CeremonyPhase,      // 'opening' | 'council' | 'integration' | 'closure'
+  GovernanceAccess,   // 'open' | 'ceremony_required' | 'restricted' | 'sacred'
+  PersonRole,         // 'steward' | 'contributor' | 'elder' | 'firekeeper'
+  RSISRelationType,   // 'STEWARDS' | 'BORN_FROM' | 'SERVES' | 'GIVES_BACK_TO' | ...
+  GovernanceProtectedPath,  // { path, authority[], access, description? }
+  GovernanceConfig,         // { protected_paths?, ceremony_required_changes?, index_exclusions? }
+  RSISConfig,               // { enabled, charts?, kinship_paths?, ceremony?, directions?, governance? }
+  KinshipHubInfo,     // { path, identity, lineage, humanAccountabilities, ... }
+  KinshipRelation,    // { from, to, type }
+  ReciprocityFlow,    // { from, to, type, count }
+  ReciprocityBalance, // { entity, giving, receiving }
+  CeremonyLineageEntry,  // { ceremonyId, ceremonyName, sun, cycle, phase, stewards[] }
+  DirectionDetail,    // { name, direction, reason }
+  DirectionDistribution,  // { east, south, west, north } (numbers)
+  DirectionInfo,      // { name, emoji, focus, guidance }
+  MedicineWheelView,  // Full UI model with suns, directions, reciprocity, kinship
+} from 'medicine-wheel-ontology-core';
+```
+
+### RDF Vocabulary
+
+Six custom namespaces with IRI utilities:
+
+```typescript
+import {
+  MW_NS,   // 'https://schema.medicinewheel.dev/ontology#'
+  CER_NS,  // 'https://schema.medicinewheel.dev/ceremony#'
+  OCAP_NS, // 'https://schema.medicinewheel.dev/ocap#'
+  REL_NS,  // 'https://schema.medicinewheel.dev/relation#'
+  IDS_NS,  // 'https://schema.medicinewheel.dev/ids#'
+  BEAT_NS, // 'https://schema.medicinewheel.dev/narrative#'
+  MW, CER, OCAP, REL, IDS, BEAT,  // Term builders
+  PREFIXES,     // All prefix declarations as string
+  prefixed,     // (ns, term) => 'mw:RelationalNode'
+  expandIRI,    // (prefixedIRI) => full IRI
+  compactIRI,   // (fullIRI) => prefixed form
+} from 'medicine-wheel-ontology-core';
+
+// Usage
+MW.RelationalNode  // → 'https://schema.medicinewheel.dev/ontology#RelationalNode'
+CER.CeremonyLog    // → 'https://schema.medicinewheel.dev/ceremony#CeremonyLog'
+expandIRI('mw:RelationalNode')  // → full IRI
+compactIRI('https://schema.medicinewheel.dev/ontology#RelationalNode')  // → 'mw:RelationalNode'
+```
+
+### Constants
+
+```typescript
+import {
+  DIRECTIONS,          // Direction[] — 4 full direction objects with all metadata
+  DIRECTION_COLORS,    // Record<DirectionName, string> — { east: '#FFD700', ... }
+  NODE_TYPE_COLORS,    // Record<NodeType, string>
+  CEREMONY_ICONS,      // Record<CeremonyType, string>
+  DIRECTION_MAP,       // Map<string, Direction>
+  DIRECTION_NAMES,     // DirectionName[] — ['east', 'south', 'west', 'north']
+  NODE_TYPES,          // NodeType[]
+  CEREMONY_TYPES,      // CeremonyType[]
+  OJIBWE_NAMES,        // Record<DirectionName, string> — { east: 'Waabinong', ... }
+  DIRECTION_SEASONS,   // Record<DirectionName, string> — { east: 'Spring', ... }
+  DIRECTION_ACTS,      // Record<DirectionName, number> — { east: 1, south: 2, west: 3, north: 4 }
+  ACT_DIRECTIONS,      // Record<number, DirectionName> — { 1: 'east', ... }
+  SUN_NAMES,           // SunName[]
+  CEREMONY_PHASES,     // CeremonyPhase[]
+  PERSON_ROLES,        // PersonRole[]
+  RSIS_RELATION_TYPES, // RSISRelationType[]
+  DIRECTION_INFO,      // Record<DirectionName, DirectionInfo>
+} from 'medicine-wheel-ontology-core';
+```
+
+### Zod Schemas
+
+Every type has a corresponding Zod schema for runtime validation:
+
+```typescript
+import {
+  DirectionNameSchema,
+  NodeTypeSchema,
+  RelationalNodeSchema,
+  RelationalEdgeSchema,
+  RelationSchema,
+  OcapFlagsSchema,
+  AccountabilityTrackingSchema,
+  CeremonyLogSchema,
+  NarrativeBeatSchema,
+  MedicineWheelCycleSchema,
+  StructuralTensionChartSchema,
+  DirectionResponseSchema,
+  // ... and more
+} from 'medicine-wheel-ontology-core';
+
+// Usage
+const parsed = RelationalNodeSchema.parse(rawData);  // throws on invalid
+const result = RelationalNodeSchema.safeParse(rawData);  // { success, data/error }
+
+// Validated types (inferred from schemas)
+import type {
+  ValidatedRelationalNode,
+  ValidatedRelation,
+  ValidatedOcapFlags,
+  ValidatedNarrativeBeat,
+  // ... etc
+} from 'medicine-wheel-ontology-core';
+```
+
+### Semantic Query Helpers
+
+```typescript
+import {
+  // Node queries
+  nodesByDirection,     // (nodes, direction) => nodes in that direction
+  nodesByType,          // (nodes, type) => nodes of that type
+  nodeById,             // (nodes, id) => single node or undefined
+
+  // Relation queries
+  relationsForNode,     // (relations, nodeId) => all relations for node
+  relationsByType,      // (relations, type) => relations of that type
+  neighborIds,          // (relations|edges, nodeId) => neighbor node IDs
+
+  // Traversal
+  traverseRelationalWeb,  // (nodes, relations, startId, maxDepth) => { visited, paths }
+
+  // Wilson alignment
+  computeWilsonAlignment,    // (accountability) => number (0-1)
+  aggregateWilsonAlignment,  // (relations) => average alignment
+  cycleWilsonAlignment,      // (cycle, relations) => alignment
+  findAccountabilityGaps,    // (relations, threshold) => low-alignment relations
+
+  // OCAP
+  checkOcapCompliance,   // (ocap) => { compliant, issues[] }
+  auditOcapCompliance,   // (relations) => { overall_compliant, compliant_count, issues[] }
+
+  // Narrative
+  beatsByDirection,      // (beats, direction) => beats for direction
+  beatsByAct,            // (beats, act) => beats for act
+  allDirectionsVisited,  // (beats) => boolean
+
+  // Ceremony
+  ceremoniesByDirection, // (ceremonies, direction) => ceremonies
+  ceremonyCounts,        // (ceremonies) => Record<DirectionName, number>
+
+  // Completeness
+  relationalCompleteness, // (nodeId, relations) => { total, categories, missing, ceremony_coverage }
+} from 'medicine-wheel-ontology-core';
+```
+
+#### Usage Examples
+
+```typescript
+// Find accountability gaps
+const gaps = findAccountabilityGaps(relations, 0.5);
+console.log(`${gaps.length} relations below 50% Wilson alignment`);
+
+// Check OCAP compliance
+const audit = auditOcapCompliance(relations);
+if (!audit.overall_compliant) {
+  for (const issue of audit.issues) {
+    console.log(`Relation ${issue.relation_id}: ${issue.issues.join(', ')}`);
+  }
+}
+
+// Traverse the relational web
+const { visited, paths } = traverseRelationalWeb(nodes, relations, 'node-1', 3);
+console.log(`Reached ${visited.size} nodes via ${paths.length} paths`);
+
+// Check relational completeness
+const completeness = relationalCompleteness('node-1', relations);
+if (completeness.missing_categories.length > 0) {
+  console.log(`Missing obligation categories: ${completeness.missing_categories.join(', ')}`);
+}
+```
+
+---
+
+## Package 2: ceremony-protocol
+
+```bash
+npm install medicine-wheel-ceremony-protocol
+```
+
+### API
+
+```typescript
+import {
+  loadCeremonyState,       // (config: RSISConfig) => CeremonyState | null
+  nextPhase,               // (current: CeremonyPhase) => CeremonyPhase | null
+  getPhaseFraming,         // (phase?: CeremonyPhase) => string
+  checkGovernance,         // (filePath, config) => GovernanceProtectedPath | null
+  isIndexExcluded,         // (filePath, config) => boolean
+  checkCeremonyRequired,   // (filePath, config) => boolean
+  getAccessLevel,          // (filePath, config) => GovernanceAccess
+  formatGovernanceWarning, // (rule) => string
+} from 'medicine-wheel-ceremony-protocol';
+import type { CeremonyState } from 'medicine-wheel-ceremony-protocol';
+```
+
+### CeremonyState Interface
+
+```typescript
+interface CeremonyState {
+  currentCycle: string;
+  hostSun: SunName;
+  phase: CeremonyPhase;
+  startDate?: string;
+  endDate?: string;
+}
+```
+
+### Usage Examples
+
+```typescript
+// Load ceremony state from RSIS config
+const config: RSISConfig = {
+  enabled: true,
+  ceremony: {
+    current_cycle: '2025-spring',
+    host_sun: 'NovelEmergence',
+    phase: 'council',
+  },
+  governance: {
+    protected_paths: [
+      { path: 'sacred/', authority: ['Elder Council'], access: 'sacred' },
+      { path: 'ceremony/', authority: ['Firekeeper'], access: 'ceremony_required' },
+    ],
+    ceremony_required_changes: ['ontology/*', 'protocol/*'],
+  },
+};
+
+const state = loadCeremonyState(config);
+// → { currentCycle: '2025-spring', hostSun: 'NovelEmergence', phase: 'council' }
+
+// Phase transitions
+const next = nextPhase('council');  // → 'integration'
+const framing = getPhaseFraming('council');
+// → 'Council Phase — Cross-Sun perspectives on code relationships.'
+
+// Governance enforcement (supports glob patterns and prefix matching)
+const rule = checkGovernance('sacred/protocols.md', config.governance!);
+if (rule) {
+  console.log(formatGovernanceWarning(rule));
+  // → '⚠️ GOVERNANCE: Changes to [sacred/] require [Elder Council] approval. Access level: sacred'
+}
+
+// Ceremony-required check with glob support
+const needsCeremony = checkCeremonyRequired('ontology/types.ts', config.governance!);
+// → true
+
+// Index exclusion (also supports glob patterns)
+const excluded = isIndexExcluded('private/notes.md', config.governance!);
+
+// Access level for any path
+const access = getAccessLevel('ceremony/smudging.md', config.governance!);
+// → 'ceremony_required'
+```
+
+---
+
+## Package 3: narrative-engine
+
+```bash
+npm install medicine-wheel-narrative-engine
+```
+
+### Sequencer
+
+```typescript
+import {
+  sequenceBeats,    // (beats) => BeatPosition[]
+  insertBeat,       // (beats, newBeat, opts?) => BeatInsertResult
+  beatsByDirection,  // (beats) => Record<DirectionName, NarrativeBeat[]>
+  nextDirection,     // (beats) => DirectionName | null
+  currentAct,        // (beats) => number
+  suggestNextBeat,   // (beats) => { direction, act }
+  spiralOrder,       // (beats) => NarrativeBeat[] sorted by spiral
+} from 'medicine-wheel-narrative-engine';
+```
+
+#### SequencerOptions
+
+```typescript
+interface SequencerOptions {
+  enforceDirectionOrder?: boolean;   // default: false
+  allowMultiplePerAct?: boolean;     // default: true
+  maxBeatsPerDirection?: number;     // default: 12
+}
+```
+
+#### Usage
+
+```typescript
+const beats: NarrativeBeat[] = [
+  { id: 'b1', direction: 'east', title: 'Vision', description: '...', ceremonies: [], learnings: [], timestamp: '2025-01-01T00:00:00Z', act: 1, relations_honored: [] },
+  { id: 'b2', direction: 'south', title: 'Research', description: '...', ceremonies: [], learnings: [], timestamp: '2025-01-02T00:00:00Z', act: 2, relations_honored: [] },
+];
+
+// What direction comes next?
+const next = nextDirection(beats);  // → 'west'
+
+// Suggest next beat
+const suggestion = suggestNextBeat(beats);  // → { direction: 'west', act: 3 }
+
+// Insert a new beat
+const result = insertBeat(beats, newBeat, { maxBeatsPerDirection: 4 });
+if (!result.success) console.log(result.warnings);
+
+// Spiral ordering
+const ordered = spiralOrder(beats);  // east(act1) → south(act2) → west(act3) → north(act4)
+```
+
+### Cadence
+
+```typescript
+import {
+  STANDARD_CADENCE,   // All 4 transitions require ceremony
+  LIGHT_CADENCE,      // Only opening & closing require ceremony
+  currentPhase,       // (beats) => CadencePhase
+  directionToPhase,   // (direction) => CadencePhase
+  phaseToDirection,   // (phase) => DirectionName
+  validateCadence,    // (beats, ceremonies, pattern?) => CadenceValidation
+  detectTransitions,  // (beats) => { from, to, beatIndex }[]
+} from 'medicine-wheel-narrative-engine';
+```
+
+#### CadencePhase mapping
+
+```
+east  → 'opening'
+south → 'deepening'
+west  → 'integrating'
+north → 'closing'
+```
+
+#### Usage
+
+```typescript
+const validation = validateCadence(beats, ceremonies, STANDARD_CADENCE);
+console.log(validation.valid);             // false if violations
+console.log(validation.phasesCompleted);   // ['opening', 'deepening']
+console.log(validation.phasesRemaining);   // ['integrating', 'closing']
+for (const v of validation.violations) {
+  console.log(`${v.phase}: ${v.message}`);
+}
+```
+
+### Arc Validation
+
+```typescript
+import {
+  computeCompleteness,  // (beats, ceremonies, relations) => ArcCompleteness
+  validateArc,          // (beats, ceremonies, relations) => ArcValidationResult
+  isArcComplete,        // (beats) => boolean (all 4 directions visited?)
+} from 'medicine-wheel-narrative-engine';
+```
+
+#### Completeness Scoring (weighted)
+
+- **30%** Direction coverage (how many of 4 directions have beats)
+- **25%** Ceremony coverage (how many directions have ceremonies)
+- **25%** Wilson alignment (average across all relations)
+- **20%** Balance (how evenly distributed beats are across directions)
+
+Complete when all directions visited AND score ≥ 0.7.
+
+#### Arc Violations
+
+| Type | Severity | Meaning |
+|------|----------|---------|
+| `missing_direction` | error | A direction has no beats |
+| `no_ceremony` | warning | Direction has beats but no ceremony |
+| `low_wilson` | warning | Wilson alignment < 50% |
+| `ocap_gap` | error | Not all relations OCAP®-compliant |
+| `unbalanced` | info | Beats unevenly distributed |
+
+#### Usage
+
+```typescript
+const arc = validateArc(beats, ceremonies, relations);
+if (!arc.valid) {
+  for (const violation of arc.violations) {
+    console.log(`[${violation.severity}] ${violation.message}`);
+  }
+  for (const rec of arc.recommendations) {
+    console.log(`→ ${rec}`);
+  }
+}
+
+const completeness = computeCompleteness(beats, ceremonies, relations);
+console.log(`Score: ${completeness.completenessScore}`);  // 0.00 – 1.00
+console.log(`Wilson: ${completeness.wilsonAlignment}`);
+console.log(`OCAP: ${completeness.ocapCompliant}`);
+```
+
+### Timeline
+
+```typescript
+import {
+  buildTimeline,  // (beats, options?) => TimelineData
+  actStrip,       // (beats) => { act, direction, beats, hasCeremony }[]
+} from 'medicine-wheel-narrative-engine';
+```
+
+#### TimelineOptions
+
+```typescript
+interface TimelineOptions {
+  axis?: 'chronological' | 'directional' | 'ceremonial';
+  filterDirection?: DirectionName;
+  filterAct?: number;
+  sortBy?: 'timestamp' | 'act' | 'direction';
+}
+```
+
+#### Usage
+
+```typescript
+const timeline = buildTimeline(beats, { axis: 'directional', sortBy: 'direction' });
+for (const group of timeline.groups) {
+  console.log(`${group.label} (${group.color}): ${group.entries.length} beats`);
+}
+
+const strip = actStrip(beats);
+for (const act of strip) {
+  console.log(`Act ${act.act} (${act.direction}): ${act.beats.length} beats, ceremony: ${act.hasCeremony}`);
+}
+```
+
+### Cycle Manager
+
+```typescript
+import {
+  createCycle,          // (id, researchQuestion) => MedicineWheelCycle
+  computeProgress,      // (cycle, beats, ceremonies, relations) => CycleProgress
+  updateCycleMetadata,  // (cycle, beats, ceremonies, relations) => MedicineWheelCycle
+  extractTransitions,   // (beats, ceremonies) => CycleTransition[]
+} from 'medicine-wheel-narrative-engine';
+```
+
+#### Usage
+
+```typescript
+// Create a new cycle
+const cycle = createCycle('cycle-1', 'How does ceremony inform code governance?');
+// → { id: 'cycle-1', research_question: '...', start_date: '...', current_direction: 'east', ... }
+
+// Track progress
+const progress = computeProgress(cycle, beats, ceremonies, relations);
+console.log(progress.currentPhase);     // 'deepening'
+console.log(progress.nextDirection);    // 'west'
+console.log(progress.suggestedAction);  // 'Move to the west direction (integrating phase)'
+console.log(progress.completeness.completenessScore);  // 0.45
+
+// Update cycle with latest state
+const updated = updateCycleMetadata(cycle, beats, ceremonies, relations);
+```
+
+### RSIS Narrative Generators
+
+```typescript
+import {
+  generateProvenanceNarrative,    // (entries: CeremonyLineageEntry[]) => string
+  generateReciprocityObservation, // (stewards, flows) => string
+  generateDirectionObservation,   // (distribution, recent) => string
+  getCeremonyPhaseFraming,        // (phase: CeremonyPhase) => string
+  describeSun,                    // (sun: SunName) => string
+} from 'medicine-wheel-narrative-engine';
+```
+
+---
+
+## Package 4: graph-viz
+
+```bash
+npm install medicine-wheel-graph-viz
+```
+
+### React Component
+
+```tsx
+import { MedicineWheelGraph } from 'medicine-wheel-graph-viz';
+import type { MedicineWheelGraphProps } from 'medicine-wheel-graph-viz';
+
+<MedicineWheelGraph
+  data={graphData}           // MWGraphData: { nodes, links }
+  width={600}
+  height={600}
+  onNodeClick={(node) => {}} // optional
+  onLinkClick={(link) => {}} // optional
+  layoutMode="wheel"         // 'wheel' | 'force' | 'radial'
+  showLabels={true}
+  showDirectionLabels={true}
+/>
+```
+
+### Layout Engine
+
+```typescript
+import {
+  applyWheelLayout,       // (nodes, config?) => void (mutates x/y)
+  DEFAULT_LAYOUT,          // WheelLayoutConfig defaults
+  getQuadrantGeometries,   // (config?) => QuadrantGeometry[]
+  quadrantArcPath,         // (cx, cy, outerR, innerR, startAngle, endAngle) => SVG path
+  curvedLinkPath,          // (source, target) => SVG path string
+  directionLabelPosition,  // (direction, config?) => { x, y }
+} from 'medicine-wheel-graph-viz';
+```
+
+#### WheelLayoutConfig
+
+```typescript
+interface WheelLayoutConfig {
+  centerX: number;
+  centerY: number;
+  radius: number;
+  padding: number;
+}
+```
+
+#### Usage
+
+```typescript
+const nodes = nodesToGraphNodes(relationalNodes);
+applyWheelLayout(nodes, { centerX: 300, centerY: 300, radius: 250, padding: 20 });
+// nodes now have x, y coordinates set based on their direction
+
+const geometries = getQuadrantGeometries({ centerX: 300, centerY: 300, radius: 250, padding: 0 });
+for (const geo of geometries) {
+  const svgPath = quadrantArcPath(
+    geo.centerX, geo.centerY, geo.outerRadius, geo.innerRadius,
+    geo.startAngle, geo.endAngle
+  );
+  // Use in SVG <path d={svgPath} />
+}
+```
+
+### Data Converters
+
+```typescript
+import {
+  nodesToGraphNodes,       // (nodes: RelationalNode[]) => MWGraphNode[]
+  edgesToGraphLinks,       // (edges: RelationalEdge[]) => MWGraphLink[]
+  relationsToGraphLinks,   // (relations: Relation[]) => MWGraphLink[]
+  buildGraphData,          // (nodes, edges: Edge[]|Relation[]) => MWGraphData
+} from 'medicine-wheel-graph-viz';
+```
+
+#### Usage
+
+```typescript
+const graphData = buildGraphData(nodes, edges);
+// Or with first-class Relations (auto-detected):
+// const graphData = buildGraphData(nodes, relations);
+// → { nodes: MWGraphNode[], links: MWGraphLink[] }
+// Ready to pass to <MedicineWheelGraph data={graphData} />
+```
+
+### RSIS Visualization Utilities
+
+```typescript
+import {
+  toKinshipGraphLayout,       // (hubs, relations) => { nodes, edges }
+  toReciprocityFlowDiagram,   // (flows, balances) => { nodes, links }
+  toDirectionWheelData,       // (distribution, details) => DirectionWheelSegment[]
+  toCeremonyTimelineData,     // (lineage) => TimelineEntry[]
+  toMermaidDiagram,           // (hubs, relations) => string (Mermaid source)
+} from 'medicine-wheel-graph-viz';
+```
+
+#### Mermaid Export
+
+```typescript
+const mermaid = toMermaidDiagram(kinshipHubs, kinshipRelations);
+// Returns Mermaid graph definition string, e.g.:
+// graph TD
+//   hub1["Hub 1"]
+//   hub2["Hub 2"]
+//   hub1 -- kinship --> hub2
+```
+
+---
+
+## Package 5: relational-query
+
+```bash
+npm install medicine-wheel-relational-query
+```
+
+### Query Builder
+
+```typescript
+import {
+  filterNodes,          // (nodes, filter: NodeFilter) => RelationalNode[]
+  filterEdges,          // (edges, filter: EdgeFilter) => RelationalEdge[]
+  filterRelations,      // (relations, filter: RelationFilter) => Relation[]
+  sortNodes,            // (nodes, sort: QuerySort) => RelationalNode[]
+  paginate,             // (items, pagination: QueryPagination) => items subset
+  filterByRelation,     // (nodes, relations, opts) => nodes with matching relations
+  relationCounts,       // (nodes, relations) => Map<string, number>
+  filterByMinRelations, // (nodes, relations, min) => nodes with >= min relations
+} from 'medicine-wheel-relational-query';
+```
+
+#### Filter Types
+
+```typescript
+interface NodeFilter {
+  direction?: DirectionName;
+  type?: NodeType;
+  nameContains?: string;
+  ids?: string[];
+}
+
+interface EdgeFilter {
+  relationshipType?: string;
+  minStrength?: number;
+  ceremonyHonored?: boolean;
+}
+
+interface RelationFilter {
+  direction?: DirectionName;
+  ceremonied?: boolean;
+  ocapCompliant?: boolean;
+  minWilsonAlignment?: number;
+  hasObligations?: boolean;
+}
+
+interface QuerySort {
+  field: SortField;   // 'name' | 'created_at' | 'updated_at' | 'type'
+  order: SortOrder;   // 'asc' | 'desc'
+}
+
+interface QueryPagination {
+  page: number;
+  pageSize: number;
+}
+```
+
+#### Usage
+
+```typescript
+// Filter nodes in the east direction of type 'knowledge'
+const eastKnowledge = filterNodes(nodes, { direction: 'east', type: 'knowledge' });
+
+// Filter edges by minimum strength with ceremony
+const strong = filterEdges(edges, { minStrength: 0.7, ceremonyHonored: true });
+
+// Filter first-class Relations by direction and OCAP compliance
+const ocapEast = filterRelations(relations, { direction: 'east', ocapCompliant: true });
+
+// Filter relations with high Wilson alignment that have obligations
+const accountable = filterRelations(relations, { minWilsonAlignment: 0.8, hasObligations: true });
+
+// Sort and paginate
+const sorted = sortNodes(nodes, { field: 'name', order: 'asc' });
+const page1 = paginate(sorted, { page: 1, pageSize: 10 });
+
+// Find nodes with at least 3 relations
+const connected = filterByMinRelations(nodes, relations, 3);
+```
+
+### Traversal
+
+```typescript
+import {
+  traverse,       // (rootId, nodes, edges, relations, opts?) => TraversalResult
+  shortestPath,   // (fromId, toId, nodes, edges) => TraversalPath | null
+  neighborhood,   // (nodeId, nodes, edges, maxDepth?) => RelationalNode[]
+} from 'medicine-wheel-relational-query';
+```
+
+#### TraversalOptions
+
+```typescript
+interface TraversalOptions {
+  maxDepth?: number;                  // default: 3
+  direction?: 'outgoing' | 'incoming' | 'both';  // default: 'both'
+  respectCeremonyBoundaries?: boolean; // default: false — skips non-ceremonied edges
+  ocapOnly?: boolean;                  // default: false — only OCAP-compliant paths
+  nodeFilter?: NodeFilter;
+  edgeFilter?: EdgeFilter;
+}
+```
+
+#### Usage
+
+```typescript
+// Traverse from a root node, respecting ceremony boundaries
+const result = traverse('node-1', nodes, edges, relations, {
+  maxDepth: 4,
+  respectCeremonyBoundaries: true,
+  ocapOnly: true,
+});
+console.log(`Visited: ${result.visitedNodes.size}`);
+console.log(`Paths: ${result.paths.length}`);
+console.log(`Max depth reached: ${result.maxDepthReached}`);
+
+// Find shortest path
+const path = shortestPath('node-1', 'node-5', nodes, edges);
+if (path) {
+  console.log(`Depth: ${path.depth}, nodes: ${path.nodes.map(n => n.name).join(' → ')}`);
+}
+
+// Get 2-hop neighborhood
+const neighbors = neighborhood('node-1', nodes, edges, 2);
+```
+
+### Accountability Audit
+
+```typescript
+import {
+  auditAccountability,       // (nodes, edges, relations) => AccountabilityReport
+  isOcapCompliant,            // (relation) => boolean
+  relationsNeedingAttention,  // (relations, threshold?) => Relation[]
+} from 'medicine-wheel-relational-query';
+```
+
+#### AccountabilityReport
+
+```typescript
+interface AccountabilityReport {
+  totalRelations: number;
+  ocapCompliant: number;
+  ocapNonCompliant: number;
+  averageWilsonAlignment: number;        // 0–1
+  directionCoverage: Record<DirectionName, number>;
+  ceremoniedRelations: number;
+  unceremoniedRelations: number;
+  obligationsOutstanding: number;
+  recommendations: string[];
+}
+```
+
+#### Usage
+
+```typescript
+const report = auditAccountability(nodes, edges, relations);
+console.log(`OCAP: ${report.ocapCompliant}/${report.totalRelations} compliant`);
+console.log(`Wilson: ${(report.averageWilsonAlignment * 100).toFixed(0)}%`);
+for (const rec of report.recommendations) {
+  console.log(`→ ${rec}`);
+}
+
+// Find relations needing attention
+const attention = relationsNeedingAttention(relations, 0.5);
+```
+
+### Cypher Query Builders (KuzuDB)
+
+```typescript
+import {
+  queryStewards,              // (symbolId) => Cypher string
+  queryCeremonyProvenance,    // (symbolId) => Cypher string
+  queryInquiries,             // (symbolId) => Cypher string
+  queryKinshipHubs,           // () => Cypher string
+  queryKinshipRelations,      // () => Cypher string
+  queryDirectionAlignment,    // (symbolId) => Cypher string
+  queryReciprocityFlows,      // () => Cypher string
+  queryInquiriesBySun,        // (sun: SunName) => Cypher string
+  queryCeremonies,            // () => Cypher string
+  queryAllInquiries,          // () => Cypher string
+  formatReciprocityObservation,  // (flows) => string (invitational tone)
+  formatDirectionObservation,    // (distribution) => string
+} from 'medicine-wheel-relational-query';
+```
+
+#### Usage
+
+```typescript
+// Generate Cypher for KuzuDB
+const cypher = queryStewards('src/ontology-core');
+// → MATCH (p:Person)-[:RSISRelation {type: 'STEWARDS'}]->(n {id: 'src/ontology-core'})
+//   RETURN p.id AS id, p.name AS name, p.email AS email, p.roles AS roles
+
+// Format observations (always invitational, never performance-oriented)
+const obs = formatDirectionObservation({ east: 40, south: 30, west: 20, north: 10 });
+// → "Recent work is concentrated in east 🌸 (40%). The ecosystem may benefit from a north 🕸️ ceremony."
+```
+
+---
+
+## Package 6: prompt-decomposition
+
+```bash
+npm install medicine-wheel-prompt-decomposition
+```
+
+### MedicineWheelDecomposer
+
+```typescript
+import { MedicineWheelDecomposer } from 'medicine-wheel-prompt-decomposition';
+import type { OntologicalDecomposition, DecomposerOptions } from 'medicine-wheel-prompt-decomposition';
+
+const decomposer = new MedicineWheelDecomposer({
+  extractImplicit: true,       // detect hedging language
+  mapDependencies: true,       // infer task dependencies
+  ceremonyThreshold: 0.3,      // balance below this triggers ceremony guidance
+});
+
+const result: OntologicalDecomposition = decomposer.decompose(
+  'Research the ontology types, then implement the query builder, validate with tests, and document the API'
+);
+```
+
+#### OntologicalDecomposition Output
+
+```typescript
+interface OntologicalDecomposition {
+  id: string;
+  timestamp: string;
+  prompt: string;
+  primary: PrimaryIntent;                        // { action, target, urgency, confidence }
+  secondary: RelationalIntent[];                  // All extracted intents with direction, obligations
+  context: ExtractionContext;                      // { filesNeeded, toolsRequired, assumptions }
+  outputs: ExpectedOutputs;                        // { artifacts, updates, communications }
+  directions: Record<DirectionName, OntologicalDirection>;  // Per-direction analysis
+  actionStack: ActionItem[];                       // Ordered tasks (east→south→west→north)
+  ambiguities: AmbiguityFlag[];                    // { text, suggestion }
+  balance: number;                                 // 0–1 directional balance
+  leadDirection: DirectionName;                    // Most prominent direction
+  neglectedDirections: DirectionName[];            // Under-represented directions
+  ceremonyGuidance: CeremonyGuidance | null;       // Generated if balance is poor
+  ceremonyRequired: boolean;
+  wilsonAlignment: number;                          // 0–1
+  narrativeBeats: NarrativeBeat[];                  // Auto-generated beats from action stack
+}
+```
+
+#### Four Directions Classification
+
+The decomposer classifies prompt segments by direction:
+
+| Direction | Keywords |
+|-----------|----------|
+| East (vision) | vision, goal, purpose, intention, want, need, dream, imagine, create, design |
+| South (analysis) | learn, research, investigate, analyze, explore, discover, context, pattern |
+| West (validation) | test, verify, validate, check, reflect, audit, ceremony, accountable, protocol |
+| North (action) | implement, execute, deploy, build, code, install, configure, ship, commit, push |
+
+#### Implicit Intent Detection
+
+The decomposer detects hedging language (lineage from mcp-pde):
+- `"I assume..."` → implicit investigate intent
+- `"probably"`, `"should"` → investigate with 0.45 confidence
+- `"somehow"` → investigate with 0.4 confidence
+- `"if..."`, `"when..."` → implicit test intent
+
+### RelationalEnricher
+
+```typescript
+import { RelationalEnricher } from 'medicine-wheel-prompt-decomposition';
+import type { RelationalGraph, EnrichmentResult } from 'medicine-wheel-prompt-decomposition';
+
+const enricher = new RelationalEnricher();
+const graph: RelationalGraph = { nodes, edges, relations };
+const enriched: EnrichmentResult = enricher.enrich(decomposition, graph);
+
+console.log(enriched.relationalHealth);     // 0–1 composite score
+console.log(enriched.accountabilityGaps);   // Where attention is needed
+console.log(enriched.intentNodeMappings);   // Which intents map to which graph nodes
+```
+
+### Storage
+
+```typescript
+import {
+  saveDecomposition,         // (workdir, result) => StoredDecomposition
+  loadDecomposition,         // (workdir, id) => StoredDecomposition | null
+  listDecompositions,        // (workdir) => StoredDecomposition[]
+  decompositionToMarkdown,   // (result) => string
+} from 'medicine-wheel-prompt-decomposition';
+
+// Save to .pde/ directory (JSON + Markdown)
+const stored = saveDecomposition('.', decomposition);
+console.log(stored.filePath);  // .pde/{id}.json
+
+// Load back
+const loaded = loadDecomposition('.', decomposition.id);
+
+// List all
+const all = listDecompositions('.');
+
+// Convert to readable markdown
+const md = decompositionToMarkdown(decomposition);
+```
+
+---
+
+## Package 7: ui-components
+
+```bash
+npm install medicine-wheel-ui-components
+```
+
+### DirectionCard
+
+Displays a direction with color, Ojibwe name, teachings, and current-direction highlighting.
+
+```tsx
+import { DirectionCard } from 'medicine-wheel-ui-components';
+import type { DirectionCardProps } from 'medicine-wheel-ui-components';
+
+<DirectionCard
+  direction={directionObject}   // Direction type from ontology-core
+  active={true}                 // highlight as current direction
+  onClick={() => {}}            // optional click handler
+/>
+```
+
+### BeatTimeline
+
+Displays a sequence of narrative beats as a timeline strip.
+
+```tsx
+import { BeatTimeline } from 'medicine-wheel-ui-components';
+import type { BeatTimelineProps } from 'medicine-wheel-ui-components';
+
+<BeatTimeline
+  beats={narrativeBeats}        // NarrativeBeat[]
+  ceremonies={ceremonyLogs}     // CeremonyLog[]
+  onBeatClick={(beat) => {}}    // optional
+  showCeremonies={true}         // show ceremony indicators
+/>
+```
+
+### NodeInspector
+
+Detailed view of a relational node with its connections and obligations.
+
+```tsx
+import { NodeInspector } from 'medicine-wheel-ui-components';
+import type { NodeInspectorProps } from 'medicine-wheel-ui-components';
+
+<NodeInspector
+  node={selectedNode}           // RelationalNode
+  relations={nodeRelations}     // Relation[]
+  edges={nodeEdges}             // RelationalEdge[]
+/>
+```
+
+### OcapBadge
+
+Displays OCAP® compliance status for a relation.
+
+```tsx
+import { OcapBadge } from 'medicine-wheel-ui-components';
+import type { OcapBadgeProps } from 'medicine-wheel-ui-components';
+
+<OcapBadge
+  ocap={relation.ocap}         // OcapFlags
+  showDetails={true}           // show all four OCAP dimensions
+/>
+```
+
+### WilsonMeter
+
+Visual meter for Wilson's three R's alignment.
+
+```tsx
+import { WilsonMeter } from 'medicine-wheel-ui-components';
+import type { WilsonMeterProps } from 'medicine-wheel-ui-components';
+
+<WilsonMeter
+  accountability={relation.accountability}  // AccountabilityTracking
+  size="medium"                              // 'small' | 'medium' | 'large'
+/>
+```
+
+---
+
+## End-to-End Usage
+
+### Complete Research Cycle
+
+```typescript
+import { createCycle, computeProgress, validateArc, insertBeat, suggestNextBeat } from 'medicine-wheel-narrative-engine';
+import { MedicineWheelDecomposer, saveDecomposition } from 'medicine-wheel-prompt-decomposition';
+import { auditAccountability, traverse } from 'medicine-wheel-relational-query';
+import { checkGovernance, loadCeremonyState } from 'medicine-wheel-ceremony-protocol';
+import { buildGraphData } from 'medicine-wheel-graph-viz';
+import type { NarrativeBeat, CeremonyLog, Relation } from 'medicine-wheel-ontology-core';
+
+// 1. Initialize
+const cycle = createCycle('research-1', 'How does Indigenous ontology inform software design?');
+const decomposer = new MedicineWheelDecomposer();
+const beats: NarrativeBeat[] = [];
+const ceremonies: CeremonyLog[] = [];
+const relations: Relation[] = [];
+
+// 2. Decompose the research question
+const decomp = decomposer.decompose(cycle.research_question);
+saveDecomposition('.', decomp);
+
+// 3. Work through the action stack
+for (const action of decomp.actionStack) {
+  const beat: NarrativeBeat = {
+    id: action.id,
+    direction: action.direction,
+    title: action.text,
+    description: action.text,
+    ceremonies: [],
+    learnings: [],
+    timestamp: new Date().toISOString(),
+    act: action.direction === 'east' ? 1 : action.direction === 'south' ? 2 : action.direction === 'west' ? 3 : 4,
+    relations_honored: [],
+  };
+  const result = insertBeat(beats, beat);
+  if (result.success) beats.push(beat);
+}
+
+// 4. Check progress
+const progress = computeProgress(cycle, beats, ceremonies, relations);
+console.log(progress.suggestedAction);
+
+// 5. Validate the arc
+const arc = validateArc(beats, ceremonies, relations);
+if (!arc.valid) {
+  for (const rec of arc.recommendations) console.log(`→ ${rec}`);
+}
+
+// 6. Audit accountability
+const report = auditAccountability(nodes, edges, relations);
+
+// 7. Visualize
+const graphData = buildGraphData(nodes, edges);
+// Pass to <MedicineWheelGraph data={graphData} width={600} height={600} />
+```
+
+### Governance-Aware Workflow
+
+```typescript
+import { checkGovernance, checkCeremonyRequired, formatGovernanceWarning, getPhaseFraming, loadCeremonyState } from 'medicine-wheel-ceremony-protocol';
+
+function beforeFileChange(filePath: string, config: RSISConfig) {
+  const state = loadCeremonyState(config);
+
+  // Check governance
+  const rule = checkGovernance(filePath, config.governance!);
+  if (rule) {
+    console.warn(formatGovernanceWarning(rule));
+    if (rule.access === 'sacred') throw new Error('Sacred path — change not permitted');
+  }
+
+  // Check ceremony requirement
+  if (checkCeremonyRequired(filePath, config.governance!)) {
+    console.log('Ceremony required before this change.');
+    if (state) console.log(getPhaseFraming(state.phase));
+  }
+}
+```
+
+---
+
+## Specifications
+
+RISE framework specifications live in `rispecs/`:
+
+| File | Description |
+|------|-------------|
+| `medicine-wheel.spec.md` | System-level spec with architecture overview |
+| `ontology-core.spec.md` | Foundation types, schemas, vocabulary, queries |
+| `ceremony-protocol.spec.md` | Ceremony state, phases, governance |
+| `narrative-engine.spec.md` | Sequencing, cadence, arc, timeline, cycle |
+| `graph-viz.spec.md` | Layout engine, SVG, converters, RSIS viz |
+| `relational-query.spec.md` | Query, traversal, audit, Cypher |
+| `prompt-decomposition.spec.md` | Decomposer, enricher, storage |
+| `ui-components.spec.md` | React components |
+
+Each spec is written in RISE format (Reverse-engineer → Intent-extract → Specify → Export) and is codebase-agnostic — another LLM can re-implement the full system from these specs alone.

@@ -1,0 +1,43 @@
+# Medicine Wheel
+
+> A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's, and OCAP® data sovereignty principles.
+
+**Version:** 0.1.1  
+**Language:** TypeScript (ES2022, ESM)  
+**License:** MIT  
+
+## Packages
+
+- [ontology-core](src/ontology-core): Foundation — types, Zod schemas, RDF vocabulary, constants, semantic queries
+- [ceremony-protocol](src/ceremony-protocol): Ceremony state, phase transitions, governance enforcement
+- [narrative-engine](src/narrative-engine): Beat sequencing, cadence, arc validation, timeline, cycle management
+- [graph-viz](src/graph-viz): Circular layout, SVG paths, data converters, React visualization
+- [relational-query](src/relational-query): Query builder, traversal, accountability audit, Cypher queries
+- [prompt-decomposition](src/prompt-decomposition): Intent extraction, Four Directions classification, relational enrichment
+- [ui-components](src/ui-components): React components — DirectionCard, BeatTimeline, NodeInspector, OcapBadge, WilsonMeter
+
+## Specifications (RISE Framework)
+
+- [System Spec](rispecs/medicine-wheel.spec.md): Top-level overview linking all packages
+- [ontology-core](rispecs/ontology-core.spec.md): Types, schemas, vocabulary, constants, queries
+- [ceremony-protocol](rispecs/ceremony-protocol.spec.md): Ceremony state, phases, governance
+- [narrative-engine](rispecs/narrative-engine.spec.md): Sequencing, cadence, arc, timeline, cycle
+- [graph-viz](rispecs/graph-viz.spec.md): Layout engine, SVG paths, data converters
+- [relational-query](rispecs/relational-query.spec.md): Query, traversal, audit, Cypher
+- [prompt-decomposition](rispecs/prompt-decomposition.spec.md): Decomposer, enricher, storage
+- [ui-components](rispecs/ui-components.spec.md): React components
+
+## Documentation
+
+- [llms-full.txt](llms-full.txt): Exhaustive reference with code samples and full API
+- [rispecs/CLAUDE.md](rispecs/CLAUDE.md): Specification index
+- [llms/llms-rise-framework.txt](llms/llms-rise-framework.txt): RISE methodology guide
+- [llms/llms-kinship-hub-system.md](llms/llms-kinship-hub-system.md): Kinship hub protocol
+
+## Key Concepts
+
+- **Four Directions**: East (vision/Waabinong), South (growth/Zhaawanong), West (reflection/Epangishmok), North (wisdom/Kiiwedinong)
+- **Wilson's Three R's**: Respect, Reciprocity, Responsibility — scored 0–1 per relation
+- **OCAP®**: Ownership, Control, Access, Possession — Indigenous data sovereignty
+- **Structural Tension**: Germination → Assimilation → Completion creative cycle
+- **Ceremonial Inquiry**: opening → council → integration → closure phase progression

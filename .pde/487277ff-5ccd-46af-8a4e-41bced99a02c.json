@@ -1,0 +1,240 @@
+{
+  "id": "487277ff-5ccd-46af-8a4e-41bced99a02c",
+  "timestamp": "2026-02-18T19:11:23.774Z",
+  "prompt": "Create the @medicine-wheel/ontology-core TypeScript package — the foundational ontology layer for the Medicine Wheel Developer Suite.",
+  "result": {
+    "primary": {
+      "action": "create",
+      "target": "@medicine-wheel/ontology-core TypeScript package",
+      "urgency": "session",
+      "confidence": 0.95
+    },
+    "secondary": [
+      {
+        "action": "define",
+        "target": "RDF-aligned vocabulary for Medicine Wheel concepts",
+        "implicit": false,
+        "dependency": null,
+        "confidence": 0.95
+      },
+      {
+        "action": "formalize",
+        "target": "TypeScript types and Zod schemas from scattered implicit data model",
+        "implicit": false,
+        "dependency": "define RDF-aligned vocabulary",
+        "confidence": 0.9
+      },
+      {
+        "action": "design",
+        "target": "relational-first schema with first-class relationships",
+        "implicit": false,
+        "dependency": "define RDF-aligned vocabulary",
+        "confidence": 0.9
+      },
+      {
+        "action": "consolidate",
+        "target": "duplicated constants (DIRECTIONS, DIRECTION_COLORS, NODE_TYPE_COLORS, CEREMONY_ICONS)",
+        "implicit": false,
+        "dependency": "formalize TypeScript types",
+        "confidence": 0.95
+      },
+      {
+        "action": "implement",
+        "target": "semantic query helpers for relational traversal, Wilson alignment, OCAP compliance",
+        "implicit": false,
+        "dependency": "design relational-first schema",
+        "confidence": 0.85
+      },
+      {
+        "action": "configure",
+        "target": "npm package publishable and consumable by both server and client",
+        "implicit": false,
+        "dependency": "consolidate constants",
+        "confidence": 0.9
+      },
+      {
+        "action": "integrate",
+        "target": "mcp-medicine-wheel and mcp-medicine-wheel-ui to consume ontology-core",
+        "implicit": true,
+        "dependency": "configure npm package",
+        "confidence": 0.7
+      }
+    ],
+    "context": {
+      "files_needed": [
+        "/src/mcp-medicine-wheel/src/types.ts",
+        "/src/mcp-medicine-wheel/src/tools/east.ts",
+        "/src/mcp-medicine-wheel/src/tools/south.ts",
+        "/src/mcp-medicine-wheel/src/tools/west.ts",
+        "/src/mcp-medicine-wheel/src/tools/north.ts",
+        "/src/mcp-medicine-wheel/src/tools/discovery.ts",
+        "/src/mcp-medicine-wheel/src/tools/structural-tension.ts",
+        "/src/mcp-medicine-wheel-ui/lib/types.ts"
+      ],
+      "tools_required": [
+        "npm",
+        "typescript",
+        "zod"
+      ],
+      "assumptions": [
+        "Package path is /workspace/repos/jgwill/medicine-wheel/src/ontology-core/",
+        "Existing types in both repos represent the implicit ontology to formalize",
+        "OCAP® flags and Wilson alignment are sufficiently defined in existing code to extract",
+        "Package should work in both Node.js (server) and browser (Next.js) environments"
+      ]
+    },
+    "outputs": {
+      "artifacts": [
+        "/workspace/repos/jgwill/medicine-wheel/src/ontology-core/package.json",
+        "/workspace/repos/jgwill/medicine-wheel/src/ontology-core/tsconfig.json",
+        "/workspace/repos/jgwill/medicine-wheel/src/ontology-core/src/index.ts",
+        "/workspace/repos/jgwill/medicine-wheel/src/ontology-core/src/types.ts",
+        "/workspace/repos/jgwill/medicine-wheel/src/ontology-core/src/schemas.ts",
+        "/workspace/repos/jgwill/medicine-wheel/src/ontology-core/src/constants.ts",
+        "/workspace/repos/jgwill/medicine-wheel/src/ontology-core/src/vocabulary.ts",
+        "/workspace/repos/jgwill/medicine-wheel/src/ontology-core/src/queries.ts"
+      ],
+      "updates": [],
+      "communications": []
+    },
+    "directions": {
+      "east": [
+        {
+          "text": "Vision: A single source of truth ontology package unifying the Medicine Wheel data model across server and client",
+          "confidence": 0.95,
+          "implicit": false
+        },
+        {
+          "text": "Vision: RDF-aligned vocabulary that bridges Indigenous relational ontology with semantic web standards",
+          "confidence": 0.9,
+          "implicit": false
+        }
+      ],
+      "south": [
+        {
+          "text": "Analysis: Audit existing types.ts in both repos to identify all entities, relationships, and constants",
+          "confidence": 0.95,
+          "implicit": false
+        },
+        {
+          "text": "Analysis: Map existing implicit relationships to first-class relational entities",
+          "confidence": 0.9,
+          "implicit": false
+        },
+        {
+          "text": "Analysis: Study how OCAP® flags and Wilson alignment are currently computed",
+          "confidence": 0.85,
+          "implicit": true
+        }
+      ],
+      "west": [
+        {
+          "text": "Validation: Zod schemas enforce data integrity at runtime",
+          "confidence": 0.9,
+          "implicit": false
+        },
+        {
+          "text": "Validation: Package compiles and is importable from both ESM server and Next.js client",
+          "confidence": 0.85,
+          "implicit": true
+        },
+        {
+          "text": "Validation: Existing constants match exactly between old and new sources",
+          "confidence": 0.9,
+          "implicit": true
+        }
+      ],
+      "north": [
+        {
+          "text": "Action: Create package directory structure, package.json, tsconfig.json",
+          "confidence": 0.95,
+          "implicit": false
+        },
+        {
+          "text": "Action: Implement types, schemas, constants, vocabulary, and query helpers",
+          "confidence": 0.95,
+          "implicit": false
+        },
+        {
+          "text": "Action: Build and verify package compiles",
+          "confidence": 0.9,
+          "implicit": false
+        }
+      ]
+    },
+    "actionStack": [
+      {
+        "text": "Create package scaffold (package.json, tsconfig.json, directory structure)",
+        "direction": "north",
+        "dependency": null,
+        "completed": false
+      },
+      {
+        "text": "Define RDF namespace/vocabulary constants (IRIs, prefixes)",
+        "direction": "east",
+        "dependency": "package scaffold",
+        "completed": false
+      },
+      {
+        "text": "Extract and formalize TypeScript type definitions from existing repos",
+        "direction": "south",
+        "dependency": "package scaffold",
+        "completed": false
+      },
+      {
+        "text": "Design relational-first schema with first-class Relation entities",
+        "direction": "south",
+        "dependency": "extract types",
+        "completed": false
+      },
+      {
+        "text": "Create Zod validation schemas for all types",
+        "direction": "west",
+        "dependency": "design relational schema",
+        "completed": false
+      },
+      {
+        "text": "Consolidate constants (DIRECTIONS, COLORS, ICONS) into single exports",
+        "direction": "north",
+        "dependency": "extract types",
+        "completed": false
+      },
+      {
+        "text": "Implement semantic query helpers (traversal, Wilson alignment, OCAP compliance)",
+        "direction": "north",
+        "dependency": "create Zod schemas",
+        "completed": false
+      },
+      {
+        "text": "Create barrel export index.ts",
+        "direction": "north",
+        "dependency": "implement query helpers",
+        "completed": false
+      },
+      {
+        "text": "Build and verify TypeScript compilation",
+        "direction": "west",
+        "dependency": "barrel export",
+        "completed": false
+      }
+    ],
+    "ambiguities": [
+      {
+        "text": "RDF-aligned vocabulary depth unclear — full Turtle/RDFS definitions or just IRI string constants?",
+        "suggestion": "Start with IRI string constants and TypeScript types; formal OWL/RDFS can be added later"
+      },
+      {
+        "text": "Wilson alignment metric calculation not fully specified in existing code",
+        "suggestion": "Define the metric interface now; actual computation can be refined iteratively"
+      },
+      {
+        "text": "OCAP compliance check specifics not detailed",
+        "suggestion": "Model OCAP as flags (ownership, control, access, possession) with boolean/enum checks; full policy engine is future work"
+      }
+    ]
+  },
+  "options": {
+    "extractImplicit": true,
+    "mapDependencies": true
+  }
+}

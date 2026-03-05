@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+     "mcp-pde": {
+      "command": "node",
+      "args": [
+        "/src/mcp-pde/dist/index.js"
+      ],
+      "env": { }
+    }
+  }
+}

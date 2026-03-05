@@ -1,0 +1,242 @@
+## 1. Literature review: Indigenous ontologies for research
+
+### 1.1 Kaupapa Māori research and Indigenous ontology
+
+Kaupapa Māori research emerged as a deliberate move to locate Māori ontology (ways of being), epistemology (ways of knowing), and methodology within the academy while resisting colonial research framings. It assumes the legitimacy of being Māori, takes Te Reo Māori and tikanga as central, and understands research as part of long struggles for self‑determination and mana motuhake. Rather than treating Māori people as objects of inquiry, Kaupapa Māori centres Māori aspirations, philosophies and collective responsibilities; research is “by Māori, for Māori, with Māori” and evaluated in terms of its benefits to whānau, hapū and iwi. [journals.sagepub](https://journals.sagepub.com/doi/10.1177/1350508401082009)
+
+Ontologically, Kaupapa Māori foregrounds whakapapa (genealogical relations) and whanaungatanga (obligations arising from relationships) as the structuring principles of reality. Knowledge is not an abstract, decontextualized commodity but a situated expression of relationships among people, ancestors, land, waters, and spiritual entities. This relational ontology underpins methodological principles such as co‑governance, co‑design, reciprocity, accountability to community, and the ethical force of tikanga in all stages of a research project. [tandfonline](https://www.tandfonline.com/doi/pdf/10.1080/1177083X.2023.2227232?needAccess=true&role=button)
+
+Kaupapa Māori methodology is frequently braided with selected Western methods (e.g., grounded theory) but keeps Te Ao Māori as the “centre of gravity”. At the interface, Western methods are modified to honour Māori relational ethics, timeframes, modes of consent, and narrative forms such as pūrākau, waiata, and whakapapa‑based storytelling. This interface work shows how an Indigenous research paradigm can dialogue with Western science without being subsumed by it. [ojs.aut.ac](https://ojs.aut.ac.nz/link-praxis/article/view/8)
+
+### 1.2 Shawn Wilson’s “Research Is Ceremony”
+
+Shawn Wilson describes an Indigenous research paradigm shared across Cree, other First Nations, and Australian Aboriginal contexts, built around four interlocking components: ontology, epistemology, axiology, and methodology. In his account, ontology is fundamentally relational: “reality is relationships” rather than isolated entities. Knowledge (epistemology) is what is created and maintained within those relationships; axiology is the ethic of respect, reciprocity and responsibility; methodology is simply how these principles are enacted in practice. [welcomehomevetsofnj](https://www.welcomehomevetsofnj.org/textbook-ga-24-1-33/shawn-wilson-research-is-ceremony.pdf)
+
+Wilson frames research itself as ceremony: an ongoing process of deepening relationships with ideas, communities, lands, and more‑than‑human relatives. He introduces “relational accountability” as the core methodological principle: a researcher is accountable to all their relations—human and more‑than‑human—for how knowledge is sought, interpreted, stored and shared. This shifts the focus from method as technique to method as a living ethical relationship. Consent, data access, authorship and benefit‑sharing become expressions of ceremony rather than administrative checkboxes. [pressbooks.bccampus](https://pressbooks.bccampus.ca/undergradresearch/chapter/1-3-relational-accountability/)
+
+Wilson explicitly contrasts this paradigm with Western research traditions that prioritize objectivity, detachment and individual authorship. Where Western ontology often begins with discrete objects that possess properties, Wilson’s ontology begins with webs of kinship, stories and obligations; entities are meaningful only within these webs. Methodologically, he resists universal prescriptions; each community, history and land base generates its own appropriate ceremonies and protocols. [fernwoodpublishing](https://fernwoodpublishing.ca/book/research-is-ceremony-shawn-wilson)
+
+### 1.3 Common threads across Indigenous approaches
+
+Despite cultural specificity, several themes recur across Indigenous research frameworks in Aotearoa, Canada and beyond:
+
+- **Relationality as ontology**: Reality is fundamentally relational—expressed as whakapapa in Māori contexts and as relationality in Wilson’s Cree framework. [journals.sagepub](https://journals.sagepub.com/doi/10.1177/1350508401082009)
+- **Place‑rooted knowledge**: Land and waters are not backdrop but active relations; research is accountable to territory and Treaty relationships as much as to human participants. [journal.mai.ac](https://www.journal.mai.ac.nz/10.20507/MAIJournal.2025.14.1.9)
+- **Collective data governance**: Communities assert rights over knowledge created about them, articulated in frameworks such as OCAP® (Ownership, Control, Access, Possession) and broader Indigenous Data Sovereignty (IDS) movements. [fnigc](https://fnigc.ca/ocap-training/)
+- **Ethics as practice, not procedure**: Ethics is embedded in tikanga, ceremony, and everyday relational work rather than solely in institutional review boards. [researchcommons.waikato.ac](https://researchcommons.waikato.ac.nz/server/api/core/bitstreams/c3eb833e-73ff-4239-a595-f64b4a00a36b/content)
+- **Narrative and oral forms**: Story, song, and other narrative forms are central analytic modes and data structures, not merely “illustrations” of findings. [anzswjournal](https://anzswjournal.nz/anzsw/article/download/766/713)
+
+These convergences offer a shared ontological orientation that the Medicine Wheel MCP can honour even while working across multiple specific nations and knowledge systems.
+
+***
+
+## 2. Western RDF ontologies and their assumptions
+
+### 2.1 RDF as a Western ontological technology
+
+In the Semantic Web stack, the Resource Description Framework (RDF) is the foundational model for expressing knowledge as triples: subject–predicate–object. Entities are identified by URIs, predicates express relationships or attributes, and graphs are assembled from potentially billions of such triples. Ontology languages such as RDFS and OWL layer on top to define classes, properties, constraints and inference rules, aimed at logical consistency, interoperability and machine reasoning. [github](https://github.com/RDFLib/rdflib)
+
+This technology emerges from European analytic traditions that treat the world as composed of discrete objects bearing properties, suitable for formalization in logic. Ontological work focuses on categorization (class hierarchies), part–whole structures, constraints and axioms. The open‑world assumption and monotonic reasoning treat knowledge as ever‑extendable fact sets; context and power relations are usually outside the formal model.
+
+Visualization tools built on this stack typically adopt force‑directed or node–link diagram metaphors, showing entities as circles and predicates as labelled edges. These interfaces are optimized for structural inspection (degrees, centrality, cluster detection) and query debugging rather than ceremony, narrative, accountability or protocol. [visgraph3.github](https://visgraph3.github.io)
+
+### 2.2 Epistemological contrasts and points of contact
+
+From an Indigenous perspective, several tensions appear:
+
+- **Entity primacy vs. relation primacy**: RDF places nodes (subjects/objects) at the centre and edges as secondary; Indigenous ontologies centre relationships, obligations and genealogies. [welcomehomevetsofnj](https://www.welcomehomevetsofnj.org/textbook-ga-24-1-33/shawn-wilson-research-is-ceremony.pdf)
+- **Abstract universality vs. situated sovereignty**: URIs are meant to be globally unique, whereas Indigenous data sovereignty locates authority within specific nations, lands and governance structures. [guides.library.ualberta](https://guides.library.ualberta.ca/indigenous-research/indigenous-data-sovereignty)
+- **Access by default vs. protocol by default**: Linked data assumes that dereferencing URIs is desirable; OCAP and similar frameworks assert that communities decide where, when and to whom data is visible. [mdl.library.utoronto](https://mdl.library.utoronto.ca/mdl-blog/first-nations-principles-ownership-control-access-and-possession-ocapr-pathway-data)
+- **Static classification vs. living story**: OWL ontologies crystallize categories; Indigenous frameworks treat knowledge as living, evolving through ceremony and narrative relationships. [researchcommons.waikato.ac](https://researchcommons.waikato.ac.nz/server/api/core/bitstreams/c3eb833e-73ff-4239-a595-f64b4a00a36b/content)
+
+At the same time, there are useful points of contact. Graph‑based representation can express rich relational structures; named graphs and provenance vocabularies can encode context, source and governance conditions. SHACL and related constraint languages provide hooks for expressing obligations or protocol rules, even if they are not yet semantically rich enough to capture full Indigenous ethics. [github](https://github.com/RDFLib/rdflib)
+
+The Medicine Wheel MCP and accompanying visualization tools can sit at this interface, preserving the powerful graph machinery while re‑orienting ontological and UX design around Indigenous priorities.
+
+***
+
+## 3. Shawn Wilson’s view of ontology and implications for tools
+
+Wilson’s ontological stance can be distilled into three design‑relevant propositions:
+
+1. **Reality is a set of relationships**—between people, communities, lands, ideas, ancestors, and spiritual entities. [fernwoodpublishing](https://fernwoodpublishing.ca/book/research-is-ceremony-shawn-wilson)
+2. **Knowledge is created within and for these relationships**, not as detached “data”. Validity depends on whether knowledge strengthens respectful, reciprocal relationships.
+3. **Research is ceremony**—a structured way of renewing and deepening these relationships through respectful attention and action. [raw.org](https://raw.org.nz/whakawhanaungatanga/)
+
+Translated into an ontological representation, this implies that:
+
+- Relations (e.g., kinship, obligations, ceremonies, shared stories) should be first‑class entities with their own lifecycles, not just labelled edges.
+- Every knowledge artefact (triple, beat, node, ceremony) carries relational accountability metadata: who has authority, who must be consulted, what reciprocity is owed, and what protocol applies.
+- Temporal and cyclical structures (seasons, directions, acts, beats) are not merely visualization themes but core ontic structures; they shape how relations unfold.
+
+For MCP and UI design, this suggests a “relational‑first” schema and interaction model: users navigate by relationships, cycles and ceremonies rather than by classes and attributes.
+
+***
+
+## 4. Intention of the Medicine Wheel MCP and RDF visualizer
+
+The Medicine Wheel MCP already structures research as a journey through four directions—East (Vision), South (Analysis), West (Validation), and North (Action)—with beats, acts, cycles and ceremonies as narrative scaffolding. The coaia‑narrative stack and associated MCP server position creative orientation and narrative memory at the centre of the workflow. [classic.yarnpkg](https://classic.yarnpkg.com/en/package/coaia-narrative)
+
+Robert Fritz’s structural tension model adds an explicit formalism: for each creative endeavour, juxtapose a clear vision of the desired result with an accurate description of current reality; the tension between them drives action. He distinguishes creative orientation (building structures around desired outcomes) from reactive/problem‑solving orientation that oscillates around threats and constraints. The Managerial Moment of Truth (MMOT) extends this into a feedback practice: early, honest, non‑punitive confrontations with reality that support learning and structural adjustment. [everand](https://www.everand.com/book/225127117/The-Managerial-Moment-of-Truth-The-Essential-Step-in-Helping-People-Improve-Performance)
+
+The Medicine Wheel MCP can weave these ideas with Indigenous paradigms:
+
+- **Vision (East)**: articulate desired research outcomes in terms of strengthened relationships and community benefit, not just technical metrics.
+- **Analysis (South)**: map existing relational structures, data assets and governance protocols using RDF plus Indigenous relational constructs.
+- **Validation (West)**: employ MMOT‑style ceremonies with Elders, co‑researchers and AI tools to confront gaps between vision and reality.
+- **Action (North)**: adjust structures—schemas, MCP tools, UI affordances, governance rules—in response to those ceremonies.
+
+The RDF visualization tool is then not just a graph inspector but a ceremonial instrument: it helps participants see relational patterns, structural tensions and accountability lines across beats, cycles and communities.
+
+***
+
+## 5. Abstract architecture for an Indigenous‑aligned RDF visualizer
+
+Before naming specific libraries, the envisioned architecture can be sketched in four layers.
+
+### 5.1 Ontological data representation
+
+1. **Western semantic layer**  
+   - RDF graphs store triples with URIs and literals, leveraging existing vocabularies (RDF, RDFS, OWL, SKOS, PROV, SHACL). [github](https://github.com/RDFLib/rdflib)
+   - Named graphs or datasets partition data by project, cycle, ceremony or community, supporting contextualization.
+
+2. **Indigenous relational layer**  
+   - Relations such as whakapapa, treaty relationship, kin‑group membership, responsibility, ceremonial connection and place‑based ties are modelled as explicit relation entities with roles and attributes, not only as simple predicates. [journals.sagepub](https://journals.sagepub.com/doi/10.1177/1350508401082009)
+   - Each relation carries metadata: direction (East/South/West/North), role categories (human, land, spirit, ancestor, knowledge), OCAP/IDS flags (ownership, control, access, possession), and protocol references. [fnigc](https://fnigc.ca/ocap-training/)
+
+3. **Narrative and structural tension layer**  
+   - Beats, acts and cycles are represented as temporal structures linked to graph entities; they track when and how relationships changed.  
+   - For each research question, a structural tension object stores vision statements, current‑reality snapshots and MMOT reflections, all linked back to graph nodes and ceremonies. [proquest](https://www.proquest.com/docview/213613505)
+
+4. **Governance and accountability layer**  
+   - OCAP and Indigenous Data Sovereignty constraints are encoded as access‑control and data‑placement policies associated with graphs, nodes and relations. [fnigc](https://fnigc.ca/wp-content/uploads/2022/10/OCAP_Brochure_20220927_web.pdf)
+   - Each operation on the graph is associated with ceremony metadata: who invited whom, what approvals were given, and what reciprocity commitments exist.
+
+### 5.2 MCP integration
+
+An MCP server (Medicine Wheel MCP) mediates between AI assistants, the RDF/relational store, and the UI:
+
+- Exposes tools for querying and mutating the graph that enforce governance rules, trigger ceremonies, and log narrative beats. [en.wikipedia](https://en.wikipedia.org/wiki/Model_Context_Protocol)
+- Provides resources (e.g., canonical queries, research questions, ceremony templates) that can be inserted into AI contexts.
+- Emits notifications when graphs or relations change, allowing UI views (wheel, narrative, accountability) to update in real time. [modelcontextprotocol](https://modelcontextprotocol.io/docs/learn/architecture)
+- Coordinates with the coaia‑narrative agent, which writes structured incident narratives and beats into the graph according to act/direction logic. [classic.yarnpkg](https://classic.yarnpkg.com/en/package/coaian)
+
+### 5.3 Visualization and interaction
+
+The UI offers multiple linked views over the same underlying ontology:
+
+- **Medicine Wheel view**: circular layout with seasonal bands and directional quadrants. Relational nodes sit on the rim by direction and role; chords or arcs represent relationships. Beats and ceremonies are shown as pulses moving around the wheel.
+- **Graph view**: force‑directed or constraint‑based graph visualization with rich tooltips and filtering for relation type, OCAP status, direction, and ceremony state. [github](https://github.com/Rathachai/d3rdf)
+- **Narrative timeline view**: stacked timelines of beats grouped by direction and act, with links back to involved nodes and relations.
+- **Accountability view**: dashboards for Wilson‑style relational accountability (e.g., percentage of beats with Elders as co‑investigators, OCAP review status) and MMOT events across cycles.
+
+Interactions are question‑driven: the user selects or asks a research question, and all views reorganize to foreground relevant relations, cycles and tensions. Edits occur through guided ceremonies (forms/workflows) rather than ad‑hoc triple editing; each ceremony writes both RDF changes and narrative/relational annotations.
+
+***
+
+## 6. Existing RDF visualization libraries as abstract classes
+
+With this abstract architecture in place, three well‑maintained open‑source projects can serve as “abstract classes” or foundational modules.
+
+### 6.1 Library A: High‑performance RDF inspector – RDFGlance
+
+**RDFGlance** is a Rust‑based RDF visualization tool designed for very large datasets (millions of triples), with both desktop and WASM/web builds. It offers multiple views—interactive graph, table and datasheet—and is optimized for multithreaded performance without server‑side dependencies. The WASM build demonstrates that substantial RDF processing and visualization can run entirely client‑side, aligning with certain OCAP and data‑sovereignty concerns by reducing central server exposure. [github](https://github.com/xdobry/rdfglance)
+
+For the Medicine Wheel MCP, RDFGlance can inform the **engine layer** of Library A:  
+
+- The Rust core provides a performant graph indexing and layout engine that can be wrapped by custom Indigenous‑aware schemas.  
+- Its datasheet views can be extended with columns for direction, relational category and governance flags, enabling “at a glance” audits of relational completeness (e.g., nodes without Elders, relations missing reciprocity fields).  
+- The WASM front‑end could be integrated into the existing web UI as a high‑performance inspection mode for large knowledge bases, while ceremony‑oriented workflows sit in React/TypeScript wrapping layers.
+
+Design pattern: treat RDFGlance as an abstract **RdfInspectorEngine** class; derive an **IndigenousRelationalInspector** that adds Indigenous metadata overlays, OCAP‑aware filtering, and hooks back into MCP tools for narrative actions.
+
+### 6.2 Library B: RDF‑aware web graph visualizer – rdf‑viz
+
+**rdf‑viz** is a TypeScript/D3 tool that reads RDF data (from URLs or local files) and renders interactive node–link graphs. It already has special logic for well‑known predicates: `rdf:type` is summarized in node tooltips; `rdf:value` literals appear in value panels; RDF lists are grouped to reduce clutter. Configuration is driven by JSON files specifying sources, namespaces, proxies and style rules. [github](https://github.com/clecompt-msft/rdf-viz)
+
+This makes rdf‑viz a strong candidate for the **semantically‑aware visualization layer**:
+
+- The existing special cases for RDF predicates can be extended with Indigenous predicates (e.g., `mw:direction`, `mw:ceremony`, `ids:ocapOwnership`) and custom rendering rules—icons for role (human, land, ancestor), ring segments for direction, halos for restricted‑access nodes.  
+- Its JSON configuration system can be specialized into ceremony templates: for each medicine‑wheel research question, a config defines relevant graphs, styles and filters.  
+- Integration with the MCP server can be done via dynamic configuration loading: MCP tools generate configs based on current cycle, OCAP permissions and narrative context; rdf‑viz renders accordingly.
+
+Pattern: treat rdf‑viz as an abstract **SemanticGraphView**; subclass **MedicineWheelGraphView** that injects Indigenous predicates, visual metaphors (suns, seasons, ceremonies) and protocol‑aware styling.
+
+### 6.3 Library C: React + D3 graph component – react‑d3‑graph
+
+**react‑d3‑graph** is a widely used React component for interactive, configurable D3 graphs, with an active ecosystem and a live playground. It is not RDF‑specific but provides a robust, declarative API for graph data, extensive configuration for node/edge rendering, and features like custom node components (`viewGenerator`), static and dynamic layouts, and interactive behaviors (drag, zoom, expand/collapse). [github](https://github.com/danielcaldas/react-d3-graph)
+
+This makes it ideal as the **presentation shell** within the existing Medicine Wheel web client:
+
+- The current Nodes/Relations view can be rebuilt using react‑d3‑graph, with node shapes and colours mapped to Indigenous ontological categories (human/land/spirit/ancestor/knowledge, direction, ceremony state).  
+- Custom node views allow embedding miniature medicine wheels, ceremony badges or OCAP indicators directly on nodes.  
+- React integration keeps the visualization consistent with the rest of the UI (beats, cycles, narrative), enabling cross‑view interactions and state sharing (e.g., selecting a node highlights its appearances in the wheel and timeline views).
+
+Pattern: treat react‑d3‑graph as an abstract **InteractiveGraphWidget**; derive **MedicineWheelRelationalWidget** that is driven by the Indigenous relational layer and RDFGlance/rdf‑viz backends, and that routes user actions through MCP tools instead of direct graph mutations.
+
+***
+
+## 7. Evolution pathways for the MCP tool and UI
+
+Bringing these strands together suggests several concrete evolution steps for the Medicine Wheel MCP and UI:
+
+1. **Ontology refactor**  
+   - Define a core RDF vocabulary for Medicine Wheel concepts: directions, beats, cycles, ceremonies, Wilson alignment, OCAP flags, relational categories.  
+   - Map existing relational nodes and ceremonies into this vocabulary via a migration pass, possibly using RDFLib or similar tooling. [github](https://github.com/RDFLib/rdflib)
+
+2. **Relational accountability model**  
+   - Attach relational accountability objects (as RDF resources) to each beat, ceremony and relation, encoding Wilson’s three R’s and OCAP stewardship details. [pressbooks.bccampus](https://pressbooks.bccampus.ca/undergradresearch/chapter/1-3-relational-accountability/)
+   - Expose MCP tools that compute “alignment” metrics (e.g., percentage of beats with community co‑ownership) for display in the Accountability view.
+
+3. **Visualization layering**  
+   - Integrate a react‑d3‑graph‑based widget into the existing UI for relational exploration, with modes toggling between “Western graph” and “Medicine Wheel” renderings.  
+   - Experiment with embedding an RDFGlance‑like high‑volume inspector for power users and audits, and an rdf‑viz‑style semantic overlay for ceremony‑centred sessions.
+
+4. **Ceremonial workflows around MMOT**  
+   - Model MMOT dialogues as ceremonies that take snapshots of current reality (graph queries) against declared visions; store them as narrative beats linked to structural tension objects. [everand](https://www.everand.com/book/225127117/The-Managerial-Moment-of-Truth-The-Essential-Step-in-Helping-People-Improve-Performance)
+   - Provide MCP tools that generate MMOT prompts and scripts, and that write the resulting reflections back into the RDF/narrative graph for later visualization and learning.
+
+5. **OCAP‑aware data flows**  
+   - Incorporate OCAP/IDS principles into data ingestion and export: each dataset is labelled with ownership, control, access and possession metadata, and UI affordances clearly signal which operations are permissible. [guides.library.ualberta](https://guides.library.ualberta.ca/indigenous-research/indigenous-data-sovereignty)
+   - Consider client‑side processing (WASM) for sensitive data where server trust is limited, following RDFGlance’s architectural example. [github](https://github.com/xdobry/rdfglance)
+
+These steps directly expand the capability of the MCP as a relational, ceremony‑aware ontology mediator and of the UI as a multi‑view narrative and accountability instrument.
+
+***
+
+## 8. Key research questions
+
+### 8.1 Ontological and epistemological questions
+
+1. How can an RDF‑based graph model be extended so that relations (e.g., whakapapa, treaty responsibilities, ceremonial ties) become first‑class ontological units without losing interoperability with existing Semantic Web tooling? [journals.sagepub](https://journals.sagepub.com/doi/10.1177/1350508401082009)
+2. In what ways can named graphs, provenance vocabularies and SHACL constraints encode Indigenous governance principles such as OCAP and relational accountability, and where do these formalisms fundamentally fall short? [fnigc](https://fnigc.ca/ocap-training/)
+3. How can Wilson’s conception of research as ceremony be operationalized in software such that every write operation on the graph is part of an explicit ceremonial workflow rather than a purely technical transaction? [raw.org](https://raw.org.nz/whakawhanaungatanga/)
+4. To what extent can medicine‑wheel structures (directions, cycles, seasons) be treated as ontological primitives rather than merely visual or narrative motifs, and what implications does this have for cross‑cultural interoperability?  
+
+### 8.2 Interaction, visualization and user‑experience questions
+
+1. How do different visual metaphors (force‑directed graphs, circular medicine wheels, braided timelines) affect users’ understanding of relational accountability, power and benefit flows in Indigenous research projects? [visgraph3.github](https://visgraph3.github.io)
+2. What UX patterns best support ceremony‑centred editing—where every change to the graph passes through guided protocols—without overwhelming users or slowing legitimate community‑driven work?  
+3. How can structural tension and MMOT events be visualized in ways that encourage ongoing creative orientation (desired outcomes) rather than slipping back into problem‑centric narratives? [blas](https://blas.com/wp-content/uploads/2019/06/The-Path-of-Least-Resistance.pdf)
+4. How can AI assistants integrated via MCP be designed to respect Indigenous protocols, avoid over‑stepping interpretive authority, and support—not replace—human relational labour? [en.wikipedia](https://en.wikipedia.org/wiki/Model_Context_Protocol)
+
+***
+
+## 9. Future research directions
+
+1. **Formal Indigenous‑relational ontology modules**  
+   Develop and evaluate reusable ontology patterns for whakapapa, ceremony, relational accountability and Indigenous governance that can plug into standard RDF/OWL environments while remaining faithful to community protocols. [researchcommons.waikato.ac](https://researchcommons.waikato.ac.nz/server/api/core/bitstreams/c3eb833e-73ff-4239-a595-f64b4a00a36b/content)
+
+2. **Multi‑community data sovereignty experiments**  
+   Pilot the Medicine Wheel MCP with different Indigenous communities (Māori, Cree, First Nations in Canada, others), studying how OCAP, IDS and local tikanga shape schema design, access control, and visualization choices. [guides.library.ualberta](https://guides.library.ualberta.ca/indigenous-research/indigenous-data-sovereignty)
+
+3. **Narrative‑based creativity training via the MCP stack**  
+   Experiment with using the medicine‑wheel narrative cycle plus structural tension and MMOT as a creativity training protocol, building on research that positions narrative as an alternative to divergent‑thinking‑based creativity training. Measure how such tooling affects researchers’ ability to articulate desired outcomes and hold structural tension over time. [pmc.ncbi.nlm.nih](https://pmc.ncbi.nlm.nih.gov/articles/PMC9313823/)
+
+4. **Comparative evaluation of visualization backends**  
+   Benchmark RDFGlance‑style Rust/WASM engines, rdf‑viz‑style D3 visualizers, and react‑d3‑graph‑style React components for Indigenous research use cases: large ceremonial archives, dense kinship graphs, and accountability dashboards. Analyze trade‑offs in performance, extensibility, sovereignty (client‑ vs server‑side), and cultural fit. [github](https://github.com/clecompt-msft/rdf-viz)
+
+5. **Ceremony‑aware MCP protocols and standards**  
+   Extend MCP examples and specifications to include ceremony and governance primitives—e.g., “tool calls with protocol context”, “ceremonial sessions” and “relational accountability logs”—so that Indigenous‑aligned tools can interoperate across AI platforms. [modelcontextprotocol](https://modelcontextprotocol.io/examples)
+
+Pursuing these questions while continuously using the evolving MCP and UI in lived research practice will allow the tools and the scholarship to co‑evolve, turning the system itself into an instrument for learning Indigenous ways of knowing rather than merely describing them.

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "charts__931bda9b-af8a-4038-bcb0-8f30cf7186ce--2602181359": {
+      "command": "npx",
+      "args": ["-y", "coaia-narrative@0.11.0", "--memory-path", "/workspace/repos/jgwill/medicine-wheel/.coaia/charts__931bda9b-af8a-4038-bcb0-8f30cf7186ce--2602181359.coaia-narrative.jsonl"]
+    }
+  }
+}
