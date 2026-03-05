@@ -1,0 +1,46 @@
+{
+  "name": "medicine-wheel-session-reader",
+  "version": "0.1.0",
+  "description": "Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, session summaries, analytics extraction, and search across agent session data",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types.js",
+      "types": "./dist/types.d.ts"
+    },
+    "./sessions": {
+      "import": "./dist/sessions.js",
+      "types": "./dist/sessions.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "session-reader",
+    "jsonl",
+    "agent-sessions",
+    "analytics",
+    "claude-hooks"
+  ],
+  "author": "IAIP Collaborative - Shawinigan, QC",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}
