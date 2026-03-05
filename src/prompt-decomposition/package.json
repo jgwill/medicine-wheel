@@ -1,0 +1,48 @@
+{
+  "name": "medicine-wheel-prompt-decomposition",
+  "version": "0.1.0",
+  "description": "Prompt Decomposition Engine for the Medicine Wheel Developer Suite — ontology-enriched intent extraction, relational dependency mapping, and ceremony-aware action stacking",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types.js",
+      "types": "./dist/types.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "prompt-decomposition",
+    "pde",
+    "intent-extraction",
+    "four-directions",
+    "ontology",
+    "relational",
+    "ceremony",
+    "indigenous-research"
+  ],
+  "author": "IAIP Collaborative - Shawinigan, QC",
+  "license": "MIT",
+  "dependencies": {
+    "medicine-wheel-ontology-core": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}
