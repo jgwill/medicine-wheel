@@ -2,12 +2,12 @@
 
 > A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's (Respect, Reciprocity, Responsibility), and OCAP® data sovereignty principles.
 
-**Version:** 0.1.1  
-**Language:** TypeScript (ES2022, ESM, strict mode)  
-**Runtime:** Node.js  
-**Validation:** Zod ^3.23.0  
-**UI:** React ^18 || ^19  
-**License:** MIT  
+**Version:** 0.1.1
+**Language:** TypeScript (ES2022, ESM, strict mode)
+**Runtime:** Node.js
+**Validation:** Zod ^3.23.0
+**UI:** React ^18 || ^19
+**License:** MIT
 
 ---
 
@@ -22,8 +22,10 @@
 7. [Package 5: relational-query](#package-5-relational-query)
 8. [Package 6: prompt-decomposition](#package-6-prompt-decomposition)
 9. [Package 7: ui-components](#package-7-ui-components)
-10. [End-to-End Usage](#end-to-end-usage)
-11. [Specifications](#specifications)
+10. [Package 8: data-store](#package-8-data-store)
+11. [Package 9: session-reader](#package-9-session-reader)
+12. [End-to-End Usage](#end-to-end-usage)
+13. [Specifications](#specifications)
 
 ---
 
@@ -36,7 +38,9 @@ medicine-wheel-ontology-core          ← Foundation (everyone depends on this)
     ├── medicine-wheel-graph-viz            ← Circular layout & visualization
     ├── medicine-wheel-relational-query     ← Query, traversal & audit
     ├── medicine-wheel-prompt-decomposition ← Intent extraction & PDE
-    └── medicine-wheel-ui-components        ← React components
+    ├── medicine-wheel-ui-components        ← React components
+    ├── medicine-wheel-data-store           ← Shared Redis data access
+    └── medicine-wheel-session-reader       ← Session event data reader
 ```
 
 All packages compile to ES2022 with source maps and declaration files. No circular dependencies. All packages use `medicine-wheel-ontology-core` types as their shared vocabulary.
@@ -919,6 +923,8 @@ const obs = formatDirectionObservation({ east: 40, south: 30, west: 20, north: 1
 npm install medicine-wheel-prompt-decomposition
 ```
 
+**Version:** 0.1.0
+
 ### MedicineWheelDecomposer
 
 ```typescript
@@ -1026,6 +1032,8 @@ const md = decompositionToMarkdown(decomposition);
 npm install medicine-wheel-ui-components
 ```
 
+**Version:** 0.1.0
+
 ### DirectionCard
 
 Displays a direction with color, Ojibwe name, teachings, and current-direction highlighting.
@@ -1099,6 +1107,55 @@ import type { WilsonMeterProps } from 'medicine-wheel-ui-components';
   size="medium"                              // 'small' | 'medium' | 'large'
 />
 ```
+
+---
+
+## Package 8: data-store
+
+```bash
+npm install medicine-wheel-data-store
+```
+
+**Version:** 0.1.0
+
+### Overview
+
+Shared Redis data-access layer for the Medicine Wheel Developer Suite. Provides connection management, Node/Edge/Ceremony CRUD, session-ceremony linking, and generic Redis helpers.
+
+### Exports
+
+-   `connection` — Redis connection management (Upstash, Vercel KV, local), singleton pattern
+-   `store` — Node/Edge/Ceremony/Accountability CRUD, search, relational web traversal
+-   `session-link` — Bidirectional session↔ceremony linking
+-   `helpers` — Generic Redis hash/set/sorted-set helpers
+
+### Dependencies
+
+-   `medicine-wheel-ontology-core` ^0.1.0
+-   `redis` ^4.6.0
+
+---
+
+## Package 9: session-reader
+
+```bash
+npm install medicine-wheel-session-reader
+```
+
+**Version:** 0.1.0
+
+### Overview
+
+Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, session summaries, analytics extraction, and search across agent session data. Zero external dependencies.
+
+### Exports
+
+-   `types` — SessionEvent, SessionAnalytics, SessionSummary, SessionFilters, EVENT_ICONS
+-   `sessions` — listSessions, getSessionSummary, getSessionEvents, getSessionDetail, searchSessions, readSessionFile, getLatestEvents, getDistinctModels
+
+### Dependencies
+
+-   None (only Node.js built-ins)
 
 ---
 
@@ -1199,5 +1256,7 @@ RISE framework specifications live in `rispecs/`:
 | `relational-query.spec.md` | Query, traversal, audit, Cypher |
 | `prompt-decomposition.spec.md` | Decomposer, enricher, storage |
 | `ui-components.spec.md` | React components |
+| `data-store.spec.md` | Redis data access, Node/Edge/Ceremony CRUD, session linking |
+| `session-reader.spec.md` | Session event parsing, summaries, analytics |
 
 Each spec is written in RISE format (Reverse-engineer → Intent-extract → Specify → Export) and is codebase-agnostic — another LLM can re-implement the full system from these specs alone.
