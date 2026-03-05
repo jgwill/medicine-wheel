@@ -1,0 +1,44 @@
+{
+  "name": "medicine-wheel-ui-components",
+  "version": "0.1.0",
+  "description": "React UI components for the Medicine Wheel Developer Suite — direction cards, beat timelines, node inspectors",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "react",
+    "ui",
+    "indigenous",
+    "four-directions",
+    "visualization"
+  ],
+  "author": "jgwill",
+  "license": "MIT",
+  "dependencies": {
+    "medicine-wheel-ontology-core": "^0.1.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "react": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}
