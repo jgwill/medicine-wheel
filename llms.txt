@@ -31,8 +31,8 @@
 
 - [llms-full.txt](llms-full.txt): Exhaustive reference with code samples and full API
 - [rispecs/CLAUDE.md](rispecs/CLAUDE.md): Specification index
-- [llms/llms-rise-framework.txt](llms/llms-rise-framework.txt): RISE methodology guide
-- [llms/llms-kinship-hub-system.md](llms/llms-kinship-hub-system.md): Kinship hub protocol
+- [llms/llms-rise-framework.txt](https://llms.jgwill.com/llms-rise-framework.txt): RISE methodology guide
+- [llms/llms-kinship-hub-system.md](https://llms.jgwill.com/llms-kinship-hub-system.md): Kinship hub protocol
 
 ## Key Concepts
 
