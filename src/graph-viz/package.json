@@ -1,0 +1,50 @@
+{
+  "name": "medicine-wheel-graph-viz",
+  "version": "0.1.1",
+  "description": "Medicine Wheel graph visualization — circular layout with four-direction node positioning, ceremony-aware edges, and OCAP® indicators",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "graph-visualization",
+    "d3",
+    "react",
+    "four-directions",
+    "indigenous-research",
+    "circular-layout"
+  ],
+  "author": "IAIP Collaborative - Shawinigan, QC",
+  "license": "MIT",
+  "dependencies": {
+    "medicine-wheel-ontology-core": "^0.1.1"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.3.0"
+  }
+}
