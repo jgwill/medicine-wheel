@@ -1,0 +1,39 @@
+{
+  "name": "medicine-wheel-relational-query",
+  "version": "0.1.1",
+  "description": "Query builder for relational webs with Indigenous protocol awareness — traversal, accountability, OCAP® compliance",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "relational",
+    "query",
+    "indigenous",
+    "ocap",
+    "graph-traversal"
+  ],
+  "author": "jgwill",
+  "license": "MIT",
+  "dependencies": {
+    "medicine-wheel-ontology-core": "^0.1.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
