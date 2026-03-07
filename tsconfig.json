@@ -14,19 +14,8 @@
     "jsx": "preserve",
     "incremental": true,
     "plugins": [{ "name": "next" }],
-    "paths": {
-      "@/*": ["./*"],
-      "medicine-wheel-ontology-core": ["./src/ontology-core/src/index.ts"],
-      "medicine-wheel-ceremony-protocol": ["./src/ceremony-protocol/src/index.ts"],
-      "medicine-wheel-narrative-engine": ["./src/narrative-engine/src/index.ts"],
-      "medicine-wheel-graph-viz": ["./src/graph-viz/src/index.ts"],
-      "medicine-wheel-relational-query": ["./src/relational-query/src/index.ts"],
-      "medicine-wheel-prompt-decomposition": ["./src/prompt-decomposition/src/index.ts"],
-      "medicine-wheel-ui-components": ["./src/ui-components/src/index.ts"],
-      "medicine-wheel-data-store": ["./src/data-store/src/index.ts"],
-      "medicine-wheel-session-reader": ["./src/session-reader/src/index.ts"]
-    }
+    "paths": { "@/*": ["./*"] }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "mcp"]
+  "exclude": ["node_modules", "src", "mcp"]
 }
