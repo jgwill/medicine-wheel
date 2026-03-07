@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { type MedicineWheelCycle, DIRECTION_COLORS, type DirectionName } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -13,7 +14,7 @@ export default function CyclesPage() {
     fetch("/api/narrative/cycles").then((r) => r.json()).then((d) => setCycles(Array.isArray(d) ? d : [])).catch(() => setCycles([]));
   }, []);
 
-  async function createCycle(e: React.FormEvent<HTMLFormElement>) {
+  async function createCycle(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const body = { research_question: form.get("question") as string };

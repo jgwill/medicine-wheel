@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense, useMemo } from "react";
+import type { FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { type CeremonyLog, DIRECTION_COLORS, CEREMONY_ICONS, type DirectionName, type CeremonyType } from "@/lib/types";
 import { toast } from "sonner";
@@ -23,7 +24,7 @@ function CeremoniesContent() {
       .catch(() => setCeremonies([]));
   }, [filterDir, filterType]);
 
-  async function logCeremony(e: React.FormEvent<HTMLFormElement>) {
+  async function logCeremony(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const body = {

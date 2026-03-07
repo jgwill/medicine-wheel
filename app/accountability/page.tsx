@@ -57,8 +57,8 @@ export default function AccountabilityPage() {
         </div>
         <div className="p-4 rounded-lg border bg-card text-center">
           <p className="text-3xl font-bold text-green-500">{ceremoniedCount > 0 ? "✓" : "○"}</p>
-          <p className="text-sm text-muted-foreground">OCAP Compliance</p>
-          <p className="text-xs text-muted-foreground">{ceremoniedCount}/{edges.length} ceremonied</p>
+          <p className="text-sm text-muted-foreground">Relations Ceremonied</p>
+          <p className="text-xs text-muted-foreground">{ceremoniedCount}/{edges.length} edges ceremonied</p>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import type { FormEvent } from "react";
 import {
   type RelationalNode,
   type RelationalEdge,
@@ -56,10 +57,16 @@ export default function NodesPage() {
     return node.name.toLowerCase().includes(q) || node.type.toLowerCase().includes(q) || (node.direction && node.direction.toLowerCase().includes(q));
   });
 
-  async function addNode(e: React.FormEvent<HTMLFormElement>) {
+  async function addNode(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
-    const body = { name: form.get("name") as string, type: form.get("type") as string, direction: (form.get("direction") as string) || undefined };
+    const description = form.get("description") as string;
+    const body = {
+      name: form.get("name") as string,
+      type: form.get("type") as string,
+      direction: (form.get("direction") as string) || undefined,
+      metadata: description ? { description } : {},
+    };
     try {
       const res = await fetch("/api/nodes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       if (!res.ok) throw new Error("Failed");

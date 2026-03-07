@@ -38,7 +38,7 @@ export function getNode(id: string): RelationalNode | null {
   return nodes.get(id) ?? null;
 }
 
-export function createNode(data: Omit<RelationalNode, 'id' | 'created_at' | 'updated_at'> & { id?: string }): RelationalNode {
+export function createNode(data: Omit<RelationalNode, 'id' | 'created_at' | 'updated_at' | 'metadata'> & { id?: string; metadata?: Record<string, unknown> }): RelationalNode {
   const id = data.id || crypto.randomUUID();
   const now = new Date().toISOString();
   const node: RelationalNode = {
@@ -46,7 +46,7 @@ export function createNode(data: Omit<RelationalNode, 'id' | 'created_at' | 'upd
     name: data.name,
     type: data.type,
     direction: data.direction,
-    metadata: data.metadata,
+    metadata: data.metadata ?? {},
     created_at: now,
     updated_at: now,
   };
