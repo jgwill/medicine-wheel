@@ -18,16 +18,7 @@
     "lucide-react": "^0.475.0",
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.0.2",
-    "recharts": "^2.15.4",
-    "medicine-wheel-ontology-core": "file:./src/ontology-core",
-    "medicine-wheel-ceremony-protocol": "file:./src/ceremony-protocol",
-    "medicine-wheel-narrative-engine": "file:./src/narrative-engine",
-    "medicine-wheel-graph-viz": "file:./src/graph-viz",
-    "medicine-wheel-relational-query": "file:./src/relational-query",
-    "medicine-wheel-prompt-decomposition": "file:./src/prompt-decomposition",
-    "medicine-wheel-ui-components": "file:./src/ui-components",
-    "medicine-wheel-data-store": "file:./src/data-store",
-    "medicine-wheel-session-reader": "file:./src/session-reader"
+    "recharts": "^2.15.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.0",
