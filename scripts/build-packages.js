@@ -1,34 +1,28 @@
 import { execSync } from 'child_process';
-import { existsSync } from 'fs';
-import { resolve } from 'path';
+import { existsSync, readdirSync } from 'fs';
+import { resolve, join } from 'path';
 
-const root = '/vercel/share/v0-project';
+// Scripts execute from /home/user; resolve relative to the script's own location
+const root = resolve(import.meta.dirname, '..');
+const srcDir = join(root, 'src');
 
-const packages = [
-  'src/ontology-core',
-  'src/ceremony-protocol',
-  'src/narrative-engine',
-  'src/graph-viz',
-  'src/relational-query',
-  'src/prompt-decomposition',
-  'src/ui-components',
-  'src/data-store',
-  'src/session-reader',
-];
+// Discover all sub-packages dynamically
+const packages = readdirSync(srcDir).filter(name => {
+  const pkgJson = join(srcDir, name, 'package.json');
+  const tsconfig = join(srcDir, name, 'tsconfig.json');
+  return existsSync(pkgJson) && existsSync(tsconfig);
+});
+
+console.log(`[v0] Found ${packages.length} packages to build: ${packages.join(', ')}`);
 
 for (const pkg of packages) {
-  const dir = resolve(root, pkg);
-  const tsconfig = resolve(dir, 'tsconfig.json');
-  if (!existsSync(tsconfig)) {
-    console.log(`[v0] Skipping ${pkg} — no tsconfig.json`);
-    continue;
-  }
-  console.log(`[v0] Building ${pkg}...`);
+  const dir = join(srcDir, pkg);
+  console.log(`[v0] Building src/${pkg}...`);
   try {
-    execSync(`npx tsc --skipLibCheck`, { cwd: dir, stdio: 'inherit' });
-    console.log(`[v0] Built ${pkg} successfully`);
+    execSync(`npm run build`, { cwd: dir, stdio: 'pipe' });
+    console.log(`[v0] Built src/${pkg} successfully`);
   } catch (e) {
-    console.log(`[v0] Warning: ${pkg} had TypeScript errors but continuing...`);
+    console.log(`[v0] Warning: src/${pkg} had errors: ${e.stderr?.toString().slice(0, 300)}`);
   }
 }
 
