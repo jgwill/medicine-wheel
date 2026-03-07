@@ -1,36 +1,48 @@
 {
   "name": "medicine-wheel-ontology-core",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "Foundational ontology layer for the Medicine Wheel Developer Suite — unified types, RDF vocabulary, Zod schemas, and semantic query helpers grounded in Indigenous relational ontology",
-  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./types": {
       "import": "./dist/types.js",
-      "types": "./dist/types.d.ts"
+      "types": "./dist/types.d.ts",
+      "require": "./dist/types.js",
+      "default": "./dist/types.js"
     },
     "./schemas": {
       "import": "./dist/schemas.js",
-      "types": "./dist/schemas.d.ts"
+      "types": "./dist/schemas.d.ts",
+      "require": "./dist/schemas.js",
+      "default": "./dist/schemas.js"
     },
     "./vocabulary": {
       "import": "./dist/vocabulary.js",
-      "types": "./dist/vocabulary.d.ts"
+      "types": "./dist/vocabulary.d.ts",
+      "require": "./dist/vocabulary.js",
+      "default": "./dist/vocabulary.js"
     },
     "./constants": {
       "import": "./dist/constants.js",
-      "types": "./dist/constants.d.ts"
+      "types": "./dist/constants.d.ts",
+      "require": "./dist/constants.js",
+      "default": "./dist/constants.js"
     },
     "./queries": {
       "import": "./dist/queries.js",
-      "types": "./dist/queries.d.ts"
+      "types": "./dist/queries.d.ts",
+      "require": "./dist/queries.js",
+      "default": "./dist/queries.js"
     }
   },
+  "sideEffects": false,
   "files": [
     "dist",
     "README.md"
@@ -39,7 +51,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
     "medicine-wheel",

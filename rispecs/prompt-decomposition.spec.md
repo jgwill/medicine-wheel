@@ -2,10 +2,10 @@
 
 > Ontology-enriched prompt decomposition engine — intent extraction, Four Directions classification, relational dependency mapping, ceremony-aware action stacking, and narrative beat generation.
 
-**Version:** 0.1.0  
+**Version:** 0.1.1  
 **Package:** `medicine-wheel-prompt-decomposition`  
 **Document ID:** rispec-prompt-decomposition-v1  
-**Last Updated:** 2026-02-23  
+**Last Updated:** 2026-03-06  
 
 ---
 
@@ -149,6 +149,43 @@ const result = enricher.enrich(decomposition, {
 
 ---
 
+## Exports
+
+The package provides two entry points to support both Node.js and browser environments:
+
+### Default Entry (`medicine-wheel-prompt-decomposition`)
+
+Full-featured entry including storage (requires Node.js `fs` and `path`):
+
+```typescript
+// Decomposition engine
+export { MedicineWheelDecomposer } from './decomposer';
+export { RelationalEnricher } from './enricher';
+
+// Storage (Node.js only — uses node:fs)
+export { saveDecomposition, loadDecomposition, listDecompositions, decompositionToMarkdown } from './storage';
+
+// Types
+export type { OntologicalDecomposition, RelationalIntent, OntologicalDirection, ... } from './types';
+```
+
+### Browser Entry (`medicine-wheel-prompt-decomposition/browser`)
+
+Storage-free entry for browser bundles — excludes all `node:fs` / `node:path` usage:
+
+```typescript
+// Decomposition engine (same as default)
+export { MedicineWheelDecomposer } from './decomposer';
+export { RelationalEnricher } from './enricher';
+
+// Types (same as default)
+export type { OntologicalDecomposition, RelationalIntent, OntologicalDirection, ... } from './types';
+```
+
+Use the `./browser` export when bundling for environments without Node.js built-ins (e.g., Vite, webpack, Next.js client).
+
+---
+
 ## Storage
 
 ```typescript
@@ -166,7 +203,7 @@ decompositionToMarkdown(result): string
 ## Dependencies
 
 - **Runtime:** `medicine-wheel-ontology-core` ^0.1.0
-- **Node.js:** `fs`, `path` (for storage)
+- **Node.js:** `node:fs`, `node:path` (for storage — excluded from `./browser` entry)
 - **Types consumed:** `DirectionName`, `RelationalObligation`, `CeremonyGuidance`, `NarrativeBeat`, `AccountabilityTracking`
 - **Constants consumed:** `DIRECTIONS`, `DIRECTION_ACTS`, `OJIBWE_NAMES`, `DIRECTION_SEASONS`
 - **Functions consumed:** `computeWilsonAlignment`, `findAccountabilityGaps`

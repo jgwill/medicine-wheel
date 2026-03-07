@@ -1,10 +1,10 @@
 # Medicine Wheel — System RISE Specification
 
-> A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development. Seven packages that together enable developers to create relationally accountable systems grounded in the Four Directions, Wilson's three R's, and OCAP® principles.
+> A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development. Nine packages that together enable developers to create relationally accountable systems grounded in the Four Directions, Wilson's three R's, and OCAP® principles.
 
-**Version:** 0.1.1  
+**Version:** 0.1.2  
 **Document ID:** rispec-medicine-wheel-system-v1  
-**Last Updated:** 2026-02-23  
+**Last Updated:** 2026-03-06  
 
 ---
 
@@ -23,10 +23,13 @@ medicine-wheel-ontology-core          ← Foundation (types, schemas, vocabulary
     ├── medicine-wheel-graph-viz            ← Circular layout & visualization
     ├── medicine-wheel-relational-query     ← Query, traversal & audit
     ├── medicine-wheel-prompt-decomposition ← Intent extraction & PDE
-    └── medicine-wheel-ui-components        ← React components
+    ├── medicine-wheel-ui-components        ← React components
+    └── medicine-wheel-data-store           ← Redis persistence (+ redis ^4.6.0)
+
+medicine-wheel-session-reader             ← JSONL session parsing (standalone)
 ```
 
-All packages depend on `ontology-core` for shared types. No circular dependencies.
+All packages depend on `ontology-core` for shared types except `session-reader` which is standalone. No circular dependencies.
 
 ---
 
@@ -49,6 +52,8 @@ Each rispec describes one package. To implement the full system:
 | [`relational-query.spec.md`](./relational-query.spec.md) | Query | Filtering, traversal, accountability audit, Cypher generation |
 | [`prompt-decomposition.spec.md`](./prompt-decomposition.spec.md) | PDE | Intent extraction, Four Directions classification, narrative beats |
 | [`ui-components.spec.md`](./ui-components.spec.md) | UI | DirectionCard, BeatTimeline, NodeInspector, OcapBadge, WilsonMeter |
+| [`data-store.spec.md`](./data-store.spec.md) | Persistence | Redis CRUD for nodes, edges, ceremonies; session linking |
+| [`session-reader.spec.md`](./session-reader.spec.md) | Sessions | JSONL session parsing, listing, analytics, search |
 
 ---
 
@@ -134,6 +139,18 @@ Three phases of creative advancement:
 - **UI Framework:** React ^18.0.0 || ^19.0.0
 - **Graph DB (optional):** KuzuDB (via Cypher query builders)
 - **Build:** tsc with source maps and declaration files
+
+---
+
+## Build & Publish
+
+All packages share a consistent build and publish configuration:
+
+- **Compiler:** `tsc` (TypeScript compiler) with declaration files and source maps
+- **Scripts:** `prepublishOnly: "tsc"` ensures builds run before every `npm publish`
+- **Module format:** `"type": "module"` — pure ESM across the monorepo
+- **Side effects:** `"sideEffects": false` — enables tree-shaking in bundlers
+- **Published files:** `"files": ["dist", "README.md"]` — only compiled output and docs ship to npm
 
 ---
 

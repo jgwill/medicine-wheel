@@ -1,32 +1,42 @@
 {
   "name": "medicine-wheel-data-store",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Shared Redis data-access layer for the Medicine Wheel Developer Suite — connection management, Node/Edge/Ceremony CRUD, session-ceremony linking, and discovery helpers",
-  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./connection": {
       "import": "./dist/connection.js",
-      "types": "./dist/connection.d.ts"
+      "types": "./dist/connection.d.ts",
+      "require": "./dist/connection.js",
+      "default": "./dist/connection.js"
     },
     "./store": {
       "import": "./dist/store.js",
-      "types": "./dist/store.d.ts"
+      "types": "./dist/store.d.ts",
+      "require": "./dist/store.js",
+      "default": "./dist/store.js"
     },
     "./session-link": {
       "import": "./dist/session-link.js",
-      "types": "./dist/session-link.d.ts"
+      "types": "./dist/session-link.d.ts",
+      "require": "./dist/session-link.js",
+      "default": "./dist/session-link.js"
     },
     "./helpers": {
       "import": "./dist/helpers.js",
-      "types": "./dist/helpers.d.ts"
+      "types": "./dist/helpers.d.ts",
+      "require": "./dist/helpers.js",
+      "default": "./dist/helpers.js"
     }
   },
+  "sideEffects": false,
   "files": [
     "dist",
     "README.md"
@@ -35,7 +45,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
     "medicine-wheel",
@@ -48,7 +59,7 @@
   "author": "IAIP Collaborative - Shawinigan, QC",
   "license": "MIT",
   "dependencies": {
-    "medicine-wheel-ontology-core": "^0.1.0",
+    "medicine-wheel-ontology-core": "^0.1.3",
     "redis": "^4.6.0"
   },
   "devDependencies": {

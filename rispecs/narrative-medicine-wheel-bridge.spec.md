@@ -130,6 +130,32 @@ When integration patterns mature, extract reusable modules as `medicine-wheel-mi
 
 ---
 
+## 🔮 Future: Narrative Context Protocol (NCP) Integration
+
+The Narrative Context Protocol (NCP) at `/a/src/STPB/lib/ncp/` implements Dramatica-based narrative structure tracking that aligns naturally with Medicine Wheel's Four Directions. NCP provides three core capabilities that represent future integration opportunities:
+
+### Throughline Analysis (`throughline-analyzer.ts`)
+
+NCP tracks four Dramatica throughlines (Objective Story, Main Character, Influence Character, Relationship Story) — each mapping to a perspective ("we" collective, "I" personal, "you" alternative, "we" relational). These parallel the Four Directions' cognitive lenses and could enrich Medicine Wheel's directional classification with narrative perspective awareness.
+
+### Coherence Validation (`coherence-validator.ts`)
+
+Validates internal narrative consistency — throughline consistency, domain alignment, and structural completeness. This could complement Medicine Wheel's `validateArc` and `validateCadence` by adding Dramatica-informed coherence checks to ceremony-structured narratives.
+
+### Arc Completeness & Dynamics (`dynamics.ts`)
+
+Tracks opposing narrative forces (Knowledge vs Ignorance, Trust vs Test, Change vs Inertia) and assesses act-level analysis, climax convergence, and arc completeness gaps. These dynamics could map to Wilson's three R's tensions and enrich structural tension charts with narrative force analysis.
+
+### Integration Pattern
+
+A future `medicine-wheel-ncp-bridge` or extension to this bridge spec could:
+- Map NCP throughlines to Four Directions perspectives
+- Use NCP coherence validation alongside ceremony arc validation
+- Surface Dramatica dynamics as structural tensions in Medicine Wheel charts
+- Enable Two-Eyed Seeing: Western narrative precision (Dramatica) alongside Indigenous relational ontology (Medicine Wheel)
+
+---
+
 ## Related Specifications
 
 - `article-publishing-pipeline.spec.md` — Detailed article system spec
@@ -137,3 +163,4 @@ When integration patterns mature, extract reusable modules as `medicine-wheel-mi
 - `narrative-engine.spec.md` — Beat sequencing and arc validation
 - `ui-components.spec.md` — Visual component library
 - `/a/src/Miadi/rispecs/miadi-code/SPEC.md` — miadi-code agent specification
+- `/a/src/STPB/lib/ncp/README.md` — Narrative Context Protocol (Phase 2)

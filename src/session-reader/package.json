@@ -1,24 +1,30 @@
 {
   "name": "medicine-wheel-session-reader",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, session summaries, analytics extraction, and search across agent session data",
-  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./types": {
       "import": "./dist/types.js",
-      "types": "./dist/types.d.ts"
+      "types": "./dist/types.d.ts",
+      "require": "./dist/types.js",
+      "default": "./dist/types.js"
     },
     "./sessions": {
       "import": "./dist/sessions.js",
-      "types": "./dist/sessions.d.ts"
+      "types": "./dist/sessions.d.ts",
+      "require": "./dist/sessions.js",
+      "default": "./dist/sessions.js"
     }
   },
+  "sideEffects": false,
   "files": [
     "dist",
     "README.md"
@@ -27,7 +33,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
     "medicine-wheel",
