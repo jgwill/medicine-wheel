@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { type RelationalNode, type RelationalEdge, NODE_TYPE_COLORS, DIRECTION_COLORS, type NodeType } from "@/lib/types";
+import type { MouseEvent, FormEvent } from "react";
+import { type RelationalNode, type RelationalEdge, NODE_TYPE_COLORS, type NodeType } from "@/lib/types";
 import { toast } from "sonner";
 
 interface GraphNode extends RelationalNode {
@@ -38,7 +39,7 @@ export default function RelationsPage() {
 
   const handleMouseDown = (id: string) => setDragging(id);
   const handleMouseUp = () => setDragging(null);
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+  const handleMouseMove = (e: MouseEvent<SVGSVGElement>) => {
     if (!dragging || !svgRef.current) return;
     const rect = svgRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 800;
@@ -60,7 +61,7 @@ export default function RelationsPage() {
   const unceremonied = totalEdges - ceremonied;
   const avgStrength = totalEdges > 0 ? edges.reduce((s, e) => s + e.strength, 0) / totalEdges : 0;
 
-  async function addNode(e: React.FormEvent<HTMLFormElement>) {
+  async function addNode(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const body = { name: form.get("name") as string, type: form.get("type") as string, direction: (form.get("direction") as string) || undefined };
@@ -176,11 +177,11 @@ export default function RelationsPage() {
                   strokeDasharray={`${avgStrength * 125.6} 125.6`} strokeLinecap="round" transform="rotate(-90 24 24)" />
                 <text x="24" y="28" textAnchor="middle" className="text-[10px] fill-foreground font-bold">{Math.round(avgStrength * 100)}%</text>
               </svg>
-              <p className="text-xs text-muted-foreground mt-1">Wilson</p>
+              <p className="text-xs text-muted-foreground mt-1">Average strength</p>
             </div>
             <div><p className="text-2xl font-bold">{ceremonied}</p><p className="text-xs text-muted-foreground">Ceremonied</p></div>
             <div><p className="text-2xl font-bold">{unceremonied}</p><p className="text-xs text-muted-foreground">Unceremonied</p></div>
-            <div><p className="text-2xl font-bold text-green-500">{ceremonied}</p><p className="text-xs text-muted-foreground">OCAP ✓</p></div>
+            <div><p className="text-2xl font-bold text-green-500">{ceremonied}</p><p className="text-xs text-muted-foreground">Ceremonies honored</p></div>
             <div><p className="text-2xl font-bold">{unceremonied}</p><p className="text-xs text-muted-foreground">Obligations</p></div>
           </div>
         </div>

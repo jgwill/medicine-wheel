@@ -1,2 +1,6 @@
-for d in *;do cat $d/package.json|grep name|awk '{print $2}'|tr ',' ' '| tr '"' ' '; done
+for d in *; do
+  if [ -f "$d/package.json" ]; then
+    jq -r '.name' "$d/package.json"
+  fi
+done
 

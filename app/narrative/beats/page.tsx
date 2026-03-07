@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { type NarrativeBeat, DIRECTION_COLORS, type DirectionName } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -18,7 +19,7 @@ export default function BeatsPage() {
   const directions: DirectionName[] = ["east", "south", "west", "north"];
   const filteredBeats = filterDir === "all" ? beats : beats.filter((b) => b.direction === filterDir);
 
-  async function addBeat(e: React.FormEvent<HTMLFormElement>) {
+  async function addBeat(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const body = {
