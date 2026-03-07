@@ -80,7 +80,35 @@ export function decompositionToMarkdown(result: OntologicalDecomposition): strin
   lines.push(`\`\`\`\n${result.prompt.substring(0, 500)}\n\`\`\``);
   lines.push('');
 
-  // Primary intent
+  // ── Canonical sections (Four Directions first) ───────────────────────────
+
+  const dirMeta: Record<DirectionName, { emoji: string; label: string }> = {
+    east:  { emoji: '🌅', label: 'Vision' },
+    south: { emoji: '🔥', label: 'Analysis' },
+    west:  { emoji: '🌊', label: 'Validation' },
+    north: { emoji: '❄️', label: 'Action' },
+  };
+
+  lines.push(`## Four Directions`);
+  lines.push('');
+  const allDirs: DirectionName[] = ['east', 'south', 'west', 'north'];
+  for (const dir of allDirs) {
+    const d = directions[dir];
+    const m = dirMeta[dir];
+    lines.push(`### ${m.emoji} ${dir.toUpperCase()} — ${m.label}`);
+    lines.push(`> Ojibwe: ${d.ojibwe} | Season: ${d.season} | Act: ${d.act}${d.ceremonyRecommended ? ' | 🔥 Ceremony recommended' : ''}`);
+    if (d.insights.length > 0) {
+      for (const insight of d.insights) {
+        const tag = insight.implicit ? ' _(implicit)_' : '';
+        lines.push(`- ${insight.text} [${Math.round(insight.confidence * 100)}%]${tag}`);
+      }
+    } else {
+      lines.push('- _(no insights)_');
+    }
+    lines.push('');
+  }
+
+  // Primary Intent
   lines.push(`## Primary Intent`);
   lines.push(`- **Action:** ${primary.action}`);
   lines.push(`- **Target:** ${primary.target}`);
@@ -88,34 +116,33 @@ export function decompositionToMarkdown(result: OntologicalDecomposition): strin
   lines.push(`- **Confidence:** ${Math.round(primary.confidence * 100)}%`);
   lines.push('');
 
-  // Four Directions
-  lines.push(`## Four Directions Analysis`);
-  lines.push(`| Direction | Ojibwe | Season | Act | Insights | Ceremony? |`);
-  lines.push(`|-----------|--------|--------|-----|----------|-----------|`);
-  const allDirs: DirectionName[] = ['east', 'south', 'west', 'north'];
-  for (const dir of allDirs) {
-    const d = directions[dir];
-    lines.push(`| ${dir} | ${d.ojibwe} | ${d.season} | ${d.act} | ${d.insights.length} | ${d.ceremonyRecommended ? '✓' : '—'} |`);
+  // Secondary Intents
+  if (secondary.length > 0) {
+    lines.push(`## Secondary Intents`);
+    for (const s of secondary) {
+      const tag = s.implicit ? ' _(implicit)_' : '';
+      const dep = s.dependency ? ` (after: ${s.dependency})` : '';
+      lines.push(`- ${s.action} → ${s.target} [${Math.round(s.confidence * 100)}%]${tag}${dep}`);
+    }
+    lines.push('');
   }
-  lines.push('');
 
-  // Balance
-  lines.push(`## Balance`);
-  lines.push(`- **Score:** ${Math.round(result.balance * 100)}%`);
-  lines.push(`- **Lead Direction:** ${result.leadDirection}`);
-  if (result.neglectedDirections.length > 0) {
-    lines.push(`- **Neglected:** ${result.neglectedDirections.join(', ')}`);
+  // Context Requirements
+  const { context } = result;
+  if (context.filesNeeded.length > 0 || context.toolsRequired.length > 0 || context.assumptions.length > 0) {
+    lines.push(`## Context Requirements`);
+    if (context.filesNeeded.length > 0) lines.push(`- **Files needed:** ${context.filesNeeded.join(', ')}`);
+    if (context.toolsRequired.length > 0) lines.push(`- **Tools required:** ${context.toolsRequired.join(', ')}`);
+    if (context.assumptions.length > 0) lines.push(`- **Assumptions:** ${context.assumptions.join('; ')}`);
+    lines.push('');
   }
-  lines.push(`- **Wilson Alignment:** ${Math.round(result.wilsonAlignment * 100)}%`);
-  lines.push(`- **Ceremony Required:** ${result.ceremonyRequired ? 'Yes' : 'No'}`);
-  lines.push('');
 
-  // Ceremony guidance
-  if (result.ceremonyGuidance) {
-    lines.push(`## Ceremony Guidance`);
-    lines.push(`- **Opening:** ${result.ceremonyGuidance.opening_practice}`);
-    lines.push(`- **Intention:** ${result.ceremonyGuidance.intention}`);
-    lines.push(`- **Protocol:** ${result.ceremonyGuidance.protocol}`);
+  // Expected Outputs
+  if (outputs.artifacts.length > 0 || outputs.updates.length > 0 || outputs.communications.length > 0) {
+    lines.push(`## Expected Outputs`);
+    if (outputs.artifacts.length > 0) lines.push(`- **Artifacts:** ${outputs.artifacts.join(', ')}`);
+    if (outputs.updates.length > 0) lines.push(`- **Updates:** ${outputs.updates.join(', ')}`);
+    if (outputs.communications.length > 0) lines.push(`- **Communications:** ${outputs.communications.join(', ')}`);
     lines.push('');
   }
 
@@ -130,9 +157,9 @@ export function decompositionToMarkdown(result: OntologicalDecomposition): strin
     lines.push('');
   }
 
-  // Ambiguities
+  // Ambiguity Flags
   if (ambiguities.length > 0) {
-    lines.push(`## Ambiguities`);
+    lines.push(`## Ambiguity Flags`);
     for (const amb of ambiguities) {
       lines.push(`- ⚠ ${amb.text}`);
       lines.push(`  → ${amb.suggestion}`);
@@ -140,12 +167,25 @@ export function decompositionToMarkdown(result: OntologicalDecomposition): strin
     lines.push('');
   }
 
-  // Expected Outputs
-  if (outputs.artifacts.length > 0 || outputs.updates.length > 0 || outputs.communications.length > 0) {
-    lines.push(`## Expected Outputs`);
-    if (outputs.artifacts.length > 0) lines.push(`- **Artifacts:** ${outputs.artifacts.join(', ')}`);
-    if (outputs.updates.length > 0) lines.push(`- **Updates:** ${outputs.updates.join(', ')}`);
-    if (outputs.communications.length > 0) lines.push(`- **Communications:** ${outputs.communications.join(', ')}`);
+  // ── Medicine-Wheel–specific sections ────────────────────────────────────
+
+  // Balance
+  lines.push(`## Balance`);
+  lines.push(`- **Score:** ${Math.round(result.balance * 100)}%`);
+  lines.push(`- **Lead Direction:** ${result.leadDirection}`);
+  if (result.neglectedDirections.length > 0) {
+    lines.push(`- **Neglected:** ${result.neglectedDirections.join(', ')}`);
+  }
+  lines.push(`- **Wilson Alignment:** ${Math.round(result.wilsonAlignment * 100)}%`);
+  lines.push(`- **Ceremony Required:** ${result.ceremonyRequired ? 'Yes' : 'No'}`);
+  lines.push('');
+
+  // Ceremony Guidance
+  if (result.ceremonyGuidance) {
+    lines.push(`## Ceremony Guidance`);
+    lines.push(`- **Opening:** ${result.ceremonyGuidance.opening_practice}`);
+    lines.push(`- **Intention:** ${result.ceremonyGuidance.intention}`);
+    lines.push(`- **Protocol:** ${result.ceremonyGuidance.protocol}`);
     lines.push('');
   }
 
