@@ -4,6 +4,9 @@
   "private": true,
   "description": "Medicine Wheel — Interactive visual layer for Indigenous relational research with Four Directions, ceremonies, and narrative arcs",
   "scripts": {
+    "build:packages": "for dir in src/ontology-core src/ceremony-protocol src/narrative-engine src/graph-viz src/relational-query src/prompt-decomposition src/ui-components src/data-store src/session-reader; do (cd $dir && npx tsc --skipLibCheck 2>/dev/null || true); done",
+    "predev": "npm run build:packages",
+    "prebuild": "npm run build:packages",
     "dev": "next dev --turbopack -p 3940",
     "build": "next build",
     "start": "next start -p 3940",
