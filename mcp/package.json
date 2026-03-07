@@ -1,0 +1,23 @@
+{
+  "name": "mcp-medicine-wheel",
+  "version": "3.0.0",
+  "description": "Medicine Wheel MCP Server — Indigenous Paradigm Research Framework",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": { "medicine-wheel-mcp": "dist/index.js" },
+  "scripts": {
+    "build": "tsc && chmod +x dist/index.js",
+    "start": "node dist/index.js",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["mcp", "medicine-wheel", "indigenous-research", "four-directions", "ocap", "data-sovereignty", "shawn-wilson", "two-eyed-seeing", "ceremony"],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "medicine-wheel-ontology-core": "file:../src/ontology-core"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}
