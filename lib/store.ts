@@ -1,0 +1,221 @@
+/**
+ * In-memory data store for Medicine Wheel.
+ * Works without Redis — all data stored in server-side maps.
+ * Data persists across requests within the same server process.
+ */
+
+import type {
+  RelationalNode,
+  RelationalEdge,
+  CeremonyLog,
+  NarrativeBeat,
+  MedicineWheelCycle,
+} from '@/lib/types';
+
+// ── Storage Maps ──
+
+const nodes = new Map<string, RelationalNode>();
+const edges = new Map<string, RelationalEdge>();
+const ceremonies = new Map<string, CeremonyLog>();
+const beats = new Map<string, NarrativeBeat>();
+const cycles = new Map<string, MedicineWheelCycle>();
+
+// ── Nodes ──
+
+export function getAllNodes(): RelationalNode[] {
+  return Array.from(nodes.values());
+}
+
+export function getNodesByType(type: string): RelationalNode[] {
+  return getAllNodes().filter(n => n.type === type);
+}
+
+export function getNodesByDirection(direction: string): RelationalNode[] {
+  return getAllNodes().filter(n => n.direction === direction);
+}
+
+export function getNode(id: string): RelationalNode | null {
+  return nodes.get(id) ?? null;
+}
+
+export function createNode(data: Omit<RelationalNode, 'id' | 'created_at' | 'updated_at'> & { id?: string }): RelationalNode {
+  const id = data.id || crypto.randomUUID();
+  const now = new Date().toISOString();
+  const node: RelationalNode = {
+    id,
+    name: data.name,
+    type: data.type,
+    direction: data.direction,
+    metadata: data.metadata,
+    created_at: now,
+    updated_at: now,
+  };
+  nodes.set(id, node);
+  return node;
+}
+
+// ── Edges ──
+
+export function getAllEdges(): RelationalEdge[] {
+  return Array.from(edges.values());
+}
+
+export function getEdgesByNode(nodeId: string): RelationalEdge[] {
+  return getAllEdges().filter(e => e.from_id === nodeId || e.to_id === nodeId);
+}
+
+export function createEdge(data: Omit<RelationalEdge, 'id' | 'created_at'> & { id?: string }): RelationalEdge {
+  const id = data.id || `${data.from_id}:${data.to_id}`;
+  const now = new Date().toISOString();
+  const edge: RelationalEdge = {
+    id,
+    from_id: data.from_id,
+    to_id: data.to_id,
+    relationship_type: data.relationship_type,
+    strength: data.strength ?? 0.5,
+    ceremony_honored: data.ceremony_honored ?? false,
+    obligations: data.obligations ?? [],
+    created_at: now,
+  };
+  edges.set(id, edge);
+  return edge;
+}
+
+// ── Ceremonies ──
+
+export function getAllCeremonies(): CeremonyLog[] {
+  return Array.from(ceremonies.values()).sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+}
+
+export function getCeremoniesByDirection(direction: string): CeremonyLog[] {
+  return getAllCeremonies().filter(c => c.direction === direction);
+}
+
+export function getCeremoniesByType(type: string): CeremonyLog[] {
+  return getAllCeremonies().filter(c => c.type === type);
+}
+
+export function createCeremony(data: Omit<CeremonyLog, 'id' | 'timestamp'> & { id?: string; timestamp?: string }): CeremonyLog {
+  const id = data.id || crypto.randomUUID();
+  const ceremony: CeremonyLog = {
+    id,
+    type: data.type,
+    direction: data.direction,
+    participants: data.participants ?? [],
+    medicines_used: data.medicines_used ?? [],
+    intentions: data.intentions ?? [],
+    timestamp: data.timestamp || new Date().toISOString(),
+    research_context: data.research_context,
+  };
+  ceremonies.set(id, ceremony);
+  return ceremony;
+}
+
+// ── Narrative Beats ──
+
+export function getAllBeats(): NarrativeBeat[] {
+  return Array.from(beats.values()).sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+}
+
+export function getBeatsByDirection(direction: string): NarrativeBeat[] {
+  return getAllBeats().filter(b => b.direction === direction);
+}
+
+export function createBeat(data: Omit<NarrativeBeat, 'id' | 'timestamp'> & { id?: string; timestamp?: string }): NarrativeBeat {
+  const id = data.id || crypto.randomUUID();
+  const beat: NarrativeBeat = {
+    id,
+    direction: data.direction,
+    title: data.title,
+    description: data.description,
+    prose: data.prose,
+    ceremonies: data.ceremonies ?? [],
+    learnings: data.learnings ?? [],
+    timestamp: data.timestamp || new Date().toISOString(),
+    act: data.act ?? 1,
+    relations_honored: data.relations_honored ?? [],
+  };
+  beats.set(id, beat);
+  return beat;
+}
+
+// ── Cycles ──
+
+export function getAllCycles(): MedicineWheelCycle[] {
+  return Array.from(cycles.values());
+}
+
+export function createCycle(data: { research_question: string; current_direction?: string }): MedicineWheelCycle {
+  const id = `cycle-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const cycle: MedicineWheelCycle = {
+    id,
+    research_question: data.research_question,
+    start_date: new Date().toISOString(),
+    current_direction: (data.current_direction as any) || 'east',
+    beats: [],
+    ceremonies_conducted: 0,
+    relations_mapped: 0,
+    wilson_alignment: 0,
+    ocap_compliant: false,
+  };
+  cycles.set(id, cycle);
+  return cycle;
+}
+
+// ── Seed Data ──
+
+export function seedDemoData() {
+  if (nodes.size > 0) return; // Already seeded
+
+  // Create some demo nodes
+  createNode({ name: 'Elder Sarah', type: 'human', direction: 'north' });
+  createNode({ name: 'Youth Circle', type: 'human', direction: 'south' });
+  createNode({ name: 'Turtle Island', type: 'land', direction: 'east' });
+  createNode({ name: 'Sacred River', type: 'land', direction: 'west' });
+  createNode({ name: 'Ancestor Teachings', type: 'ancestor', direction: 'north' });
+  createNode({ name: 'Dream Vision', type: 'spirit', direction: 'east' });
+  createNode({ name: 'Seven Generations', type: 'future', direction: 'south' });
+  createNode({ name: 'Oral Traditions', type: 'knowledge', direction: 'west' });
+
+  const allN = getAllNodes();
+  // Create edges between nodes
+  if (allN.length >= 4) {
+    createEdge({ from_id: allN[0].id, to_id: allN[1].id, relationship_type: 'mentorship', strength: 0.9, ceremony_honored: true, obligations: ['teaching', 'guidance'] });
+    createEdge({ from_id: allN[0].id, to_id: allN[4].id, relationship_type: 'carries_teachings', strength: 0.8, ceremony_honored: true, obligations: ['remembering'] });
+    createEdge({ from_id: allN[2].id, to_id: allN[3].id, relationship_type: 'stewardship', strength: 0.7, ceremony_honored: false, obligations: ['land care'] });
+    createEdge({ from_id: allN[1].id, to_id: allN[6].id, relationship_type: 'responsibility', strength: 0.6, ceremony_honored: false, obligations: ['future planning'] });
+    createEdge({ from_id: allN[5].id, to_id: allN[7].id, relationship_type: 'inspiration', strength: 0.8, ceremony_honored: true, obligations: ['listening'] });
+  }
+
+  // Create a demo ceremony
+  createCeremony({
+    type: 'smudging',
+    direction: 'east',
+    participants: ['Elder Sarah', 'Youth Circle'],
+    medicines_used: ['sage', 'tobacco'],
+    intentions: ['Opening the research journey with gratitude'],
+    research_context: 'Beginning relational inquiry',
+  });
+
+  // Create a demo beat
+  createBeat({
+    direction: 'east',
+    title: 'Vision Quest Beginning',
+    description: 'Initial visioning for the research journey',
+    prose: 'We begin in the East, where the sun rises...',
+    ceremonies: [],
+    learnings: ['Relational accountability starts with listening'],
+    act: 1,
+    relations_honored: [],
+  });
+
+  // Create a demo cycle
+  createCycle({ research_question: 'How do we honor relational accountability in software development?' });
+}
+
+// Auto-seed on import
+seedDemoData();
