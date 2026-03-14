@@ -32,6 +32,14 @@ export type {
   MWTool,
   MWResource,
   MWPrompt,
+  // Epistemic & axiological types
+  EpistemicSource,
+  AxiologicalPillar,
+  // Specialized relation subtypes
+  LandRelation,
+  AncestorRelation,
+  FutureRelation,
+  CosmicRelation,
   // RSIS types
   SunName,
   CeremonyPhase,
@@ -93,6 +101,9 @@ export {
   CeremonyTypeSchema,
   ObligationCategorySchema,
   TensionPhaseSchema,
+  EpistemicSourceSchema,
+  AxiologicalPillarSchema,
+  ConsentStateSchema,
   AccessLevelSchema,
   PossessionLocationSchema,
   DirectionSchema,

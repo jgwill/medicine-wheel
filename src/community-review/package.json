@@ -1,0 +1,44 @@
+{
+  "name": "medicine-wheel-community-review",
+  "version": "0.1.0",
+  "description": "Community-based ceremonial review protocol for Medicine Wheel — implements Wilson's validation through Elder review circles, consensus, and relational accountability",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "dependencies": {
+    "medicine-wheel-ontology-core": "^0.1.1",
+    "medicine-wheel-ceremony-protocol": "^0.1.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "community-review",
+    "elder-validation",
+    "consensus",
+    "wilson",
+    "indigenous",
+    "ocap",
+    "talking-circle"
+  ],
+  "license": "MIT"
+}

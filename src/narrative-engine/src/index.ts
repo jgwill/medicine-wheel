@@ -25,6 +25,8 @@ export type {
   TimelineOptions,
   CycleTransition,
   CycleProgress,
+  EpistemicDepth,
+  NarrativeTransformation,
 } from './types.js';
 
 // Sequencer
@@ -36,6 +38,8 @@ export {
   currentAct,
   suggestNextBeat,
   spiralOrder,
+  detectEpistemicDeepening,
+  findTransformationPoints,
 } from './sequencer.js';
 
 // Cadence

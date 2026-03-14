@@ -29,6 +29,18 @@ export const TensionPhaseSchema = z.enum([
   'germination', 'assimilation', 'completion',
 ]);
 
+export const EpistemicSourceSchema = z.enum([
+  'land', 'dream', 'code', 'vision',
+]);
+
+export const AxiologicalPillarSchema = z.enum([
+  'ontology', 'epistemology', 'methodology', 'axiology',
+]);
+
+export const ConsentStateSchema = z.enum([
+  'active', 'withdrawn', 'expired', 'pending',
+]);
+
 export const AccessLevelSchema = z.enum([
   'community', 'researchers', 'public', 'restricted',
 ]);
@@ -88,6 +100,8 @@ export const OcapFlagsSchema = z.object({
   steward: z.string().optional(),
   consent_given: z.boolean().optional(),
   consent_scope: z.string().optional(),
+  consent_state: z.enum(['active', 'withdrawn', 'expired', 'pending']).optional(),
+  consent_last_affirmed: z.string().optional(),
 });
 
 export const AccountabilityTrackingSchema = z.object({

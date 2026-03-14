@@ -32,6 +32,7 @@ import type {
   DirectionalInsight,
   DecomposerOptions,
   Urgency,
+  EpistemicSourceHint,
 } from './types.js';
 
 // ── Direction keywords (same as ava-langchain-prompt-decomposition) ─────────
@@ -604,4 +605,82 @@ export class MedicineWheelDecomposer {
       relations_honored: [],
     }));
   }
+}
+
+// ── Epistemic Source Detection ─────────────────────────────────────────────
+
+const EPISTEMIC_KEYWORDS: Record<EpistemicSourceHint, string[]> = {
+  land: [
+    'place', 'territory', 'walking', 'embodied', 'land', 'ground',
+    'earth', 'river', 'mountain', 'forest', 'body', 'physical',
+    'sensation', 'touch', 'landscape', 'soil', 'roots', 'habitat',
+  ],
+  dream: [
+    'vision', 'dream', 'intuition', 'liminal', 'imagine', 'spirit',
+    'ceremony', 'prayer', 'meditation', 'ancestor', 'sleep', 'unconscious',
+    'symbol', 'omen', 'feeling', 'sense', 'inner', 'calling',
+  ],
+  code: [
+    'implement', 'function', 'algorithm', 'code', 'program', 'compile',
+    'syntax', 'module', 'class', 'method', 'variable', 'data',
+    'structure', 'logic', 'compute', 'binary', 'interface', 'api',
+  ],
+  vision: [
+    'intention', 'aspiration', 'future', 'goal', 'purpose', 'mission',
+    'plan', 'strategy', 'direction', 'horizon', 'possibility', 'potential',
+    'transform', 'become', 'evolve', 'next', 'forward', 'beyond',
+  ],
+  unknown: [],
+};
+
+/**
+ * Heuristic classification of epistemic source from language patterns.
+ *
+ * Scans text for keywords associated with each of Wilson's four
+ * epistemic sources and returns the best match. Returns 'unknown'
+ * when no clear signal is present.
+ *
+ * - **land**: mentions of place, territory, walking, embodied experience
+ * - **dream**: mentions of vision, dream, intuition, liminal space
+ * - **code**: mentions of implementation, function, algorithm, structure
+ * - **vision**: mentions of intention, aspiration, future, purpose
+ */
+export function detectEpistemicSource(text: string): EpistemicSourceHint {
+  const lower = text.toLowerCase();
+  const words = lower.split(/\s+/);
+
+  const scores: Record<string, number> = {
+    land: 0,
+    dream: 0,
+    code: 0,
+    vision: 0,
+  };
+
+  for (const word of words) {
+    for (const [source, keywords] of Object.entries(EPISTEMIC_KEYWORDS)) {
+      if (source === 'unknown') continue;
+      for (const keyword of keywords) {
+        if (word.includes(keyword)) {
+          scores[source]++;
+        }
+      }
+    }
+  }
+
+  const total = Object.values(scores).reduce((a, b) => a + b, 0);
+  if (total === 0) return 'unknown';
+
+  let bestSource: EpistemicSourceHint = 'unknown';
+  let bestScore = 0;
+  for (const [source, score] of Object.entries(scores)) {
+    if (score > bestScore) {
+      bestScore = score;
+      bestSource = source as EpistemicSourceHint;
+    }
+  }
+
+  // Require at least 20% signal strength to avoid noisy classification
+  if (bestScore / total < 0.2) return 'unknown';
+
+  return bestSource;
 }
