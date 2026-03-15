@@ -8,7 +8,7 @@
 import type {
   Direction, DirectionName, NodeType, CeremonyType,
   SunName, CeremonyPhase, PersonRole, RSISRelationType, GovernanceAccess, DirectionInfo,
-} from './types.js';
+} from './types';
 
 // ── Direction Definitions ───────────────────────────────────────────────────
 

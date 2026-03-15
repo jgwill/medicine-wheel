@@ -7,7 +7,7 @@
     "build:packages": "cd src/ontology-core && npm install && npm run build && cd ../ceremony-protocol && npm install && npm run build && cd ../narrative-engine && npm install && npm run build && cd ../graph-viz && npm install && npm run build && cd ../relational-query && npm install && npm run build && cd ../prompt-decomposition && npm install && npm run build && cd ../ui-components && npm install && npm run build && cd ../data-store && npm install && npm run build && cd ../session-reader && npm install && npm run build",
     "prebuild": "npm run build:packages",
     "predev": "npm run build:packages",
-    "dev": "next dev --turbopack -p 3940",
+    "dev": "next dev -p 3940",
     "build": "next build",
     "start": "next start -p 3940",
     "lint": "next lint"
