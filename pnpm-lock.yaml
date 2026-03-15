@@ -20,9 +20,15 @@ importers:
       medicine-wheel-data-store:
         specifier: file:./src/data-store
         version: file:src/data-store
+      medicine-wheel-fire-keeper:
+        specifier: file:./src/fire-keeper
+        version: file:src/fire-keeper
       medicine-wheel-graph-viz:
         specifier: file:./src/graph-viz
         version: file:src/graph-viz(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      medicine-wheel-importance-unit:
+        specifier: file:./src/importance-unit
+        version: file:src/importance-unit
       medicine-wheel-narrative-engine:
         specifier: file:./src/narrative-engine
         version: file:src/narrative-engine
@@ -32,12 +38,18 @@ importers:
       medicine-wheel-prompt-decomposition:
         specifier: file:./src/prompt-decomposition
         version: file:src/prompt-decomposition
+      medicine-wheel-relational-index:
+        specifier: file:./src/relational-index
+        version: file:src/relational-index
       medicine-wheel-relational-query:
         specifier: file:./src/relational-query
         version: file:src/relational-query
       medicine-wheel-session-reader:
         specifier: file:./src/session-reader
         version: file:src/session-reader
+      medicine-wheel-transformation-tracker:
+        specifier: file:./src/transformation-tracker
+        version: file:src/transformation-tracker
       medicine-wheel-ui-components:
         specifier: file:./src/ui-components
         version: file:src/ui-components(react@19.2.4)
@@ -670,17 +682,26 @@ packages:
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
+  medicine-wheel-ceremony-protocol@0.1.3:
+    resolution: {integrity: sha512-H6VTk+ni4UU5wHkvQqlvALeS2VoMlkQdg6paUJ90VfNEVR3MX/ET6lWEWjC0NM9LLSwOeSSEoaEXikhZpJe7dw==}
+
   medicine-wheel-ceremony-protocol@file:src/ceremony-protocol:
     resolution: {directory: src/ceremony-protocol, type: directory}
 
   medicine-wheel-data-store@file:src/data-store:
     resolution: {directory: src/data-store, type: directory}
 
+  medicine-wheel-fire-keeper@file:src/fire-keeper:
+    resolution: {directory: src/fire-keeper, type: directory}
+
   medicine-wheel-graph-viz@file:src/graph-viz:
     resolution: {directory: src/graph-viz, type: directory}
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
+
+  medicine-wheel-importance-unit@file:src/importance-unit:
+    resolution: {directory: src/importance-unit, type: directory}
 
   medicine-wheel-narrative-engine@file:src/narrative-engine:
     resolution: {directory: src/narrative-engine, type: directory}
@@ -694,11 +715,17 @@ packages:
   medicine-wheel-prompt-decomposition@file:src/prompt-decomposition:
     resolution: {directory: src/prompt-decomposition, type: directory}
 
+  medicine-wheel-relational-index@file:src/relational-index:
+    resolution: {directory: src/relational-index, type: directory}
+
   medicine-wheel-relational-query@file:src/relational-query:
     resolution: {directory: src/relational-query, type: directory}
 
   medicine-wheel-session-reader@file:src/session-reader:
     resolution: {directory: src/session-reader, type: directory}
+
+  medicine-wheel-transformation-tracker@file:src/transformation-tracker:
+    resolution: {directory: src/transformation-tracker, type: directory}
 
   medicine-wheel-ui-components@file:src/ui-components:
     resolution: {directory: src/ui-components, type: directory}
@@ -1290,6 +1317,10 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  medicine-wheel-ceremony-protocol@0.1.3:
+    dependencies:
+      medicine-wheel-ontology-core: 0.1.4
+
   medicine-wheel-ceremony-protocol@file:src/ceremony-protocol:
     dependencies:
       medicine-wheel-ontology-core: 0.1.4
@@ -1299,11 +1330,21 @@ snapshots:
       medicine-wheel-ontology-core: 0.1.4
       redis: 4.7.1
 
+  medicine-wheel-fire-keeper@file:src/fire-keeper:
+    dependencies:
+      medicine-wheel-ceremony-protocol: 0.1.3
+      medicine-wheel-ontology-core: 0.1.4
+
   medicine-wheel-graph-viz@file:src/graph-viz(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       medicine-wheel-ontology-core: 0.1.4
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
+
+  medicine-wheel-importance-unit@file:src/importance-unit:
+    dependencies:
+      medicine-wheel-ontology-core: 0.1.4
+      zod: 3.25.76
 
   medicine-wheel-narrative-engine@file:src/narrative-engine:
     dependencies:
@@ -1321,11 +1362,21 @@ snapshots:
     dependencies:
       medicine-wheel-ontology-core: 0.1.4
 
+  medicine-wheel-relational-index@file:src/relational-index:
+    dependencies:
+      medicine-wheel-ontology-core: 0.1.4
+
   medicine-wheel-relational-query@file:src/relational-query:
     dependencies:
       medicine-wheel-ontology-core: 0.1.4
 
   medicine-wheel-session-reader@file:src/session-reader: {}
+
+  medicine-wheel-transformation-tracker@file:src/transformation-tracker:
+    dependencies:
+      medicine-wheel-ceremony-protocol: 0.1.3
+      medicine-wheel-ontology-core: 0.1.4
+      zod: 3.25.76
 
   medicine-wheel-ui-components@file:src/ui-components(react@19.2.4):
     dependencies:
