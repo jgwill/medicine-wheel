@@ -6,11 +6,20 @@ import { type NarrativeBeat, type MedicineWheelCycle, DIRECTION_COLORS, type Dir
 export default function NarrativePage() {
   const [beats, setBeats] = useState<NarrativeBeat[]>([]);
   const [cycles, setCycles] = useState<MedicineWheelCycle[]>([]);
+  const [analysis, setAnalysis] = useState<any>(null);
   const [expandedBeat, setExpandedBeat] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([fetch("/api/narrative/beats").then((r) => r.json()), fetch("/api/narrative/cycles").then((r) => r.json())])
-      .then(([b, c]) => { setBeats(Array.isArray(b) ? b : []); setCycles(Array.isArray(c) ? c : []); })
+    Promise.all([
+      fetch("/api/narrative/beats").then((r) => r.json()),
+      fetch("/api/narrative/cycles").then((r) => r.json()),
+      fetch("/api/analysis").then((r) => r.json()),
+    ])
+      .then(([b, c, a]) => {
+        setBeats(Array.isArray(b) ? b : []);
+        setCycles(Array.isArray(c) ? c : []);
+        setAnalysis(a && !a.error ? a : null);
+      })
       .catch(() => {});
   }, []);
 
@@ -18,6 +27,12 @@ export default function NarrativePage() {
   const dirOrder: DirectionName[] = ["east", "south", "west", "north"];
   const dirIdx = activeCycle ? dirOrder.indexOf(activeCycle.current_direction as DirectionName) : 0;
   const progress = ((dirIdx + 1) / 4) * 100;
+
+  const narrativeAnalysis = analysis?.narrativeAnalysis ?? {};
+  const cadence = narrativeAnalysis.cadence ?? {};
+  const completeness = narrativeAnalysis.completeness ?? {};
+  const narrativePhase = narrativeAnalysis.currentPhase ?? "unknown";
+  const phaseFraming = analysis?.ceremonyPhaseFraming?.[narrativePhase] ?? "";
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -59,6 +74,58 @@ export default function NarrativePage() {
             </div>
             <div className="flex justify-between mt-1 text-xs text-muted-foreground">
               {dirOrder.map((d) => <span key={d} className="capitalize">{d}</span>)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Narrative Engine Analysis */}
+      {analysis && (
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Arc Completeness */}
+          <div className="p-4 rounded-lg border bg-card">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2">Arc Completeness</h3>
+            {typeof completeness.directionsVisited === "number" ? (
+              <>
+                <p className="text-2xl font-bold">{completeness.directionsVisited}/4 <span className="text-sm font-normal text-muted-foreground">directions visited</span></p>
+                {completeness.completionPercentage != null && (
+                  <div className="mt-2 h-2 bg-secondary rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500 rounded-full" style={{ width: `${completeness.completionPercentage}%` }} />
+                  </div>
+                )}
+                {typeof completeness.score === "number" && (
+                  <p className="text-xs text-muted-foreground mt-1">Score: {Math.round(completeness.score * 100)}%</p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">Completeness data computed from relational web</p>
+            )}
+          </div>
+
+          {/* Cadence Validation */}
+          <div className="p-4 rounded-lg border bg-card">
+            <h3 className="text-sm font-semibold text-muted-foreground mb-2">Cadence Validation</h3>
+            <p className="text-lg font-bold">{cadence.valid ? "✓ Valid Cadence" : "⚠ Violations Detected"}</p>
+            {cadence.violations?.length > 0 && (
+              <ul className="mt-2 text-xs space-y-1 text-muted-foreground">
+                {cadence.violations.slice(0, 3).map((v: any, i: number) => (
+                  <li key={i}>• {typeof v === "string" ? v : v.message ?? v.description ?? JSON.stringify(v)}</li>
+                ))}
+              </ul>
+            )}
+            <p className="text-xs text-muted-foreground mt-2">Current phase: <span className="capitalize font-medium">{narrativePhase}</span></p>
+          </div>
+        </div>
+      )}
+
+      {/* Phase Framing */}
+      {phaseFraming && (
+        <div className="mb-6 p-4 rounded-lg border bg-card/50 backdrop-blur">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔥</span>
+            <div>
+              <p className="text-sm font-medium">{phaseFraming}</p>
+              <p className="text-xs text-muted-foreground mt-1 capitalize">Phase: {narrativePhase}</p>
             </div>
           </div>
         </div>

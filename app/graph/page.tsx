@@ -34,32 +34,60 @@ export default function GraphPage() {
       const nodesData: RelationalNode[] = await nodesRes.json();
       const edgesData: RelationalEdge[] = await edgesRes.json();
 
-      // Position nodes by direction on a circular layout
-      const CX = 350, CY = 300, R = 220;
-      const dirAngles: Record<string, number> = { east: 0, south: 90, west: 180, north: 270 };
+      let graphNodes: GraphNode[];
+      let graphLinks: GraphLink[];
 
-      const graphNodes = nodesData.map((n, i) => {
-        const baseAngle = n.direction ? dirAngles[n.direction] ?? 0 : (360 * i) / nodesData.length;
-        const jitter = (Math.random() - 0.5) * 60;
-        const angle = ((baseAngle + jitter) * Math.PI) / 180;
-        const r = R * (0.5 + Math.random() * 0.4);
-        return {
+      try {
+        // Use graph-viz converters for node/edge transformation
+        const { nodesToGraphNodes, edgesToGraphLinks, applyWheelLayout, buildGraphData } = await import("medicine-wheel-graph-viz");
+
+        const gd = buildGraphData(nodesData, edgesData);
+        const laid = applyWheelLayout(gd, { centerX: 350, centerY: 300, radius: 220 });
+
+        graphNodes = laid.nodes.map((n: any) => ({
           id: n.id,
-          label: n.name,
-          type: n.type,
+          label: n.label ?? n.name ?? n.id,
+          type: n.type ?? "unknown",
           direction: n.direction,
-          x: CX + r * Math.cos(angle),
-          y: CY + r * Math.sin(angle),
-        };
-      });
+          x: n.x ?? 350,
+          y: n.y ?? 300,
+        }));
 
-      const graphLinks = edgesData.map((e) => ({
-        source: e.from_id,
-        target: e.to_id,
-        label: e.relationship_type,
-        ceremonyHonored: e.ceremony_honored,
-        strength: e.strength,
-      }));
+        graphLinks = laid.links.map((l: any) => ({
+          source: typeof l.source === "string" ? l.source : l.source?.id ?? "",
+          target: typeof l.target === "string" ? l.target : l.target?.id ?? "",
+          label: l.label ?? l.type ?? "",
+          ceremonyHonored: l.ceremonyHonored ?? false,
+          strength: l.strength ?? 0.5,
+        }));
+      } catch {
+        // Fallback to manual conversion if graph-viz fails
+        const CX = 350, CY = 300, R = 220;
+        const dirAngles: Record<string, number> = { east: 0, south: 90, west: 180, north: 270 };
+
+        graphNodes = nodesData.map((n, i) => {
+          const baseAngle = n.direction ? dirAngles[n.direction] ?? 0 : (360 * i) / nodesData.length;
+          const jitter = (Math.random() - 0.5) * 60;
+          const angle = ((baseAngle + jitter) * Math.PI) / 180;
+          const r = R * (0.5 + Math.random() * 0.4);
+          return {
+            id: n.id,
+            label: n.name,
+            type: n.type,
+            direction: n.direction,
+            x: CX + r * Math.cos(angle),
+            y: CY + r * Math.sin(angle),
+          };
+        });
+
+        graphLinks = edgesData.map((e) => ({
+          source: e.from_id,
+          target: e.to_id,
+          label: e.relationship_type,
+          ceremonyHonored: e.ceremony_honored,
+          strength: e.strength,
+        }));
+      }
 
       setNodes(graphNodes);
       setLinks(graphLinks);

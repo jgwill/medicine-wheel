@@ -20,7 +20,10 @@ function CeremoniesContent() {
     if (filterType !== "all") params.set("type", filterType);
     fetch(`/api/ceremonies?${params}`)
       .then((r) => r.json())
-      .then((data) => setCeremonies(Array.isArray(data) ? data : []))
+      .then((data) => {
+        const cerems = data?.ceremonies ?? (Array.isArray(data) ? data : []);
+        setCeremonies(Array.isArray(cerems) ? cerems : []);
+      })
       .catch(() => setCeremonies([]));
   }, [filterDir, filterType]);
 
@@ -40,7 +43,8 @@ function CeremoniesContent() {
       toast.success("Ceremony logged");
       setShowForm(false);
       const data = await fetch("/api/ceremonies").then((r) => r.json());
-      setCeremonies(Array.isArray(data) ? data : []);
+      const cerems = data?.ceremonies ?? (Array.isArray(data) ? data : []);
+      setCeremonies(Array.isArray(cerems) ? cerems : []);
     } else { toast.error("Failed to log ceremony"); }
   }
 
@@ -54,14 +58,33 @@ function CeremoniesContent() {
     return phaseMap[latest.direction] ?? "opening";
   }, [ceremonies]);
 
-  const phaseFramings: Record<string, string> = {
-    opening: "🔥 We are in the Opening phase — setting intentions and acknowledging relationships",
-    council: "🔥 We are in the Council phase — deepening understanding through dialogue",
-    integration: "🔥 We are in the Integration phase — weaving learnings together",
-    closure: "🔥 We are in the Closure phase — honoring what has been shared",
-  };
+  // Use ceremony-protocol for phase framing and next-phase computation
+  const [protocolFraming, setProtocolFraming] = useState<string>("");
+  const [protocolNextPhase, setProtocolNextPhase] = useState<string>("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const cp = await import("medicine-wheel-ceremony-protocol");
+        setProtocolFraming(cp.getPhaseFraming(currentPhase as any));
+        const np = cp.nextPhase(currentPhase as any);
+        setProtocolNextPhase(np ?? "opening");
+      } catch {
+        // Fallback to hardcoded
+        const phaseFramings: Record<string, string> = {
+          opening: "🔥 We are in the Opening phase — setting intentions and acknowledging relationships",
+          council: "🔥 We are in the Council phase — deepening understanding through dialogue",
+          integration: "🔥 We are in the Integration phase — weaving learnings together",
+          closure: "🔥 We are in the Closure phase — honoring what has been shared",
+        };
+        setProtocolFraming(phaseFramings[currentPhase] ?? phaseFramings.opening);
+        const phases = ["opening", "council", "integration", "closure"];
+        setProtocolNextPhase(phases[(phases.indexOf(currentPhase) + 1) % 4]);
+      }
+    })();
+  }, [currentPhase]);
+
   const phases = ["opening", "council", "integration", "closure"];
-  const nextPhase = phases[(phases.indexOf(currentPhase) + 1) % 4];
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -77,8 +100,8 @@ function CeremoniesContent() {
         <div className="flex items-center gap-3">
           <span className="text-2xl">🔥</span>
           <div className="flex-1">
-            <p className="text-sm font-medium">{phaseFramings[currentPhase]}</p>
-            <p className="text-xs text-muted-foreground mt-1">Next phase: <span className="capitalize">{nextPhase}</span></p>
+            <p className="text-sm font-medium">{protocolFraming || "🔥 Ceremony phase loading..."}</p>
+            <p className="text-xs text-muted-foreground mt-1">Next phase: <span className="capitalize">{protocolNextPhase}</span></p>
           </div>
           <div className="flex gap-1">
             {phases.map((p) => (

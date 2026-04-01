@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getAllBeats, createBeat } from "@/lib/store";
+import { getAllBeats, getAllCeremonies, createBeat } from "@/lib/store";
+import { validateCadence } from "medicine-wheel-narrative-engine";
 
 export async function GET() {
   try {
@@ -22,7 +23,18 @@ export async function POST(request: Request) {
       act: body.act ?? 1,
       relations_honored: body.relations_honored ?? [],
     });
-    return NextResponse.json(beat, { status: 201 });
+
+    // Run cadence validation after adding the beat
+    let cadenceValidation = null;
+    try {
+      const allBeats = getAllBeats();
+      const allCeremonies = getAllCeremonies();
+      cadenceValidation = validateCadence(allBeats, allCeremonies);
+    } catch {
+      cadenceValidation = { valid: false, note: "Cadence validation unavailable" };
+    }
+
+    return NextResponse.json({ beat, cadenceValidation }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
