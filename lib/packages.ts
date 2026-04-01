@@ -120,7 +120,7 @@ export function getAnalysis() {
   let narrativeAnalysis: Record<string, unknown> = {};
   try {
     const cadenceResult = validateCadence(beats, ceremonies);
-    const phase = currentPhase(beats);
+    const narrativePhase = currentPhase(beats);
     const timeline = buildTimeline(beats);
 
     let completeness: unknown = null;
@@ -149,7 +149,7 @@ export function getAnalysis() {
     narrativeAnalysis = {
       cadence: cadenceResult,
       completeness,
-      currentPhase: phase,
+      currentPhase: narrativePhase,
       timeline,
       progress,
       transitions,
