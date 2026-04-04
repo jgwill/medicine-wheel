@@ -87,7 +87,7 @@ export function createEdge(data: Omit<RelationalEdge, 'id' | 'created_at'> & { i
 // ── Ceremonies ──
 
 export function getAllCeremonies(): CeremonyLog[] {
-  return store.getAllCeremonies(200) as unknown as CeremonyLog[];
+  return store.getAllCeremonies() as unknown as CeremonyLog[];
 }
 
 export function getCeremoniesByDirection(direction: string): CeremonyLog[] {
