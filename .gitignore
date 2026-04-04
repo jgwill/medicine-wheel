@@ -8,3 +8,6 @@ dist/
 build/
 src/_/
 .env
+
+# Medicine Wheel JSONL data (local persistence)
+.mw/store/
