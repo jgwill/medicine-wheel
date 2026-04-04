@@ -1,0 +1,13 @@
+.env*
+mcp
+rispecs/
+.env
+TUG.md
+.mw
+.context/
+.pi
+etc
+llms
+.hch
+output
+CNAME
