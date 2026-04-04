@@ -341,6 +341,60 @@ export const integrationTools: Tool[] = [
     },
   },
   {
+    name: "create_research_cycle",
+    description: "Create a new medicine wheel research cycle. Each cycle is a complete turn of the wheel around a research question. Starts in the East (vision) and progresses through South (growth), West (reflection), North (wisdom).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        research_question: {
+          type: "string",
+          description: "The research question driving this cycle",
+        },
+        current_direction: {
+          type: "string",
+          enum: ["east", "south", "west", "north"],
+          description: "Starting direction (default: east)",
+        },
+      },
+      required: ["research_question"],
+    },
+    handler: async (args) => {
+      try {
+        const { research_question, current_direction = 'east' } = args;
+
+        const cycle = {
+          id: `cycle-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          research_question,
+          current_direction,
+          start_date: new Date().toISOString(),
+          ceremonies_conducted: 0,
+          relations_mapped: 0,
+          wilson_alignment: 0,
+          ocap_compliant: false,
+          archived: false,
+        };
+
+        store.createCycle(cycle);
+
+        return {
+          cycle_id: cycle.id,
+          research_question: cycle.research_question,
+          current_direction: cycle.current_direction,
+          start_date: cycle.start_date,
+          cycle: cycle,
+          teaching: "A cycle is a complete turn of the wheel. Each research question deserves its full journey through all four directions.",
+        };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return {
+          status: "error",
+          message: `Failed to create research cycle: ${errorMsg}`,
+          error: errorMsg,
+        };
+      }
+    },
+  },
+  {
     name: "get_narrative_arc",
     description: "Get complete narrative arc across all four directions for a medicine wheel cycle. Shows full research journey.",
     inputSchema: {

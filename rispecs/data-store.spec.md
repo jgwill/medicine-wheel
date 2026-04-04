@@ -1,35 +1,95 @@
 # data-store — RISE Specification
 
-> Redis-backed persistence layer for the Medicine Wheel ecosystem — connection management, Node/Edge/Ceremony CRUD operations, session-ceremony bidirectional linking, and generic Redis helpers.
+> Persistence layers for the Medicine Wheel ecosystem — JSONL file-based storage for development/community use, and Redis-backed persistence for production scale.
 
-**Version:** 0.1.1  
+**Version:** 0.2.0  
 **Package:** `medicine-wheel-data-store`  
-**Document ID:** rispec-data-store-v1  
-**Last Updated:** 2026-03-06  
+**Document ID:** rispec-data-store-v2  
+**Last Updated:** 2026-04-04  
 
 ---
 
 ## Desired Outcome
 
-Users create **persistent relational knowledge graphs** backed by Redis where:
-- Nodes, edges, and ceremonies are stored as Redis hashes with full CRUD
-- Session-ceremony links are bidirectional and queryable from either side
-- Connection lifecycle is auto-managed with sensible defaults and full configurability
-- Generic helpers simplify common Redis patterns (TTL, bulk ops, key scanning)
+Users create **persistent relational knowledge graphs** that survive process restarts and are visible across all interfaces (Web UI, MCP tools, terminal agents) without requiring external infrastructure for development and community deployments.
 
 ---
 
 ## Creative Intent
 
-**What this enables:** Any Medicine Wheel application can persist its ontological data to Redis without writing boilerplate connection or serialization code. The data-store translates between ontology-core types and Redis storage, keeping the relational semantics intact.
+**What this enables:** Any Medicine Wheel application can persist its ontological data — ceremonies, cycles, nodes, edges, beats, structural tension charts — to shared storage that all interfaces read/write simultaneously. Communities can start with zero-infrastructure JSONL files and graduate to Redis when scale demands it.
 
-**Structural Tension:** Between in-memory-only ontology operations (fast but ephemeral) and durable, queryable persistence (survives restarts, shareable across processes). The data-store resolves this by mapping ontology-core types directly to Redis hashes and sets.
+**Structural Tension:** Between in-memory-only ephemeral data (fast but invisible across processes) and durable queryable persistence (survives restarts, shareable). The JSONL layer resolves this with file-based persistence; the Redis layer resolves it with network-accessible persistence.
 
 ---
 
-## Connection Management
+## Architecture: Two Persistence Backends
 
-### Sub-path: `medicine-wheel-data-store/connection`
+### 1. JSONL File Store (Default — Zero Dependencies)
+
+**Location:** `lib/jsonl-store.ts` (Web UI) + `mcp/src/jsonl-store.ts` (MCP server)  
+**Data directory:** `.mw/store/` (configurable via `MW_DATA_DIR`)
+
+Both the Next.js Web UI and MCP server processes read/write the same JSONL files on disk. Cross-process synchronization is handled via file mtime checking — if one process writes, the other detects the change and reloads from disk.
+
+#### File Layout
+
+```
+.mw/store/
+├── nodes.jsonl        # Relational nodes (human, land, spirit, ancestor, future, knowledge)
+├── edges.jsonl        # Relational edges between nodes
+├── ceremonies.jsonl   # Ceremony logs
+├── beats.jsonl        # Narrative beats
+├── cycles.jsonl       # Medicine wheel research cycles
+├── charts.jsonl       # Structural tension charts
+└── mmots.jsonl        # Moment of truth reviews
+```
+
+Each file is JSONL format: one JSON record per line. Records are keyed by `id` field.
+
+#### Cross-Process Sync Protocol
+
+```
+Process A (Web UI)              Shared Disk               Process B (MCP)
+     │                              │                          │
+     ├── write ceremony ──────────► │ ceremonies.jsonl         │
+     │   (atomic: tmp+rename)       │ mtime updated            │
+     │                              │                          │
+     │                              │ ◄───────── list_ceremonies│
+     │                              │   (check mtime → reload) │
+     │                              │   returns ceremony ──────┤
+```
+
+#### Configuration
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `MW_DATA_DIR` | `.mw/store/` (project root) | Override JSONL data directory |
+
+The MCP server resolves the project root automatically (from `mcp/` subdirectory → parent `.mw/store/`).
+
+#### Atomic Writes
+
+Writes use temp-file + rename to prevent corruption:
+1. Write to `file.jsonl.tmp.<pid>`
+2. `fs.renameSync()` to `file.jsonl`
+3. Rename is atomic on POSIX filesystems
+
+#### When to Use JSONL
+
+- Development and demo environments
+- Community deployments without Redis infrastructure
+- Single-machine setups where Web UI and MCP run together
+- Projects where `.mw/` directory conventions are established
+
+### 2. Redis Store (Production Scale)
+
+**Location:** `src/data-store/`  
+**Package:** `medicine-wheel-data-store`
+
+Redis-backed persistence for production deployments. Supports Upstash, Vercel KV, and local Redis.
+
+#### Connection Management
 
 ```typescript
 interface RedisConnectionConfig {
@@ -41,108 +101,154 @@ interface RedisConnectionConfig {
 }
 
 createConnection(config?: RedisConnectionConfig): Promise<MWRedisClient>
-getConnection(): MWRedisClient                   // Returns current or auto-creates
+getConnection(): MWRedisClient
 closeConnection(): Promise<void>
 isConnected(): boolean
 ```
 
-Connection is auto-managed: first call to any store function connects if needed. Explicit `createConnection` is only required for custom configuration.
+#### Store Operations
 
----
+CRUD for `RelationalNode`, `RelationalEdge`, and `CeremonyLog` types from ontology-core.
 
-## Store Operations
+**Nodes:** `putNode`, `getNode`, `deleteNode`, `listNodes`  
+**Edges:** `putEdge`, `getEdge`, `deleteEdge`, `listEdges`  
+**Ceremonies:** `putCeremony`, `getCeremony`, `deleteCeremony`, `listCeremonies`
 
-### Sub-path: `medicine-wheel-data-store/store`
-
-CRUD for `RelationalNode`, `RelationalEdge`, and `Ceremony` types from ontology-core.
-
-#### Nodes
-
-```typescript
-putNode(node: RelationalNode): Promise<void>
-getNode(id: string): Promise<RelationalNode | null>
-deleteNode(id: string): Promise<boolean>
-listNodes(pattern?: string): Promise<RelationalNode[]>
-```
-
-Stored as Redis hashes at `{prefix}node:{id}`. Nested objects (OCAP flags, Wilson scores) are JSON-serialized within hash fields.
-
-#### Edges
-
-```typescript
-putEdge(edge: RelationalEdge): Promise<void>
-getEdge(id: string): Promise<RelationalEdge | null>
-deleteEdge(id: string): Promise<boolean>
-listEdges(nodeId?: string): Promise<RelationalEdge[]>
-```
-
-Stored as hashes at `{prefix}edge:{id}`. Adjacency sets at `{prefix}adj:{nodeId}` enable fast neighbor lookup.
-
-#### Ceremonies
-
-```typescript
-putCeremony(ceremony: Ceremony): Promise<void>
-getCeremony(id: string): Promise<Ceremony | null>
-deleteCeremony(id: string): Promise<boolean>
-listCeremonies(phase?: CeremonyPhase): Promise<Ceremony[]>
-```
-
-Stored as hashes at `{prefix}ceremony:{id}`. Phase index at `{prefix}ceremonies:phase:{phase}` enables filtering.
-
----
-
-## Session-Ceremony Linking
-
-### Sub-path: `medicine-wheel-data-store/session-link`
+#### Session-Ceremony Linking
 
 Bidirectional links between external sessions and Medicine Wheel ceremonies:
 
 ```typescript
 linkSessionToCeremony(sessionId: string, ceremonyId: string): Promise<void>
-unlinkSessionFromCeremony(sessionId: string, ceremonyId: string): Promise<void>
 getCeremoniesForSession(sessionId: string): Promise<string[]>
 getSessionsForCeremony(ceremonyId: string): Promise<string[]>
 ```
 
-Uses Redis sets at `{prefix}session:{sessionId}:ceremonies` and `{prefix}ceremony:{ceremonyId}:sessions` for O(1) bidirectional lookup.
+#### When to Use Redis
+
+- Multi-machine deployments
+- High-concurrency environments
+- Production web applications
+- When network-accessible persistence is required
 
 ---
 
-## Generic Redis Helpers
+## API Surface (Shared Across Backends)
 
-### Sub-path: `medicine-wheel-data-store/helpers`
+Both JSONL and Redis backends expose the same logical operations:
 
+### Nodes
 ```typescript
-setWithTTL(key: string, value: string, ttlSeconds: number): Promise<void>
-getJSON<T>(key: string): Promise<T | null>
-setJSON<T>(key: string, value: T, ttlSeconds?: number): Promise<void>
-scanKeys(pattern: string, count?: number): AsyncIterable<string>
-bulkDelete(pattern: string): Promise<number>
-keyExists(key: string): Promise<boolean>
+createNode(node: RelationalNode): void
+getNode(id: string): RelationalNode | undefined
+getAllNodes(limit?: number): RelationalNode[]
+getNodesByType(type: string): RelationalNode[]
+getNodesByDirection(direction: string): RelationalNode[]
+searchNodes(query: string, opts?: { type?; direction?; limit? }): RelationalNode[]
 ```
+
+### Edges
+```typescript
+createEdge(edge: RelationalEdge): void
+getEdgesForNode(nodeId: string): RelationalEdge[]
+getRelatedNodeIds(nodeId: string): string[]
+getRelationalWeb(nodeId: string, depth?: number): { nodes; edges }
+updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): void
+```
+
+### Ceremonies
+```typescript
+logCeremony(ceremony: CeremonyLog): void
+getCeremony(id: string): CeremonyLog | undefined
+getAllCeremonies(limit?: number): CeremonyLog[]
+getCeremoniesByDirection(direction: string): CeremonyLog[]
+getCeremoniesByType(type: string): CeremonyLog[]
+```
+
+### Beats
+```typescript
+createBeat(beat: NarrativeBeat): void
+getBeat(id: string): NarrativeBeat | undefined
+getAllBeats(limit?: number): NarrativeBeat[]
+getBeatsByDirection(direction: string): NarrativeBeat[]
+```
+
+### Cycles
+```typescript
+createCycle(cycle: MedicineWheelCycle): void
+getCycle(id: string): MedicineWheelCycle | undefined
+getAllCycles(): { active: MedicineWheelCycle[]; archived: MedicineWheelCycle[] }
+archiveCycle(id: string): void
+```
+
+### Charts (Structural Tension)
+```typescript
+saveChart(chart: StructuralTensionChart): void
+getChart(id: string): StructuralTensionChart | undefined
+getAllCharts(direction?: string): StructuralTensionChart[]
+```
+
+### MMOT (Moment of Truth)
+```typescript
+saveMmot(mmot: MmotReview): void
+getMmotsByChart(chartId: string): MmotReview[]
+```
+
+---
+
+## `.mw/` Directory Convention
+
+The `.mw/` directory follows the Medicine Wheel workspace convention established across the ecosystem:
+
+```
+.mw/
+├── store/               # JSONL data files (this spec)
+│   ├── nodes.jsonl
+│   ├── edges.jsonl
+│   ├── ceremonies.jsonl
+│   ├── beats.jsonl
+│   ├── cycles.jsonl
+│   ├── charts.jsonl
+│   └── mmots.jsonl
+├── east/                # Vision artifacts (optional)
+├── south/               # Planning artifacts (optional)
+├── west/                # Implementation artifacts (optional)
+├── north/               # Reflection artifacts (optional)
+├── ceremonies/          # Ceremony crossing artifacts (optional)
+└── README.md            # Workspace description
+```
+
+The `store/` subdirectory is created automatically by the JSONL persistence engine. The directional subdirectories are optional and follow the `.mw/` convention from other ecosystem projects.
 
 ---
 
 ## Dependencies
 
+### JSONL Store
+- **Runtime:** Node.js built-in `fs`, `path` only — zero external dependencies
+- **Types consumed:** Inline interfaces compatible with `ontology-core` types
+
+### Redis Store
 - **Runtime:** `medicine-wheel-ontology-core` ^0.1.0, `redis` ^4.6.0
-- **Types consumed:** `RelationalNode`, `RelationalEdge`, `Ceremony`, `CeremonyPhase`, `OcapFlags`, `AccountabilityTracking`
-- **Node.js:** Built-in modules only (no additional Node.js dependencies beyond `redis`)
+- **Types consumed:** `RelationalNode`, `RelationalEdge`, `CeremonyLog`, `CeremonyPhase`, `OcapFlags`
 
 ---
 
 ## Advancing Patterns
 
-- **Ontology-native persistence** — Store and retrieve ontology-core types without manual serialization
-- **Bidirectional linking** — Session↔Ceremony links enable ceremony-aware session management
-- **Auto-managed connections** — Zero-config for development, fully configurable for production
-- **Key prefix isolation** — Multiple Medicine Wheel instances can share one Redis without collision
+- **Cross-interface visibility** — Data created in Web UI appears in MCP tools instantly (and vice versa)
+- **Zero-infrastructure start** — Communities begin with JSONL files, no Redis setup needed
+- **Inspectable data** — `cat .mw/store/ceremonies.jsonl` reveals all ceremonies in plain text
+- **Git-trackable** — JSONL files can be committed to version control as project data
+- **Graceful graduation** — Switch to Redis when scale requires it, same API
+- **`.mw/` convention alignment** — Follows the ecosystem-wide directional workspace pattern
 
 ---
 
 ## Quality Criteria
 
-- ✅ Creative Orientation: Enables durable relational knowledge graphs, not just caching
-- ✅ Structural Dynamics: Session-ceremony links bridge temporal sessions with ceremonial structure
-- ✅ Implementation Sufficient: Complete CRUD API, key schemas, and connection lifecycle documented
-- ✅ Codebase Agnostic: Works with any Redis ^4.6.0 deployment
+- ✅ Creative Orientation: Enables persistent relational knowledge graphs across all interfaces
+- ✅ Structural Dynamics: Mtime-based cross-process sync resolves the isolation tension naturally
+- ✅ Implementation Sufficient: Complete API, file layout, sync protocol, and configuration documented
+- ✅ Codebase Agnostic: JSONL files are plain text — any tool can read/write them
+- ✅ Advancing Pattern: Zero-to-Redis progression without API changes

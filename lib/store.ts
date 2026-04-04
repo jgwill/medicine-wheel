@@ -1,7 +1,14 @@
 /**
- * In-memory data store for Medicine Wheel.
- * Works without Redis — all data stored in server-side maps.
- * Data persists across requests within the same server process.
+ * Medicine Wheel — Web UI Data Store
+ *
+ * Wraps the shared JSONL persistence layer so that data created in the
+ * Web UI is immediately visible to the MCP server (and vice versa).
+ *
+ * All data persists in .mw/store/*.jsonl files on disk.
+ * The public API is unchanged — API routes call these functions as before.
+ *
+ * @see lib/jsonl-store.ts — the underlying JSONL persistence engine
+ * @see https://github.com/jgwill/medicine-wheel/issues/26
  */
 
 import type {
@@ -12,30 +19,26 @@ import type {
   MedicineWheelCycle,
 } from '@/lib/types';
 
-// ── Storage Maps ──
+import { getJsonlStore } from './jsonl-store';
 
-const nodes = new Map<string, RelationalNode>();
-const edges = new Map<string, RelationalEdge>();
-const ceremonies = new Map<string, CeremonyLog>();
-const beats = new Map<string, NarrativeBeat>();
-const cycles = new Map<string, MedicineWheelCycle>();
+const store = getJsonlStore();
 
 // ── Nodes ──
 
 export function getAllNodes(): RelationalNode[] {
-  return Array.from(nodes.values());
+  return store.getAllNodes(200) as unknown as RelationalNode[];
 }
 
 export function getNodesByType(type: string): RelationalNode[] {
-  return getAllNodes().filter(n => n.type === type);
+  return store.getNodesByType(type) as unknown as RelationalNode[];
 }
 
 export function getNodesByDirection(direction: string): RelationalNode[] {
-  return getAllNodes().filter(n => n.direction === direction);
+  return store.getNodesByDirection(direction) as unknown as RelationalNode[];
 }
 
 export function getNode(id: string): RelationalNode | null {
-  return nodes.get(id) ?? null;
+  return (store.getNode(id) as unknown as RelationalNode) ?? null;
 }
 
 export function createNode(data: Omit<RelationalNode, 'id' | 'created_at' | 'updated_at' | 'metadata'> & { id?: string; metadata?: Record<string, unknown> }): RelationalNode {
@@ -50,18 +53,18 @@ export function createNode(data: Omit<RelationalNode, 'id' | 'created_at' | 'upd
     created_at: now,
     updated_at: now,
   };
-  nodes.set(id, node);
+  store.createNode(node as any);
   return node;
 }
 
 // ── Edges ──
 
 export function getAllEdges(): RelationalEdge[] {
-  return Array.from(edges.values());
+  return store.edges.getAll() as unknown as RelationalEdge[];
 }
 
 export function getEdgesByNode(nodeId: string): RelationalEdge[] {
-  return getAllEdges().filter(e => e.from_id === nodeId || e.to_id === nodeId);
+  return store.getEdgesForNode(nodeId) as unknown as RelationalEdge[];
 }
 
 export function createEdge(data: Omit<RelationalEdge, 'id' | 'created_at'> & { id?: string }): RelationalEdge {
@@ -77,24 +80,22 @@ export function createEdge(data: Omit<RelationalEdge, 'id' | 'created_at'> & { i
     obligations: data.obligations ?? [],
     created_at: now,
   };
-  edges.set(id, edge);
+  store.createEdge(edge as any);
   return edge;
 }
 
 // ── Ceremonies ──
 
 export function getAllCeremonies(): CeremonyLog[] {
-  return Array.from(ceremonies.values()).sort(
-    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
+  return store.getAllCeremonies(200) as unknown as CeremonyLog[];
 }
 
 export function getCeremoniesByDirection(direction: string): CeremonyLog[] {
-  return getAllCeremonies().filter(c => c.direction === direction);
+  return store.getCeremoniesByDirection(direction) as unknown as CeremonyLog[];
 }
 
 export function getCeremoniesByType(type: string): CeremonyLog[] {
-  return getAllCeremonies().filter(c => c.type === type);
+  return store.getCeremoniesByType(type) as unknown as CeremonyLog[];
 }
 
 export function createCeremony(data: Omit<CeremonyLog, 'id' | 'timestamp'> & { id?: string; timestamp?: string }): CeremonyLog {
@@ -109,20 +110,18 @@ export function createCeremony(data: Omit<CeremonyLog, 'id' | 'timestamp'> & { i
     timestamp: data.timestamp || new Date().toISOString(),
     research_context: data.research_context,
   };
-  ceremonies.set(id, ceremony);
+  store.logCeremony(ceremony as any);
   return ceremony;
 }
 
 // ── Narrative Beats ──
 
 export function getAllBeats(): NarrativeBeat[] {
-  return Array.from(beats.values()).sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  );
+  return store.getAllBeats(200) as unknown as NarrativeBeat[];
 }
 
 export function getBeatsByDirection(direction: string): NarrativeBeat[] {
-  return getAllBeats().filter(b => b.direction === direction);
+  return store.getBeatsByDirection(direction) as unknown as NarrativeBeat[];
 }
 
 export function createBeat(data: Omit<NarrativeBeat, 'id' | 'timestamp'> & { id?: string; timestamp?: string }): NarrativeBeat {
@@ -139,14 +138,15 @@ export function createBeat(data: Omit<NarrativeBeat, 'id' | 'timestamp'> & { id?
     act: data.act ?? 1,
     relations_honored: data.relations_honored ?? [],
   };
-  beats.set(id, beat);
+  store.createBeat(beat as any);
   return beat;
 }
 
 // ── Cycles ──
 
 export function getAllCycles(): MedicineWheelCycle[] {
-  return Array.from(cycles.values());
+  const { active, archived } = store.getAllCycles();
+  return [...active, ...archived] as unknown as MedicineWheelCycle[];
 }
 
 export function createCycle(data: { research_question: string; current_direction?: string }): MedicineWheelCycle {
@@ -162,14 +162,14 @@ export function createCycle(data: { research_question: string; current_direction
     wilson_alignment: 0,
     ocap_compliant: false,
   };
-  cycles.set(id, cycle);
+  store.createCycle(cycle as any);
   return cycle;
 }
 
 // ── Seed Data ──
 
 export function seedDemoData() {
-  if (nodes.size > 0) return; // Already seeded
+  if (store.nodes.size() > 0) return; // Already seeded
 
   // Create some demo nodes
   createNode({ name: 'Elder Sarah', type: 'human', direction: 'north' });
