@@ -109,18 +109,20 @@ function readJsonl<T>(filePath: string): T[] {
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
     const records: T[] = [];
-    for (const line of content.split('\n')) {
+    for (const [index, line] of content.split('\n').entries()) {
       const trimmed = line.trim();
       if (!trimmed) continue;
       try {
         records.push(JSON.parse(trimmed) as T);
-      } catch {
-        // Skip malformed lines
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to parse JSONL record in ${filePath} at line ${index + 1}: ${message}`);
       }
     }
     return records;
-  } catch {
-    return [];
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to read JSONL file ${filePath}: ${message}`);
   }
 }
 
