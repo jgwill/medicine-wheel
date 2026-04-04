@@ -45,7 +45,7 @@ Both the Next.js Web UI and MCP server processes read/write the same JSONL files
 └── mmots.jsonl        # Moment of truth reviews
 ```
 
-Each file is JSONL format: one JSON record per line. Records are keyed by `id` field.
+Each file is JSONL format: one JSON record per line. Records may include an `id` field depending on record type, but the JSONL persistence layer is append-only and does not itself guarantee key-based uniqueness, upsert behavior, or de-duplication.
 
 #### Cross-Process Sync Protocol
 
