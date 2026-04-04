@@ -26,7 +26,7 @@ const store = getJsonlStore();
 // ── Nodes ──
 
 export function getAllNodes(): RelationalNode[] {
-  return store.getAllNodes(200) as unknown as RelationalNode[];
+  return store.getAllNodes() as unknown as RelationalNode[];
 }
 
 export function getNodesByType(type: string): RelationalNode[] {
@@ -117,7 +117,7 @@ export function createCeremony(data: Omit<CeremonyLog, 'id' | 'timestamp'> & { i
 // ── Narrative Beats ──
 
 export function getAllBeats(): NarrativeBeat[] {
-  return store.getAllBeats(200) as unknown as NarrativeBeat[];
+  return store.getAllBeats() as unknown as NarrativeBeat[];
 }
 
 export function getBeatsByDirection(direction: string): NarrativeBeat[] {

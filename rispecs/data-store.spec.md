@@ -45,7 +45,7 @@ Both the Next.js Web UI and MCP server processes read/write the same JSONL files
 └── mmots.jsonl        # Moment of truth reviews
 ```
 
-Each file is JSONL format: one JSON record per line. Records may include an `id` field depending on record type, but the JSONL persistence layer is append-only and does not itself guarantee key-based uniqueness, upsert behavior, or de-duplication.
+Each file is JSONL format: one JSON record per line. Entity collections (nodes, ceremonies, beats, cycles, charts, mmots) are keyed by the record's `id` field with full upsert semantics — writing the same `id` twice replaces the first record. Edges are keyed by `${from_id}:${to_id}` (or the edge's explicit `id`) and also use upsert — re-adding the same edge endpoints updates the existing record rather than duplicating it.
 
 #### Cross-Process Sync Protocol
 
@@ -68,12 +68,17 @@ Process A (Web UI)              Shared Disk               Process B (MCP)
 
 The MCP server resolves the project root automatically (from `mcp/` subdirectory → parent `.mw/store/`).
 
-#### Atomic Writes
+#### Atomic Writes & Concurrent Safety
 
-Writes use temp-file + rename to prevent corruption:
-1. Write to `file.jsonl.tmp.<pid>`
-2. `fs.renameSync()` to `file.jsonl`
-3. Rename is atomic on POSIX filesystems
+Each write is a **read-modify-write inside a file lock**:
+1. Acquire lock via `O_EXCL` create of `file.jsonl.lock` (atomic on POSIX)
+2. Re-read current disk state inside the lock (picks up any concurrent writes)
+3. Merge in-memory changes with disk state (in-memory items take precedence)
+4. Write merged result to `file.jsonl.tmp.<pid>`
+5. `fs.renameSync()` to `file.jsonl` (atomic)
+6. Release lock (delete lock file)
+
+This prevents last-writer-wins data loss when the Web UI and MCP server write simultaneously.
 
 #### When to Use JSONL
 

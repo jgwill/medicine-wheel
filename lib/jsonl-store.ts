@@ -8,8 +8,8 @@
  * Storage format: One JSONL file per entity type in the .mw/store/ directory.
  * Each line is a JSON-serialized record. Atomic writes via temp+rename.
  *
- * Cross-process sync: Checks file mtime before reads — if the file changed
- * on disk (written by the other process), reloads from disk automatically.
+ * Cross-process sync: file-lock + read-modify-write inside flush so concurrent
+ * writers merge rather than clobber each other.
  *
  * Location is configurable via MW_DATA_DIR env var (defaults to .mw/store/).
  *
@@ -108,49 +108,89 @@ interface StoredMmot {
   step4_feedback: string;
 }
 
+// ── File Lock ──
+// Cross-process write coordination via an exclusive lock file.
+// Uses O_EXCL (create-only) which is atomic on POSIX filesystems.
+// Inside the lock, flush performs read-modify-write so concurrent
+// writers merge rather than clobber each other.
+
+function withWriteLock<T>(filePath: string, fn: () => T): T {
+  const lockPath = filePath + '.lock';
+  let locked = false;
+
+  for (let attempt = 0; attempt < 20; attempt++) {
+    try {
+      const fd = fs.openSync(lockPath, 'wx'); // O_EXCL — fails if exists
+      fs.closeSync(fd);
+      locked = true;
+      break;
+    } catch {
+      // Lock held by another process; spin-wait with linear back-off
+      const delayMs = Math.min(25 * (attempt + 1), 250);
+      const deadline = Date.now() + delayMs;
+      while (Date.now() < deadline) { /* spin */ }
+    }
+  }
+
+  try {
+    return fn();
+  } finally {
+    if (locked) {
+      try { fs.unlinkSync(lockPath); } catch { /* best effort */ }
+    }
+  }
+}
+
 // ── JSONL File Helpers ──
 
 /**
- * Read all records from a JSONL file. Returns empty array if file doesn't exist.
+ * Read all records from a JSONL file.
+ * Returns [] if the file does not exist (normal for first run).
+ * Throws on permission errors or other real FS failures so the caller
+ * knows not to proceed with a potentially-stale empty state.
  */
 function readJsonl<T>(filePath: string): T[] {
   if (!fs.existsSync(filePath)) return [];
+
+  let content: string;
   try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const records: T[] = [];
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-      try {
-        records.push(JSON.parse(trimmed) as T);
-      } catch {
-        // Skip malformed lines
-      }
-    }
-    return records;
+    content = fs.readFileSync(filePath, 'utf-8');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to read JSONL store at ${filePath}: ${message}`);
   }
+
+  const records: T[] = [];
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      records.push(JSON.parse(trimmed) as T);
+    } catch (error) {
+      // Skip individual malformed lines — log so they don't disappear silently
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`[jsonl-store] Skipping malformed line in ${filePath}: ${message}`);
+    }
+  }
+  return records;
 }
 
 /**
  * Write all records to a JSONL file atomically (temp + rename).
+ * Must be called inside withWriteLock() for cross-process safety.
  */
 function writeJsonl<T>(filePath: string, records: T[]): void {
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  const tmpPath = filePath + `.tmp.${process.pid}`;
+  const tmpPath = `${filePath}.tmp.${process.pid}`;
   const content = records.map(r => JSON.stringify(r)).join('\n') + (records.length > 0 ? '\n' : '');
   fs.writeFileSync(tmpPath, content, 'utf-8');
   fs.renameSync(tmpPath, filePath);
 }
 
-/**
- * Get the mtime of a file (0 if doesn't exist).
- */
+/** Get file mtime in ms (0 if file does not exist). */
 function getMtime(filePath: string): number {
   try {
     return fs.statSync(filePath).mtimeMs;
@@ -159,7 +199,10 @@ function getMtime(filePath: string): number {
   }
 }
 
-// ── Collection: a single JSONL-backed entity collection with mtime sync ──
+// ── JsonlCollection<T> ──
+// Single JSONL-backed entity collection keyed by `id`.
+// flush() performs read-modify-write inside a file lock so concurrent
+// writes from the Web UI and MCP server merge rather than clobber.
 
 class JsonlCollection<T extends { id?: string }> {
   private items: Map<string, T> = new Map();
@@ -171,28 +214,44 @@ class JsonlCollection<T extends { id?: string }> {
     this.filePath = filePath;
   }
 
-  /** Ensure data is loaded and synced from disk */
+  /** Reload from disk if file changed since last sync. */
   private sync(): void {
     const currentMtime = getMtime(this.filePath);
     if (!this.loaded || currentMtime !== this.lastMtime) {
       const records = readJsonl<T>(this.filePath);
       this.items = new Map();
       for (const record of records) {
-        const id = (record as any).id;
-        if (id) {
-          this.items.set(id, record);
-        }
+        const id = (record as any).id as string | undefined;
+        if (id) this.items.set(id, record);
       }
       this.lastMtime = currentMtime;
       this.loaded = true;
     }
   }
 
-  /** Flush in-memory state to disk */
+  /**
+   * Flush in-memory state to disk using read-modify-write inside a file lock.
+   * Reads the current on-disk state first so concurrent writes from another
+   * process are merged (our in-memory items take precedence for keys we own).
+   */
   private flush(): void {
-    const records = Array.from(this.items.values());
-    writeJsonl(this.filePath, records);
-    this.lastMtime = getMtime(this.filePath);
+    withWriteLock(this.filePath, () => {
+      // Read disk state inside the lock so we don't clobber concurrent writes
+      const diskRecords = readJsonl<T>(this.filePath);
+      const merged = new Map<string, T>();
+      for (const r of diskRecords) {
+        const id = (r as any).id as string | undefined;
+        if (id) merged.set(id, r);
+      }
+      // Our in-memory items take precedence (we just set them)
+      for (const [id, item] of this.items) {
+        merged.set(id, item);
+      }
+      writeJsonl(this.filePath, Array.from(merged.values()));
+      // Sync our cache to match merged disk state
+      this.items = merged;
+      this.lastMtime = getMtime(this.filePath);
+    });
   }
 
   get(id: string): T | undefined {
@@ -238,10 +297,14 @@ class JsonlCollection<T extends { id?: string }> {
   }
 }
 
-// ── Edge Collection (keyed by from_id:to_id, not by .id) ──
+// ── EdgeCollection ──
+// Edges are keyed by `${from_id}:${to_id}` (upsert semantics).
+// add() replaces an existing edge with the same endpoints rather than
+// appending a duplicate. flush() uses the same lock + read-modify-write
+// strategy as JsonlCollection.
 
 class EdgeCollection {
-  private items: StoredEdge[] = [];
+  private items: Map<string, StoredEdge> = new Map();
   private filePath: string;
   private lastMtime: number = 0;
   private loaded: boolean = false;
@@ -250,40 +313,64 @@ class EdgeCollection {
     this.filePath = filePath;
   }
 
+  private edgeKey(edge: StoredEdge): string {
+    // Use explicit id if present, otherwise derive from endpoints
+    return (edge as any).id || `${edge.from_id}:${edge.to_id}`;
+  }
+
   private sync(): void {
     const currentMtime = getMtime(this.filePath);
     if (!this.loaded || currentMtime !== this.lastMtime) {
-      this.items = readJsonl<StoredEdge>(this.filePath);
+      const records = readJsonl<StoredEdge>(this.filePath);
+      this.items = new Map();
+      for (const r of records) {
+        this.items.set(this.edgeKey(r), r);
+      }
       this.lastMtime = currentMtime;
       this.loaded = true;
     }
   }
 
   private flush(): void {
-    writeJsonl(this.filePath, this.items);
-    this.lastMtime = getMtime(this.filePath);
+    withWriteLock(this.filePath, () => {
+      // Read-modify-write inside lock to merge concurrent changes
+      const diskRecords = readJsonl<StoredEdge>(this.filePath);
+      const merged = new Map<string, StoredEdge>();
+      for (const r of diskRecords) {
+        merged.set(this.edgeKey(r), r);
+      }
+      for (const [key, edge] of this.items) {
+        merged.set(key, edge);
+      }
+      writeJsonl(this.filePath, Array.from(merged.values()));
+      this.items = merged;
+      this.lastMtime = getMtime(this.filePath);
+    });
   }
 
+  /** Upsert: replaces any existing edge with the same endpoints. */
   add(edge: StoredEdge): void {
     this.sync();
-    this.items.push(edge);
+    this.items.set(this.edgeKey(edge), edge);
     this.flush();
   }
 
   getAll(): StoredEdge[] {
     this.sync();
-    return [...this.items];
+    return Array.from(this.items.values());
   }
 
   getForNode(nodeId: string): StoredEdge[] {
     this.sync();
-    return this.items.filter(e => e.from_id === nodeId || e.to_id === nodeId);
+    return Array.from(this.items.values()).filter(
+      e => e.from_id === nodeId || e.to_id === nodeId
+    );
   }
 
   getRelatedNodeIds(nodeId: string): string[] {
     this.sync();
     const ids = new Set<string>();
-    for (const e of this.items) {
+    for (const e of this.items.values()) {
       if (e.from_id === nodeId) ids.add(e.to_id);
       if (e.to_id === nodeId) ids.add(e.from_id);
     }
@@ -292,11 +379,10 @@ class EdgeCollection {
 
   updateCeremony(fromId: string, toId: string, ceremonyId: string): void {
     this.sync();
-    for (const edge of this.items) {
+    for (const [key, edge] of this.items) {
       if ((edge.from_id === fromId && edge.to_id === toId) ||
           (edge.from_id === toId && edge.to_id === fromId)) {
-        edge.ceremony_honored = true;
-        edge.ceremony_id = ceremonyId;
+        this.items.set(key, { ...edge, ceremony_honored: true, ceremony_id: ceremonyId });
       }
     }
     this.flush();
@@ -319,32 +405,27 @@ export class JsonlStore {
   constructor(dataDir?: string) {
     this.dataDir = dataDir || process.env.MW_DATA_DIR || path.join(process.cwd(), '.mw', 'store');
 
-    // Ensure directory exists
     if (!fs.existsSync(this.dataDir)) {
       fs.mkdirSync(this.dataDir, { recursive: true });
     }
 
-    this.nodes = new JsonlCollection<StoredNode>(path.join(this.dataDir, 'nodes.jsonl'));
-    this.edges = new EdgeCollection(path.join(this.dataDir, 'edges.jsonl'));
+    this.nodes      = new JsonlCollection<StoredNode>   (path.join(this.dataDir, 'nodes.jsonl'));
+    this.edges      = new EdgeCollection                 (path.join(this.dataDir, 'edges.jsonl'));
     this.ceremonies = new JsonlCollection<StoredCeremony>(path.join(this.dataDir, 'ceremonies.jsonl'));
-    this.beats = new JsonlCollection<StoredBeat>(path.join(this.dataDir, 'beats.jsonl'));
-    this.cycles = new JsonlCollection<StoredCycle>(path.join(this.dataDir, 'cycles.jsonl'));
-    this.charts = new JsonlCollection<StoredChart>(path.join(this.dataDir, 'charts.jsonl'));
-    this.mmots = new JsonlCollection<StoredMmot>(path.join(this.dataDir, 'mmots.jsonl'));
+    this.beats      = new JsonlCollection<StoredBeat>    (path.join(this.dataDir, 'beats.jsonl'));
+    this.cycles     = new JsonlCollection<StoredCycle>   (path.join(this.dataDir, 'cycles.jsonl'));
+    this.charts     = new JsonlCollection<StoredChart>   (path.join(this.dataDir, 'charts.jsonl'));
+    this.mmots      = new JsonlCollection<StoredMmot>    (path.join(this.dataDir, 'mmots.jsonl'));
   }
 
   // === Nodes ===
 
-  createNode(node: StoredNode): void {
-    this.nodes.set(node.id, node);
-  }
+  createNode(node: StoredNode): void { this.nodes.set(node.id, node); }
+  getNode(id: string): StoredNode | undefined { return this.nodes.get(id); }
 
-  getNode(id: string): StoredNode | undefined {
-    return this.nodes.get(id);
-  }
-
-  getAllNodes(limit = 50): StoredNode[] {
-    return this.nodes.getAll().slice(0, limit);
+  getAllNodes(limit?: number): StoredNode[] {
+    const all = this.nodes.getAll();
+    return limit !== undefined ? all.slice(0, limit) : all;
   }
 
   getNodesByType(type: string): StoredNode[] {
@@ -357,23 +438,18 @@ export class JsonlStore {
 
   searchNodes(query: string, opts: { type?: string; direction?: string; limit?: number } = {}): StoredNode[] {
     let results = this.nodes.search(query, ['name', 'description'] as any);
-    if (opts.type) results = results.filter(n => n.type === opts.type);
+    if (opts.type)      results = results.filter(n => n.type === opts.type);
     if (opts.direction) results = results.filter(n => n.direction === opts.direction);
-    return results.slice(0, opts.limit || 20);
+    return opts.limit !== undefined ? results.slice(0, opts.limit) : results;
   }
 
   // === Edges ===
 
-  createEdge(edge: StoredEdge): void {
-    this.edges.add(edge);
-  }
-
-  getEdgesForNode(nodeId: string): StoredEdge[] {
-    return this.edges.getForNode(nodeId);
-  }
-
-  getRelatedNodeIds(nodeId: string): string[] {
-    return this.edges.getRelatedNodeIds(nodeId);
+  createEdge(edge: StoredEdge): void { this.edges.add(edge); }
+  getEdgesForNode(nodeId: string): StoredEdge[] { return this.edges.getForNode(nodeId); }
+  getRelatedNodeIds(nodeId: string): string[] { return this.edges.getRelatedNodeIds(nodeId); }
+  updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): void {
+    this.edges.updateCeremony(fromId, toId, ceremonyId);
   }
 
   getRelationalWeb(nodeId: string, depth = 2): { nodes: StoredNode[]; edges: StoredEdge[] } {
@@ -395,28 +471,18 @@ export class JsonlStore {
         if (!visited.has(otherId)) queue.push({ id: otherId, d: d + 1 });
       }
     }
-
     return { nodes: resultNodes, edges: resultEdges };
-  }
-
-  updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): void {
-    this.edges.updateCeremony(fromId, toId, ceremonyId);
   }
 
   // === Ceremonies ===
 
-  logCeremony(ceremony: StoredCeremony): void {
-    this.ceremonies.set(ceremony.id, ceremony);
-  }
+  logCeremony(ceremony: StoredCeremony): void { this.ceremonies.set(ceremony.id, ceremony); }
+  getCeremony(id: string): StoredCeremony | undefined { return this.ceremonies.get(id); }
 
-  getCeremony(id: string): StoredCeremony | undefined {
-    return this.ceremonies.get(id);
-  }
-
-  getAllCeremonies(limit = 50): StoredCeremony[] {
-    return this.ceremonies.getAll()
-      .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
-      .slice(0, limit);
+  getAllCeremonies(limit?: number): StoredCeremony[] {
+    const sorted = this.ceremonies.getAll()
+      .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
+    return limit !== undefined ? sorted.slice(0, limit) : sorted;
   }
 
   getCeremoniesByDirection(direction: string): StoredCeremony[] {
@@ -429,16 +495,12 @@ export class JsonlStore {
 
   // === Beats ===
 
-  createBeat(beat: StoredBeat): void {
-    this.beats.set(beat.id, beat);
-  }
+  createBeat(beat: StoredBeat): void { this.beats.set(beat.id, beat); }
+  getBeat(id: string): StoredBeat | undefined { return this.beats.get(id); }
 
-  getBeat(id: string): StoredBeat | undefined {
-    return this.beats.get(id);
-  }
-
-  getAllBeats(limit = 50): StoredBeat[] {
-    return this.beats.getAll().slice(0, limit);
+  getAllBeats(limit?: number): StoredBeat[] {
+    const all = this.beats.getAll();
+    return limit !== undefined ? all.slice(0, limit) : all;
   }
 
   getBeatsByDirection(direction: string): StoredBeat[] {
@@ -447,39 +509,26 @@ export class JsonlStore {
 
   // === Cycles ===
 
-  createCycle(cycle: StoredCycle): void {
-    this.cycles.set(cycle.id, cycle);
-  }
-
-  getCycle(id: string): StoredCycle | undefined {
-    return this.cycles.get(id);
-  }
+  createCycle(cycle: StoredCycle): void { this.cycles.set(cycle.id, cycle); }
+  getCycle(id: string): StoredCycle | undefined { return this.cycles.get(id); }
 
   getAllCycles(): { active: StoredCycle[]; archived: StoredCycle[] } {
     const all = this.cycles.getAll();
     return {
-      active: all.filter(c => !c.archived),
-      archived: all.filter(c => c.archived),
+      active:   all.filter(c => !c.archived),
+      archived: all.filter(c =>  c.archived),
     };
   }
 
   archiveCycle(id: string): void {
     const cycle = this.cycles.get(id);
-    if (cycle) {
-      cycle.archived = true;
-      this.cycles.set(id, cycle);
-    }
+    if (cycle) this.cycles.set(id, { ...cycle, archived: true });
   }
 
   // === Charts (Structural Tension) ===
 
-  saveChart(chart: StoredChart): void {
-    this.charts.set(chart.id, chart);
-  }
-
-  getChart(id: string): StoredChart | undefined {
-    return this.charts.get(id);
-  }
+  saveChart(chart: StoredChart): void { this.charts.set(chart.id, chart); }
+  getChart(id: string): StoredChart | undefined { return this.charts.get(id); }
 
   getAllCharts(direction?: string): StoredChart[] {
     let charts = this.charts.getAll();
@@ -489,10 +538,7 @@ export class JsonlStore {
 
   // === MMOT (Moment of Truth) ===
 
-  saveMmot(mmot: StoredMmot): void {
-    this.mmots.set(mmot.id, mmot);
-  }
-
+  saveMmot(mmot: StoredMmot): void { this.mmots.set(mmot.id, mmot); }
   getMmotsByChart(chartId: string): StoredMmot[] {
     return this.mmots.filter(m => m.chart_id === chartId);
   }
@@ -520,16 +566,9 @@ export function getJsonlStore(dataDir?: string): JsonlStore {
  */
 export function resolveProjectDataDir(currentDir?: string): string {
   const dir = currentDir || process.cwd();
-
-  // If we're in the mcp/ subdirectory, go up one level
   if (dir.endsWith('/mcp') || dir.endsWith('\\mcp')) {
     return path.join(path.dirname(dir), '.mw', 'store');
   }
-
-  // Check if MW_DATA_DIR is set
-  if (process.env.MW_DATA_DIR) {
-    return process.env.MW_DATA_DIR;
-  }
-
+  if (process.env.MW_DATA_DIR) return process.env.MW_DATA_DIR;
   return path.join(dir, '.mw', 'store');
 }
