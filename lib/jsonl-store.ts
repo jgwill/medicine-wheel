@@ -128,8 +128,9 @@ function readJsonl<T>(filePath: string): T[] {
       }
     }
     return records;
-  } catch {
-    return [];
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to read JSONL store at ${filePath}: ${message}`);
   }
 }
 
