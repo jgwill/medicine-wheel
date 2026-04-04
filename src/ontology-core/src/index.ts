@@ -32,6 +32,14 @@ export type {
   MWTool,
   MWResource,
   MWPrompt,
+  // Epistemic & axiological types
+  EpistemicSource,
+  AxiologicalPillar,
+  // Specialized relation subtypes
+  LandRelation,
+  AncestorRelation,
+  FutureRelation,
+  CosmicRelation,
   // RSIS types
   SunName,
   CeremonyPhase,
@@ -50,7 +58,7 @@ export type {
   DirectionDistribution,
   DirectionInfo,
   MedicineWheelView,
-} from './types.js';
+} from './types';
 
 // ── RDF Vocabulary ──────────────────────────────────────────────────────────
 export {
@@ -59,7 +67,7 @@ export {
   PREFIXES,
   MW, CER, OCAP, REL, IDS, BEAT,
   prefixed, expandIRI, compactIRI,
-} from './vocabulary.js';
+} from './vocabulary';
 
 // ── Constants ───────────────────────────────────────────────────────────────
 export {
@@ -84,7 +92,7 @@ export {
   RSIS_RELATION_TYPES,
   GOVERNANCE_ACCESS_LEVELS,
   DIRECTION_INFO,
-} from './constants.js';
+} from './constants';
 
 // ── Zod Schemas ─────────────────────────────────────────────────────────────
 export {
@@ -93,6 +101,9 @@ export {
   CeremonyTypeSchema,
   ObligationCategorySchema,
   TensionPhaseSchema,
+  EpistemicSourceSchema,
+  AxiologicalPillarSchema,
+  ConsentStateSchema,
   AccessLevelSchema,
   PossessionLocationSchema,
   DirectionSchema,
@@ -110,7 +121,7 @@ export {
   ActionStepSchema,
   StructuralTensionChartSchema,
   DirectionResponseSchema,
-} from './schemas.js';
+} from './schemas';
 
 // Re-export validated types
 export type {
@@ -124,7 +135,7 @@ export type {
   ValidatedNarrativeBeat,
   ValidatedMedicineWheelCycle,
   ValidatedStructuralTensionChart,
-} from './schemas.js';
+} from './schemas';
 
 // ── Semantic Query Helpers ──────────────────────────────────────────────────
 export {
@@ -147,4 +158,4 @@ export {
   ceremoniesByDirection,
   ceremonyCounts,
   relationalCompleteness,
-} from './queries.js';
+} from './queries';

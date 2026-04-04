@@ -87,6 +87,10 @@ export interface OcapFlags {
   consent_given?: boolean;
   /** Scope of the consent */
   consent_scope?: string;
+  /** Current state of consent: active, withdrawn, expired, or pending */
+  consent_state?: 'active' | 'withdrawn' | 'expired' | 'pending';
+  /** ISO 8601 timestamp of when consent was last affirmed */
+  consent_last_affirmed?: string;
 }
 
 export interface AccountabilityTracking {
@@ -375,6 +379,72 @@ export interface MedicineWheelView {
     hubs: KinshipHubInfo[];
     relations: KinshipRelation[];
   };
+}
+
+// ── Epistemic Source Dimensions ──────────────────────────────────────────────
+
+/**
+ * The relational origin dimension of knowledge.
+ * Canonical definition — re-exported by importance-unit.
+ * - `land` — place-grounded, embodied knowing
+ * - `dream` — liminal, spirit-state knowing
+ * - `code` — technical, implementation knowing
+ * - `vision` — intentional, architectural knowing
+ */
+export type EpistemicSource = 'land' | 'dream' | 'code' | 'vision';
+
+// ── Axiological Pillars ─────────────────────────────────────────────────────
+
+/**
+ * Wilson's four pillars of a research paradigm.
+ * Every piece of knowledge addresses at least one pillar.
+ */
+export type AxiologicalPillar = 'ontology' | 'epistemology' | 'methodology' | 'axiology';
+
+// ── Specialized Relation Subtypes ───────────────────────────────────────────
+
+/**
+ * A relation grounded in place — rivers, forests, land forms.
+ * Land teaches through embodied presence and seasonal rhythms.
+ */
+export interface LandRelation extends Relation {
+  relationship_type: 'land-kinship' | 'land-teaching' | 'land-stewardship';
+  /** The specific place or land feature this relation connects to */
+  place?: string;
+  /** Seasonal context of the relation */
+  season?: string;
+}
+
+/**
+ * A relation with ancestors — those who came before.
+ * Ancestor relations carry intergenerational obligations.
+ */
+export interface AncestorRelation extends Relation {
+  relationship_type: 'ancestor-teaching' | 'ancestor-obligation' | 'ancestor-lineage';
+  /** Name or identifier of the ancestor(s) */
+  ancestor?: string;
+  /** The lineage or tradition this relation belongs to */
+  lineage?: string;
+}
+
+/**
+ * A relation with future generations — those yet to come.
+ * Future relations carry forward-looking responsibility.
+ */
+export interface FutureRelation extends Relation {
+  relationship_type: 'future-obligation' | 'future-gift' | 'future-teaching';
+  /** Number of generations this relation looks forward */
+  generationsForward?: number;
+}
+
+/**
+ * A relation with cosmic or spirit entities.
+ * Cosmic relations honor the more-than-human world.
+ */
+export interface CosmicRelation extends Relation {
+  relationship_type: 'cosmic-kinship' | 'spirit-teaching' | 'cosmic-reciprocity';
+  /** The cosmic or spirit entity this relation connects to */
+  entity?: string;
 }
 
 // ── MCP Tool/Resource/Prompt types ──────────────────────────────────────────

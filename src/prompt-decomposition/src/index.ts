@@ -30,10 +30,11 @@ export type {
   ActionItem,
   StoredDecomposition,
   DecomposerOptions,
+  EpistemicSourceHint,
 } from './types.js';
 
 // Decomposer
-export { MedicineWheelDecomposer } from './decomposer.js';
+export { MedicineWheelDecomposer, detectEpistemicSource } from './decomposer.js';
 
 // Relational Enricher
 export {

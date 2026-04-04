@@ -1,10 +1,10 @@
 # Medicine Wheel — System RISE Specification
 
-> A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development. Nine packages that together enable developers to create relationally accountable systems grounded in the Four Directions, Wilson's three R's, and OCAP® principles.
+> A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development. Fifteen packages that together enable developers to create relationally accountable systems grounded in the Four Directions, Wilson's three R's, and OCAP® principles.
 
-**Version:** 0.1.2  
+**Version:** 0.2.0  
 **Document ID:** rispec-medicine-wheel-system-v1  
-**Last Updated:** 2026-03-06  
+**Last Updated:** 2026-03-15  
 
 ---
 
@@ -17,19 +17,33 @@ Users create **complete Medicine Wheel software systems** — from ontological d
 ## Package Architecture
 
 ```
-medicine-wheel-ontology-core          ← Foundation (types, schemas, vocabulary)
-    ├── medicine-wheel-ceremony-protocol    ← Ceremony state & governance
-    ├── medicine-wheel-narrative-engine     ← Beat sequencing & arc validation
-    ├── medicine-wheel-graph-viz            ← Circular layout & visualization
-    ├── medicine-wheel-relational-query     ← Query, traversal & audit
-    ├── medicine-wheel-prompt-decomposition ← Intent extraction & PDE
-    ├── medicine-wheel-ui-components        ← React components
-    └── medicine-wheel-data-store           ← Redis persistence (+ redis ^4.6.0)
+medicine-wheel-ontology-core              ← Foundation (types, schemas, vocabulary)
+    ├── medicine-wheel-ceremony-protocol      ← Ceremony state & governance
+    ├── medicine-wheel-narrative-engine        ← Beat sequencing & arc validation
+    ├── medicine-wheel-graph-viz              ← Circular layout & visualization
+    ├── medicine-wheel-relational-query        ← Query, traversal & audit
+    ├── medicine-wheel-prompt-decomposition    ← Intent extraction & PDE
+    ├── medicine-wheel-ui-components          ← React components
+    ├── medicine-wheel-data-store             ← Redis persistence (+ redis ^4.6.0)
+    ├── medicine-wheel-importance-unit         ← Relational knowledge with epistemic weight
+    ├── medicine-wheel-fire-keeper            ← Ceremony coordination agent
+    ├── medicine-wheel-transformation-tracker  ← Research impact & growth tracking
+    ├── medicine-wheel-relational-index        ← Four-source dimensional indexing
+    ├── medicine-wheel-consent-lifecycle       ← Consent as ongoing relationship
+    └── medicine-wheel-community-review        ← Ceremonial review with Elder validation
 
-medicine-wheel-session-reader             ← JSONL session parsing (standalone)
+medicine-wheel-session-reader                 ← JSONL session parsing (standalone)
 ```
 
-All packages depend on `ontology-core` for shared types except `session-reader` which is standalone. No circular dependencies.
+All packages depend on `ontology-core` for shared types except `session-reader` which is standalone. The six new Wilson-alignment packages have these additional dependencies:
+- `importance-unit` → ontology-core
+- `fire-keeper` → ontology-core, ceremony-protocol
+- `transformation-tracker` → ontology-core, ceremony-protocol
+- `relational-index` → ontology-core, importance-unit
+- `consent-lifecycle` → ontology-core, ceremony-protocol
+- `community-review` → ontology-core, ceremony-protocol
+
+No circular dependencies.
 
 ---
 
@@ -54,6 +68,12 @@ Each rispec describes one package. To implement the full system:
 | [`ui-components.spec.md`](./ui-components.spec.md) | UI | DirectionCard, BeatTimeline, NodeInspector, OcapBadge, WilsonMeter |
 | [`data-store.spec.md`](./data-store.spec.md) | Persistence | Redis CRUD for nodes, edges, ceremonies; session linking |
 | [`session-reader.spec.md`](./session-reader.spec.md) | Sessions | JSONL session parsing, listing, analytics, search |
+| [`importance-unit.spec.md`](./importance-unit.spec.md) | Epistemology | Relational knowledge units with epistemic weight, circle depth |
+| [`fire-keeper.spec.md`](./fire-keeper.spec.md) | Coordination | Ceremony coordination agent, gating, trajectory, stop-work |
+| [`transformation-tracker.spec.md`](./transformation-tracker.spec.md) | Validity | Research impact tracking, Wilson's validity criterion |
+| [`relational-index.spec.md`](./relational-index.spec.md) | Indexing | Four-source dimensional indexing (Land/Dream/Code/Vision) |
+| [`consent-lifecycle.spec.md`](./consent-lifecycle.spec.md) | Consent | Consent as ongoing relationship, lifecycle, cascade |
+| [`community-review.spec.md`](./community-review.spec.md) | Review | Community review circles, Elder validation, consensus |
 
 ---
 
@@ -89,6 +109,47 @@ Three phases of creative advancement:
 1. **Germination** — Vision + honest current reality assessment
 2. **Assimilation** — Building momentum through ritualized action
 3. **Completion** — Integration and transformation
+
+### ImportanceUnit (Epistemic Weight)
+
+A relationally-accountable piece of meaning that carries:
+- **Epistemic weight** (0–1) — dream-state knowledge starts at 0.85+
+- **Source dimension** — Land, Dream, Code, or Vision
+- **Circle depth** — increments with each revisitation
+- **Accountability links** — connections to relations this knowledge is accountable to
+
+### Fire Keeper (Ceremony Coordination)
+
+The living keeper of ceremony — an active coordination agent that:
+- **Gates** work behind relational conditions
+- **Monitors** Wilson alignment trajectory continuously
+- **Escalates** value conflicts to humans
+- **Issues** stop-work orders when relational accountability is violated
+
+### Transformation Tracking (Wilson Validity)
+
+Wilson's validity criterion — research success measured by transformation:
+- **Researcher growth** — periodic understanding snapshots
+- **Community benefit** — impact voiced by community, not self-reported
+- **Relational shifts** — before/after strength changes
+- **Reciprocity balance** — giving and receiving across categories
+- **Seven-generation assessment** — impact on future generations
+
+### Consent Lifecycle
+
+Consent as ongoing relational obligation, not boolean:
+- **State machine** — pending → granted → active → renewal-needed → expired/withdrawn
+- **Ceremony-witnessed** — consent moments formalized with witnesses
+- **Cascading withdrawal** — withdrawal ripples through dependent relations
+- **Community consent** — distinct from individual consent, includes Elder and youth voice
+
+### Community Review
+
+Community-based ceremonial review replacing Western peer review:
+- **Review circles** — community body with directional perspectives
+- **Talking circle** — each voice heard in turn
+- **Elder validation** — authoritative blessing grounded in relational accountability
+- **Wilson's three R's check** — Respect, Reciprocity, Responsibility assessed
 
 ---
 

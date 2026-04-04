@@ -127,3 +127,135 @@ export function spiralOrder(beats: NarrativeBeat[]): NarrativeBeat[] {
     return a.timestamp.localeCompare(b.timestamp);
   });
 }
+
+// ─── Epistemic Deepening ──────────────────────────────────────
+
+/**
+ * Analyse whether later beats show genuine epistemic deepening vs repetition.
+ *
+ * Deepening is detected when:
+ * - Learnings accumulate and diversify across beats
+ * - Later beats reference or build upon earlier learnings
+ * - New directions are visited in subsequent cycles
+ *
+ * Stagnation is flagged when:
+ * - Learnings stop growing
+ * - The same directions repeat without new content
+ */
+export function detectEpistemicDeepening(beats: NarrativeBeat[]): {
+  circleCount: number;
+  deepeningIndicators: string[];
+  stagnationRisk: boolean;
+} {
+  if (beats.length === 0) {
+    return { circleCount: 0, deepeningIndicators: [], stagnationRisk: false };
+  }
+
+  const sorted = [...beats].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const indicators: string[] = [];
+
+  // Count full cycles through all four directions
+  let cycleDirections = new Set<string>();
+  let circleCount = 0;
+  for (const beat of sorted) {
+    cycleDirections.add(beat.direction);
+    if (cycleDirections.size === DIRECTION_ORDER.length) {
+      circleCount++;
+      cycleDirections = new Set();
+    }
+  }
+
+  // Track learning accumulation
+  const cumulativeLearnings: string[] = [];
+  let learningsGrowing = false;
+  const midpoint = Math.floor(sorted.length / 2);
+
+  const firstHalfLearnings = sorted.slice(0, midpoint).flatMap(b => b.learnings);
+  const secondHalfLearnings = sorted.slice(midpoint).flatMap(b => b.learnings);
+
+  if (secondHalfLearnings.length > firstHalfLearnings.length) {
+    learningsGrowing = true;
+    indicators.push('Learnings are accumulating — later beats carry more insight');
+  }
+
+  // Check learning diversity
+  const allLearnings = sorted.flatMap(b => b.learnings);
+  const uniqueLearnings = new Set(allLearnings);
+  if (uniqueLearnings.size > allLearnings.length * 0.7) {
+    indicators.push('High learning diversity — minimal repetition of insights');
+  }
+
+  // Check direction coverage expansion
+  const firstHalfDirs = new Set(sorted.slice(0, midpoint).map(b => b.direction));
+  const secondHalfDirs = new Set(sorted.slice(midpoint).map(b => b.direction));
+  if (secondHalfDirs.size >= firstHalfDirs.size) {
+    indicators.push('Direction coverage maintained or expanded in later beats');
+  }
+
+  if (circleCount > 0) {
+    indicators.push(`${circleCount} full circle(s) completed through all four directions`);
+  }
+
+  // Stagnation: no learning growth and high repetition
+  const stagnationRisk =
+    !learningsGrowing &&
+    beats.length > 4 &&
+    uniqueLearnings.size < allLearnings.length * 0.5;
+
+  return { circleCount, deepeningIndicators: indicators, stagnationRisk };
+}
+
+/**
+ * Identify beats where understanding visibly shifted.
+ *
+ * A transformation point is a beat where:
+ * - New learnings appear that were absent in all prior beats
+ * - A direction transition occurs (ceremony boundary)
+ * - The beat carries ceremonies (indicating intentional shift)
+ */
+export function findTransformationPoints(beats: NarrativeBeat[]): Array<{
+  beatId: string;
+  beforeUnderstanding: string;
+  afterUnderstanding: string;
+  catalyst: string;
+}> {
+  if (beats.length < 2) return [];
+
+  const sorted = [...beats].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const transformations: Array<{
+    beatId: string;
+    beforeUnderstanding: string;
+    afterUnderstanding: string;
+    catalyst: string;
+  }> = [];
+
+  const priorLearnings = new Set<string>();
+
+  for (let i = 1; i < sorted.length; i++) {
+    const beat = sorted[i];
+    const prev = sorted[i - 1];
+    const newLearnings = beat.learnings.filter(l => !priorLearnings.has(l));
+
+    const isDirectionShift = beat.direction !== prev.direction;
+    const hasCeremony = beat.ceremonies.length > 0;
+    const hasNewLearnings = newLearnings.length > 0;
+
+    if (hasNewLearnings || (isDirectionShift && hasCeremony)) {
+      const catalystParts: string[] = [];
+      if (isDirectionShift) catalystParts.push(`direction shift (${prev.direction} → ${beat.direction})`);
+      if (hasCeremony) catalystParts.push('ceremony conducted');
+      if (hasNewLearnings) catalystParts.push(`${newLearnings.length} new learning(s)`);
+
+      transformations.push({
+        beatId: beat.id,
+        beforeUnderstanding: prev.learnings.join('; ') || prev.title,
+        afterUnderstanding: beat.learnings.join('; ') || beat.title,
+        catalyst: catalystParts.join(', '),
+      });
+    }
+
+    for (const l of beat.learnings) priorLearnings.add(l);
+  }
+
+  return transformations;
+}

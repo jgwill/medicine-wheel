@@ -17,7 +17,7 @@ import type {
   CeremonyLog,
   OcapFlags,
   AccountabilityTracking,
-} from './types.js';
+} from './types';
 
 // ── Node Queries ────────────────────────────────────────────────────────────
 

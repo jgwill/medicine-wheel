@@ -21,6 +21,11 @@ import type {
   AccountabilityTracking,
 } from 'medicine-wheel-ontology-core';
 
+// ── Epistemic Source Hints ───────────────────────────────────────────────────
+
+/** Epistemic source hint following Wilson's four ways of knowing */
+export type EpistemicSourceHint = 'land' | 'dream' | 'code' | 'vision' | 'unknown';
+
 // ── Core PDE Types (compatible with ava-langchain-prompt-decomposition) ─────
 
 export type Urgency = 'immediate' | 'session' | 'sprint' | 'ongoing';
@@ -155,6 +160,10 @@ export interface ActionItem {
   completed: boolean;
   confidence: number;
   implicit: boolean;
+  /** Epistemic source classification for this action */
+  epistemicSource?: EpistemicSourceHint;
+  /** Epistemic weight reflecting significance (0–1) */
+  epistemicWeight?: number;
 }
 
 // ── Storage ─────────────────────────────────────────────────────────────────

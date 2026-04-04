@@ -141,3 +141,29 @@ export interface CycleProgress {
   nextDirection: DirectionName | null;
   suggestedAction: string;
 }
+
+// ─── Epistemic Depth ──────────────────────────────────────────
+
+/** Measures whether narrative beats show genuine deepening of understanding */
+export interface EpistemicDepth {
+  /** How many full circles through the four directions have been completed */
+  circleCount: number;
+  /** Indicators that understanding is genuinely deepening */
+  deepeningIndicators: string[];
+  /** Whether the narrative risks stagnation (circling without progress) */
+  stagnationRisk: boolean;
+}
+
+// ─── Narrative Transformation ─────────────────────────────────
+
+/** A point in the narrative where understanding visibly shifted */
+export interface NarrativeTransformation {
+  /** The beat where transformation occurred */
+  beatId: string;
+  /** Understanding before this beat */
+  beforeUnderstanding: string;
+  /** Understanding after this beat */
+  afterUnderstanding: string;
+  /** What catalysed the shift */
+  catalyst: string;
+}

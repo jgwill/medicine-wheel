@@ -1,0 +1,85 @@
+{
+  "name": "medicine-wheel-importance-unit",
+  "version": "0.1.0",
+  "description": "ImportanceUnit — the relational unit of knowledge for the Medicine Wheel Developer Suite. Carries epistemic weight, source dimensions (Land/Dream/Code/Vision), circle depth tracking, and accountability links grounded in Wilson's relational epistemology",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./types": {
+      "import": "./dist/types.js",
+      "types": "./dist/types.d.ts",
+      "require": "./dist/types.js",
+      "default": "./dist/types.js"
+    },
+    "./schemas": {
+      "import": "./dist/schemas.js",
+      "types": "./dist/schemas.d.ts",
+      "require": "./dist/schemas.js",
+      "default": "./dist/schemas.js"
+    },
+    "./unit": {
+      "import": "./dist/unit.js",
+      "types": "./dist/unit.d.ts",
+      "require": "./dist/unit.js",
+      "default": "./dist/unit.js"
+    },
+    "./epistemic-weight": {
+      "import": "./dist/epistemic-weight.js",
+      "types": "./dist/epistemic-weight.d.ts",
+      "require": "./dist/epistemic-weight.js",
+      "default": "./dist/epistemic-weight.js"
+    },
+    "./accountability": {
+      "import": "./dist/accountability.js",
+      "types": "./dist/accountability.d.ts",
+      "require": "./dist/accountability.js",
+      "default": "./dist/accountability.js"
+    },
+    "./circle-tracking": {
+      "import": "./dist/circle-tracking.js",
+      "types": "./dist/circle-tracking.d.ts",
+      "require": "./dist/circle-tracking.js",
+      "default": "./dist/circle-tracking.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "importance-unit",
+    "epistemic-weight",
+    "relational-knowledge",
+    "indigenous-research",
+    "relational-accountability",
+    "four-directions",
+    "shawn-wilson",
+    "circle-depth",
+    "zod"
+  ],
+  "author": "IAIP Collaborative - Shawinigan, QC",
+  "license": "MIT",
+  "dependencies": {
+    "medicine-wheel-ontology-core": "^0.1.4",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}
