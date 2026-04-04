@@ -21,3 +21,15 @@ You will have to work with what is the most relevant next step and create the co
 
 You also have `/workspace/repos/jgwill/mwds-rdfglance`, `/workspace/repos/jgwill/mwds-react-d3-graph` which are forks that the Perplexity article was mentionning, we might want to borrow are make them to our liking for using them
 
+  
+  
+---
+2604041820--56b856a4-27c2-47b9-87c4-3e0fc405ce0b - @.pde/2604041820--56b856a4-27c2-47b9-87c4-3e0fc405ce0b
+---
+upstash-kv-medicine-wheel-aquamarine database of the online parts
+  
+  
+---
+2604041821--25797780-02c9-4ccf-aed5-09e76ea046d8 - @.pde/2604041821--25797780-02c9-4ccf-aed5-09e76ea046d8
+---
+neon-medicine-wheel-charcoal-mountain for the online app
