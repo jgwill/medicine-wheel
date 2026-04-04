@@ -239,7 +239,8 @@ The `store/` subdirectory is created automatically by the JSONL persistence engi
 - **Cross-interface visibility** — Data created in Web UI appears in MCP tools instantly (and vice versa)
 - **Zero-infrastructure start** — Communities begin with JSONL files, no Redis setup needed
 - **Inspectable data** — `cat .mw/store/ceremonies.jsonl` reveals all ceremonies in plain text
-- **Git-trackable** — JSONL files can be committed to version control as project data
+- **Git-friendly when opted in** — JSONL files are plain-text and can be committed as project data, but `.mw/store/` is ignored by default in standard repo setups
+- **Explicit commit control** — Projects that want tracked seed/state data can override the ignore rule for selected `.mw/store/*.jsonl` files or subdirectories
 - **Graceful graduation** — Switch to Redis when scale requires it, same API
 - **`.mw/` convention alignment** — Follows the ecosystem-wide directional workspace pattern
 
