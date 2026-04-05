@@ -11,19 +11,21 @@
 
 **Desired Outcome**: A fully-featured Medicine Wheel MCP server with complete CRUD operations for all entity types (nodes, edges, ceremonies, beats, cycles, charts, mmots), backed by shared JSONL persistence, academically grounded in Indigenous epistemology, and documented with orchestration learnings that inform future ceremonial technology development sessions.
 
-**Current Reality**: MCP has 30+ tools but `create_research_cycle` was just added and not yet validated end-to-end. Shared JSONL persistence exists (PR #27) but hasn't been reviewed via MMOT. CRUD coverage is uneven — some entity types have create/list but not get/update. No academic validation of the design against Indigenous epistemology literature. No orchestration documentation exists.
+**Current Reality**: MCP has 30+ tools but `create_research_cycle` was just added and not yet validated end-to-end. Shared JSONL persistence (PR #27) is **completed and merged** — needs MMOT review to identify enhancement opportunities, not initial review. CRUD coverage is uneven — some entity types have create/list but not get/update. No academic validation of the design against Indigenous epistemology literature. No orchestration documentation exists. rispecs/CYCLES.md and rispecs/CEREMONIES.md exist only as demo versions in `rispecs/demo/` — production rispecs need to be created.
 
 **Action Steps** (strategic secondary choices supporting the primary goal):
 
 1. **PART 1 — MMOT Review & Validation** (SOUTH→WEST→NORTH)
-   - Review PR #27 shared-persistence using 4-step MMOT
+   - Review completed PR #27 shared-persistence using 4-step MMOT — identify enhancement opportunities
    - Audit MCP tool completeness matrix
    - Validate create_research_cycle end-to-end
    - Write mmot-review.md
 
 2. **PART 2 — Deep-Search & Academic Grounding** (SOUTH→WEST→NORTH)
-   - 3 parallel deep-searches: Indigenous epistemology in orchestration, ceremonial tech patterns, decolonizing software
-   - Cross-reference with codebase
+   - **DS#1**: Wilson's relational ontology → multi-agent orchestration design (agent identity as relational, not capability-based). Compare with AutoGen/CrewAI to surface structural differences. Ground: Wilson 2008 ch.4, KINSHIP.md, IAIP DRAFT §2.1
+   - **DS#2**: Ceremonial protocol precedents in technology development — ceremony-as-lifecycle (opening/closing, witnessing, consent, circle governance → PR review, deploy, incident). Ground: ceremony-protocol.spec.md, fire-keeper.spec.md, Kovach 2009, Smith 1999
+   - **DS#3**: Two-Eyed Seeing (Etuaptmumk) in dual-store architecture — JSONL/graph persistence (Western) alongside OCAP®/relational accountability (Indigenous). Ground: Marshall 2004, consent-lifecycle.spec.md, FNIGC Indigenous data sovereignty
+   - Cross-reference findings with codebase
    - Transform into rispecs
    - Store thesis
 
@@ -38,10 +40,10 @@
 ## Agent Deployment Plan
 
 ### SOUTH Agents (model: claude-opus-4.6)
-- **S1**: MMOT review of shared-persistence + MCP tool audit
-- **S2**: Deep-search Indigenous epistemology in agent orchestration
-- **S3**: Deep-search ceremonial technology development patterns
-- **S4**: Deep-search decolonizing software architecture
+- **S1**: MMOT review of completed shared-persistence (PR #27) — enhancement opportunities + MCP tool audit
+- **S2**: Deep-search #1 — Wilson’s relational ontology → multi-agent orchestration (compare Western frameworks)
+- **S3**: Deep-search #2 — Ceremonial protocol precedents in technology lifecycle
+- **S4**: Deep-search #3 — Two-Eyed Seeing in dual-store architecture + Indigenous data sovereignty
 - **S5**: Explore orchestration skill patterns
 
 ### WEST Agents (model: claude-opus-4.6)
