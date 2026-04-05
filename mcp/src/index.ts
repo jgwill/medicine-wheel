@@ -19,6 +19,7 @@ import { validators } from "./validators/index.js";
 import { integrationTools } from "./tools/integrations.js";
 import { discoveryTools } from "./tools/discovery.js";
 import { structuralTensionTools } from "./tools/structural-tension.js";
+import { ceremonyLifecycleTools } from "./tools/ceremony-lifecycle.js";
 import { resources } from "./resources/index.js";
 import { prompts } from "./prompts/index.js";
 
@@ -45,6 +46,7 @@ const allTools = [
   ...integrationTools,
   ...discoveryTools,
   ...structuralTensionTools,
+  ...ceremonyLifecycleTools,
 ];
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
