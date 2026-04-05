@@ -358,4 +358,200 @@ export const discoveryTools: Tool[] = [
       }
     },
   },
+  {
+    name: "get_relational_node",
+    description: "Get a single relational node by its ID. Returns the full node object or not_found.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        node_id: {
+          type: "string",
+          description: "The ID of the relational node to retrieve",
+        },
+      },
+      required: ["node_id"],
+    },
+    handler: async (args) => {
+      try {
+        const { node_id } = args;
+        const node = store.getNode(node_id);
+        if (!node) {
+          return {
+            status: "not_found",
+            message: `Relational node ${node_id} not found`,
+          };
+        }
+        return {
+          status: "found",
+          node,
+          teaching: "To know a relation by name is to accept responsibility for it.",
+        };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return {
+          status: "error",
+          message: `Failed to get relational node: ${errorMsg}`,
+          error: errorMsg,
+        };
+      }
+    },
+  },
+  {
+    name: "get_ceremony",
+    description: "Get a single ceremony by its ID. Returns the full ceremony object or not_found.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ceremony_id: {
+          type: "string",
+          description: "The ID of the ceremony to retrieve",
+        },
+      },
+      required: ["ceremony_id"],
+    },
+    handler: async (args) => {
+      try {
+        const { ceremony_id } = args;
+        const ceremony = store.getCeremony(ceremony_id);
+        if (!ceremony) {
+          return {
+            status: "not_found",
+            message: `Ceremony ${ceremony_id} not found`,
+          };
+        }
+        return {
+          status: "found",
+          ceremony,
+          teaching: "Research is ceremony. Each record is a witness to relational practice.",
+        };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return {
+          status: "error",
+          message: `Failed to get ceremony: ${errorMsg}`,
+          error: errorMsg,
+        };
+      }
+    },
+  },
+  {
+    name: "get_cycle",
+    description: "Get a single medicine wheel research cycle by its ID. Lighter than get_narrative_arc — returns the cycle object without beats.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cycle_id: {
+          type: "string",
+          description: "The ID of the cycle to retrieve",
+        },
+      },
+      required: ["cycle_id"],
+    },
+    handler: async (args) => {
+      try {
+        const { cycle_id } = args;
+        const cycle = store.getCycle(cycle_id);
+        if (!cycle) {
+          return {
+            status: "not_found",
+            message: `Cycle ${cycle_id} not found`,
+          };
+        }
+        return {
+          status: "found",
+          cycle,
+          teaching: "A cycle is a complete turn of the wheel. Each question deserves its full journey.",
+        };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return {
+          status: "error",
+          message: `Failed to get cycle: ${errorMsg}`,
+          error: errorMsg,
+        };
+      }
+    },
+  },
+  {
+    name: "list_edges",
+    description: "List relational edges (connections between nodes). Optionally filter by a specific node to see all its relationships.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        node_id: {
+          type: "string",
+          description: "Filter edges connected to this node ID (optional)",
+        },
+        limit: {
+          type: "number",
+          description: "Maximum edges to return (default: 50)",
+          minimum: 1,
+          maximum: 200,
+        },
+      },
+    },
+    handler: async (args) => {
+      try {
+        const { node_id, limit = 50 } = args;
+
+        let edges;
+        if (node_id) {
+          edges = store.getEdgesForNode(node_id);
+        } else {
+          edges = store.edges.getAll();
+        }
+
+        const limited = edges.slice(0, limit);
+
+        return {
+          count: limited.length,
+          total_available: edges.length,
+          filters: { node_id, limit },
+          edges: limited,
+          teaching: "Every edge is a responsibility. Relationships are not mere links — they carry obligations.",
+        };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return {
+          status: "error",
+          message: `Failed to list edges: ${errorMsg}`,
+          error: errorMsg,
+        };
+      }
+    },
+  },
+  {
+    name: "list_mmots",
+    description: "List Medicine-wheel Marks-On-Time (MMOTs) for a specific chart. MMOTs are temporal annotations on medicine wheel charts.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        chart_id: {
+          type: "string",
+          description: "The chart ID to list MMOTs for",
+        },
+      },
+      required: ["chart_id"],
+    },
+    handler: async (args) => {
+      try {
+        const { chart_id } = args;
+        const mmots = store.getMmotsByChart(chart_id);
+
+        return {
+          count: mmots.length,
+          chart_id,
+          mmots,
+          teaching: "Marks on time honour the moments that shaped the journey.",
+        };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return {
+          status: "error",
+          message: `Failed to list MMOTs: ${errorMsg}`,
+          error: errorMsg,
+        };
+      }
+    },
+  },
 ];

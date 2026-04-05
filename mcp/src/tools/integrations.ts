@@ -545,4 +545,124 @@ export const integrationTools: Tool[] = [
       }
     },
   },
+  {
+    name: "update_cycle_direction",
+    description: "Advance a medicine wheel research cycle to a new direction. The wheel turns: east → south → west → north.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cycle_id: {
+          type: "string",
+          description: "The ID of the cycle to update",
+        },
+        new_direction: {
+          type: "string",
+          enum: ["east", "south", "west", "north"],
+          description: "The new current direction for the cycle",
+        },
+      },
+      required: ["cycle_id", "new_direction"],
+    },
+    handler: async (args) => {
+      try {
+        const { cycle_id, new_direction } = args;
+
+        const cycle = store.getCycle(cycle_id);
+        if (!cycle) {
+          return {
+            status: "not_found",
+            message: `Cycle ${cycle_id} not found`,
+          };
+        }
+
+        const previousDirection = cycle.current_direction;
+        const updated = {
+          ...cycle,
+          current_direction: new_direction,
+        };
+
+        store.createCycle(updated);
+
+        return {
+          status: "updated",
+          cycle_id,
+          previous_direction: previousDirection,
+          new_direction,
+          cycle: updated,
+          teaching: "The wheel turns. Each direction holds its own medicine.",
+        };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return {
+          status: "error",
+          message: `Failed to update cycle direction: ${errorMsg}`,
+          error: errorMsg,
+        };
+      }
+    },
+  },
+  {
+    name: "update_relational_node",
+    description: "Update a relational node's description, metadata, or direction. Preserves existing fields not specified in the update.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        node_id: {
+          type: "string",
+          description: "The ID of the relational node to update",
+        },
+        description: {
+          type: "string",
+          description: "New description for the node (optional)",
+        },
+        metadata: {
+          type: "object",
+          description: "Metadata to merge into existing metadata (optional)",
+        },
+        direction: {
+          type: "string",
+          enum: ["east", "south", "west", "north"],
+          description: "New medicine wheel direction (optional)",
+        },
+      },
+      required: ["node_id"],
+    },
+    handler: async (args) => {
+      try {
+        const { node_id, description, metadata, direction } = args;
+
+        const node = store.getNode(node_id);
+        if (!node) {
+          return {
+            status: "not_found",
+            message: `Relational node ${node_id} not found`,
+          };
+        }
+
+        const updated = {
+          ...node,
+          ...(description !== undefined && { description }),
+          ...(direction !== undefined && { direction }),
+          metadata: { ...(node.metadata || {}), ...(metadata || {}) },
+          updated_at: new Date().toISOString(),
+        };
+
+        store.createNode(updated);
+
+        return {
+          status: "updated",
+          node_id,
+          node: updated,
+          teaching: "Relations grow and change. Updating a node honours that living reality.",
+        };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return {
+          status: "error",
+          message: `Failed to update relational node: ${errorMsg}`,
+          error: errorMsg,
+        };
+      }
+    },
+  },
 ];
