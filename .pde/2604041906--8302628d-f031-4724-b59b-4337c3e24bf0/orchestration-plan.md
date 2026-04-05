@@ -11,7 +11,15 @@
 
 **Desired Outcome**: A fully-featured Medicine Wheel MCP server with complete CRUD operations for all entity types (nodes, edges, ceremonies, beats, cycles, charts, mmots), backed by shared JSONL persistence, academically grounded in Indigenous epistemology, and documented with orchestration learnings that inform future ceremonial technology development sessions.
 
-**Current Reality**: MCP has 30+ tools but `create_research_cycle` was just added and not yet validated end-to-end. Shared JSONL persistence (PR #27) is **completed and merged** — needs MMOT review to identify enhancement opportunities, not initial review. CRUD coverage is uneven — some entity types have create/list but not get/update. No academic validation of the design against Indigenous epistemology literature. No orchestration documentation exists. rispecs/CYCLES.md and rispecs/CEREMONIES.md exist only as demo versions in `rispecs/demo/` — production rispecs need to be created.
+**Current Reality** _(updated post-wake 2026-04-05)_:
+- ✅ `create_research_cycle` validated end-to-end — cycle created, listed, retrieved by ID via JSONL store
+- ✅ JSONL persistence confirmed working — 3 cycles and 3 ceremonies persisting across sessions
+- ✅ Store at `.mw/store/` with nodes.jsonl, edges.jsonl, ceremonies.jsonl, cycles.jsonl, beats.jsonl
+- 🔄 S1 agent running MMOT review of shared-persistence + tool completeness audit
+- 🔄 S2-S4 agents running 3 parallel deep-searches (Wilson/ceremonial protocol/Two-Eyed Seeing)
+- ⬜ CRUD coverage uneven — audit in progress
+- ⬜ No academic validation yet — deep-searches running
+- ⬜ rispecs/CYCLES.md and rispecs/CEREMONIES.md exist only as demo versions in `rispecs/demo/`
 
 **Action Steps** (strategic secondary choices supporting the primary goal):
 
