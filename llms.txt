@@ -57,3 +57,13 @@
 - **OCAP®**: Ownership, Control, Access, Possession — Indigenous data sovereignty
 - **Structural Tension**: Germination → Assimilation → Completion creative cycle
 - **Ceremonial Inquiry**: opening → council → integration → closure phase progression
+
+## Cross-Repository Links
+
+- [Master LLM Index](https://llms.jgwill.com/llms-full.txt): 40+ guidance documents
+- [Workspace Platform](https://docs.workspace.jgwill.com/llms.txt): Unified creative development platform
+- [Veritas — Truth & Performance Models](https://docs.veritas.jgwill.com/llms.txt): MMOT evaluation using Medicine Wheel ontology
+- [SMCraft — State Machine Craft](https://docs.smcraft.jgwill.com/llms.txt): FSM patterns for ceremonial cycle state machines
+- [NarIntel — Narrative Intelligence](https://docs.narintel.jgwill.com/llms.txt): Narrative analysis grounded in Four Directions inquiry
+- [Storytelling — Narrative Craft](https://storytelling.jgwill.com/llms.txt): Story structure and creative orientation
+- [RISE Framework](https://llms.jgwill.com/llms-rise-framework.txt): Creative-oriented specification methodology
