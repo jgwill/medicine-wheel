@@ -2,7 +2,7 @@
 
 > A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's (Respect, Reciprocity, Responsibility), and OCAP® data sovereignty principles.
 
-**Version:** 0.1.1
+**Version:** 0.2.0
 **Language:** TypeScript (ES2022, ESM, strict mode)
 **Runtime:** Node.js
 **Validation:** Zod ^3.23.0
@@ -17,15 +17,21 @@
 2. [Core Concepts](#core-concepts)
 3. [Package 1: ontology-core](#package-1-ontology-core)
 4. [Package 2: ceremony-protocol](#package-2-ceremony-protocol)
-5. [Package 3: narrative-engine](#package-3-narrative-engine)
-6. [Package 4: graph-viz](#package-4-graph-viz)
-7. [Package 5: relational-query](#package-5-relational-query)
-8. [Package 6: prompt-decomposition](#package-6-prompt-decomposition)
-9. [Package 7: ui-components](#package-7-ui-components)
-10. [Package 8: data-store](#package-8-data-store)
-11. [Package 9: session-reader](#package-9-session-reader)
-12. [End-to-End Usage](#end-to-end-usage)
-13. [Specifications](#specifications)
+5. [Package 3: fire-keeper](#package-3-fire-keeper)
+6. [Package 4: community-review](#package-4-community-review)
+7. [Package 5: consent-lifecycle](#package-5-consent-lifecycle)
+8. [Package 6: narrative-engine](#package-6-narrative-engine)
+9. [Package 7: importance-unit](#package-7-importance-unit)
+10. [Package 8: relational-index](#package-8-relational-index)
+11. [Package 9: transformation-tracker](#package-9-transformation-tracker)
+12. [Package 10: graph-viz](#package-10-graph-viz)
+13. [Package 11: relational-query](#package-11-relational-query)
+14. [Package 12: prompt-decomposition](#package-12-prompt-decomposition)
+15. [Package 13: ui-components](#package-13-ui-components)
+16. [Package 14: data-store](#package-14-data-store)
+17. [Package 15: session-reader](#package-15-session-reader)
+18. [End-to-End Usage](#end-to-end-usage)
+19. [Specifications](#specifications)
 
 ---
 
@@ -34,7 +40,13 @@
 ```
 medicine-wheel-ontology-core          ← Foundation (everyone depends on this)
     ├── medicine-wheel-ceremony-protocol    ← Ceremony state & governance
+    ├── medicine-wheel-fire-keeper          ← Ceremony coordination agent
+    ├── medicine-wheel-community-review     ← Elder review & consensus
+    ├── medicine-wheel-consent-lifecycle    ← Relational consent lifecycle
     ├── medicine-wheel-narrative-engine     ← Beat sequencing & arc validation
+    ├── medicine-wheel-importance-unit      ← Relational unit of knowledge
+    ├── medicine-wheel-relational-index     ← Four-source epistemic indexing
+    ├── medicine-wheel-transformation-tracker ← Wilson validity tracking
     ├── medicine-wheel-graph-viz            ← Circular layout & visualization
     ├── medicine-wheel-relational-query     ← Query, traversal & audit
     ├── medicine-wheel-prompt-decomposition ← Intent extraction & PDE
@@ -43,7 +55,7 @@ medicine-wheel-ontology-core          ← Foundation (everyone depends on this)
     └── medicine-wheel-session-reader       ← Session event data reader
 ```
 
-All packages compile to ES2022 with source maps and declaration files. No circular dependencies. All packages use `medicine-wheel-ontology-core` types as their shared vocabulary.
+All packages compile to ES2022 with source maps and declaration files. No circular dependencies. All packages use `medicine-wheel-ontology-core` types as their shared vocabulary. 15 packages total organized in conceptual layers: Foundation → Ceremony → Relational Epistemology → Visualization/Query → UI → Infrastructure.
 
 ---
 
@@ -395,7 +407,481 @@ const access = getAccessLevel('ceremony/smudging.md', config.governance!);
 
 ---
 
-## Package 3: narrative-engine
+## Package 3: fire-keeper
+
+```bash
+npm install medicine-wheel-fire-keeper
+```
+
+**Version:** 0.1.0
+
+The Fire Keeper is the ceremony coordination agent. It does not write code or produce artifacts directly — it receives, evaluates, routes, and gates the work of sub-agents through relational integrity checks.
+
+### Core Class: FireKeeper
+
+```typescript
+import { FireKeeper, DEFAULT_GATES } from 'medicine-wheel-fire-keeper';
+import type { FireKeeperConfig, FireKeeperState } from 'medicine-wheel-fire-keeper';
+
+const config: FireKeeperConfig = {
+  trajectoryThreshold: 0.65,
+  permissionTiers: ['observe', 'analyze', 'propose', 'act'],
+  gatingConditions: DEFAULT_GATES,
+  humanDecisionPoints: [],
+};
+
+const keeper = new FireKeeper(config);
+```
+
+### Types
+
+```typescript
+import type {
+  CeremonyPhaseExtended,   // 'gathering' | 'kindling' | 'tending' | 'harvesting' | 'resting'
+  QuadrantStatus,           // { status, unitCount, deepestCircle, lastVisited }
+  FireKeeperContext,        // { ceremonyState, unitId?, wilsonAlignment?, ocapCompliant?, metadata? }
+  GatingCondition,          // { condition, required, evaluator: (ctx) => boolean }
+  GatingConditionStatus,    // { condition, satisfied, satisfiedAt, satisfiedBy }
+  PermissionTier,           // 'observe' | 'analyze' | 'propose' | 'act'
+  DecisionPointType,        // 'value-conflict' | 'permission-escalation' | 'circle-completion-review' | 'modality-choice'
+  DecisionPoint,            // { type, trigger: (ctx) => boolean, requiresHuman }
+  TrajectoryCheckpoint,     // { timestamp, confidence, direction, note }
+  RelationalMilestone,      // { milestone, complete, quadrantsRequired, quadrantsTouched }
+  StopWorkOrder,            // { targetAgentId, reason, unitId, resumeCondition }
+  CeremonyStateExtended,    // Full ceremony state per inquiry
+  FireKeeperConfig,         // { trajectoryThreshold, permissionTiers, gatingConditions, humanDecisionPoints }
+  FireKeeperState,          // { active, ceremonies, currentTier, activeStopWorkOrders, lastUpdated }
+} from 'medicine-wheel-fire-keeper';
+```
+
+### Message Types (A2A Protocol)
+
+```typescript
+import type {
+  ImportanceSubmittedMessage,  // Sub-agent submits an ImportanceUnit
+  CircleReturnMessage,         // Unit needs to circle back to a quadrant
+  AgentReportMessage,          // Sub-agent reports progress
+  HumanResponseMessage,        // Human responds to a decision point
+  ImportanceAcceptedMessage,   // Fire Keeper accepts an ImportanceUnit
+  ImportanceHeldMessage,       // Fire Keeper holds a unit for review
+  DeepenRequestedMessage,      // Fire Keeper requests deeper work
+  HumanNeededMessage,          // Fire Keeper escalates to human
+  CeremonyStateUpdateMessage,  // Ceremony state broadcast
+  StopWorkOrderMessage,        // Emergency halt
+  FireKeeperMessage,           // Union of all message types
+} from 'medicine-wheel-fire-keeper';
+```
+
+### Gating
+
+```typescript
+import {
+  evaluateGates,         // (gates, context) => GateEvaluationResult
+  createGate,            // (condition, required, evaluator) => GatingCondition
+  resolveHold,           // (gate, context) => resolved GatingConditionStatus
+  GATE_WILSON_ALIGNMENT, // Pre-built: Wilson alignment >= 0.6
+  GATE_OCAP_COMPLIANCE,  // Pre-built: OCAP flags compliant
+  GATE_CEREMONY_PHASE,   // Pre-built: ceremony in active phase
+  DEFAULT_GATES,         // [GATE_WILSON_ALIGNMENT, GATE_OCAP_COMPLIANCE, GATE_CEREMONY_PHASE]
+} from 'medicine-wheel-fire-keeper';
+import type { GateEvaluationResult } from 'medicine-wheel-fire-keeper';
+// GateEvaluationResult: { allPassed, results: { condition, passed, required }[] }
+```
+
+### Decisions (Human-in-the-Loop)
+
+```typescript
+import { humanNeeded, permissionEscalation, circleReview } from 'medicine-wheel-fire-keeper';
+import type { HumanDecisionResult, EscalationResult, CircleReviewResult } from 'medicine-wheel-fire-keeper';
+```
+
+### Check-Back Protocol
+
+```typescript
+import { relationalCheckBack } from 'medicine-wheel-fire-keeper';
+import type { CheckBackStep, CheckBackResult } from 'medicine-wheel-fire-keeper';
+
+// Four-step relational check-back before autonomous action:
+// 1. Does this action honor existing relations?
+// 2. Does it strengthen the Spirit-Body relationship?
+// 3. Is it accountable to all four directions?
+// 4. Would an Elder approve?
+```
+
+### Ceremony State & Trajectory
+
+```typescript
+import { CeremonyStateManager, createCeremonyState } from 'medicine-wheel-fire-keeper';
+import { trajectoryConfidence, valueDivergenceDetect } from 'medicine-wheel-fire-keeper';
+import type { CompletionReadiness, DivergenceResult } from 'medicine-wheel-fire-keeper';
+```
+
+### Permission Tiers
+
+| Tier | Scope | Human Required |
+|------|-------|---------------|
+| 🟢 observe | Read files, gather context | No |
+| 🟡 analyze | Produce analysis, create ImportanceUnits | No |
+| 🟠 propose | Draft artifacts, suggest schemas | No (Fire Keeper reviews) |
+| 🔴 act | Generate code, create commits | **Yes** |
+
+### Usage Example
+
+```typescript
+import { FireKeeper, DEFAULT_GATES } from 'medicine-wheel-fire-keeper';
+import type { FireKeeperConfig } from 'medicine-wheel-fire-keeper';
+
+const config: FireKeeperConfig = {
+  trajectoryThreshold: 0.65,
+  permissionTiers: ['observe', 'analyze', 'propose', 'act'],
+  gatingConditions: DEFAULT_GATES,
+  humanDecisionPoints: [],
+};
+
+const keeper = new FireKeeper(config);
+
+// Begin a ceremony
+const ceremony = keeper.beginCeremony('inquiry::my-research');
+
+// Evaluate an ImportanceUnit against gating conditions
+const result = keeper.evaluateImportance(
+  { id: 'unit-1', title: 'Vision from the East' },
+  'inquiry::my-research'
+);
+// result: { accepted, held, gateResults, relationalAlignment }
+```
+
+---
+
+## Package 4: community-review
+
+```bash
+npm install medicine-wheel-community-review
+```
+
+**Version:** 0.1.0
+
+Wilson describes research validation through *community review* — Elders, knowledge keepers, and community members validate whether research honors relational accountability. This package implements that vision.
+
+### Types
+
+```typescript
+import type {
+  PersonRole,            // 'steward' | 'contributor' | 'elder' | 'firekeeper' | 'community-member' | 'youth'
+  ArtifactType,          // 'research' | 'ceremony' | 'knowledge' | 'code' | 'narrative'
+  ReviewCircleStatus,    // 'gathering' | 'reviewing' | 'deliberating' | 'decided'
+  ReviewOutcomeType,     // 'approved-with-blessings' | 'deepen-required' | 'return-to-circle' | 'ceremonial-hold' | 'withdrawn'
+  ReviewCircle,          // { id, artifactId, artifactType, reviewers[], elderValidator?, status, outcome?, talkingCircleLog[], wilsonAlignment, ocapCompliant, createdAt }
+  Reviewer,              // { id, role, direction?, voice?, accountableTo[] }
+  ReviewOutcome,         // { type, consensus, voices[], wilsonCheck, elderBlessing?, conditions[], nextAction }
+  WilsonCheck,           // { respectHonored, reciprocityPresent, responsibilityTaken }
+  TalkingCircleEntry,    // { speakerId, role, direction?, voice, timestamp, inResponseTo? }
+} from 'medicine-wheel-community-review';
+```
+
+### Zod Schemas
+
+```typescript
+import {
+  PersonRoleSchema,
+  ArtifactTypeSchema,
+  ReviewCircleStatusSchema,
+  ReviewOutcomeTypeSchema,
+  ReviewerSchema,
+  TalkingCircleEntrySchema,
+  WilsonCheckSchema,
+  ReviewOutcomeSchema,
+  ReviewCircleSchema,
+} from 'medicine-wheel-community-review';
+
+import type {
+  ValidatedReviewer,
+  ValidatedTalkingCircleEntry,
+  ValidatedWilsonCheck,
+  ValidatedReviewOutcome,
+  ValidatedReviewCircle,
+} from 'medicine-wheel-community-review';
+```
+
+### Circle Management
+
+```typescript
+import {
+  createReviewCircle,  // (artifactId, artifactType) => ReviewCircle
+  addReviewer,         // (circle, reviewer) => ReviewCircle
+  submitForReview,     // (circle) => ReviewCircle (transitions to 'reviewing')
+  closeCircle,         // (circle, outcome) => ReviewCircle (transitions to 'decided')
+  circleStatus,        // (circle) => { status, reviewerCount, hasElder, wilsonAlignment }
+} from 'medicine-wheel-community-review';
+```
+
+### Elder Validation
+
+```typescript
+import {
+  requestElderValidation,  // (circle, elderId) => ReviewCircle
+  elderGuidance,           // (circle) => guidance string
+  elderBlessing,           // (circle, elderId, blessing) => ReviewCircle
+} from 'medicine-wheel-community-review';
+```
+
+### Consensus & Talking Circle
+
+```typescript
+import {
+  seekConsensus,         // (circle) => { reached, voices[], gaps[] }
+  talkingCircle,         // (circle, entry) => ReviewCircle
+  recordVoices,          // (circle) => voice summary
+  resolveDisagreement,   // (circle, process) => ReviewCircle
+} from 'medicine-wheel-community-review';
+```
+
+### Accountability
+
+```typescript
+import {
+  reviewerAccountability,   // (reviewer) => accountability chain
+  reviewAgainstWilson,       // (circle) => WilsonCheck
+  reviewAgainstOcap,         // (circle) => OCAP® compliance check
+  relationalHealthReview,    // (circle) => relational health assessment
+} from 'medicine-wheel-community-review';
+```
+
+### Outcomes
+
+```typescript
+import {
+  approveWithBlessings,  // (circle, blessing) => ReviewOutcome
+  requestDeepening,      // (circle, areas) => ReviewOutcome
+  returnToCircle,        // (circle, reason) => ReviewOutcome
+  ceremonialHold,        // (circle, reason) => ReviewOutcome
+} from 'medicine-wheel-community-review';
+```
+
+### Usage Example
+
+```typescript
+import {
+  createReviewCircle,
+  addReviewer,
+  submitForReview,
+  talkingCircle,
+  requestElderValidation,
+  seekConsensus,
+  approveWithBlessings,
+  closeCircle,
+} from 'medicine-wheel-community-review';
+
+// Create a review circle
+let circle = createReviewCircle('research-001', 'research');
+
+// Add reviewers from different directions
+circle = addReviewer(circle, {
+  id: 'reviewer-1',
+  role: 'steward',
+  direction: 'east',
+  accountableTo: ['community', 'future-generations'],
+});
+
+circle = addReviewer(circle, {
+  id: 'elder-1',
+  role: 'elder',
+  direction: 'north',
+  accountableTo: ['ancestors', 'land'],
+});
+
+// Submit for review
+circle = submitForReview(circle);
+
+// Add voices in the talking circle
+circle = talkingCircle(circle, {
+  speakerId: 'reviewer-1',
+  role: 'steward',
+  direction: 'east',
+  voice: 'This research honors the land and our relations.',
+  timestamp: new Date().toISOString(),
+});
+
+// Request Elder validation
+circle = requestElderValidation(circle, 'elder-1');
+
+// Seek consensus
+const consensus = seekConsensus(circle);
+
+// Produce outcome
+const outcome = approveWithBlessings(circle, 'This work carries our blessing.');
+circle = closeCircle(circle, outcome);
+```
+
+---
+
+## Package 5: consent-lifecycle
+
+```bash
+npm install medicine-wheel-consent-lifecycle
+```
+
+**Version:** 0.1.0
+
+Transforms consent from a boolean checkbox into a living relational obligation with lifecycle tracking, renewal, renegotiation, and community-level consent protocols. Wilson's relational accountability means consent is not an event — it's a *relationship*.
+
+### Types
+
+```typescript
+import type {
+  ConsentState,        // 'pending' | 'granted' | 'active' | 'renewal-needed' | 'expired' | 'renegotiating' | 'withdrawn'
+  ConsentRecord,       // { id, grantor, grantee, scope, state, grantedAt?, renewedAt?, expiresAt?, renewalInterval?, ceremonies[], history[], communityLevel, dependentRelations[], ocapFlags }
+  ConsentScope,        // { description, dataTypes[], purposes[], duration?, geographic?, restrictions[] }
+  ConsentCeremony,     // { type, timestamp, participants[], witnessedBy[], outcome, notes?, ceremonyId? }
+  ConsentStateChange,  // { from, to, reason, timestamp, initiatedBy }
+  ConsentCascade,      // { triggerId, affected[], action: 'expire' | 'review' | 'withdraw' | 'narrow' }
+} from 'medicine-wheel-consent-lifecycle';
+```
+
+### Zod Schemas
+
+```typescript
+import {
+  ConsentStateSchema,
+  ConsentScopeSchema,
+  ConsentCeremonySchema,
+  ConsentStateChangeSchema,
+  ConsentCascadeSchema,
+  ConsentRecordSchema,
+} from 'medicine-wheel-consent-lifecycle';
+
+import type {
+  ValidatedConsentRecord,
+  ValidatedConsentScope,
+  ValidatedConsentCeremony,
+  ValidatedConsentStateChange,
+  ValidatedConsentCascade,
+} from 'medicine-wheel-consent-lifecycle';
+```
+
+### Lifecycle
+
+```typescript
+import {
+  grantConsent,         // (record) => ConsentRecord (state → 'granted')
+  renewConsent,         // (record) => ConsentRecord (state → 'active', renewedAt updated)
+  renegotiateConsent,   // (record, newScope) => ConsentRecord (state → 'renegotiating')
+  withdrawConsent,      // (record, reason) => ConsentRecord (state → 'withdrawn', terminal)
+  checkConsentHealth,   // (record) => ConsentHealthResult
+} from 'medicine-wheel-consent-lifecycle';
+import type { ConsentHealthResult } from 'medicine-wheel-consent-lifecycle';
+```
+
+### Scope
+
+```typescript
+import {
+  defineScope,     // (description, dataTypes, purposes) => ConsentScope
+  narrowScope,     // (scope, restrictions) => ConsentScope
+  widenScope,      // (scope, additions) => WidenScopeResult (requires re-consent)
+  scopeIncludes,   // (scope, query) => ScopeCheckResult
+} from 'medicine-wheel-consent-lifecycle';
+import type { ScopeAdditions, WidenScopeResult, ScopeQuery, ScopeCheckResult } from 'medicine-wheel-consent-lifecycle';
+```
+
+### Ceremony
+
+```typescript
+import {
+  consentCeremony,          // (record, participants) => ConsentRecord
+  consentRenewalCeremony,   // (record, participants) => ConsentRecord
+} from 'medicine-wheel-consent-lifecycle';
+import type { ConsentCeremonyOptions } from 'medicine-wheel-consent-lifecycle';
+```
+
+### Community Consent
+
+```typescript
+import {
+  communityConsent,     // (community, scope) => ConsentRecord
+  collectiveDecision,   // (voices) => ConsensusResult
+  elderApproval,        // (elderId, record) => ConsentRecord
+} from 'medicine-wheel-consent-lifecycle';
+import type { CommunityInfo, CommunityVoice, ConsensusResult, ElderApprovalOptions } from 'medicine-wheel-consent-lifecycle';
+```
+
+### Cascade
+
+```typescript
+import {
+  onWithdrawal,             // (record) => AffectedRelation[]
+  propagateScopeChange,     // (record, newScope) => ScopeChangeResult
+  findDependentRelations,   // (record, allRecords) => DependencyResult
+} from 'medicine-wheel-consent-lifecycle';
+import type { AffectedRelation, ScopeChangeResult, DependencyResult } from 'medicine-wheel-consent-lifecycle';
+```
+
+### Alerts
+
+```typescript
+import {
+  consentStaleAlert,  // (record) => StaleAlert
+  renewalDue,          // (records) => RenewalDueResult
+  scopeMismatch,       // (record, action) => ScopeMismatchResult
+  healthCheck,         // (records) => BatchHealthResult
+} from 'medicine-wheel-consent-lifecycle';
+import type { StaleAlert, RenewalItem, RenewalDueResult, ScopeMismatchResult, BatchHealthResult } from 'medicine-wheel-consent-lifecycle';
+```
+
+### Usage Example
+
+```typescript
+import {
+  grantConsent,
+  renewConsent,
+  withdrawConsent,
+  defineScope,
+  consentCeremony,
+  onWithdrawal,
+  checkConsentHealth,
+} from 'medicine-wheel-consent-lifecycle';
+
+// Define a consent scope
+const scope = defineScope(
+  'Research data about community healing practices',
+  ['interview-transcripts', 'ceremony-observations'],
+  ['academic-publication', 'community-archive']
+);
+
+// Create a consent record and grant
+let consent: ConsentRecord = {
+  id: 'consent-001',
+  grantor: 'elder-council',
+  grantee: 'researcher-1',
+  scope,
+  state: 'pending',
+  ceremonies: [],
+  history: [],
+  communityLevel: true,
+  dependentRelations: ['rel-001', 'rel-002'],
+  ocapFlags: { ownership: 'community', control: 'elder-council', access: 'researchers', possession: 'community-server', compliant: true },
+};
+
+consent = grantConsent(consent);
+// consent.state === 'granted'
+
+// Ceremonialized consent
+consent = consentCeremony(consent, ['elder-1', 'elder-2', 'researcher-1']);
+// consent.state === 'active'
+
+// Later — check health
+const health = checkConsentHealth(consent);
+// health: { healthy, needsRenewal, expiresIn, recommendations[] }
+
+// If consent is withdrawn, cascade to dependent relations
+consent = withdrawConsent(consent, 'Community elder withdrew consent');
+const affected = onWithdrawal(consent);
+// affected: [{ relationId: 'rel-001', action: 'withdraw' }, ...]
+```
+
+---
+
+## Package 6: narrative-engine
 
 ```bash
 npm install medicine-wheel-narrative-engine
@@ -607,7 +1093,515 @@ import {
 
 ---
 
-## Package 4: graph-viz
+## Package 7: importance-unit
+
+```bash
+npm install medicine-wheel-importance-unit
+```
+
+**Version:** 0.1.0
+
+The ImportanceUnit is the relational unit of knowledge in Wilson's epistemology — a relationally-accountable piece of meaning that carries epistemic weight, source dimensions, accountability links, and circle depth tracking. Not all knowledge is equal: dream-state and embodied knowledge may carry more epistemic authority than rational analysis.
+
+### Types
+
+```typescript
+import type {
+  EpistemicSource,          // 'land' | 'dream' | 'code' | 'vision'
+  AccountabilityLinkType,   // 'accountable-to' | 'deepens' | 'tensions-with' | 'emerges-from' | 'gates' | 'circles-back-to'
+  AxiologicalPillar,        // 'ontology' | 'epistemology' | 'methodology' | 'axiology'
+  AccountabilityLink,       // { targetId, relationType, description? }
+  CircleRefinement,         // { circle, shift, timestamp }
+  GatingConditionStatus,    // { condition, satisfied }
+  CeremonyState,            // { quadrantsVisited[], circleComplete, gatingConditions[] }
+  ImportanceUnitContent,    // { summary, rawInput?, refinements[] }
+  ImportanceUnitMeta,       // { createdBy, createdAt, lastCircledAt?, traceId? }
+  ImportanceUnit,           // { id, direction, epistemicWeight, source, accountabilityLinks[], circleDepth, content, ceremonyState?, axiologicalPillar?, inquiryRef?, meta }
+  CreateUnitInput,          // { direction, source, summary, rawInput?, createdBy, axiologicalPillar?, inquiryRef?, accountabilityLinks?, traceId? }
+  UpdateUnitInput,          // { direction?, summary?, axiologicalPillar?, inquiryRef? }
+} from 'medicine-wheel-importance-unit';
+```
+
+### Zod Schemas
+
+```typescript
+import {
+  EpistemicSourceSchema,
+  AccountabilityLinkTypeSchema,
+  AxiologicalPillarSchema,
+  AccountabilityLinkSchema,
+  CircleRefinementSchema,
+  GatingConditionStatusSchema,
+  CeremonyStateSchema,
+  ImportanceUnitContentSchema,
+  ImportanceUnitMetaSchema,
+  ImportanceUnitSchema,
+  CreateUnitInputSchema,
+  UpdateUnitInputSchema,
+} from 'medicine-wheel-importance-unit';
+
+import type {
+  ValidatedImportanceUnit,
+  ValidatedAccountabilityLink,
+  ValidatedCircleRefinement,
+  ValidatedGatingConditionStatus,
+  ValidatedCeremonyState,
+  ValidatedCreateUnitInput,
+  ValidatedUpdateUnitInput,
+} from 'medicine-wheel-importance-unit';
+```
+
+### Core CRUD
+
+```typescript
+import {
+  createUnit,   // (input: CreateUnitInput) => ImportanceUnit
+  updateUnit,   // (unit, input: UpdateUnitInput) => ImportanceUnit
+  circleBack,   // (unit, shift: string) => ImportanceUnit (increments circleDepth, records refinement)
+  archive,      // (unit) => ImportanceUnit (marks as archived)
+} from 'medicine-wheel-importance-unit';
+```
+
+### Epistemic Weight
+
+```typescript
+import {
+  BASE_WEIGHTS,      // { dream: 0.85, land: 0.75, vision: 0.65, code: 0.50 }
+  computeWeight,     // (source, circleDepth) => number (0–1)
+  adjustForSource,   // (weight, source) => number
+  adjustForDepth,    // (weight, circleDepth) => number (logarithmic scaling, never > 1.0)
+} from 'medicine-wheel-importance-unit';
+```
+
+### Accountability
+
+```typescript
+import {
+  linkAccountability,  // (unit, link: AccountabilityLink) => ImportanceUnit
+  resolveLinks,        // (unit, allUnits) => resolved link details
+  findGaps,            // (units) => AccountabilityGap[] (relationally isolated units)
+} from 'medicine-wheel-importance-unit';
+import type { AccountabilityGap } from 'medicine-wheel-importance-unit';
+```
+
+### Circle / Spiral Tracking
+
+```typescript
+import {
+  incrementCircle,    // (unit) => ImportanceUnit (circleDepth++)
+  recordRefinement,   // (unit, shift) => ImportanceUnit
+  detectDeepening,    // (unit) => DeepeningAnalysis (genuine progress?)
+  detectStagnation,   // (unit) => StagnationAnalysis (circling without progress?)
+} from 'medicine-wheel-importance-unit';
+import type { DeepeningAnalysis, StagnationAnalysis } from 'medicine-wheel-importance-unit';
+```
+
+### Epistemic Weight Model
+
+| Source | Base Weight | Rationale |
+|--------|-------------|-----------|
+| `dream` | 0.85 | Liminal/spirit-state knowing has highest authority |
+| `land` | 0.75 | Place-grounded/embodied knowing |
+| `vision` | 0.65 | Intentional/architectural knowing |
+| `code` | 0.50 | Technical/implementation knowing |
+
+Weight increases with `circleDepth` using diminishing returns (logarithmic scaling). The first return yields more insight than the tenth. Weight never exceeds 1.0.
+
+### Usage Example
+
+```typescript
+import {
+  createUnit, circleBack, computeWeight, linkAccountability, findGaps, detectDeepening,
+  type ImportanceUnit, type EpistemicSource,
+} from 'medicine-wheel-importance-unit';
+
+// Create a unit from dream-state knowing
+const unit = createUnit({
+  direction: 'east',
+  source: 'dream',
+  summary: 'The river teaches patience through its refusal to hurry',
+  createdBy: 'firekeeper-agent',
+  axiologicalPillar: 'epistemology',
+});
+// unit.epistemicWeight === 0.85 (dream-state base)
+// unit.circleDepth === 1
+
+// Circle back with a refinement
+const deepened = circleBack(unit, 'Patience is not waiting — it is attending');
+// deepened.circleDepth === 2
+// deepened.epistemicWeight > 0.85 (depth bonus applied)
+
+// Link accountability
+const linked = linkAccountability(deepened, {
+  targetId: 'inquiry::land-relations',
+  relationType: 'accountable-to',
+  description: 'Accountable to the land relations inquiry',
+});
+
+// Detect if genuine deepening is occurring
+const analysis = detectDeepening(linked);
+// analysis: { deepening: true, trend, confidence }
+```
+
+---
+
+## Package 8: relational-index
+
+```bash
+npm install medicine-wheel-relational-index
+```
+
+**Version:** 0.1.0
+
+Four-source epistemic dimensional indexing. Wilson's epistemology recognises multiple sources of knowing — Land, Dream, Code, and Vision each teach differently. This package enables querying, traversal, and cross-dimensional mapping across those epistemic sources.
+
+### Types
+
+```typescript
+import type {
+  EpistemicSource,        // 'land' | 'dream' | 'code' | 'vision'
+  IndexEntry,             // { unitId, source, direction, epistemicWeight, circleDepth, accountableTo[], tags[], timestamp }
+  DimensionIndex,         // { source, entries[], depth, weight }
+  CrossDimensionalMap,    // { convergences[], tensions[], gaps[] }
+  Convergence,            // { dimensions[], entries[], strength, description }
+  Tension,                // { dimensions[], conflict, entries[] }
+  DimensionGap,           // { source, severity, description }
+  RelationalIndex,        // { entries: Map<string, IndexEntry>, dimensions: Record<EpistemicSource, DimensionIndex>, crossMap }
+  SpiralDepthMetrics,     // { totalCircles, averageDepth, deepeningRate, stagnationAlert, deepestUnit }
+  Refinement,             // { id, circle, depth, timestamp }
+  RelationalPath,         // { nodes[], dimensions[], totalWeight, description }
+  IndexHealth,            // { score, dimensionBalance, entryCount, convergenceCount, tensionCount, gapCount, recommendations[] }
+} from 'medicine-wheel-relational-index';
+```
+
+### Index Manager
+
+```typescript
+import {
+  createIndex,        // () => RelationalIndex
+  addEntry,           // (index, entry) => RelationalIndex
+  removeEntry,        // (index, unitId) => RelationalIndex
+  rebuildDimensions,  // (index) => RelationalIndex (recompute dimension aggregations)
+} from 'medicine-wheel-relational-index';
+```
+
+### Query
+
+```typescript
+import {
+  queryBySource,            // (index, source) => IndexEntry[]
+  queryByDirection,         // (index, direction) => IndexEntry[]
+  queryByWeight,            // (index, minWeight, maxWeight?) => IndexEntry[]
+  queryByDepth,             // (index, minDepth) => IndexEntry[]
+  queryCrossDimensional,    // (index, sources[]) => IndexEntry[] (entries touching multiple sources)
+} from 'medicine-wheel-relational-index';
+```
+
+### Dimensions
+
+```typescript
+import {
+  landIndex,          // (index) => DimensionIndex
+  dreamIndex,         // (index) => DimensionIndex
+  codeIndex,          // (index) => DimensionIndex
+  visionIndex,        // (index) => DimensionIndex
+  dimensionBalance,   // (index) => { land, dream, code, vision } (0–1 each, 1 = balanced)
+} from 'medicine-wheel-relational-index';
+```
+
+### Cross-Dimensional
+
+```typescript
+import {
+  mapAcrossDimensions,  // (index) => CrossDimensionalMap
+  findConvergences,     // (index) => Convergence[]
+  detectTensions,       // (index) => Tension[]
+  coverageGaps,         // (index) => DimensionGap[]
+} from 'medicine-wheel-relational-index';
+```
+
+### Spiral Depth
+
+```typescript
+import {
+  measureSpiralDepth,  // (index) => SpiralDepthMetrics
+  compareCircles,      // (index, circle1, circle2) => comparison
+  detectDeepening,     // (index) => boolean (genuine progress across circles?)
+  detectStagnation,    // (index) => boolean (circling without deepening?)
+} from 'medicine-wheel-relational-index';
+```
+
+### Metrics
+
+```typescript
+import {
+  indexHealth,                       // (index) => IndexHealth
+  metricsDimensionBalance,           // alias for balance check
+  metricsCoverageGaps,               // alias for gap detection
+} from 'medicine-wheel-relational-index';
+```
+
+### Usage Example
+
+```typescript
+import {
+  createIndex, addEntry, queryBySource, dimensionBalance,
+  measureSpiralDepth, findConvergences, indexHealth,
+} from 'medicine-wheel-relational-index';
+
+// Create an empty index
+let index = createIndex();
+
+// Add entries from different epistemic sources
+index = addEntry(index, {
+  unitId: 'territory-walk-01',
+  source: 'land',
+  direction: 'east',
+  epistemicWeight: 0.8,
+  circleDepth: 1,
+  accountableTo: ['community-elders'],
+  tags: ['territory', 'morning'],
+  timestamp: new Date().toISOString(),
+});
+
+index = addEntry(index, {
+  unitId: 'dream-river-patience',
+  source: 'dream',
+  direction: 'west',
+  epistemicWeight: 0.85,
+  circleDepth: 2,
+  accountableTo: ['ancestors'],
+  tags: ['patience', 'river'],
+  timestamp: new Date().toISOString(),
+});
+
+// Query by source
+const landEntries = queryBySource(index, 'land');  // entries from land dimension
+
+// Check dimensional balance
+const balance = dimensionBalance(index);
+// balance: { land: 0.5, dream: 0.5, code: 0.0, vision: 0.0 }
+
+// Find convergences across dimensions
+const convergences = findConvergences(index);
+
+// Measure spiral depth
+const depth = measureSpiralDepth(index);
+// depth: { totalCircles, averageDepth, deepeningRate, stagnationAlert, deepestUnit }
+
+// Get overall health
+const health = indexHealth(index);
+// health: { score, dimensionBalance, entryCount, recommendations[] }
+```
+
+---
+
+## Package 9: transformation-tracker
+
+```bash
+npm install medicine-wheel-transformation-tracker
+```
+
+**Version:** 0.1.0
+
+Research transformation tracking — Wilson's validity criterion: "If research doesn't change you, you haven't done it right." Tracks the transformative impact of research on researchers, communities, and relational networks.
+
+### Types
+
+```typescript
+import type {
+  TransformationLog,    // { id, researchCycleId, snapshots[], reflections[], communityImpacts[], relationalShifts[], reciprocityLedger[], sevenGenerationScore, overallTransformation }
+  GrowthSnapshot,       // { timestamp, direction, ceremonyPhase, understanding, relationsCount, wilsonAlignment, keyInsights[], openQuestions[] }
+  Reflection,           // { id, timestamp, prompt, response, direction, depth }
+  CommunityImpact,      // { id, description, beneficiary, category, timestamp, measurable }
+  RelationalShift,      // { relationId, before: { strength, description }, after: { strength, description }, catalyst, direction, timestamp }
+  ReciprocityEntry,     // { type: 'giving' | 'receiving', description, relatedTo, category, timestamp }
+  WilsonValidity,       // { researcherTransformed, communityBenefited, relationsStrengthened, reciprocityBalanced, sevenGenerationsConsidered, overallValid, score, recommendations[] }
+} from 'medicine-wheel-transformation-tracker';
+```
+
+### Zod Schemas
+
+```typescript
+import {
+  CeremonyPhaseSchema,
+  GrowthSnapshotSchema,
+  ReflectionSchema,
+  CommunityImpactSchema,
+  RelationalShiftSchema,
+  ReciprocityEntrySchema,
+  TransformationLogSchema,
+  WilsonValiditySchema,
+} from 'medicine-wheel-transformation-tracker';
+
+import type {
+  ValidatedTransformationLog,
+  ValidatedGrowthSnapshot,
+  ValidatedReflection,
+  ValidatedCommunityImpact,
+  ValidatedRelationalShift,
+  ValidatedReciprocityEntry,
+  ValidatedWilsonValidity,
+} from 'medicine-wheel-transformation-tracker';
+```
+
+### Researcher Module
+
+```typescript
+import {
+  logReflection,           // (log, prompt, response, direction) => TransformationLog
+  snapshotUnderstanding,   // (log, snapshot) => TransformationLog
+  compareSnapshots,        // (before, after) => SnapshotComparison
+  detectGrowth,            // (log) => GrowthSignal[] (analyze log for genuine growth)
+} from 'medicine-wheel-transformation-tracker';
+import type { SnapshotComparison, GrowthSignal } from 'medicine-wheel-transformation-tracker';
+```
+
+### Community Module
+
+```typescript
+import {
+  logCommunityImpact,  // (log, impact) => TransformationLog
+  reciprocityBalance,  // (log) => ReciprocityBalanceResult
+  communityVoice,      // (log) => CommunityVoiceResult
+  impactTimeline,      // (log) => TimelineEntry[]
+} from 'medicine-wheel-transformation-tracker';
+import type { ReciprocityBalanceResult, CommunityVoiceResult, TimelineEntry } from 'medicine-wheel-transformation-tracker';
+```
+
+### Relational Shift Module
+
+```typescript
+import {
+  trackRelationalChange,  // (log, shift) => TransformationLog
+  beforeAfter,             // (log, relationId) => { before, after }
+  strengthDelta,           // (log) => StrengthDeltaResult (aggregate relational strength changes)
+  newRelationsFormed,      // (log) => NewRelationsResult
+} from 'medicine-wheel-transformation-tracker';
+import type { RelationalShiftSummary, StrengthDeltaResult, NewRelationDescriptor, NewRelationsResult } from 'medicine-wheel-transformation-tracker';
+```
+
+### Seven Generations Module
+
+```typescript
+import {
+  sevenGenScore,          // (log) => SevenGenResult (seven-generation sustainability score)
+  futureImpact,           // (log) => FutureImpactAssessment
+  sustainabilityCheck,    // (log) => SustainabilityResult
+} from 'medicine-wheel-transformation-tracker';
+import type { SevenGenResult, FutureImpactAssessment, SustainabilityResult } from 'medicine-wheel-transformation-tracker';
+```
+
+### Reciprocity Ledger Module
+
+```typescript
+import {
+  logGiving,         // (log, entry) => TransformationLog
+  logReceiving,      // (log, entry) => TransformationLog
+  balanceCheck,      // (log) => BalanceCheckResult
+  reciprocityDebt,   // (log) => ReciprocityDebtResult (what needs to be given back?)
+} from 'medicine-wheel-transformation-tracker';
+import type { CategoryBalance, BalanceCheckResult, Debt, ReciprocityDebtResult } from 'medicine-wheel-transformation-tracker';
+```
+
+### Prompts Module
+
+```typescript
+import {
+  reflectionPrompts,         // (phase) => string[] (prompts for each ceremony phase)
+  phaseTransitionPrompts,    // (from, to) => string[] (prompts for phase transitions)
+  milestonePrompts,          // (milestone) => string[] (prompts at relational milestones)
+} from 'medicine-wheel-transformation-tracker';
+import type { RelationalMilestone } from 'medicine-wheel-transformation-tracker';
+```
+
+### Wilson Validity Check — THE Function
+
+```typescript
+import { wilsonValidityCheck } from 'medicine-wheel-transformation-tracker';
+
+// THE function: has the research transformed?
+// Evaluates five dimensions:
+// 1. Researcher Transformation — has the researcher been changed?
+// 2. Community Benefit — has the community benefited?
+// 3. Relational Strengthening — have relations been strengthened?
+// 4. Reciprocity Balance — is giving and receiving balanced?
+// 5. Seven-Generation Consideration — are future generations honored?
+
+const validity = wilsonValidityCheck(log);
+// validity: { researcherTransformed, communityBenefited, relationsStrengthened, reciprocityBalanced, sevenGenerationsConsidered, overallValid, score, recommendations[] }
+```
+
+### Usage Example
+
+```typescript
+import {
+  logReflection, snapshotUnderstanding, compareSnapshots, detectGrowth,
+  logCommunityImpact, logGiving, logReceiving, balanceCheck,
+  trackRelationalChange, sevenGenScore, wilsonValidityCheck,
+  type TransformationLog, type GrowthSnapshot,
+} from 'medicine-wheel-transformation-tracker';
+
+// Initialize a transformation log
+let log: TransformationLog = {
+  id: 'transform-001',
+  researchCycleId: 'cycle-001',
+  snapshots: [],
+  reflections: [],
+  communityImpacts: [],
+  relationalShifts: [],
+  reciprocityLedger: [],
+  sevenGenerationScore: 0,
+  overallTransformation: 0,
+};
+
+// Take an understanding snapshot at the start
+log = snapshotUnderstanding(log, {
+  timestamp: new Date().toISOString(),
+  direction: 'east',
+  ceremonyPhase: 'opening',
+  understanding: 'Beginning to explore relational ontology in code',
+  relationsCount: 3,
+  wilsonAlignment: 0.4,
+  keyInsights: ['Code can carry relational meaning'],
+  openQuestions: ['How does ceremony inform governance?'],
+});
+
+// Log a reflection
+log = logReflection(log, 'What has changed in your understanding?',
+  'I now see that functions are not tools but relational acts.', 'south');
+
+// Track community impact
+log = logCommunityImpact(log, {
+  id: 'impact-001',
+  description: 'Shared framework with local knowledge keepers',
+  beneficiary: 'Shawinigan community',
+  category: 'human',
+  timestamp: new Date().toISOString(),
+  measurable: true,
+});
+
+// Record reciprocity
+log = logGiving(log, {
+  type: 'giving',
+  description: 'Open-source release of ontology-core',
+  relatedTo: 'developer community',
+  category: 'future',
+  timestamp: new Date().toISOString(),
+});
+
+// THE check: has the research transformed?
+const validity = wilsonValidityCheck(log);
+if (!validity.overallValid) {
+  for (const rec of validity.recommendations) {
+    console.log(`→ ${rec}`);
+  }
+}
+```
+
+---
+
+## Package 10: graph-viz
 
 ```bash
 npm install medicine-wheel-graph-viz
@@ -718,7 +1712,7 @@ const mermaid = toMermaidDiagram(kinshipHubs, kinshipRelations);
 
 ---
 
-## Package 5: relational-query
+## Package 11: relational-query
 
 ```bash
 npm install medicine-wheel-relational-query
@@ -917,7 +1911,7 @@ const obs = formatDirectionObservation({ east: 40, south: 30, west: 20, north: 1
 
 ---
 
-## Package 6: prompt-decomposition
+## Package 12: prompt-decomposition
 
 ```bash
 npm install medicine-wheel-prompt-decomposition
@@ -1026,7 +2020,7 @@ const md = decompositionToMarkdown(decomposition);
 
 ---
 
-## Package 7: ui-components
+## Package 13: ui-components
 
 ```bash
 npm install medicine-wheel-ui-components
@@ -1110,7 +2104,7 @@ import type { WilsonMeterProps } from 'medicine-wheel-ui-components';
 
 ---
 
-## Package 8: data-store
+## Package 14: data-store
 
 ```bash
 npm install medicine-wheel-data-store
@@ -1136,7 +2130,7 @@ Shared Redis data-access layer for the Medicine Wheel Developer Suite. Provides 
 
 ---
 
-## Package 9: session-reader
+## Package 15: session-reader
 
 ```bash
 npm install medicine-wheel-session-reader
@@ -1217,6 +2211,73 @@ const graphData = buildGraphData(nodes, edges);
 // Pass to <MedicineWheelGraph data={graphData} width={600} height={600} />
 ```
 
+### Fire Keeper Ceremony Coordination
+
+```typescript
+import { FireKeeper, DEFAULT_GATES } from 'medicine-wheel-fire-keeper';
+import { createUnit, circleBack, computeWeight } from 'medicine-wheel-importance-unit';
+import { createReviewCircle, addReviewer, submitForReview, seekConsensus } from 'medicine-wheel-community-review';
+import { grantConsent, checkConsentHealth, defineScope } from 'medicine-wheel-consent-lifecycle';
+import { wilsonValidityCheck } from 'medicine-wheel-transformation-tracker';
+import { createIndex, addEntry, indexHealth } from 'medicine-wheel-relational-index';
+
+// 1. Initialize the Fire Keeper
+const keeper = new FireKeeper({
+  trajectoryThreshold: 0.65,
+  permissionTiers: ['observe', 'analyze', 'propose', 'act'],
+  gatingConditions: DEFAULT_GATES,
+  humanDecisionPoints: [],
+});
+
+// 2. Create ImportanceUnits from different epistemic sources
+const dreamUnit = createUnit({
+  direction: 'east',
+  source: 'dream',
+  summary: 'The river teaches patience through its refusal to hurry',
+  createdBy: 'firekeeper-agent',
+  axiologicalPillar: 'epistemology',
+});
+
+const landUnit = createUnit({
+  direction: 'south',
+  source: 'land',
+  summary: 'Walking the territory reveals what maps cannot show',
+  createdBy: 'researcher-1',
+  axiologicalPillar: 'methodology',
+});
+
+// 3. Index knowledge across epistemic dimensions
+let index = createIndex();
+index = addEntry(index, {
+  unitId: dreamUnit.id,
+  source: 'dream',
+  direction: 'east',
+  epistemicWeight: dreamUnit.epistemicWeight,
+  circleDepth: 1,
+  accountableTo: ['ancestors'],
+  tags: ['patience', 'river'],
+  timestamp: new Date().toISOString(),
+});
+
+// 4. Community review before publication
+let circle = createReviewCircle('research-001', 'research');
+circle = addReviewer(circle, {
+  id: 'elder-1', role: 'elder', direction: 'north',
+  accountableTo: ['ancestors', 'future-generations'],
+});
+circle = submitForReview(circle);
+
+// 5. Check Wilson validity — has the research transformed?
+const validity = wilsonValidityCheck(transformationLog);
+if (validity.overallValid) {
+  console.log(`Wilson validity score: ${validity.score}`);
+}
+
+// 6. Check index health
+const health = indexHealth(index);
+console.log(`Index health: ${health.score}, recommendations: ${health.recommendations.length}`);
+```
+
 ### Governance-Aware Workflow
 
 ```typescript
@@ -1251,7 +2312,13 @@ RISE framework specifications live in `rispecs/`:
 | `medicine-wheel.spec.md` | System-level spec with architecture overview |
 | `ontology-core.spec.md` | Foundation types, schemas, vocabulary, queries |
 | `ceremony-protocol.spec.md` | Ceremony state, phases, governance |
+| `fire-keeper.spec.md` | Fire Keeper coordination agent, gating, decisions |
+| `community-review.spec.md` | Elder review circles, consensus, accountability |
+| `consent-lifecycle.spec.md` | Consent as living obligation, lifecycle, cascade |
 | `narrative-engine.spec.md` | Sequencing, cadence, arc, timeline, cycle |
+| `importance-unit.spec.md` | Epistemic weight, source dimensions, circle depth |
+| `relational-index.spec.md` | Four-source dimensional indexing, spiral depth |
+| `transformation-tracker.spec.md` | Wilson validity, seven generations, reciprocity |
 | `graph-viz.spec.md` | Layout engine, SVG, converters, RSIS viz |
 | `relational-query.spec.md` | Query, traversal, audit, Cypher |
 | `prompt-decomposition.spec.md` | Decomposer, enricher, storage |
