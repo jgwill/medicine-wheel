@@ -11,3 +11,4 @@ src/_/
 
 # Medicine Wheel JSONL data (local persistence)
 .mw/store/
+.env*
