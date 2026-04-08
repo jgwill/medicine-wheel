@@ -1,0 +1,633 @@
+#!/usr/bin/env bash
+# ──────────────────────────────────────────────────────────────────
+# mw — Medicine Wheel CLI
+#
+# Thin wrapper around the Medicine Wheel system.
+# Two backends:
+#   HTTP  → Next.js REST API (default: http://localhost:3940)
+#   STDIO → MCP server via JSON-RPC (node mcp/dist/index.js)
+#
+# Usage:
+#   mw <command> [args...]
+#   mw help
+#
+# Environment:
+#   MW_API_URL   — API base URL (default: http://localhost:3940)
+#   MW_MCP_PATH  — MCP server path (auto-detected)
+#   MW_FORMAT    — Output format: pretty (default), json, quiet
+# ──────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+# ── Config ────────────────────────────────────────────────────────
+MW_API_URL="${MW_API_URL:-http://localhost:3940}"
+MW_FORMAT="${MW_FORMAT:-pretty}"
+
+# Auto-detect MCP path relative to this script or fallback
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/../mcp/dist/index.js" ]]; then
+  MW_MCP_PATH="${MW_MCP_PATH:-$SCRIPT_DIR/../mcp/dist/index.js}"
+elif [[ -f "/workspace/repos/jgwill/medicine-wheel/mcp/dist/index.js" ]]; then
+  MW_MCP_PATH="${MW_MCP_PATH:-/workspace/repos/jgwill/medicine-wheel/mcp/dist/index.js}"
+else
+  MW_MCP_PATH="${MW_MCP_PATH:-}"
+fi
+
+# ── Colors ────────────────────────────────────────────────────────
+C_EAST='\033[33m'    # Gold
+C_SOUTH='\033[31m'   # Red
+C_WEST='\033[34m'    # Blue
+C_NORTH='\033[37m'   # White
+C_GREEN='\033[32m'
+C_DIM='\033[2m'
+C_BOLD='\033[1m'
+C_RESET='\033[0m'
+
+# Direction symbols
+D_EAST="🌅"
+D_SOUTH="🔥"
+D_WEST="🌊"
+D_NORTH="❄️"
+D_CENTER="🌿"
+
+direction_icon() {
+  case "$1" in
+    east)  echo "$D_EAST" ;;
+    south) echo "$D_SOUTH" ;;
+    west)  echo "$D_WEST" ;;
+    north) echo "$D_NORTH" ;;
+    *)     echo "$D_CENTER" ;;
+  esac
+}
+
+direction_color() {
+  case "$1" in
+    east)  echo "$C_EAST" ;;
+    south) echo "$C_SOUTH" ;;
+    west)  echo "$C_WEST" ;;
+    north) echo "$C_NORTH" ;;
+    *)     echo "$C_RESET" ;;
+  esac
+}
+
+# ── Helpers ───────────────────────────────────────────────────────
+
+# HTTP API call
+api() {
+  local method="$1" path="$2"
+  shift 2
+  if [[ "$method" == "GET" ]]; then
+    curl -sf "${MW_API_URL}${path}" 2>/dev/null
+  else
+    curl -sf -X "$method" "${MW_API_URL}${path}" \
+      -H "Content-Type: application/json" \
+      "$@" 2>/dev/null
+  fi
+}
+
+# MCP tool call via stdio
+mcp_call() {
+  local tool_name="$1" args_json="$2"
+  if [[ -z "$MW_MCP_PATH" ]]; then
+    echo "Error: MCP server path not found. Set MW_MCP_PATH." >&2
+    return 1
+  fi
+  echo "{\"jsonrpc\":\"2.0\",\"method\":\"tools/call\",\"params\":{\"name\":\"${tool_name}\",\"arguments\":${args_json}},\"id\":1}" \
+    | node "$MW_MCP_PATH" 2>/dev/null \
+    | python3 -c "
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    content = data.get('result',{}).get('content',[{}])[0].get('text','{}')
+    parsed = json.loads(content)
+    print(json.dumps(parsed, indent=2))
+except:
+    print(json.dumps(data, indent=2))
+" 2>/dev/null
+}
+
+# Pretty-print JSON with jq or python fallback
+pp() {
+  if [[ "$MW_FORMAT" == "json" ]]; then
+    cat
+  elif [[ "$MW_FORMAT" == "quiet" ]]; then
+    cat > /dev/null
+  elif command -v jq &>/dev/null; then
+    jq '.'
+  else
+    python3 -m json.tool
+  fi
+}
+
+# Check API is reachable
+check_api() {
+  if ! curl -sf "${MW_API_URL}/api/directions" > /dev/null 2>&1; then
+    echo -e "${C_SOUTH}✗ Medicine Wheel API not reachable at ${MW_API_URL}${C_RESET}" >&2
+    echo -e "${C_DIM}  Start with: cd /workspace/repos/jgwill/medicine-wheel && npm run dev${C_RESET}" >&2
+    return 1
+  fi
+}
+
+# ── Commands ──────────────────────────────────────────────────────
+
+cmd_help() {
+  cat <<'EOF'
+
+  🌿 mw — Medicine Wheel CLI
+
+  CEREMONY LIFECYCLE
+    mw ceremony open <intention>           Open ceremony (starts in East)
+    mw ceremony close <id> [summary]       Close ceremony
+    mw ceremony list [--direction east]    List ceremonies
+    mw ceremony get <id>                   Get ceremony by ID
+
+  DIRECTIONS
+    mw direction [east|south|west|north]   Show direction metadata
+    mw directions                          Show all four directions
+
+  CYCLES
+    mw cycle create <research_question>    Create research cycle
+    mw cycle list                          List all cycles
+    mw cycle advance <id> <direction>      Advance cycle direction
+
+  NODES
+    mw node create <name> <type> <desc>    Create relational node
+    mw node list [--type human] [--dir east]
+    mw node get <id>                       Get node by ID
+    mw node search <query>                 Search nodes
+
+  NARRATIVE
+    mw beat create <dir> <title> <desc>    Create narrative beat
+    mw beat list [--direction east]        List beats
+    mw arc <cycle_id>                      Get narrative arc
+
+  STRUCTURAL TENSION
+    mw chart create <outcome> <reality> <dir>   Create STC
+    mw chart list [--direction east]             List charts
+    mw chart progress <id>                       Get progress
+    mw mmot <chart_id> ...                       MMOT review
+
+  RELATIONS
+    mw edge create <from> <to> <type>     Create edge
+    mw edge list [--node <id>]            List edges
+    mw web <node_id> [depth]              Relational web
+
+  VALIDATION
+    mw validate wilson <description>       Wilson paradigm check
+    mw validate ocap <data_plan_json>      OCAP® compliance check
+    mw validate accountability <plan_json> Accountability audit
+
+  MEMORY
+    mw memory store <key> <value> [dir]    Store relational memory
+
+  SYSTEM
+    mw status                              Show system status
+    mw tools                               List all 54 MCP tools
+    mw help                                This help
+
+  ENVIRONMENT
+    MW_API_URL   API base (default: http://localhost:3940)
+    MW_FORMAT    Output: pretty, json, quiet
+
+EOF
+}
+
+cmd_status() {
+  echo -e "${C_BOLD}${D_CENTER} Medicine Wheel Status${C_RESET}"
+  echo ""
+
+  # Check API
+  if curl -sf "${MW_API_URL}/api/directions" > /dev/null 2>&1; then
+    echo -e "  ${C_GREEN}✓${C_RESET} API: ${MW_API_URL}"
+  else
+    echo -e "  ${C_SOUTH}✗${C_RESET} API: ${MW_API_URL} (not reachable)"
+  fi
+
+  # Check MCP
+  if [[ -n "$MW_MCP_PATH" && -f "$MW_MCP_PATH" ]]; then
+    local tool_count
+    tool_count=$(echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' | node "$MW_MCP_PATH" 2>/dev/null | python3 -c "import json,sys; print(len(json.load(sys.stdin)['result']['tools']))" 2>/dev/null || echo "?")
+    echo -e "  ${C_GREEN}✓${C_RESET} MCP: ${tool_count} tools (${MW_MCP_PATH})"
+  else
+    echo -e "  ${C_SOUTH}✗${C_RESET} MCP: not found"
+  fi
+
+  # Check store
+  local store_dir="/workspace/repos/jgwill/medicine-wheel/.mw/store"
+  if [[ -d "$store_dir" ]]; then
+    local nodes=$(cat "$store_dir/nodes.jsonl" 2>/dev/null | wc -l || echo 0)
+    local ceremonies=$(cat "$store_dir/ceremonies.jsonl" 2>/dev/null | wc -l || echo 0)
+    local cycles=$(cat "$store_dir/cycles.jsonl" 2>/dev/null | wc -l || echo 0)
+    local edges=$(cat "$store_dir/edges.jsonl" 2>/dev/null | wc -l || echo 0)
+    local beats=$(cat "$store_dir/beats.jsonl" 2>/dev/null | wc -l || echo 0)
+    local charts=$(cat "$store_dir/charts.jsonl" 2>/dev/null | wc -l || echo 0)
+    echo -e "  ${C_GREEN}✓${C_RESET} Store: ${store_dir}"
+    echo -e "    ${C_DIM}${nodes} nodes · ${edges} edges · ${ceremonies} ceremonies · ${cycles} cycles · ${beats} beats · ${charts} charts${C_RESET}"
+  else
+    echo -e "  ${C_SOUTH}✗${C_RESET} Store: .mw/store/ not found"
+  fi
+  echo ""
+}
+
+cmd_tools() {
+  if [[ -z "$MW_MCP_PATH" ]]; then
+    echo "MCP path not set" >&2; return 1
+  fi
+  echo '{"jsonrpc":"2.0","method":"tools/list","id":1}' \
+    | node "$MW_MCP_PATH" 2>/dev/null \
+    | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+tools = data['result']['tools']
+# Group by category
+categories = {}
+for t in tools:
+    name = t['name']
+    if name.startswith('east_') or name.startswith('south_') or name.startswith('west_') or name.startswith('north_'):
+        cat = 'Direction Guidance'
+    elif name.startswith('mw_'):
+        cat = 'Ceremony Lifecycle'
+    elif name.startswith('create_') or name.startswith('update_') or name.startswith('log_'):
+        cat = 'Create/Update'
+    elif name.startswith('list_') or name.startswith('get_') or name.startswith('search_') or name.startswith('telescope_'):
+        cat = 'Read/Search'
+    elif 'validator' in name or 'checker' in name or 'bridge' in name:
+        cat = 'Validation'
+    elif 'chart' in name or 'action' in name or 'tension' in name or 'mmot' in name or name == 'creator_moment_of_truth' or 'honor' in name or 'link_' in name or name == 'mark_action_complete':
+        cat = 'Structural Tension'
+    elif 'archive' in name or 'narrative' in name or 'arc' in name:
+        cat = 'Narrative/Archive'
+    else:
+        cat = 'Other'
+    categories.setdefault(cat, []).append(t)
+
+for cat in ['Ceremony Lifecycle', 'Create/Update', 'Read/Search', 'Structural Tension', 'Direction Guidance', 'Validation', 'Narrative/Archive', 'Other']:
+    if cat in categories:
+        print(f'\n  {cat} ({len(categories[cat])})')
+        for t in sorted(categories[cat], key=lambda x: x['name']):
+            desc = t['description'][:70] + '...' if len(t['description']) > 70 else t['description']
+            print(f'    {t[\"name\"]:<40} {desc}')
+
+print(f'\n  Total: {len(tools)} tools')
+" 2>/dev/null
+}
+
+# ── Ceremony ──────────────────────────────────────────────────────
+
+cmd_ceremony() {
+  local sub="${1:-list}"
+  shift || true
+
+  case "$sub" in
+    open)
+      local intention="${*:-Opening ceremony}"
+      mcp_call "mw_ceremony_open" "{\"intention\":\"${intention}\"}"
+      ;;
+    close)
+      local id="$1"; shift || true
+      local summary="${*:-Ceremony complete}"
+      mcp_call "mw_ceremony_close" "{\"ceremony_id\":\"${id}\",\"summary\":\"${summary}\"}"
+      ;;
+    get)
+      mcp_call "get_ceremony" "{\"ceremony_id\":\"$1\"}"
+      ;;
+    list)
+      local filter=""
+      while [[ $# -gt 0 ]]; do
+        case "$1" in
+          --direction|-d) filter="?direction=$2"; shift 2 ;;
+          --type|-t)      filter="?type=$2"; shift 2 ;;
+          *) shift ;;
+        esac
+      done
+      if check_api 2>/dev/null; then
+        api GET "/api/ceremonies${filter}" | pp
+      else
+        mcp_call "list_ceremonies" "{}"
+      fi
+      ;;
+    *)
+      echo "Unknown ceremony command: $sub" >&2
+      ;;
+  esac
+}
+
+# ── Direction ─────────────────────────────────────────────────────
+
+cmd_direction() {
+  local dir="${1:-}"
+  if [[ -z "$dir" ]]; then
+    cmd_directions
+    return
+  fi
+  mcp_call "mw_get_direction" "{\"direction\":\"${dir}\"}"
+}
+
+cmd_directions() {
+  if check_api 2>/dev/null; then
+    api GET "/api/directions" | python3 -c "
+import json, sys
+dirs = json.load(sys.stdin)
+icons = {'east': '🌅', 'south': '🔥', 'west': '🌊', 'north': '❄️'}
+colors = {'east': '\033[33m', 'south': '\033[31m', 'west': '\033[34m', 'north': '\033[37m'}
+reset = '\033[0m'
+dim = '\033[2m'
+for d in dirs:
+    n = d['name']
+    icon = icons.get(n, '🌿')
+    color = colors.get(n, reset)
+    meds = ', '.join(d.get('medicine', []))
+    teachings = ', '.join(d.get('teachings', [])[:2])
+    print(f'  {icon} {color}{n.upper():<6}{reset} ({d[\"ojibwe\"]}) — {d[\"season\"]}')
+    print(f'    {dim}Medicine: {meds}{reset}')
+    print(f'    {dim}{teachings}{reset}')
+    print()
+" 2>/dev/null
+  else
+    for d in east south west north; do
+      mcp_call "mw_get_direction" "{\"direction\":\"$d\"}"
+    done
+  fi
+}
+
+# ── Cycle ─────────────────────────────────────────────────────────
+
+cmd_cycle() {
+  local sub="${1:-list}"
+  shift || true
+
+  case "$sub" in
+    create)
+      local question="$*"
+      if check_api 2>/dev/null; then
+        api POST "/api/narrative/cycles" -d "{\"research_question\":\"${question}\",\"current_direction\":\"east\"}" | pp
+      else
+        mcp_call "create_research_cycle" "{\"research_question\":\"${question}\",\"current_direction\":\"east\"}"
+      fi
+      ;;
+    list)
+      if check_api 2>/dev/null; then
+        api GET "/api/narrative/cycles" | python3 -c "
+import json, sys
+cycles = json.load(sys.stdin)
+icons = {'east': '🌅', 'south': '🔥', 'west': '🌊', 'north': '❄️'}
+print()
+for c in cycles:
+    d = c.get('current_direction', 'east')
+    icon = icons.get(d, '🌿')
+    archived = ' [archived]' if c.get('archived') else ''
+    print(f'  {icon} {c[\"id\"][:30]}')
+    print(f'    \"{c[\"research_question\"]}\"')
+    print(f'    Direction: {d} · Wilson: {c.get(\"wilson_alignment\", 0)} · OCAP: {c.get(\"ocap_compliant\", False)}{archived}')
+    print()
+" 2>/dev/null
+      else
+        mcp_call "list_cycles" "{}"
+      fi
+      ;;
+    advance)
+      local id="$1" dir="$2"
+      mcp_call "update_cycle_direction" "{\"cycle_id\":\"${id}\",\"new_direction\":\"${dir}\"}"
+      ;;
+    get)
+      mcp_call "get_cycle" "{\"cycle_id\":\"$1\"}"
+      ;;
+    arc)
+      mcp_call "get_narrative_arc" "{\"cycle_id\":\"$1\"}"
+      ;;
+    *)
+      echo "Unknown cycle command: $sub" >&2
+      ;;
+  esac
+}
+
+# ── Node ──────────────────────────────────────────────────────────
+
+cmd_node() {
+  local sub="${1:-list}"
+  shift || true
+
+  case "$sub" in
+    create)
+      local name="$1" type="$2"; shift 2
+      local desc="$*"
+      if check_api 2>/dev/null; then
+        api POST "/api/nodes" -d "{\"name\":\"${name}\",\"type\":\"${type}\",\"description\":\"${desc}\"}" | pp
+      else
+        mcp_call "create_relational_node" "{\"name\":\"${name}\",\"type\":\"${type}\",\"description\":\"${desc}\"}"
+      fi
+      ;;
+    list)
+      local params=""
+      while [[ $# -gt 0 ]]; do
+        case "$1" in
+          --type|-t)      params="?type=$2"; shift 2 ;;
+          --direction|-d) params="?direction=$2"; shift 2 ;;
+          *) shift ;;
+        esac
+      done
+      if check_api 2>/dev/null; then
+        api GET "/api/nodes${params}" | python3 -c "
+import json, sys
+nodes = json.load(sys.stdin)
+icons = {'human':'👤','land':'🌍','spirit':'✨','ancestor':'👴','future':'🌱','knowledge':'📚'}
+for n in nodes:
+    icon = icons.get(n.get('type',''), '•')
+    d = n.get('direction', '')
+    d_str = f' [{d}]' if d else ''
+    print(f'  {icon} {n[\"name\"]}{d_str}')
+    print(f'    {n.get(\"id\",\"\")}')
+print(f'\n  {len(nodes)} nodes')
+" 2>/dev/null
+      else
+        mcp_call "list_relational_nodes" "{}"
+      fi
+      ;;
+    get)
+      mcp_call "get_relational_node" "{\"node_id\":\"$1\"}"
+      ;;
+    search)
+      mcp_call "search_nodes" "{\"query\":\"$*\"}"
+      ;;
+    *)
+      echo "Unknown node command: $sub" >&2
+      ;;
+  esac
+}
+
+# ── Beat ──────────────────────────────────────────────────────────
+
+cmd_beat() {
+  local sub="${1:-list}"
+  shift || true
+
+  case "$sub" in
+    create)
+      local dir="$1" title="$2"; shift 2
+      local desc="$*"
+      mcp_call "create_narrative_beat" "{\"direction\":\"${dir}\",\"title\":\"${title}\",\"description\":\"${desc}\",\"learnings\":[]}"
+      ;;
+    list)
+      if check_api 2>/dev/null; then
+        api GET "/api/narrative/beats" | pp
+      else
+        mcp_call "list_narrative_beats" "{}"
+      fi
+      ;;
+    *)
+      echo "Unknown beat command: $sub" >&2
+      ;;
+  esac
+}
+
+# ── Edge / Web ────────────────────────────────────────────────────
+
+cmd_edge() {
+  local sub="${1:-list}"
+  shift || true
+
+  case "$sub" in
+    create)
+      local from="$1" to="$2" rel_type="$3"
+      mcp_call "create_relational_edge" "{\"from_node_id\":\"${from}\",\"to_node_id\":\"${to}\",\"relationship_type\":\"${rel_type}\"}"
+      ;;
+    list)
+      local node_filter=""
+      while [[ $# -gt 0 ]]; do
+        case "$1" in
+          --node|-n) node_filter="$2"; shift 2 ;;
+          *) shift ;;
+        esac
+      done
+      if [[ -n "$node_filter" ]]; then
+        mcp_call "list_edges" "{\"node_id\":\"${node_filter}\"}"
+      else
+        mcp_call "list_edges" "{}"
+      fi
+      ;;
+    *)
+      echo "Unknown edge command: $sub" >&2
+      ;;
+  esac
+}
+
+cmd_web() {
+  local node_id="$1"
+  local depth="${2:-2}"
+  mcp_call "get_relational_web" "{\"node_id\":\"${node_id}\",\"depth\":${depth}}"
+}
+
+# ── Chart / STC ───────────────────────────────────────────────────
+
+cmd_chart() {
+  local sub="${1:-list}"
+  shift || true
+
+  case "$sub" in
+    create)
+      local outcome="$1" reality="$2" dir="${3:-east}"
+      mcp_call "create_structural_tension_chart" "{\"desired_outcome\":\"${outcome}\",\"current_reality\":\"${reality}\",\"direction\":\"${dir}\"}"
+      ;;
+    list)
+      mcp_call "list_structural_tension_charts" "{}"
+      ;;
+    progress)
+      mcp_call "get_chart_progress" "{\"chart_id\":\"$1\"}"
+      ;;
+    *)
+      echo "Unknown chart command: $sub" >&2
+      ;;
+  esac
+}
+
+cmd_mmot() {
+  local chart_id="$1" expected="$2" actual="$3" analysis="$4"
+  shift 4 || true
+  mcp_call "creator_moment_of_truth" "{\"chart_id\":\"${chart_id}\",\"expected_outcome\":\"${expected}\",\"actual_outcome\":\"${actual}\",\"analysis\":\"${analysis}\",\"adjustments\":[],\"feedback_system\":\"\"}"
+}
+
+# ── Validate ──────────────────────────────────────────────────────
+
+cmd_validate() {
+  local sub="${1:-wilson}"
+  shift || true
+
+  case "$sub" in
+    wilson)
+      mcp_call "wilson_paradigm_checker" "{\"research_description\":\"$*\"}"
+      ;;
+    ocap)
+      mcp_call "ocap_compliance_checker" "{\"data_plan\":$1}"
+      ;;
+    accountability)
+      mcp_call "accountability_validator" "{\"research_plan\":$1}"
+      ;;
+    bridge)
+      local concept="$1" direction="${2:-integrate_both}"
+      mcp_call "two_eyed_seeing_bridge" "{\"concept\":\"${concept}\",\"direction\":\"${direction}\"}"
+      ;;
+    *)
+      echo "Unknown validate command: $sub" >&2
+      ;;
+  esac
+}
+
+# ── Memory ────────────────────────────────────────────────────────
+
+cmd_memory() {
+  local sub="${1:-store}"
+  shift || true
+
+  case "$sub" in
+    store)
+      local key="$1" value="$2" dir="${3:-}"
+      local args="{\"key\":\"${key}\",\"value\":\"${value}\""
+      if [[ -n "$dir" ]]; then
+        args="${args},\"direction\":\"${dir}\""
+      fi
+      args="${args}}"
+      mcp_call "mw_store_memory" "$args"
+      ;;
+    *)
+      echo "Unknown memory command: $sub" >&2
+      ;;
+  esac
+}
+
+# ── Arc (shortcut) ────────────────────────────────────────────────
+
+cmd_arc() {
+  mcp_call "get_narrative_arc" "{\"cycle_id\":\"$1\"}"
+}
+
+# ── Main Dispatch ─────────────────────────────────────────────────
+
+main() {
+  local cmd="${1:-help}"
+  shift || true
+
+  case "$cmd" in
+    help|--help|-h)     cmd_help ;;
+    status)             cmd_status ;;
+    tools)              cmd_tools ;;
+    ceremony|c)         cmd_ceremony "$@" ;;
+    direction|dir)      cmd_direction "$@" ;;
+    directions|dirs)    cmd_directions ;;
+    cycle|cy)           cmd_cycle "$@" ;;
+    node|n)             cmd_node "$@" ;;
+    beat|b)             cmd_beat "$@" ;;
+    edge|e)             cmd_edge "$@" ;;
+    web|w)              cmd_web "$@" ;;
+    chart|stc)          cmd_chart "$@" ;;
+    mmot)               cmd_mmot "$@" ;;
+    validate|v)         cmd_validate "$@" ;;
+    memory|mem)         cmd_memory "$@" ;;
+    arc)                cmd_arc "$@" ;;
+    *)
+      echo -e "${C_SOUTH}Unknown command: ${cmd}${C_RESET}" >&2
+      echo "Run 'mw help' for usage." >&2
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"
