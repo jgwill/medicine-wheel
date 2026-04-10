@@ -85,7 +85,7 @@ export const reasoningObservabilityTools: Tool[] = [
         return {
           session_id: detail.id,
           model: detail.model,
-          event_count: detail.event_count,
+          eventCount: detail.eventCount,
           analytics: detail.analytics,
           top_tools: Object.entries(detail.analytics.toolUsage)
             .sort(([, a], [, b]) => b - a)
