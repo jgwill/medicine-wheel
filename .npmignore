@@ -3,6 +3,11 @@ mcp
 rispecs/
 .env
 TUG.md
+.mia
+.mia-code
+.ava
+.pva
+.miawa
 .mw
 .context/
 .pi
@@ -12,3 +17,15 @@ llms
 output
 CNAME
 .pde
+mcp
+src
+context7.json
+etc
+scripts
+TUG.md
+*.code-workspace
+KINSHIP.md
+*.sh
+MINO.md
+output
+CNAME
