@@ -46,3 +46,15 @@ Issue being tracked via @stcissue bot.
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #41 - LICENSE
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-04-23T10:42:23Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/41
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+

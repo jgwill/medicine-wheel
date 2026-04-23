@@ -174,4 +174,7 @@ npm install @medicine-wheel/narrative-engine
 
 ## License
 
-MIT
+MIT derived (will be added soon)
+* see [LICENSE](LICENSE)
+
+
