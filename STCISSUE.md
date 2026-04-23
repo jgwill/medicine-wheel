@@ -10,3 +10,27 @@
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #37 - 🎨 Integrate and Refine New Visual Design Language: Core UI & Typography ✨
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-04-23T09:17:56Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/37
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #38 - packaging publish setup
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-04-23T10:08:07Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/38
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
