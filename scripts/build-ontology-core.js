@@ -1,7 +1,10 @@
 import { execSync } from 'child_process';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const ontologyCoreDir = resolve('/vercel/share/v0-project/src/ontology-core');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const projectRoot = resolve(__dirname, '..');
+const ontologyCoreDir = resolve(projectRoot, 'src/ontology-core');
 
 console.log('Building medicine-wheel-ontology-core...');
 

@@ -21,7 +21,7 @@
     "src/ui-components"
   ],
   "scripts": {
-    "build:packages": "npm run build --workspaces --if-present",
+    "build:packages": "npm run build -w medicine-wheel-ontology-core && npm run build --workspaces --if-present",
     "clean:packages": "npm run clean --workspaces --if-present",
     "prebuild": "npm run build:packages",
     "predev": "npm run build:packages",

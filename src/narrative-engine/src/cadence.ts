@@ -120,7 +120,7 @@ export function validateCadence(
 
     // Check ceremony requirement
     if (rule.requiresCeremony) {
-      const hasCeremony = phaseBeats.some(b => b.ceremonies.some(cId => ceremonyIds.has(cId)));
+      const hasCeremony = phaseBeats.some(b => b.ceremonies.some((cId: string) => ceremonyIds.has(cId)));
       if (!hasCeremony) {
         violations.push({
           phase: rule.phase,

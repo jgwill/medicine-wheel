@@ -83,7 +83,7 @@ export function checkGovernance(
 /** Check if a file path should be excluded from indexing */
 export function isIndexExcluded(filePath: string, config: GovernanceConfig): boolean {
   if (!config.index_exclusions) return false;
-  return config.index_exclusions.some((exclusion) => {
+  return config.index_exclusions.some((exclusion: string) => {
     if (exclusion.includes('*')) {
       const regex = new RegExp('^' + exclusion.replace(/\*/g, '.*') + '$');
       return regex.test(filePath);
@@ -95,7 +95,7 @@ export function isIndexExcluded(filePath: string, config: GovernanceConfig): boo
 /** Check if changes to a file require ceremonial review */
 export function checkCeremonyRequired(filePath: string, config: GovernanceConfig): boolean {
   if (!config.ceremony_required_changes) return false;
-  return config.ceremony_required_changes.some((pattern) => {
+  return config.ceremony_required_changes.some((pattern: string) => {
     if (pattern.includes('*')) {
       const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
       return regex.test(filePath);

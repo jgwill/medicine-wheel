@@ -29,7 +29,7 @@ export function extractTransitions(
         from: beats[i - 1].direction,
         to: beats[i].direction,
         timestamp: transitionBeat.timestamp,
-        ceremonyConducted: transitionBeat.ceremonies.some(cId => ceremonyIds.has(cId)),
+        ceremonyConducted: transitionBeat.ceremonies.some((cId: string) => ceremonyIds.has(cId)),
         beat: transitionBeat,
       });
     }
