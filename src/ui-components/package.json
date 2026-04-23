@@ -10,11 +10,13 @@
       "import": "./dist/index.js",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
-    }
+    },
+    "./tokens.css": "./src/tokens.css"
   },
-  "sideEffects": false,
+  "sideEffects": ["./src/tokens.css"],
   "files": [
     "dist",
+    "src/tokens.css",
     "README.md"
   ],
   "scripts": {

@@ -13,12 +13,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
           <Navigation />
           <main className="min-h-screen pt-16">{children}</main>
-          <footer className="border-t border-border px-6 py-4 text-center text-sm text-muted-foreground">
-            &ldquo;Research is Ceremony&rdquo; — Shawn Wilson
-          </footer>
           <Toaster richColors position="bottom-right" />
         </ThemeProvider>
       </body>
