@@ -1,0 +1,18 @@
+{
+  "name": "medicine-wheel-storage-provider",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.0",
+    "@upstash/redis": "^1.34.3",
+    "medicine-wheel-ontology-core": "file:../ontology-core"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

@@ -17,6 +17,7 @@
     "src/relational-index",
     "src/relational-query",
     "src/session-reader",
+    "src/storage-provider",
     "src/transformation-tracker",
     "src/ui-components"
   ],
@@ -60,7 +61,9 @@
     "medicine-wheel-fire-keeper": "^0.2.0",
     "medicine-wheel-importance-unit": "^0.2.0",
     "medicine-wheel-relational-index": "^0.2.0",
-    "medicine-wheel-transformation-tracker": "^0.2.0"
+    "medicine-wheel-transformation-tracker": "^0.2.0",
+    "medicine-wheel-storage-provider": "^0.1.0",
+    "@neondatabase/serverless": "^0.10.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.0",
