@@ -234,7 +234,7 @@ export function findTransformationPoints(beats: NarrativeBeat[]): Array<{
   for (let i = 1; i < sorted.length; i++) {
     const beat = sorted[i];
     const prev = sorted[i - 1];
-    const newLearnings = beat.learnings.filter(l => !priorLearnings.has(l));
+    const newLearnings = beat.learnings.filter((l: string) => !priorLearnings.has(l));
 
     const isDirectionShift = beat.direction !== prev.direction;
     const hasCeremony = beat.ceremonies.length > 0;

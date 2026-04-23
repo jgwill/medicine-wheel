@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# Build the ontology-core package
-cd /vercel/share/v0-project/src/ontology-core
+# Build the ontology-core package relative to the project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
+
+cd "$PROJECT_ROOT/src/ontology-core"
 
 echo "Building medicine-wheel-ontology-core..."
 npx tsc
