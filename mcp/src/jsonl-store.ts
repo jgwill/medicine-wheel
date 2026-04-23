@@ -110,6 +110,16 @@ function withWriteLock<T>(filePath: string, fn: () => T): T {
   const lockPath = filePath + '.lock';
   let locked = false;
 
+  // Stale lock recovery: if a previous process crashed while holding the lock,
+  // the .lock file persists forever. Remove it if older than 30 seconds.
+  try {
+    const stat = fs.statSync(lockPath);
+    if (Date.now() - stat.mtimeMs > 30_000) {
+      console.error(`[jsonl-store] Removing stale lock: ${lockPath} (age: ${Math.round((Date.now() - stat.mtimeMs) / 1000)}s)`);
+      fs.unlinkSync(lockPath);
+    }
+  } catch { /* lock file doesn't exist — normal */ }
+
   for (let attempt = 0; attempt < 20; attempt++) {
     try {
       const fd = fs.openSync(lockPath, 'wx'); // O_EXCL — atomic on POSIX
@@ -123,12 +133,14 @@ function withWriteLock<T>(filePath: string, fn: () => T): T {
     }
   }
 
+  if (!locked) {
+    throw new Error(`[jsonl-store] Failed to acquire write lock after 20 attempts: ${lockPath}`);
+  }
+
   try {
     return fn();
   } finally {
-    if (locked) {
-      try { fs.unlinkSync(lockPath); } catch { /* best effort */ }
-    }
+    try { fs.unlinkSync(lockPath); } catch { /* best effort */ }
   }
 }
 

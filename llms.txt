@@ -2,7 +2,7 @@
 
 > A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's, and OCAP® data sovereignty principles.
 
-**Version:** 0.1.1
+**Version:** 0.2.0
 **Language:** TypeScript (ES2022, ESM)
 **License:** MIT
 
@@ -10,7 +10,13 @@
 
 - [ontology-core](src/ontology-core): Foundational ontology layer for the Medicine Wheel Developer Suite — unified types, RDF vocabulary, Zod schemas, constants, semantic query helpers grounded in Indigenous relational ontology
 - [ceremony-protocol](src/ceremony-protocol): Ceremony lifecycle protocol — manages ceremony state, phase transitions, governance enforcement, and ceremonial review workflows
+- [fire-keeper](src/fire-keeper): Fire Keeper coordination agent — tends the ceremony fire, ensures relational integrity through gating conditions, and maintains Wilson alignment as an active agent
+- [community-review](src/community-review): Community-based ceremonial review protocol — implements Wilson's validation through Elder review circles, consensus-seeking, and relational accountability assessment
+- [consent-lifecycle](src/consent-lifecycle): Ongoing relational consent lifecycle — consent as a living relational obligation with lifecycle tracking, renewal, renegotiation, and community-level consent protocols
 - [narrative-engine](src/narrative-engine): Beat sequencing, arc validation, cadence patterns, and timeline building for the Medicine Wheel Developer Suite
+- [importance-unit](src/importance-unit): ImportanceUnit — the relational unit of knowledge carrying epistemic weight, source dimensions (Land/Dream/Code/Vision), circle depth tracking, and accountability links grounded in Wilson's relational epistemology
+- [relational-index](src/relational-index): Four-source epistemic dimensional indexing — Land, Dream, Code, Vision traversal with cross-dimensional mapping and spiral depth metrics
+- [transformation-tracker](src/transformation-tracker): Research transformation tracking — Wilson validity criterion: if research doesn't change you, you haven't done it right. Tracks researcher, community, and relational transformation
 - [graph-viz](src/graph-viz): Medicine Wheel graph visualization — circular layout with four-direction node positioning, ceremony-aware edges, and OCAP® indicators
 - [relational-query](src/relational-query): Query builder, graph traversal, and accountability audit for the Medicine Wheel relational web. Protocol-aware: respects ceremony boundaries and OCAP® compliance during traversal.
 - [prompt-decomposition](src/prompt-decomposition): Ontology-enriched prompt decomposition engine for the Medicine Wheel Developer Suite — intent extraction, relational dependency mapping, and ceremony-aware action stacking
@@ -23,7 +29,13 @@
 - [System Spec](rispecs/medicine-wheel.spec.md): Top-level overview linking all packages
 - [ontology-core](rispecs/ontology-core.spec.md): Types, schemas, vocabulary, constants, queries
 - [ceremony-protocol](rispecs/ceremony-protocol.spec.md): Ceremony state, phases, governance
+- [fire-keeper](rispecs/fire-keeper.spec.md): Fire Keeper coordination agent, gating, decisions
+- [community-review](rispecs/community-review.spec.md): Elder review circles, consensus, accountability
+- [consent-lifecycle](rispecs/consent-lifecycle.spec.md): Consent as living obligation, lifecycle, cascade
 - [narrative-engine](rispecs/narrative-engine.spec.md): Sequencing, cadence, arc, timeline, cycle
+- [importance-unit](rispecs/importance-unit.spec.md): Epistemic weight, source dimensions, circle depth
+- [relational-index](rispecs/relational-index.spec.md): Four-source dimensional indexing, spiral depth
+- [transformation-tracker](rispecs/transformation-tracker.spec.md): Wilson validity, seven generations, reciprocity
 - [graph-viz](rispecs/graph-viz.spec.md): Layout engine, SVG paths, data converters
 - [relational-query](rispecs/relational-query.spec.md): Query, traversal, audit, Cypher
 - [prompt-decomposition](rispecs/prompt-decomposition.spec.md): Decomposer, enricher, storage
@@ -45,3 +57,10 @@
 - **OCAP®**: Ownership, Control, Access, Possession — Indigenous data sovereignty
 - **Structural Tension**: Germination → Assimilation → Completion creative cycle
 - **Ceremonial Inquiry**: opening → council → integration → closure phase progression
+
+## Cross-Repository Links
+
+- [Master LLM Index](https://llms.jgwill.com/llms-full.txt): Guidance portfolio — 40+ methodology documents including medicine-wheel package documentation
+- [RISE Framework](https://llms.jgwill.com/llms-rise-framework.txt): Creative-oriented specification methodology governing all rispecs
+- [Veritas](https://docs.veritas.jgwill.com/llms.txt): Formal bridge proposal maps StructuralTensionChart ↔ DigitalModel — MMOT evaluation layer for medicine-wheel's tension types
+- [NarIntel](https://docs.narintel.jgwill.com/llms.txt): Narrative Intelligence Stack grounded in Four Directions inquiry — narintel's 7-role apps map East/South/West/North to narrative creation phases

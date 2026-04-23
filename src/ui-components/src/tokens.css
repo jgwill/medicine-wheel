@@ -1,0 +1,291 @@
+/**
+ * medicine-wheel-ui-components — Design Tokens
+ * Source of truth for Medicine Wheel colors, type, spacing, radius, motion.
+ * Mirror of Miadi Design System `colors_and_type.css`.
+ *
+ * Consume from an app with:
+ *   @import "medicine-wheel-ui-components/tokens.css";
+ * Or a bundler path:
+ *   @import "../../src/ui-components/src/tokens.css";
+ *
+ * Assumes a webfont file at /fonts/Stereohead.otf (app serves it publicly).
+ */
+
+@font-face {
+  font-family: 'Stereohead';
+  src: url('/fonts/Stereohead.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Base */
+  --mw-bg:          oklch(0.145 0 0);
+  --mw-card:        oklch(0.185 0 0);
+  --mw-card-2:      oklch(0.21 0 0);
+  --mw-secondary:   oklch(0.269 0 0);
+  --mw-border:      oklch(0.3 0 0);
+  --mw-fg:          oklch(0.985 0 0);
+  --mw-muted:       oklch(0.708 0 0);
+  --mw-primary:     oklch(0.785 0.115 85);
+  --mw-primary-fg:  oklch(0.145 0 0);
+  --mw-ring:        oklch(0.785 0.115 85);
+  --mw-destructive: oklch(0.396 0.141 25.723);
+
+  /* STC panel accent */
+  --mw-stc-bg:      #111827;
+  --mw-stc-card:    #1f2937;
+  --mw-stc-accent:  #0891b2;
+  --mw-stc-border:  #374151;
+
+  /* Four Direction colors */
+  --mw-east:        #FFD700;
+  --mw-south:       #DC143C;
+  --mw-west:        #1a1a2e;
+  --mw-north:       #E8E8E8;
+
+  --mw-east-tint:   #FFD70015;
+  --mw-south-tint:  #DC143C15;
+  --mw-west-tint:   #2a2a4a;
+  --mw-north-tint:  #E8E8E810;
+
+  --mw-east-border:  #FFD70060;
+  --mw-south-border: #DC143C60;
+  --mw-west-border:  #5a5a8060;
+  --mw-north-border: #E8E8E860;
+
+  --mw-west-display: #8888cc; /* legible stand-in for near-black west on dark bg */
+
+  /* oklch direction tokens (for gradients) */
+  --color-east:   oklch(0.85 0.15 85);
+  --color-south:  oklch(0.55 0.22 25);
+  --color-west:   oklch(0.25 0.05 270);
+  --color-north:  oklch(0.92 0.01 0);
+
+  /* Node type colors — ancestor/knowledge retuned for contrast vs human */
+  --mw-node-human:     #e8913a;
+  --mw-node-land:      #4a9e5c;
+  --mw-node-spirit:    #9a5cc6;
+  --mw-node-ancestor:  #8a5a2a;
+  --mw-node-future:    #5a9ec6;
+  --mw-node-knowledge: #c8d42a;
+
+  /* Wilson meter */
+  --mw-wilson-high:   #22c55e;
+  --mw-wilson-mid:    #f59e0b;
+  --mw-wilson-low:    #ef4444;
+
+  /* Typography */
+  --font-display: 'Stereohead', 'Nunito', system-ui, sans-serif;
+  --font-sans:    'Nunito', system-ui, -apple-system, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  1.875rem;
+  --text-4xl:  2.25rem;
+
+  --weight-normal:    400;
+  --weight-medium:    500;
+  --weight-semibold:  600;
+  --weight-bold:      700;
+  --weight-extrabold: 800;
+
+  --leading-tight:  1.25;
+  --leading-snug:   1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed:1.625;
+
+  /* Spacing */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Radius */
+  --radius-sm:   0.25rem;
+  --radius:      0.625rem;
+  --radius-lg:   0.75rem;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --duration-fast:    150ms;
+  --duration-default: 200ms;
+  --duration-slow:    300ms;
+  --duration-pulse:   3s;
+  --duration-glow:    2s;
+
+  /* Layout */
+  --max-w-content: 80rem;
+  --max-w-focused: 64rem;
+  --nav-height:    4rem;
+}
+
+/* Type classes */
+.mw-display {
+  font-family: var(--font-display);
+  font-size:   var(--text-4xl);
+  font-weight: var(--weight-normal);
+  line-height: var(--leading-tight);
+  letter-spacing: 0.02em;
+}
+.mw-h1 {
+  font-family: var(--font-display);
+  font-size:   var(--text-3xl);
+  font-weight: var(--weight-normal);
+  line-height: var(--leading-tight);
+}
+.mw-h2 {
+  font-family: var(--font-display);
+  font-size:   var(--text-2xl);
+  font-weight: var(--weight-normal);
+  line-height: var(--leading-tight);
+}
+.mw-h3 {
+  font-size:   var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+.mw-body    { font-size: var(--text-base); line-height: var(--leading-relaxed); }
+.mw-body-sm { font-size: var(--text-sm);   line-height: var(--leading-normal); }
+.mw-label   { font-size: var(--text-sm);   font-weight: var(--weight-medium); }
+.mw-meta    { font-size: var(--text-xs);   color: var(--mw-muted); }
+.mw-ojibwe  { font-style: italic; font-size: var(--text-sm); opacity: 0.7; }
+.mw-quote   { font-style: italic; color: var(--mw-muted); border-left: 3px solid var(--mw-primary); padding-left: var(--space-4); }
+.mw-mono    { font-family: var(--font-mono); font-size: var(--text-sm); background: var(--mw-secondary); padding: 2px 6px; border-radius: var(--radius-sm); }
+
+/* Cards */
+.mw-card {
+  background:    var(--mw-card);
+  border:        1px solid var(--mw-border);
+  border-radius: var(--radius);
+  padding:       var(--space-4) var(--space-6);
+}
+.mw-card--east  { border-top: 3px solid var(--mw-east); }
+.mw-card--south { border-top: 3px solid var(--mw-south); }
+.mw-card--west  { border-top: 3px solid var(--mw-west); }
+.mw-card--north { border-top: 3px solid var(--mw-north); }
+.mw-card--east-left  { border-left: 4px solid var(--mw-east); }
+.mw-card--south-left { border-left: 4px solid var(--mw-south); }
+.mw-card--west-left  { border-left: 4px solid var(--mw-west); }
+.mw-card--north-left { border-left: 4px solid var(--mw-north); }
+
+/* Buttons */
+.mw-btn {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           var(--space-2);
+  padding:       var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+  font-size:     var(--text-sm);
+  font-weight:   var(--weight-medium);
+  font-family:   var(--font-sans);
+  cursor:        pointer;
+  transition:    all var(--duration-default) ease;
+  border:        none;
+  outline:       none;
+}
+.mw-btn--primary   { background: var(--mw-primary); color: var(--mw-primary-fg); }
+.mw-btn--primary:hover { filter: brightness(0.9); }
+.mw-btn--secondary { background: var(--mw-secondary); color: var(--mw-fg); }
+.mw-btn--secondary:hover { background: var(--mw-border); }
+.mw-btn--ghost     { background: transparent; color: var(--mw-muted); border: 1px solid var(--mw-border); }
+.mw-btn--ghost:hover { color: var(--mw-fg); background: var(--mw-secondary); }
+.mw-btn--stc       { background: var(--mw-stc-accent); color: #fff; }
+.mw-btn--stc:hover { filter: brightness(0.9); }
+.mw-btn--danger    { background: transparent; color: var(--mw-destructive); font-weight: var(--weight-bold); }
+
+/* Badges */
+.mw-badge {
+  display:       inline-flex;
+  align-items:   center;
+  padding:       2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size:     var(--text-xs);
+  font-weight:   var(--weight-medium);
+  background:    var(--mw-secondary);
+  color:         var(--mw-fg);
+}
+.mw-badge--east    { background: var(--mw-east-tint); color: var(--mw-east); border: 1px solid var(--mw-east-border); }
+.mw-badge--south   { background: #DC143C25; color: #ff6b80; border: 1px solid #DC143C50; }
+.mw-badge--west    { background: var(--mw-west-tint); color: var(--mw-west-display); border: 1px solid var(--mw-west-border); }
+.mw-badge--north   { background: var(--mw-north-tint); color: var(--mw-north); border: 1px solid var(--mw-north-border); }
+.mw-badge--success { background: #14532d40; color: var(--mw-wilson-high); }
+.mw-badge--warning { background: #78350f40; color: var(--mw-wilson-mid); }
+.mw-badge--error   { background: #7f1d1d40; color: var(--mw-wilson-low); }
+
+/* Inputs */
+.mw-input {
+  width:         100%;
+  background:    var(--mw-secondary);
+  border:        1px solid var(--mw-border);
+  border-radius: var(--radius);
+  padding:       var(--space-2) var(--space-3);
+  color:         var(--mw-fg);
+  font-family:   var(--font-sans);
+  font-size:     var(--text-sm);
+  outline:       none;
+  transition:    border-color var(--duration-fast);
+}
+.mw-input:focus { border-color: var(--mw-ring); }
+.mw-input::placeholder { color: var(--mw-muted); }
+
+/* Progress */
+.mw-progress-track {
+  height:        0.5rem;
+  background:    var(--mw-secondary);
+  border-radius: var(--radius-full);
+  overflow:      hidden;
+}
+.mw-progress-fill {
+  height:    100%;
+  background: var(--mw-primary);
+  border-radius: var(--radius-full);
+  transition: width var(--duration-slow);
+}
+.mw-progress-fill--directions {
+  background: linear-gradient(to right, var(--mw-east), var(--mw-south), #6060a0, var(--mw-north));
+}
+
+/* Dots */
+.mw-dot {
+  width:  0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+.mw-dot--active   { background: var(--mw-wilson-high); }
+.mw-dot--inactive { background: var(--mw-muted); }
+.mw-dot--east     { background: var(--mw-east); }
+.mw-dot--south    { background: var(--mw-south); }
+.mw-dot--west     { background: var(--mw-west-display); }
+.mw-dot--north    { background: var(--mw-north); }
+
+/* Animations */
+@keyframes mw-pulse-center {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.08); }
+}
+@keyframes mw-glow {
+  0%, 100% { filter: brightness(1); }
+  50%       { filter: brightness(1.3); }
+}
+@keyframes mw-spin {
+  to { transform: rotate(360deg); }
+}
+.mw-pulse { animation: mw-pulse-center var(--duration-pulse) ease-in-out infinite; }
+.mw-glow  { animation: mw-glow var(--duration-glow) ease-in-out infinite; }
+.mw-spin  { animation: mw-spin 1s linear infinite; }

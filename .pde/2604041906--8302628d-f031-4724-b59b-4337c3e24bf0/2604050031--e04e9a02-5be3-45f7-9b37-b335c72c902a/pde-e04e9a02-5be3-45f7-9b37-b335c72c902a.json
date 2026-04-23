@@ -1,0 +1,331 @@
+{
+  "id": "e04e9a02-5be3-45f7-9b37-b335c72c902a",
+  "timestamp": "2026-04-05T04:31:48.335Z",
+  "prompt": "ORCHESTRATE MEDICINE WHEEL MCP ENHANCEMENT — Multi-Part Cascading Mission. PART 1: Review shared-persistence PR #27 with MMOT, verify create_research_cycle, validate with ceremony+cycle. PART 2: Academic deep-search on Indigenous epistemology in agent orchestration, ceremonial technology patterns, decolonizing software. PART 3: Create orchestration-plan.md, enhance MCP CRUD completeness, update rispecs, create orchestration-upgrade-recommendations.md.",
+  "result": {
+    "primary": {
+      "action": "orchestrate",
+      "target": "medicine-wheel MCP enhancement across review, research, and implementation",
+      "urgency": "session",
+      "confidence": 0.95
+    },
+    "secondary": [
+      {
+        "action": "review",
+        "target": "shared-persistence PR #27 implementation using MMOT framework",
+        "implicit": false,
+        "dependency": null,
+        "confidence": 0.95
+      },
+      {
+        "action": "validate",
+        "target": "create_research_cycle tool end-to-end after MCP rebuild",
+        "implicit": false,
+        "dependency": "review",
+        "confidence": 0.9
+      },
+      {
+        "action": "deep-search",
+        "target": "Indigenous epistemology in agent orchestration design",
+        "implicit": false,
+        "dependency": "review",
+        "confidence": 0.9
+      },
+      {
+        "action": "deep-search",
+        "target": "ceremonial technology development patterns",
+        "implicit": false,
+        "dependency": null,
+        "confidence": 0.9
+      },
+      {
+        "action": "deep-search",
+        "target": "decolonizing software architecture",
+        "implicit": false,
+        "dependency": null,
+        "confidence": 0.85
+      },
+      {
+        "action": "transform",
+        "target": "deep-search insights into rispecs specifications",
+        "implicit": true,
+        "dependency": "deep-search",
+        "confidence": 0.8
+      },
+      {
+        "action": "enhance",
+        "target": "MCP CRUD tool completeness for all entity types",
+        "implicit": false,
+        "dependency": "review",
+        "confidence": 0.9
+      },
+      {
+        "action": "create",
+        "target": "orchestration-plan.md documenting ceremonial technology development process",
+        "implicit": false,
+        "dependency": "deep-search",
+        "confidence": 0.9
+      },
+      {
+        "action": "create",
+        "target": "orchestration-upgrade-recommendations.md with orchestrator learnings",
+        "implicit": false,
+        "dependency": "enhance",
+        "confidence": 0.85
+      }
+    ],
+    "context": {
+      "files_needed": [
+        ".pde/shared-persistence-plan.md",
+        "mcp/src/tools/integrations.ts",
+        "mcp/src/tools/discovery.ts",
+        "mcp/src/tools/structural-tension.ts",
+        "mcp/src/tools/east.ts",
+        "mcp/src/tools/south.ts",
+        "mcp/src/tools/west.ts",
+        "mcp/src/tools/north.ts",
+        "mcp/src/store.ts",
+        "mcp/src/jsonl-store.ts",
+        "lib/jsonl-store.ts",
+        "lib/store.ts",
+        "rispecs/*.md",
+        "llms/llms-managerial-moment-of-truth.md",
+        "KINSHIP.md"
+      ],
+      "tools_required": [
+        "medecin-wheel-mcp",
+        "mcp-pde",
+        "github-mcp-server",
+        "deep-search",
+        "bash"
+      ],
+      "assumptions": [
+        "MCP server will reconnect after model switch with rebuilt dist",
+        "PR #27 shared-persistence work is merged and available on current branch",
+        "create_research_cycle tool is now compiled in mcp/dist",
+        "JSONL persistence files exist at lib/jsonl-store.ts and mcp/src/jsonl-store.ts"
+      ]
+    },
+    "outputs": {
+      "artifacts": [
+        ".pde/2604041906--8302628d-f031-4724-b59b-4337c3e24bf0/orchestration-plan.md",
+        ".pde/2604041906--8302628d-f031-4724-b59b-4337c3e24bf0/orchestration-thesis/",
+        ".pde/2604041906--8302628d-f031-4724-b59b-4337c3e24bf0/orchestration-upgrade-recommendations.md",
+        ".pde/2604041906--8302628d-f031-4724-b59b-4337c3e24bf0/mmot-review.md",
+        ".pde/2604041906--8302628d-f031-4724-b59b-4337c3e24bf0/session-summary.md"
+      ],
+      "updates": [
+        "mcp/src/tools/integrations.ts",
+        "mcp/src/tools/discovery.ts",
+        "rispecs/CEREMONIES.md",
+        "rispecs/CYCLES.md"
+      ],
+      "communications": [
+        "GitHub issues documenting each enhancement stage"
+      ]
+    },
+    "directions": {
+      "east": [
+        {
+          "text": "Envision a complete MCP with full CRUD for all entity types and shared persistence",
+          "confidence": 0.95,
+          "implicit": false
+        },
+        {
+          "text": "Vision of ceremonial technology development as orchestration paradigm",
+          "confidence": 0.9,
+          "implicit": false
+        }
+      ],
+      "south": [
+        {
+          "text": "Deep-search Indigenous epistemology in agent orchestration",
+          "confidence": 0.9,
+          "implicit": false
+        },
+        {
+          "text": "Deep-search ceremonial technology development patterns",
+          "confidence": 0.9,
+          "implicit": false
+        },
+        {
+          "text": "Deep-search decolonizing software architecture",
+          "confidence": 0.85,
+          "implicit": false
+        },
+        {
+          "text": "Review shared-persistence implementation with MMOT framework",
+          "confidence": 0.95,
+          "implicit": false
+        },
+        {
+          "text": "Audit MCP tool completeness across all entity types",
+          "confidence": 0.9,
+          "implicit": true
+        }
+      ],
+      "west": [
+        {
+          "text": "Validate create_research_cycle works end-to-end",
+          "confidence": 0.9,
+          "implicit": false
+        },
+        {
+          "text": "Cross-reference deep-search findings with codebase",
+          "confidence": 0.85,
+          "implicit": false
+        },
+        {
+          "text": "Verify all CRUD operations for each entity type",
+          "confidence": 0.9,
+          "implicit": true
+        }
+      ],
+      "north": [
+        {
+          "text": "Enhance MCP with missing CRUD tools",
+          "confidence": 0.9,
+          "implicit": false
+        },
+        {
+          "text": "Create orchestration-plan.md",
+          "confidence": 0.9,
+          "implicit": false
+        },
+        {
+          "text": "Create orchestration-upgrade-recommendations.md",
+          "confidence": 0.85,
+          "implicit": false
+        },
+        {
+          "text": "Transform deep-search insights into rispecs",
+          "confidence": 0.8,
+          "implicit": true
+        },
+        {
+          "text": "Update rispecs/CEREMONIES.md and rispecs/CYCLES.md",
+          "confidence": 0.85,
+          "implicit": false
+        }
+      ]
+    },
+    "actionStack": [
+      {
+        "text": "PART 1: Review shared-persistence PR #27 using MMOT 4-step process",
+        "direction": "south",
+        "dependency": null,
+        "completed": false
+      },
+      {
+        "text": "PART 1: Audit MCP tool completeness — map all entity types to create/list/get tools",
+        "direction": "south",
+        "dependency": null,
+        "completed": false
+      },
+      {
+        "text": "PART 1: Validate create_research_cycle end-to-end (build → create → list → verify)",
+        "direction": "west",
+        "dependency": null,
+        "completed": false
+      },
+      {
+        "text": "PART 1: Create ceremony + cycle via MCP to validate the full flow",
+        "direction": "west",
+        "dependency": "validate create_research_cycle",
+        "completed": false
+      },
+      {
+        "text": "PART 1: Write MMOT review findings to .pde/<UUID>/mmot-review.md",
+        "direction": "north",
+        "dependency": "MMOT review",
+        "completed": false
+      },
+      {
+        "text": "PART 2: Deep-search Indigenous epistemology in agent orchestration design",
+        "direction": "south",
+        "dependency": "PART 1 commit",
+        "completed": false
+      },
+      {
+        "text": "PART 2: Deep-search ceremonial technology development patterns",
+        "direction": "south",
+        "dependency": null,
+        "completed": false
+      },
+      {
+        "text": "PART 2: Deep-search decolonizing software architecture",
+        "direction": "south",
+        "dependency": null,
+        "completed": false
+      },
+      {
+        "text": "PART 2: Cross-reference findings with medicine-wheel codebase",
+        "direction": "west",
+        "dependency": "all deep-searches",
+        "completed": false
+      },
+      {
+        "text": "PART 2: Transform insights into potential rispecs specifications",
+        "direction": "north",
+        "dependency": "cross-reference",
+        "completed": false
+      },
+      {
+        "text": "PART 2: Store thesis in .pde/<UUID>/orchestration-thesis/",
+        "direction": "north",
+        "dependency": "transform insights",
+        "completed": false
+      },
+      {
+        "text": "PART 3: Explore skills/ for orchestration patterns",
+        "direction": "south",
+        "dependency": "PART 2 commit",
+        "completed": false
+      },
+      {
+        "text": "PART 3: Create orchestration-plan.md",
+        "direction": "north",
+        "dependency": "explore skills",
+        "completed": false
+      },
+      {
+        "text": "PART 3: Enhance MCP with missing CRUD tools",
+        "direction": "north",
+        "dependency": "audit results",
+        "completed": false
+      },
+      {
+        "text": "PART 3: Update rispecs/ to reflect enhancements",
+        "direction": "north",
+        "dependency": "MCP enhancement",
+        "completed": false
+      },
+      {
+        "text": "PART 3: Create orchestration-upgrade-recommendations.md",
+        "direction": "north",
+        "dependency": "all parts complete",
+        "completed": false
+      }
+    ],
+    "ambiguities": [
+      {
+        "text": "MCP server connection lost after model switch",
+        "suggestion": "Test via bash node invocation or wait for MCP reconnection"
+      },
+      {
+        "text": "Scope of CRUD completeness — which entity types need which operations",
+        "suggestion": "Audit all store.ts methods vs exposed MCP tools"
+      },
+      {
+        "text": "Whether deep-search should use web_search or codebase-only exploration",
+        "suggestion": "Use both: web_search for academic, grep/glob for codebase"
+      }
+    ]
+  },
+  "options": {
+    "extractImplicit": true,
+    "mapDependencies": true
+  },
+  "folder_name": "2604050031--e04e9a02-5be3-45f7-9b37-b335c72c902a",
+  "parent_pde_id": "8302628d-f031-4724-b59b-4337c3e24bf0"
+}

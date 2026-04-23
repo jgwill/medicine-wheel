@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../src/ui-components/src/tokens.css";
 
 @theme inline {
   --color-background: oklch(0.145 0 0);
@@ -30,11 +31,13 @@
   --color-node-human: oklch(0.72 0.15 55);
   --color-node-land: oklch(0.6 0.16 145);
   --color-node-spirit: oklch(0.6 0.18 300);
-  --color-node-ancestor: oklch(0.65 0.14 65);
+  --color-node-ancestor: oklch(0.48 0.09 55);   /* deep copper — #8a5a2a */
   --color-node-future: oklch(0.7 0.12 230);
-  --color-node-knowledge: oklch(0.8 0.15 90);
+  --color-node-knowledge: oklch(0.83 0.18 110); /* lime-gold — #c8d42a */
 
-  --font-sans: system-ui, -apple-system, sans-serif;
+  --font-sans: 'Nunito', system-ui, -apple-system, sans-serif;
+  --font-display: 'Stereohead', 'Nunito', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
 @layer base {
@@ -43,6 +46,12 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+  h1, h2 {
+    font-family: var(--font-display);
+    font-weight: normal;
+    letter-spacing: 0.01em;
   }
 }
 

@@ -19,13 +19,18 @@ import { validators } from "./validators/index.js";
 import { integrationTools } from "./tools/integrations.js";
 import { discoveryTools } from "./tools/discovery.js";
 import { structuralTensionTools } from "./tools/structural-tension.js";
+import { ceremonyLifecycleTools } from "./tools/ceremony-lifecycle.js";
+import { epistemicTools } from "./tools/epistemic.js";
+import { coordinationTools } from "./tools/coordination.js";
+import { governanceTransformationTools } from "./tools/governance-transformation.js";
+import { reasoningObservabilityTools } from "./tools/reasoning-observability.js";
 import { resources } from "./resources/index.js";
 import { prompts } from "./prompts/index.js";
 
 const server = new Server(
   {
     name: "medicine-wheel-mcp",
-    version: "3.0.0",
+    version: "4.0.0",
   },
   {
     capabilities: {
@@ -45,6 +50,11 @@ const allTools = [
   ...integrationTools,
   ...discoveryTools,
   ...structuralTensionTools,
+  ...ceremonyLifecycleTools,
+  ...epistemicTools,
+  ...coordinationTools,
+  ...governanceTransformationTools,
+  ...reasoningObservabilityTools,
 ];
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {

@@ -1,6 +1,6 @@
 {
   "name": "medicine-wheel-ontology-core",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Foundational ontology layer for the Medicine Wheel Developer Suite — unified types, RDF vocabulary, Zod schemas, and semantic query helpers grounded in Indigenous relational ontology",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

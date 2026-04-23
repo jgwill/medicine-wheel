@@ -1,20 +1,46 @@
 {
-  "name": "mcp-medicine-wheel",
-  "version": "3.0.0",
-  "description": "Medicine Wheel MCP Server — Indigenous Paradigm Research Framework",
+  "name": "medicine-wheel-mcp",
+  "version": "4.0.0",
+  "description": "Medicine Wheel MCP Server — Integrated Indigenous Paradigm Research Framework",
   "type": "module",
   "main": "dist/index.js",
-  "bin": { "medicine-wheel-mcp": "dist/index.js" },
+  "bin": {
+    "medicine-wheel-mcp": "dist/index.js"
+  },
   "scripts": {
     "build": "tsc && chmod +x dist/index.js",
     "start": "node dist/index.js",
     "dev": "tsc --watch",
     "clean": "rm -rf dist"
   },
-  "keywords": ["mcp", "medicine-wheel", "indigenous-research", "four-directions", "ocap", "data-sovereignty", "shawn-wilson", "two-eyed-seeing", "ceremony"],
+  "keywords": [
+    "mcp",
+    "medicine-wheel",
+    "indigenous-research",
+    "four-directions",
+    "ocap",
+    "data-sovereignty",
+    "shawn-wilson",
+    "two-eyed-seeing",
+    "ceremony"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
-    "medicine-wheel-ontology-core": "file:../src/ontology-core"
+    "medicine-wheel-ontology-core": "file:../src/ontology-core",
+    "medicine-wheel-ceremony-protocol": "file:../src/ceremony-protocol",
+    "medicine-wheel-community-review": "file:../src/community-review",
+    "medicine-wheel-consent-lifecycle": "file:../src/consent-lifecycle",
+    "medicine-wheel-data-store": "file:../src/data-store",
+    "medicine-wheel-fire-keeper": "file:../src/fire-keeper",
+    "medicine-wheel-graph-viz": "file:../src/graph-viz",
+    "medicine-wheel-importance-unit": "file:../src/importance-unit",
+    "medicine-wheel-narrative-engine": "file:../src/narrative-engine",
+    "medicine-wheel-prompt-decomposition": "file:../src/prompt-decomposition",
+    "medicine-wheel-relational-index": "file:../src/relational-index",
+    "medicine-wheel-relational-query": "file:../src/relational-query",
+    "medicine-wheel-session-reader": "file:../src/session-reader",
+    "medicine-wheel-transformation-tracker": "file:../src/transformation-tracker",
+    "medicine-wheel-ui-components": "file:../src/ui-components"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
