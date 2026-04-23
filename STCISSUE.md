@@ -34,3 +34,15 @@ Issue being tracked via @stcissue bot.
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #40 - rispecs/docker-containerized-app.kin.md
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-04-23T10:32:36Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/40
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
