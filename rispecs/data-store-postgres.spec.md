@@ -6,7 +6,7 @@
 
 **Architecture:** Keep the storage contract thin. Reuse `RelationalNode`, `RelationalEdge`, and `CeremonyLog` from `medicine-wheel-ontology-core`; use this package as a small Postgres scaffold only, while the shared provider-selection surface lives in `src/storage-provider/`.
 
-**Tech Stack:** TypeScript, `pg`, Neon/Postgres `DATABASE_URL`.
+**Tech Stack:** TypeScript, `pg`, Neon/Postgres connection strings with explicit SSL selection.
 
 ---
 
@@ -18,8 +18,8 @@ The current `src/data-store` package is Redis-specific. The demo app already has
 
 Create a new workspace package at `src/data-store-postgres/` that:
 
-1. Connects through `pg` using `DATABASE_URL` or `POSTGRES_URL`
-2. Exports a shared pool helper
+1. Connects through `pg` using `DATABASE_URL`, `POSTGRES_URL`, or `NEON_DATABASE_URL`
+2. Exports a shared pool helper keyed by effective connection options
 3. Reuses ontology-core types as the storage contract
 4. Stays small enough to serve as the first backend proof
 
@@ -45,7 +45,7 @@ Keep the schema simple and JSON-friendly so the app can move from Redis/JSONL to
 
 - Workspace builds with the new package included
 - Package can create and close a Postgres pool
-- Environment detection works for Neon/Postgres
+- SSL is only enabled when explicitly requested by options, URL parameters, or `PGSSLMODE=require|verify-ca|verify-full`
 - The package name is stable and export shape is clear for future CRUD work
 
 ## Notes for the implementing agent

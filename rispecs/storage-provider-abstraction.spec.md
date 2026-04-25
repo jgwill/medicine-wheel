@@ -124,9 +124,6 @@ function createProvider(): StorageProvider {
   if (process.env.MW_STORAGE_PROVIDER === 'jsonl') return new JsonlProvider();
   if (process.env.MW_STORAGE_PROVIDER === 'neon') return new NeonProvider();
   if (process.env.MW_STORAGE_PROVIDER === 'redis') return new RedisProvider();
-  if (process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL) {
-    return new NeonProvider();
-  }
   return new JsonlProvider();
 }
 ```
@@ -134,5 +131,6 @@ function createProvider(): StorageProvider {
 ## Notes
 
 - JSONL remains the default/local backend and stays compatible with `.mw/store/*.jsonl`
+- Ambient Postgres connection variables do not change the provider unless `MW_STORAGE_PROVIDER` explicitly selects Neon/Postgres
 - Keep existing `data-store` as-is for backwards compatibility while Redis remains secondary
 - `src/data-store-postgres` may remain as a small scaffold, but the provider abstraction converges in `medicine-wheel-storage-provider`

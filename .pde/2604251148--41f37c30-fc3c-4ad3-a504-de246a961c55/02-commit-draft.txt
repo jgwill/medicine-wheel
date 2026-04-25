@@ -1,0 +1,60 @@
+feat(storage-provider): add JsonlProvider default, harden NeonProvider, scaffold data-store-postgres
+
+Make `src/storage-provider` the single relational persistence abstraction
+for nodes, edges, and ceremonies, preserving the existing JSONL workflow
+without requiring a database connection.
+
+## New: JsonlProvider (src/storage-provider/src/jsonl.ts)
+- Implements the full StorageProvider interface backed by .mw/store/*.jsonl
+- Data dir resolved from: MW_DATA_DIR -> mcp/ cwd -> package-root walk -> cwd fallback
+- Atomic writes via ${filePath}.tmp.${process.pid} + fs.renameSync
+- Spin-retry sentinel-file write lock (.lock) with 30 s staleness eviction
+- Legacy edge ceremony_id field transparently mapped to/from last_ceremony on
+  read and write; no data migration required
+
+## Updated: StorageProvider interface (src/storage-provider/src/interface.ts)
+- RelationalNode extends ontology-core with optional description
+- RelationalEdge extends ontology-core with optional id and last_ceremony
+- CeremonyLog is a direct re-export from ontology-core
+- Added: updateEdgeCeremony, getCeremoniesByType, getAllCeremonies
+
+## Updated: factory (src/storage-provider/src/factory.ts)
+- createProvider(type = 'auto') returns a connected StorageProvider
+- normalizeProviderType accepts: local/file -> jsonl, postgres -> neon, upstash -> redis
+- Auto-detection order: MW_STORAGE_PROVIDER -> Postgres env -> jsonl fallback
+- Explicit Redis selection throws immediately (fast-fail, not silent)
+- detectProvider() exported for inspection without connecting
+
+## Updated: NeonProvider (src/storage-provider/src/neon.ts)
+- Dynamic await import('@neondatabase/serverless') in connect(); Neon module is
+  never loaded in JSONL environments
+- Accepts DATABASE_URL, POSTGRES_URL, or NEON_DATABASE_URL
+- Full ON CONFLICT ... DO UPDATE upsert coverage for all three entity types
+- Strict row parsing with parseJsonValue and toIsoString helpers
+
+## Updated: package entrypoint (src/storage-provider/src/index.ts)
+- Exports JsonlProvider and NeonProvider alongside factory and shared types
+
+## New: Neon type shim (src/storage-provider/src/neondatabase-serverless.d.ts)
+- Minimal ambient declaration to keep TS builds stable when Neon is absent
+
+## New: data-store-postgres scaffold (src/data-store-postgres/)
+- medicine-wheel-data-store-postgres v0.2.0 added as workspace package
+- connection.ts: singleton pg.Pool, withPostgresClient, closePostgresPool,
+  resetPostgresPoolForTests; SSL on by default when a connection string is present
+- Types borrowed from medicine-wheel-ontology-core; no local domain types
+- Root package.json workspaces list updated to include src/data-store-postgres
+- Intentionally stops at pool infrastructure; CRUD and migrations are future work
+
+## Spec and process docs
+- rispecs/storage-provider-abstraction.spec.md: documents convergence decision,
+  auto-detection order, and provider priority
+- rispecs/data-store-postgres.spec.md: reframes package as scaffold proof only
+- rispecs/KINSHIP.md: updated to reflect convergence
+- .pde/20260423-092004-copilot-storage-provider-wave/: PDE wave artifacts added
+
+## Intentional non-changes
+- app/** and mcp/** JSONL surfaces left as-is; async provider wiring is follow-up
+- No Redis implementation
+- No JSONL-to-Postgres data migration
+- No provider expansion beyond the relational slice (nodes/edges/ceremonies)

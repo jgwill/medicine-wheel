@@ -10,7 +10,7 @@
  * ```ts
  * import { createProvider } from 'medicine-wheel-storage-provider';
  * 
- * const store = await createProvider(); // Auto-detects JSONL locally, Neon in configured environments
+ * const store = await createProvider(); // Defaults to JSONL unless MW_STORAGE_PROVIDER explicitly selects another backend
  * await store.createNode({ id: 'elder-1', type: 'human', ... });
  * const node = await store.getNode('elder-1');
  * ```
