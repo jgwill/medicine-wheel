@@ -11,7 +11,7 @@ export interface PostgresConnectionOptions {
   applicationName?: string;
 }
 
-let singletonPool: Pool | null = null;
+const singletonPools = new Map<string, Pool>();
 
 function resolvePoolConfig(options?: PostgresConnectionOptions): PoolConfig {
   const connectionString =
@@ -20,14 +20,14 @@ function resolvePoolConfig(options?: PostgresConnectionOptions): PoolConfig {
     process.env.POSTGRES_URL ??
     process.env.NEON_DATABASE_URL;
 
-  const useSsl = options?.ssl ?? Boolean(process.env.PGSSLMODE === 'require' || connectionString);
+  const useSsl = resolveSslEnabled(connectionString, options?.ssl);
 
   return {
     connectionString,
     max: options?.max ?? 10,
     idleTimeoutMillis: options?.idleTimeoutMillis ?? 30000,
     application_name: options?.applicationName ?? 'medicine-wheel-data-store-postgres',
-    ssl: useSsl ? { rejectUnauthorized: false } : undefined,
+    ssl: useSsl ? { rejectUnauthorized: true } : undefined,
   };
 }
 
@@ -36,10 +36,16 @@ export function createPostgresPool(options?: PostgresConnectionOptions): Pool {
 }
 
 export function getPostgresPool(options?: PostgresConnectionOptions): Pool {
-  if (!singletonPool) {
-    singletonPool = createPostgresPool(options);
+  const poolKey = getPoolKey(options);
+  const existingPool = singletonPools.get(poolKey);
+
+  if (existingPool) {
+    return existingPool;
   }
-  return singletonPool;
+
+  const pool = createPostgresPool(options);
+  singletonPools.set(poolKey, pool);
+  return pool;
 }
 
 export async function withPostgresClient<T>(
@@ -54,13 +60,100 @@ export async function withPostgresClient<T>(
   }
 }
 
-export async function closePostgresPool(): Promise<void> {
-  if (singletonPool) {
-    await singletonPool.end();
-    singletonPool = null;
+export async function closePostgresPool(options?: PostgresConnectionOptions): Promise<void> {
+  if (options !== undefined) {
+    // Close only the pool that matches the given options, leaving others intact.
+    const poolKey = getPoolKey(options);
+    const pool = singletonPools.get(poolKey);
+    if (pool) {
+      await pool.end();
+      singletonPools.delete(poolKey);
+    }
+    return;
+  }
+
+  await Promise.all(Array.from(singletonPools.values(), (pool) => pool.end()));
+  singletonPools.clear();
+}
+
+export async function resetPostgresPoolForTests(): Promise<void> {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('resetPostgresPoolForTests must not be called in production');
+  }
+  // Close all pools so connections are not leaked between test suites.
+  await Promise.all(Array.from(singletonPools.values(), (pool) => pool.end()));
+  singletonPools.clear();
+}
+
+function resolveSslEnabled(
+  connectionString: string | undefined,
+  explicitSsl: boolean | undefined,
+): boolean {
+  if (explicitSsl !== undefined) {
+    return explicitSsl;
+  }
+
+  const sslFromConnectionString = readSslFromConnectionString(connectionString);
+  if (sslFromConnectionString !== undefined) {
+    return sslFromConnectionString;
+  }
+
+  return isSslModeEnabled(process.env.PGSSLMODE);
+}
+
+function readSslFromConnectionString(connectionString: string | undefined): boolean | undefined {
+  if (!connectionString) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(connectionString);
+    const ssl = url.searchParams.get('ssl');
+    if (ssl !== null) {
+      return isAffirmativeValue(ssl);
+    }
+
+    const sslMode = url.searchParams.get('sslmode');
+    if (sslMode !== null) {
+      return isSslModeEnabled(sslMode);
+    }
+  } catch {
+    // Leave SSL disabled unless it was explicitly requested.
+  }
+
+  return undefined;
+}
+
+function isAffirmativeValue(value: string): boolean {
+  switch (value.toLowerCase()) {
+    case '1':
+    case 'true':
+    case 'yes':
+    case 'on':
+      return true;
+    default:
+      return false;
   }
 }
 
-export function resetPostgresPoolForTests(): void {
-  singletonPool = null;
+function isSslModeEnabled(value: string | undefined): boolean {
+  switch (value?.toLowerCase()) {
+    case 'require':
+    case 'verify-ca':
+    case 'verify-full':
+      return true;
+    default:
+      return false;
+  }
+}
+
+function getPoolKey(options?: PostgresConnectionOptions): string {
+  const config = resolvePoolConfig(options);
+  return JSON.stringify({
+    connectionString: config.connectionString ?? null,
+    max: config.max ?? null,
+    idleTimeoutMillis: config.idleTimeoutMillis ?? null,
+    application_name: config.application_name ?? null,
+    ssl: config.ssl === true,
+  });
 }

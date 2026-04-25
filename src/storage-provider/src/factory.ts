@@ -1,7 +1,7 @@
 /**
  * Storage Provider Factory
- * 
- * Auto-detects available storage backend based on environment variables.
+ *
+ * Defaults to JSONL unless the backend is explicitly selected.
  */
 
 import type { StorageProvider, ProviderType } from './interface.js';
@@ -33,18 +33,14 @@ function getConfiguredProvider(): ConcreteProviderType | null {
 
   const normalized = normalizeProviderType(raw);
   if (!normalized) {
+    // Truncate raw value to avoid leaking arbitrarily long env content into logs.
+    const displayValue = raw.length > 40 ? `${raw.slice(0, 40)}…` : raw;
     throw new Error(
-      `Unsupported MW_STORAGE_PROVIDER value: ${raw}. Expected jsonl, neon/postgres, or redis/upstash.`,
+      `Unsupported MW_STORAGE_PROVIDER value: "${displayValue}". Expected jsonl, neon/postgres, or redis/upstash.`,
     );
   }
 
   return normalized;
-}
-
-function hasPostgresConfiguration(): boolean {
-  return Boolean(
-    process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.NEON_DATABASE_URL,
-  );
 }
 
 function instantiateProvider(type: ConcreteProviderType): StorageProvider {
@@ -65,10 +61,7 @@ function instantiateProvider(type: ConcreteProviderType): StorageProvider {
  * @returns Connected StorageProvider instance
  */
 export async function createProvider(type: ProviderType = 'auto'): Promise<StorageProvider> {
-  const providerType =
-    type === 'auto'
-      ? getConfiguredProvider() ?? (hasPostgresConfiguration() ? 'neon' : 'jsonl')
-      : type;
+  const providerType = type === 'auto' ? getConfiguredProvider() ?? 'jsonl' : type;
   const provider = instantiateProvider(providerType);
 
   await provider.connect();
@@ -77,7 +70,8 @@ export async function createProvider(type: ProviderType = 'auto'): Promise<Stora
 
 /**
  * Detect which provider is available without connecting.
+ * Always returns a concrete non-null provider type; falls back to 'jsonl'.
  */
-export function detectProvider(): ProviderType | null {
-  return getConfiguredProvider() ?? (hasPostgresConfiguration() ? 'neon' : 'jsonl');
+export function detectProvider(): ProviderType {
+  return getConfiguredProvider() ?? 'jsonl';
 }

@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { randomUUID } from 'crypto';
 import type { DirectionName, NodeType, CeremonyType } from 'medicine-wheel-ontology-core';
 import type { StorageProvider, RelationalNode, RelationalEdge, CeremonyLog } from './interface.js';
 
@@ -47,7 +48,7 @@ export class JsonlProvider implements StorageProvider {
   private readonly ceremoniesFile: string;
 
   constructor(dataDir?: string) {
-    this.dataDir = dataDir ?? resolveProjectDataDir();
+    this.dataDir = path.resolve(dataDir ?? resolveProjectDataDir());
     this.nodesFile = path.join(this.dataDir, 'nodes.jsonl');
     this.edgesFile = path.join(this.dataDir, 'edges.jsonl');
     this.ceremoniesFile = path.join(this.dataDir, 'ceremonies.jsonl');
@@ -62,7 +63,7 @@ export class JsonlProvider implements StorageProvider {
   }
 
   async createNode(node: RelationalNode): Promise<void> {
-    this.upsertById(this.nodesFile, node);
+    await this.upsertById(this.nodesFile, node);
   }
 
   async getNode(id: string): Promise<RelationalNode | null> {
@@ -92,7 +93,7 @@ export class JsonlProvider implements StorageProvider {
   }
 
   async createEdge(edge: RelationalEdge): Promise<void> {
-    this.upsertEdge({
+    await this.upsertEdge({
       ...edge,
       ceremony_id: edge.last_ceremony,
     });
@@ -124,9 +125,9 @@ export class JsonlProvider implements StorageProvider {
   }
 
   async updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): Promise<void> {
-    withWriteLock(this.edgesFile, () => {
+    await withWriteLock(this.edgesFile, () => {
       const nextEdges = this.readEdges().map((edge) => {
-        if (!matchesEdge(edge, fromId, toId)) return edge;
+        if (edge.from_id !== fromId || edge.to_id !== toId) return edge;
 
         return {
           ...edge,
@@ -141,7 +142,7 @@ export class JsonlProvider implements StorageProvider {
   }
 
   async logCeremony(ceremony: CeremonyLog): Promise<void> {
-    this.upsertById(this.ceremoniesFile, ceremony);
+    await this.upsertById(this.ceremoniesFile, ceremony);
   }
 
   async getCeremony(id: string): Promise<CeremonyLog | null> {
@@ -189,16 +190,16 @@ export class JsonlProvider implements StorageProvider {
     return readJsonl<StoredCeremony>(this.ceremoniesFile);
   }
 
-  private upsertById<T extends { id: string }>(filePath: string, item: T): void {
-    withWriteLock(filePath, () => {
+  private async upsertById<T extends { id: string }>(filePath: string, item: T): Promise<void> {
+    await withWriteLock(filePath, () => {
       const nextRecords = readJsonl<T>(filePath).filter((candidate) => candidate.id !== item.id);
       nextRecords.push(item);
       writeJsonl(filePath, nextRecords);
     });
   }
 
-  private upsertEdge(edge: StoredEdge): void {
-    withWriteLock(this.edgesFile, () => {
+  private async upsertEdge(edge: StoredEdge): Promise<void> {
+    await withWriteLock(this.edgesFile, () => {
       const nextEdges = this.readEdges().filter(
         (candidate) => edgeKey(candidate) !== edgeKey(edge),
       );
@@ -282,46 +283,14 @@ function writeJsonl<T>(filePath: string, records: T[]): void {
   fs.renameSync(tmpPath, filePath);
 }
 
-function withWriteLock<T>(filePath: string, fn: () => T): T {
+async function withWriteLock<T>(filePath: string, fn: () => T | Promise<T>): Promise<T> {
   const lockPath = `${filePath}.lock`;
-  let locked = false;
+  const ownerToken = await acquireWriteLock(lockPath);
 
   try {
-    const stat = fs.statSync(lockPath);
-    if (Date.now() - stat.mtimeMs > 30_000) {
-      fs.unlinkSync(lockPath);
-    }
-  } catch {
-    // No existing lock.
-  }
-
-  for (let attempt = 0; attempt < 20; attempt++) {
-    try {
-      const fd = fs.openSync(lockPath, 'wx');
-      fs.closeSync(fd);
-      locked = true;
-      break;
-    } catch {
-      const delayMs = Math.min(25 * (attempt + 1), 250);
-      const deadline = Date.now() + delayMs;
-      while (Date.now() < deadline) {
-        // Spin-wait inside the short retry window.
-      }
-    }
-  }
-
-  if (!locked) {
-    throw new Error(`[storage-provider/jsonl] Failed to acquire write lock: ${lockPath}`);
-  }
-
-  try {
-    return fn();
+    return await fn();
   } finally {
-    try {
-      fs.unlinkSync(lockPath);
-    } catch {
-      // Best-effort unlock.
-    }
+    releaseWriteLock(lockPath, ownerToken);
   }
 }
 
@@ -356,16 +325,116 @@ function resolveProjectDataDir(currentDir?: string): string {
 }
 
 function edgeKey(edge: Pick<StoredEdge, 'from_id' | 'to_id'>): string {
-  return `${edge.from_id}:${edge.to_id}`;
-}
-
-function matchesEdge(edge: StoredEdge, fromId: string, toId: string): boolean {
-  return (
-    (edge.from_id === fromId && edge.to_id === toId) ||
-    (edge.from_id === toId && edge.to_id === fromId)
-  );
+  // JSON-array encoding avoids false collisions when IDs contain the delimiter.
+  return JSON.stringify([edge.from_id, edge.to_id]);
 }
 
 function sortByNewest<T extends Record<K, string>, K extends keyof T>(field: K) {
   return (left: T, right: T): number => Date.parse(right[field]) - Date.parse(left[field]);
+}
+
+function isProcessAlive(pid: number): boolean {
+  try {
+    // Signal 0 checks process existence without sending a real signal.
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isLockStale(lockPath: string): boolean {
+  try {
+    const content = fs.readFileSync(lockPath, 'utf-8').trim();
+    const parsed = JSON.parse(content) as { pid?: unknown; created_at?: unknown };
+
+    const pid = typeof parsed.pid === 'number' ? parsed.pid : null;
+    const createdAt =
+      typeof parsed.created_at === 'string' ? Date.parse(parsed.created_at) : NaN;
+
+    // A lock held by a live process is never stale.
+    if (pid !== null && isProcessAlive(pid)) {
+      return false;
+    }
+
+    // PID is dead or unreadable — treat as stale after a 30-second grace period.
+    const lockAgeMs = isNaN(createdAt) ? Infinity : Date.now() - createdAt;
+    return lockAgeMs > 30_000;
+  } catch {
+    return false;
+  }
+}
+
+async function acquireWriteLock(lockPath: string): Promise<string> {
+  const ownerToken = `${process.pid}:${Date.now()}:${randomUUID()}`;
+  const payload = JSON.stringify({
+    token: ownerToken,
+    pid: process.pid,
+    created_at: new Date().toISOString(),
+  });
+
+  for (let attempt = 0; attempt < 20; attempt++) {
+    let fd: number | undefined;
+
+    try {
+      fd = fs.openSync(lockPath, 'wx');
+      fs.writeFileSync(fd, payload, 'utf-8');
+      return ownerToken;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException)?.code !== 'EEXIST') {
+        throw error;
+      }
+
+      // Only remove the lock file when we are certain its owner is gone.
+      if (isLockStale(lockPath)) {
+        try {
+          fs.unlinkSync(lockPath);
+          console.warn(`[storage-provider/jsonl] Removed stale lock: ${lockPath}`);
+        } catch {
+          // Another process may have removed it first — that is fine.
+        }
+      } else {
+        await sleep(Math.min(25 * (attempt + 1), 250));
+      }
+    } finally {
+      if (fd !== undefined) {
+        fs.closeSync(fd);
+      }
+    }
+  }
+
+  throw new Error(`[storage-provider/jsonl] Failed to acquire write lock: ${lockPath}`);
+}
+
+function releaseWriteLock(lockPath: string, ownerToken: string): void {
+  try {
+    const currentOwner = readLockOwner(lockPath);
+    if (currentOwner !== ownerToken) {
+      return;
+    }
+
+    fs.unlinkSync(lockPath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') {
+      throw error;
+    }
+  }
+}
+
+function readLockOwner(lockPath: string): string | null {
+  const content = fs.readFileSync(lockPath, 'utf-8').trim();
+  if (!content) return null;
+
+  try {
+    const parsed = JSON.parse(content) as { token?: unknown };
+    return typeof parsed.token === 'string' ? parsed.token : null;
+  } catch {
+    return null;
+  }
+}
+
+function sleep(delayMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
 }
