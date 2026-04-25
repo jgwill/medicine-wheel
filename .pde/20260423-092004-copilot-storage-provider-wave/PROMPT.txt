@@ -1,0 +1,49 @@
+You are executing a supervised storage-provider convergence wave in /workspace/repos/jgwill/medicine-wheel.
+
+Read and follow /workspace/repos/jgwill/medicine-wheel/.pde/20260423-092004-copilot-storage-provider-wave/ORCHESTRATION.md as the contract.
+
+Your workflow must explicitly use a sub-agent style sequence, even if implemented as internal role passes or explicit phases:
+1. scout
+2. design
+3. design review
+4. implementation
+5. implementation review
+6. revision
+7. test
+
+What you must accomplish:
+- Analyze committed v0 work in src/storage-provider and related spec/sql files.
+- Analyze staged local work in src/data-store-postgres and rispecs/data-store-postgres.spec.md.
+- Decide the single best convergence path.
+- Preserve JSONL compatibility as current default/local behavior.
+- Prefer Neon/Postgres as first production backend path.
+- Keep Redis/Upstash secondary if needed.
+- Avoid sustaining two parallel long-term architectures unless strongly justified.
+
+Important context to read:
+- rispecs/storage-provider-abstraction.spec.md
+- rispecs/data-store-postgres.spec.md
+- src/storage-provider/**
+- src/data-store/**
+- scripts/001-create-medicine-wheel-tables.sql
+- app/** and mcp/** JSONL usage surfaces if present
+- /workspace/repos/miadisabelle/mia-awesome-copilot/AGENTS.md
+- /workspace/repos/miadisabelle/mia-awesome-copilot/agents
+- /workspace/repos/miadisabelle/mia-awesome-copilot/plugins
+
+Required artifacts to write:
+- .pde/20260423-092004-copilot-storage-provider-wave/artifacts/01-scout.md
+- .pde/20260423-092004-copilot-storage-provider-wave/artifacts/02-design.md
+- .pde/20260423-092004-copilot-storage-provider-wave/artifacts/03-design-review.md
+- .pde/20260423-092004-copilot-storage-provider-wave/artifacts/04-implementation-notes.md
+- .pde/20260423-092004-copilot-storage-provider-wave/artifacts/05-implementation-review.md
+- .pde/20260423-092004-copilot-storage-provider-wave/artifacts/06-revision.md
+- .pde/20260423-092004-copilot-storage-provider-wave/artifacts/07-validation.md
+
+Execution rules:
+- Be repo-grounded and concrete.
+- Make the smallest viable code changes.
+- Run validation commands and record exact outputs/results in 07-validation.md.
+- If there is a runnable local app/server path, perform at least one smoke check.
+- End with a short final summary naming changed files, chosen architecture, validation status, and remaining gaps.
+- Do not stop at planning only; implement the approved minimum slice.

@@ -5,34 +5,71 @@
  */
 
 import type { StorageProvider, ProviderType } from './interface.js';
+import { JsonlProvider } from './jsonl.js';
 import { NeonProvider } from './neon.js';
+
+type ConcreteProviderType = Exclude<ProviderType, 'auto'>;
+
+function normalizeProviderType(value: string): ConcreteProviderType | null {
+  switch (value.toLowerCase()) {
+    case 'jsonl':
+    case 'local':
+    case 'file':
+      return 'jsonl';
+    case 'neon':
+    case 'postgres':
+      return 'neon';
+    case 'redis':
+    case 'upstash':
+      return 'redis';
+    default:
+      return null;
+  }
+}
+
+function getConfiguredProvider(): ConcreteProviderType | null {
+  const raw = process.env.MW_STORAGE_PROVIDER;
+  if (!raw) return null;
+
+  const normalized = normalizeProviderType(raw);
+  if (!normalized) {
+    throw new Error(
+      `Unsupported MW_STORAGE_PROVIDER value: ${raw}. Expected jsonl, neon/postgres, or redis/upstash.`,
+    );
+  }
+
+  return normalized;
+}
+
+function hasPostgresConfiguration(): boolean {
+  return Boolean(
+    process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.NEON_DATABASE_URL,
+  );
+}
+
+function instantiateProvider(type: ConcreteProviderType): StorageProvider {
+  switch (type) {
+    case 'jsonl':
+      return new JsonlProvider();
+    case 'neon':
+      return new NeonProvider();
+    case 'redis':
+      throw new Error('Redis provider not yet implemented. Use jsonl or neon.');
+  }
+}
 
 /**
  * Create a storage provider instance.
  * 
- * @param type - 'neon', 'redis', or 'auto' (default)
+ * @param type - 'jsonl', 'neon', 'redis', or 'auto' (default)
  * @returns Connected StorageProvider instance
  */
 export async function createProvider(type: ProviderType = 'auto'): Promise<StorageProvider> {
-  let provider: StorageProvider;
-
-  if (type === 'auto') {
-    // Auto-detect based on available env vars
-    if (process.env.DATABASE_URL) {
-      provider = new NeonProvider();
-    } else if (process.env.KV_REST_API_URL || process.env.REDIS_URL) {
-      // TODO: Implement RedisProvider wrapping data-store
-      throw new Error('Redis provider not yet implemented. Use Neon or set DATABASE_URL.');
-    } else {
-      throw new Error('No storage provider configured. Set DATABASE_URL (Neon) or KV_REST_API_URL (Redis).');
-    }
-  } else if (type === 'neon') {
-    provider = new NeonProvider();
-  } else if (type === 'redis') {
-    throw new Error('Redis provider not yet implemented.');
-  } else {
-    throw new Error(`Unknown provider type: ${type}`);
-  }
+  const providerType =
+    type === 'auto'
+      ? getConfiguredProvider() ?? (hasPostgresConfiguration() ? 'neon' : 'jsonl')
+      : type;
+  const provider = instantiateProvider(providerType);
 
   await provider.connect();
   return provider;
@@ -42,7 +79,5 @@ export async function createProvider(type: ProviderType = 'auto'): Promise<Stora
  * Detect which provider is available without connecting.
  */
 export function detectProvider(): ProviderType | null {
-  if (process.env.DATABASE_URL) return 'neon';
-  if (process.env.KV_REST_API_URL || process.env.REDIS_URL) return 'redis';
-  return null;
+  return getConfiguredProvider() ?? (hasPostgresConfiguration() ? 'neon' : 'jsonl');
 }

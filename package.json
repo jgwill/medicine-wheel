@@ -8,6 +8,7 @@
     "src/community-review",
     "src/consent-lifecycle",
     "src/data-store",
+    "src/data-store-postgres",
     "src/fire-keeper",
     "src/graph-viz",
     "src/importance-unit",

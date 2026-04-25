@@ -2,45 +2,30 @@
  * Storage Provider Interface
  * 
  * Abstract interface for Medicine Wheel data persistence.
- * Implementations: NeonProvider (Postgres), RedisProvider (Upstash)
+ * Implementations: JsonlProvider (local/default), NeonProvider (Postgres), RedisProvider (future)
  */
 
-import type { DirectionName, NodeType, CeremonyType } from 'medicine-wheel-ontology-core';
+import type {
+  DirectionName,
+  NodeType,
+  CeremonyType,
+  RelationalNode as OntologyRelationalNode,
+  RelationalEdge as OntologyRelationalEdge,
+  CeremonyLog as OntologyCeremonyLog,
+} from 'medicine-wheel-ontology-core';
 
 // ── Domain Types ──
 
-export interface RelationalNode {
-  id: string;
-  type: NodeType;
-  name: string;
-  description: string;
-  direction?: DirectionName;
-  metadata: Record<string, unknown>;
-  created_at: string;
-  updated_at: string;
+export interface RelationalNode extends OntologyRelationalNode {
+  description?: string;
 }
 
-export interface RelationalEdge {
-  from_id: string;
-  to_id: string;
-  relationship_type: string;
-  strength: number;
-  ceremony_honored: boolean;
+export interface RelationalEdge extends Omit<OntologyRelationalEdge, 'id'> {
+  id?: string;
   last_ceremony?: string;
-  obligations: string[];
-  created_at: string;
 }
 
-export interface CeremonyLog {
-  id: string;
-  type: CeremonyType;
-  direction: DirectionName;
-  participants: string[];
-  medicines_used: string[];
-  intentions: string[];
-  timestamp: string;
-  research_context?: string;
-}
+export type CeremonyLog = OntologyCeremonyLog;
 
 // ── Provider Interface ──
 
@@ -73,4 +58,4 @@ export interface StorageProvider {
   getAllCeremonies(limit?: number): Promise<CeremonyLog[]>;
 }
 
-export type ProviderType = 'neon' | 'redis' | 'auto';
+export type ProviderType = 'jsonl' | 'neon' | 'redis' | 'auto';

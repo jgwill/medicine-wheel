@@ -2,17 +2,20 @@
  * Neon (Postgres) Storage Provider
  */
 
-import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 import type { DirectionName, NodeType, CeremonyType } from 'medicine-wheel-ontology-core';
 import type { StorageProvider, RelationalNode, RelationalEdge, CeremonyLog } from './interface.js';
 
+type QueryRow = Record<string, unknown>;
+type NeonQueryFunction = (strings: TemplateStringsArray, ...params: unknown[]) => Promise<QueryRow[]>;
+
 export class NeonProvider implements StorageProvider {
   readonly name = 'neon';
-  private sql: NeonQueryFunction<false, false> | null = null;
+  private sql: NeonQueryFunction | null = null;
 
   async connect(): Promise<void> {
-    const url = process.env.DATABASE_URL;
-    if (!url) throw new Error('DATABASE_URL not set');
+    const url = getConnectionString();
+    if (!url) throw new Error('DATABASE_URL, POSTGRES_URL, or NEON_DATABASE_URL must be set');
+    const { neon } = await import('@neondatabase/serverless');
     this.sql = neon(url);
   }
 
@@ -20,7 +23,7 @@ export class NeonProvider implements StorageProvider {
     this.sql = null;
   }
 
-  private get db(): NeonQueryFunction<false, false> {
+  private get db(): NeonQueryFunction {
     if (!this.sql) throw new Error('NeonProvider not connected');
     return this.sql;
   }
@@ -34,6 +37,7 @@ export class NeonProvider implements StorageProvider {
               ${node.direction || null}, ${JSON.stringify(node.metadata)}, 
               ${node.created_at}, ${node.updated_at})
       ON CONFLICT (id) DO UPDATE SET
+        type = EXCLUDED.type,
         name = EXCLUDED.name,
         description = EXCLUDED.description,
         direction = EXCLUDED.direction,
@@ -50,17 +54,17 @@ export class NeonProvider implements StorageProvider {
 
   async getNodesByType(type: NodeType): Promise<RelationalNode[]> {
     const rows = await this.db`SELECT * FROM nodes WHERE type = ${type} ORDER BY created_at DESC`;
-    return rows.map(r => this.parseNode(r));
+    return rows.map((row: Record<string, unknown>) => this.parseNode(row));
   }
 
   async getNodesByDirection(direction: DirectionName): Promise<RelationalNode[]> {
     const rows = await this.db`SELECT * FROM nodes WHERE direction = ${direction} ORDER BY created_at DESC`;
-    return rows.map(r => this.parseNode(r));
+    return rows.map((row: Record<string, unknown>) => this.parseNode(row));
   }
 
   async getAllNodes(limit = 100): Promise<RelationalNode[]> {
     const rows = await this.db`SELECT * FROM nodes ORDER BY created_at DESC LIMIT ${limit}`;
-    return rows.map(r => this.parseNode(r));
+    return rows.map((row: Record<string, unknown>) => this.parseNode(row));
   }
 
   private parseNode(row: Record<string, unknown>): RelationalNode {
@@ -70,9 +74,9 @@ export class NeonProvider implements StorageProvider {
       name: row.name as string,
       description: (row.description as string) || '',
       direction: (row.direction as DirectionName) || undefined,
-      metadata: (row.metadata as Record<string, unknown>) || {},
-      created_at: (row.created_at as Date).toISOString(),
-      updated_at: (row.updated_at as Date).toISOString(),
+      metadata: parseJsonValue<Record<string, unknown>>(row.metadata, {}),
+      created_at: toIsoString(row.created_at),
+      updated_at: toIsoString(row.updated_at),
     };
   }
 
@@ -87,6 +91,7 @@ export class NeonProvider implements StorageProvider {
         relationship_type = EXCLUDED.relationship_type,
         strength = EXCLUDED.strength,
         ceremony_honored = EXCLUDED.ceremony_honored,
+        last_ceremony = EXCLUDED.last_ceremony,
         obligations = EXCLUDED.obligations
     `;
   }
@@ -125,11 +130,11 @@ export class NeonProvider implements StorageProvider {
       from_id: row.from_id as string,
       to_id: row.to_id as string,
       relationship_type: row.relationship_type as string,
-      strength: row.strength as number,
+      strength: Number(row.strength),
       ceremony_honored: row.ceremony_honored as boolean,
       last_ceremony: (row.last_ceremony as string) || undefined,
-      obligations: (row.obligations as string[]) || [],
-      created_at: (row.created_at as Date).toISOString(),
+      obligations: parseJsonValue<string[]>(row.obligations, []),
+      created_at: toIsoString(row.created_at),
     };
   }
 
@@ -142,9 +147,13 @@ export class NeonProvider implements StorageProvider {
               ${JSON.stringify(ceremony.participants)}, ${JSON.stringify(ceremony.medicines_used)},
               ${JSON.stringify(ceremony.intentions)}, ${ceremony.timestamp}, ${ceremony.research_context || null})
       ON CONFLICT (id) DO UPDATE SET
+        type = EXCLUDED.type,
+        direction = EXCLUDED.direction,
         participants = EXCLUDED.participants,
         medicines_used = EXCLUDED.medicines_used,
-        intentions = EXCLUDED.intentions
+        intentions = EXCLUDED.intentions,
+        timestamp = EXCLUDED.timestamp,
+        research_context = EXCLUDED.research_context
     `;
   }
 
@@ -156,17 +165,17 @@ export class NeonProvider implements StorageProvider {
 
   async getCeremoniesTimeline(limit = 20): Promise<CeremonyLog[]> {
     const rows = await this.db`SELECT * FROM ceremonies ORDER BY timestamp DESC LIMIT ${limit}`;
-    return rows.map(r => this.parseCeremony(r));
+    return rows.map((row: Record<string, unknown>) => this.parseCeremony(row));
   }
 
   async getCeremoniesByDirection(direction: DirectionName): Promise<CeremonyLog[]> {
     const rows = await this.db`SELECT * FROM ceremonies WHERE direction = ${direction} ORDER BY timestamp DESC`;
-    return rows.map(r => this.parseCeremony(r));
+    return rows.map((row: Record<string, unknown>) => this.parseCeremony(row));
   }
 
   async getCeremoniesByType(type: CeremonyType): Promise<CeremonyLog[]> {
     const rows = await this.db`SELECT * FROM ceremonies WHERE type = ${type} ORDER BY timestamp DESC`;
-    return rows.map(r => this.parseCeremony(r));
+    return rows.map((row: Record<string, unknown>) => this.parseCeremony(row));
   }
 
   async getAllCeremonies(limit = 100): Promise<CeremonyLog[]> {
@@ -178,11 +187,33 @@ export class NeonProvider implements StorageProvider {
       id: row.id as string,
       type: row.type as CeremonyType,
       direction: row.direction as DirectionName,
-      participants: (row.participants as string[]) || [],
-      medicines_used: (row.medicines_used as string[]) || [],
-      intentions: (row.intentions as string[]) || [],
-      timestamp: (row.timestamp as Date).toISOString(),
+      participants: parseJsonValue<string[]>(row.participants, []),
+      medicines_used: parseJsonValue<string[]>(row.medicines_used, []),
+      intentions: parseJsonValue<string[]>(row.intentions, []),
+      timestamp: toIsoString(row.timestamp),
       research_context: (row.research_context as string) || undefined,
     };
   }
+}
+
+function getConnectionString(): string | undefined {
+  return process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? process.env.NEON_DATABASE_URL;
+}
+
+function toIsoString(value: unknown): string {
+  if (value instanceof Date) return value.toISOString();
+  if (typeof value === 'string') return value;
+  return new Date(String(value)).toISOString();
+}
+
+function parseJsonValue<T>(value: unknown, fallback: T): T {
+  if (value === undefined || value === null) return fallback;
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  }
+  return value as T;
 }

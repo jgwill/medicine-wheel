@@ -151,3 +151,8 @@ The medicine-wheel rispecs define *what is* — the relational ontology, ceremon
 |---|---|---|
 | 2025-07-17 | Added `medicine-wheel.spec.md` → `relational-intelligence` (MedicineWheelFilter) Direct Ancestor mapping — W1 validation fix | medicine-wheel.spec ↔ relational-intelligence |
 | 2025-07-17 | Initial kinship map created — 15 relational mappings across 10 medicine-wheel specs, 8 AvaLangStack packages, and 2 miadi-code specs | All mappings |
+
+----
+`/workspace/wikis/medicine-wheel` - cloned of `https://github.com/jgwill/medicine-wheel.wiki.git`
+----
+This is where we'll store LLM wiki about this repo....
