@@ -41,7 +41,7 @@
   "author": "IAIP Collaborative - Shawinigan, QC",
   "license": "MIT",
   "dependencies": {
-    "medicine-wheel-ontology-core": "file:../ontology-core",
+    "medicine-wheel-ontology-core": "^0.2.0",
     "pg": "^8.20.0"
   },
   "devDependencies": {
