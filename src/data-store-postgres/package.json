@@ -1,0 +1,52 @@
+{
+  "name": "medicine-wheel-data-store-postgres",
+  "version": "0.2.0",
+  "description": "PostgreSQL/Neon provider scaffold for the Medicine Wheel Developer Suite — shared pool management and provider-ready storage entrypoints",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./connection": {
+      "import": "./dist/connection.js",
+      "types": "./dist/connection.d.ts",
+      "require": "./dist/connection.js",
+      "default": "./dist/connection.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "postgres",
+    "neon",
+    "data-store",
+    "provider",
+    "relational-memory"
+  ],
+  "author": "IAIP Collaborative - Shawinigan, QC",
+  "license": "MIT",
+  "dependencies": {
+    "medicine-wheel-ontology-core": "file:../ontology-core",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/pg": "^8.20.0",
+    "typescript": "^5.3.0"
+  }
+}

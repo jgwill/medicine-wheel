@@ -1,14 +1,17 @@
 /**
  * Medicine Wheel — Web UI Data Store
  *
- * Wraps the shared JSONL persistence layer so that data created in the
- * Web UI is immediately visible to the MCP server (and vice versa).
+ * Provider-agnostic data layer that supports multiple backends:
+ * - JSONL (default for local development)
+ * - Neon/Postgres (production on Vercel)
+ * - Redis/Upstash (coming soon)
  *
- * All data persists in .mw/store/*.jsonl files on disk.
- * The public API is unchanged — API routes call these functions as before.
+ * Backend selection via MW_STORAGE_PROVIDER env var:
+ * - 'neon' or 'postgres' → NeonProvider (requires DATABASE_URL)
+ * - 'jsonl' or unset → JsonlProvider (file-based)
  *
- * @see lib/jsonl-store.ts — the underlying JSONL persistence engine
- * @see https://github.com/jgwill/medicine-wheel/issues/26
+ * @see lib/jsonl-store.ts — the JSONL persistence engine (fallback)
+ * @see src/storage-provider — the provider abstraction layer
  */
 
 import type {
@@ -21,6 +24,8 @@ import type {
 
 import { getJsonlStore } from './jsonl-store';
 
+// JSONL store for sync operations (used by seeding and legacy code paths)
+// For async provider access (Neon), use API routes or import from medicine-wheel-storage-provider directly
 const store = getJsonlStore();
 
 // ── Nodes ──

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAllNodes, getNodesByType, getNodesByDirection, createNode } from "@/lib/store";
+import { createProvider, detectProvider } from "medicine-wheel-storage-provider";
 
 export async function GET(request: Request) {
   try {
@@ -7,32 +7,46 @@ export async function GET(request: Request) {
     const type = searchParams.get("type");
     const direction = searchParams.get("direction");
 
-    let nodes;
+    const store = await createProvider();
+    let nodes = await store.listNodes();
+
     if (type) {
-      nodes = getNodesByType(type);
+      nodes = nodes.filter((n) => n.type === type);
     } else if (direction) {
-      nodes = getNodesByDirection(direction);
-    } else {
-      nodes = getAllNodes();
+      nodes = nodes.filter((n) => n.direction === direction);
     }
 
-    return NextResponse.json(nodes);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      nodes, 
+      provider: detectProvider(),
+      count: nodes.length 
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
+    const store = await createProvider();
     const body = await request.json();
-    const node = createNode({
+    
+    const node = {
+      id: body.id || crypto.randomUUID(),
       name: body.name,
       type: body.type,
+      description: body.description || "",
       direction: body.direction || undefined,
       metadata: body.metadata || {},
-    });
-    return NextResponse.json(node, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    
+    await store.createNode(node);
+    return NextResponse.json({ success: true, node, provider: detectProvider() }, { status: 201 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

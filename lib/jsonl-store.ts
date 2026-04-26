@@ -577,10 +577,10 @@ export function getJsonlStore(dataDir?: string): JsonlStore {
  * When called from mcp/ subdirectory, resolves up to the project root.
  */
 export function resolveProjectDataDir(currentDir?: string): string {
+  if (process.env.MW_DATA_DIR) return process.env.MW_DATA_DIR;
   const dir = currentDir || process.cwd();
   if (dir.endsWith('/mcp') || dir.endsWith('\\mcp')) {
     return path.join(path.dirname(dir), '.mw', 'store');
   }
-  if (process.env.MW_DATA_DIR) return process.env.MW_DATA_DIR;
   return path.join(dir, '.mw', 'store');
 }

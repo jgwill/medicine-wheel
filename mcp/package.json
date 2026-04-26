@@ -30,7 +30,6 @@
     "medicine-wheel-ceremony-protocol": "file:../src/ceremony-protocol",
     "medicine-wheel-community-review": "file:../src/community-review",
     "medicine-wheel-consent-lifecycle": "file:../src/consent-lifecycle",
-    "medicine-wheel-data-store": "file:../src/data-store",
     "medicine-wheel-fire-keeper": "file:../src/fire-keeper",
     "medicine-wheel-graph-viz": "file:../src/graph-viz",
     "medicine-wheel-importance-unit": "file:../src/importance-unit",

@@ -71,12 +71,13 @@ The MCP server resolves the project root automatically (from `mcp/` subdirectory
 #### Atomic Writes & Concurrent Safety
 
 Each write is a **read-modify-write inside a file lock**:
-1. Acquire lock via `O_EXCL` create of `file.jsonl.lock` (atomic on POSIX)
+1. Acquire lock via `O_EXCL` create of `file.jsonl.lock` (atomic on POSIX) and write an ownership token into the lock file
 2. Re-read current disk state inside the lock (picks up any concurrent writes)
 3. Merge in-memory changes with disk state (in-memory items take precedence)
 4. Write merged result to `file.jsonl.tmp.<pid>`
 5. `fs.renameSync()` to `file.jsonl` (atomic)
-6. Release lock (delete lock file)
+6. If the lock is busy, retry asynchronously with backoff so the event loop can continue serving work
+7. Release lock only if the current process still owns the matching lock token
 
 This prevents last-writer-wins data loss when the Web UI and MCP server write simultaneously.
 
@@ -158,7 +159,7 @@ createEdge(edge: RelationalEdge): void
 getEdgesForNode(nodeId: string): RelationalEdge[]
 getRelatedNodeIds(nodeId: string): string[]
 getRelationalWeb(nodeId: string, depth?: number): { nodes; edges }
-updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): void
+updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): void // updates only the directed edge that matches fromId -> toId
 ```
 
 ### Ceremonies

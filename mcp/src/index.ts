@@ -118,8 +118,8 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 });
 
 async function main() {
-  console.error("🌿 Medicine Wheel MCP Server v3.0 initializing...");
-  console.error("📍 Using in-memory store (no Redis required)");
+  console.error("🌿 Medicine Wheel MCP Server v4.0 initializing...");
+  console.error("📂 Using JSONL file-backed store (.mw/store/)");
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Medicine Wheel MCP Server running on stdio");
