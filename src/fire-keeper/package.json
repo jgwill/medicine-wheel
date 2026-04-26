@@ -1,6 +1,6 @@
 {
   "name": "medicine-wheel-fire-keeper",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Fire Keeper coordination agent for Medicine Wheel — tends the ceremony fire, ensures relational integrity through gating conditions, and maintains Wilson alignment as an active agent",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,8 +23,8 @@
     "README.md"
   ],
   "dependencies": {
-    "medicine-wheel-ontology-core": "^0.2.0",
-    "medicine-wheel-ceremony-protocol": "^0.2.0"
+    "medicine-wheel-ontology-core": "^0.2.1",
+    "medicine-wheel-ceremony-protocol": "^0.2.1"
   },
   "devDependencies": {
     "typescript": "^5.4.0"
