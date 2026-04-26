@@ -8,8 +8,8 @@ export async function GET() {
     const store = await createProvider();
     
     // Test basic connectivity
-    const nodes = await store.listNodes();
-    const ceremonies = await store.listCeremonies();
+    const nodes = await store.getAllNodes();
+    const ceremonies = await store.getAllCeremonies();
     
     return NextResponse.json({
       status: 'healthy',

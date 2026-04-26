@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const direction = searchParams.get("direction");
 
     const store = await createProvider();
-    let nodes = await store.listNodes();
+    let nodes = await store.getAllNodes();
 
     if (type) {
       nodes = nodes.filter((n) => n.type === type);
