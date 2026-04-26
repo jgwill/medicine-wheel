@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAllCeremonies, getCeremoniesByDirection, getCeremoniesByType, createCeremony } from "@/lib/store";
+import { createProvider, detectProvider } from "medicine-wheel-storage-provider";
 
 export async function GET(request: Request) {
   try {
@@ -7,34 +7,46 @@ export async function GET(request: Request) {
     const direction = searchParams.get("direction");
     const type = searchParams.get("type");
 
-    let ceremonies;
+    const store = await createProvider();
+    let ceremonies = await store.listCeremonies();
+
     if (direction) {
-      ceremonies = getCeremoniesByDirection(direction);
+      ceremonies = ceremonies.filter((c) => c.direction === direction);
     } else if (type) {
-      ceremonies = getCeremoniesByType(type);
-    } else {
-      ceremonies = getAllCeremonies();
+      ceremonies = ceremonies.filter((c) => c.type === type);
     }
 
-    return NextResponse.json(ceremonies);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ 
+      ceremonies, 
+      provider: detectProvider(),
+      count: ceremonies.length 
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
+    const store = await createProvider();
     const body = await request.json();
-    const ceremony = createCeremony({
+    
+    const ceremony = {
+      id: body.id || crypto.randomUUID(),
       type: body.type,
       direction: body.direction,
       participants: body.participants ?? [],
       medicines_used: body.medicines_used ?? [],
       intentions: body.intentions ?? [],
+      timestamp: new Date().toISOString(),
       research_context: body.research_context,
-    });
-    return NextResponse.json(ceremony, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    };
+    
+    await store.logCeremony(ceremony);
+    return NextResponse.json({ success: true, ceremony, provider: detectProvider() }, { status: 201 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
