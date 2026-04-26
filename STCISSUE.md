@@ -58,3 +58,27 @@ Issue being tracked via @stcissue bot.
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #42 - Converge relational persistence on storage-provider: JsonlProvider as local default, NeonProvider as first production backend
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-04-25T15:53:31Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/42
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #42 - Converge relational persistence on storage-provider: JsonlProvider as local default, NeonProvider as first production backend
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-04-26T10:04:58Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/42
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+

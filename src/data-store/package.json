@@ -1,6 +1,6 @@
 {
   "name": "medicine-wheel-data-store",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Shared Redis data-access layer for the Medicine Wheel Developer Suite — connection management, Node/Edge/Ceremony CRUD, session-ceremony linking, and discovery helpers",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -59,7 +59,7 @@
   "author": "IAIP Collaborative - Shawinigan, QC",
   "license": "MIT",
   "dependencies": {
-    "medicine-wheel-ontology-core": "^0.2.0",
+    "medicine-wheel-ontology-core": "^0.2.1",
     "redis": "^4.6.0"
   },
   "devDependencies": {

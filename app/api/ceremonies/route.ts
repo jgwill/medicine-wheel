@@ -8,7 +8,7 @@ export async function GET(request: Request) {
     const type = searchParams.get("type");
 
     const store = await createProvider();
-    let ceremonies = await store.listCeremonies();
+    let ceremonies = await store.getAllCeremonies();
 
     if (direction) {
       ceremonies = ceremonies.filter((c) => c.direction === direction);

@@ -1,6 +1,6 @@
 {
   "name": "medicine-wheel-ui-components",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "React UI components for the Medicine Wheel Developer Suite — direction cards, beat timelines, node inspectors",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -37,7 +37,7 @@
   "author": "jgwill",
   "license": "MIT",
   "dependencies": {
-    "medicine-wheel-ontology-core": "^0.2.0"
+    "medicine-wheel-ontology-core": "^0.2.1"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0"

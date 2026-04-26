@@ -1,6 +1,6 @@
 {
   "name": "medicine-wheel-ceremony-protocol",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Ceremony lifecycle protocol for Medicine Wheel — manages ceremony state, phase transitions, governance enforcement, and ceremonial review workflows",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,7 +23,7 @@
     "README.md"
   ],
   "dependencies": {
-    "medicine-wheel-ontology-core": "^0.2.0"
+    "medicine-wheel-ontology-core": "^0.2.1"
   },
   "devDependencies": {
     "typescript": "^5.4.0"
