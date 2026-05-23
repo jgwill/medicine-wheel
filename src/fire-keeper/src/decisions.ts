@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-fire-keeper — Human-in-the-Loop Decisions
+ * @medicine-wheel/fire-keeper — Human-in-the-Loop Decisions
  *
  * Determines when human involvement is required, manages permission
  * escalation, and triggers circle review processes. The Fire Keeper

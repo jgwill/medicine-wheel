@@ -1,12 +1,12 @@
 /**
- * medicine-wheel-fire-keeper — Type Definitions
+ * @medicine-wheel/fire-keeper — Type Definitions
  *
  * Types for the Fire Keeper coordination agent.
  * The Fire Keeper tends the ceremony fire, ensures relational integrity,
  * and maintains Wilson alignment as an active agent — not a passive metric.
  */
 
-import type { DirectionName } from 'medicine-wheel-ontology-core';
+import type { DirectionName } from '@medicine-wheel/ontology-core';
 
 // ── Ceremony Phase (Extended) ───────────────────────────────────────────────
 

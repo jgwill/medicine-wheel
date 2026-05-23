@@ -1,10 +1,10 @@
 /**
- * medicine-wheel-narrative-engine — types
+ * @medicine-wheel/narrative-engine — types
  *
  * Extends ontology-core types with engine-specific interfaces
  * for beat sequencing, cadence patterns, and arc validation.
  */
-import type { DirectionName, NarrativeBeat, MedicineWheelCycle } from 'medicine-wheel-ontology-core';
+import type { DirectionName, NarrativeBeat, MedicineWheelCycle } from '@medicine-wheel/ontology-core';
 
 // ─── Beat Sequencer ───────────────────────────────────────────
 

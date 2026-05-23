@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-graph-viz
+ * @medicine-wheel/graph-viz
  *
  * Medicine Wheel graph visualization — circular layout with
  * four-direction node positioning, ceremony-aware edges,

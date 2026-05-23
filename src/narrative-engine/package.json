@@ -1,5 +1,5 @@
 {
-  "name": "medicine-wheel-narrative-engine",
+  "name": "@medicine-wheel/narrative-engine",
   "version": "0.2.2",
   "description": "Beat sequencing, arc validation, and ceremonial cadence engine for the Medicine Wheel Developer Suite",
   "main": "dist/index.js",
@@ -33,7 +33,7 @@
   "author": "jgwill",
   "license": "MIT",
   "dependencies": {
-    "medicine-wheel-ontology-core": "^0.2.2"
+    "@medicine-wheel/ontology-core": "^0.2.2"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

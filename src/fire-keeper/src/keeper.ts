@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-fire-keeper — Fire Keeper Class
+ * @medicine-wheel/fire-keeper — Fire Keeper Class
  *
  * The core coordination engine. The Fire Keeper tends the ceremony fire,
  * receives and evaluates ImportanceUnits, gates work through relational
@@ -9,7 +9,7 @@
  * It receives, evaluates, routes, and gates the work of sub-agents.
  */
 
-import type { DirectionName } from 'medicine-wheel-ontology-core';
+import type { DirectionName } from '@medicine-wheel/ontology-core';
 import type {
   FireKeeperConfig,
   FireKeeperState,

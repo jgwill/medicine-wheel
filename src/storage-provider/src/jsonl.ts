@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
-import type { DirectionName, NodeType, CeremonyType } from 'medicine-wheel-ontology-core';
+import type { DirectionName, NodeType, CeremonyType } from '@medicine-wheel/ontology-core';
 import type { StorageProvider, RelationalNode, RelationalEdge, CeremonyLog } from './interface.js';
 
 interface StoredNode {

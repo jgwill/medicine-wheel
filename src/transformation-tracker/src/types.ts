@@ -12,7 +12,7 @@ import type {
   DirectionName,
   CeremonyPhase,
   ObligationCategory,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 // ── Transformation Log ──────────────────────────────────────────────────────
 

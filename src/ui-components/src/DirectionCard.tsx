@@ -3,8 +3,8 @@
  * color coding, and cultural context.
  */
 import React from 'react';
-import type { Direction, DirectionName } from 'medicine-wheel-ontology-core';
-import { DIRECTION_COLORS, DIRECTIONS, OJIBWE_NAMES } from 'medicine-wheel-ontology-core';
+import type { Direction, DirectionName } from '@medicine-wheel/ontology-core';
+import { DIRECTION_COLORS, DIRECTIONS, OJIBWE_NAMES } from '@medicine-wheel/ontology-core';
 
 const DIR_ICONS: Record<DirectionName, string> = {
   east: '🌅', south: '🔥', west: '🌊', north: '❄️',

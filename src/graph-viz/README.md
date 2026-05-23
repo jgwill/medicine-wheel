@@ -1,7 +1,4 @@
-# medicine-wheel-graph-viz
-
-> **Package rename notice:** `medicine-wheel-graph-viz` is scheduled to move to `@medicine-wheel/graph-viz`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/graph-viz
 
 Medicine Wheel graph visualization — circular layout with four-direction node positioning, ceremony-aware edges, and OCAP® indicators.
 
@@ -19,13 +16,13 @@ Medicine Wheel graph visualization — circular layout with four-direction node 
 ## Installation
 
 ```bash
-npm install medicine-wheel-graph-viz medicine-wheel-ontology-core
+npm install @medicine-wheel/graph-viz @medicine-wheel/ontology-core
 ```
 
 ## Usage
 
 ```tsx
-import { MedicineWheelGraph, buildGraphData } from 'medicine-wheel-graph-viz';
+import { MedicineWheelGraph, buildGraphData } from '@medicine-wheel/graph-viz';
 
 // From ontology-core data
 const graphData = buildGraphData(relationalNodes, relationalEdges);
@@ -82,7 +79,7 @@ const data = {
 ### Layout Engine (headless)
 
 ```ts
-import { applyWheelLayout, getQuadrantGeometries } from 'medicine-wheel-graph-viz';
+import { applyWheelLayout, getQuadrantGeometries } from '@medicine-wheel/graph-viz';
 
 const positioned = applyWheelLayout(data, { radius: 300, centerX: 400, centerY: 400 });
 ```
@@ -90,7 +87,7 @@ const positioned = applyWheelLayout(data, { radius: 300, centerX: 400, centerY: 
 ### Data Converters
 
 ```ts
-import { buildGraphData, nodesToGraphNodes, edgesToGraphLinks } from 'medicine-wheel-graph-viz';
+import { buildGraphData, nodesToGraphNodes, edgesToGraphLinks } from '@medicine-wheel/graph-viz';
 ```
 
 ## License

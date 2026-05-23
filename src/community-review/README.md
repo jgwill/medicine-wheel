@@ -1,7 +1,4 @@
-# medicine-wheel-community-review
-
-> **Package rename notice:** `medicine-wheel-community-review` is scheduled to move to `@medicine-wheel/community-review`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/community-review
 
 > Community-based ceremonial review protocol — implements Wilson's validation through Elder review circles, consensus-seeking, and relational accountability assessment.
 
@@ -40,7 +37,7 @@ import {
   seekConsensus,
   approveWithBlessings,
   closeCircle,
-} from 'medicine-wheel-community-review';
+} from '@medicine-wheel/community-review';
 
 // Create a circle
 let circle = createReviewCircle('research-001', 'research');
@@ -110,8 +107,8 @@ circle = closeCircle(circle, outcome);
 
 ## Dependencies
 
-- `medicine-wheel-ontology-core` ^0.1.1
-- `medicine-wheel-ceremony-protocol` ^0.1.0
+- `@medicine-wheel/ontology-core` ^0.1.1
+- `@medicine-wheel/ceremony-protocol` ^0.1.0
 - `zod` ^3.23.0
 
 ## License

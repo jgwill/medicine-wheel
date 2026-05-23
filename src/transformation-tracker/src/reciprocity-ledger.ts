@@ -6,7 +6,7 @@
  * demands balanced reciprocity — what you take, you must give back.
  */
 
-import type { ObligationCategory } from 'medicine-wheel-ontology-core';
+import type { ObligationCategory } from '@medicine-wheel/ontology-core';
 import type { TransformationLog, ReciprocityEntry } from './types.js';
 
 /**

@@ -1,7 +1,4 @@
-# medicine-wheel-fire-keeper
-
-> **Package rename notice:** `medicine-wheel-fire-keeper` is scheduled to move to `@medicine-wheel/fire-keeper`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/fire-keeper
 
 > The Fire Keeper — ceremony coordination agent for Medicine Wheel
 
@@ -36,7 +33,7 @@ import {
   FireKeeper,
   DEFAULT_GATES,
   type FireKeeperConfig,
-} from 'medicine-wheel-fire-keeper';
+} from '@medicine-wheel/fire-keeper';
 
 const config: FireKeeperConfig = {
   trajectoryThreshold: 0.65,

@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-prompt-decomposition — Browser Entry
+ * @medicine-wheel/prompt-decomposition — Browser Entry
  *
  * Re-exports everything EXCEPT storage (which requires Node.js built-ins).
  * Use this entry when bundling for browser/edge environments.
@@ -37,4 +37,4 @@ export {
 
 // NOTE: Storage functions (saveDecomposition, loadDecomposition, etc.)
 // are NOT exported here — they require Node.js built-in modules.
-// Import from 'medicine-wheel-prompt-decomposition' (main entry) for server usage.
+// Import from '@medicine-wheel/prompt-decomposition' (main entry) for server usage.

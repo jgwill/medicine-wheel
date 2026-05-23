@@ -5,7 +5,7 @@
  * Uses the shared Redis connection from ./connection.
  */
 
-import type { DirectionName, NodeType, CeremonyType } from 'medicine-wheel-ontology-core';
+import type { DirectionName, NodeType, CeremonyType } from '@medicine-wheel/ontology-core';
 import { getRedis } from './connection.js';
 
 // ── Domain Interfaces ──

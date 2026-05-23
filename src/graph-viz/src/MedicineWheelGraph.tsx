@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-graph-viz — MedicineWheelGraph Component
+ * @medicine-wheel/graph-viz — MedicineWheelGraph Component
  *
  * A pure SVG React component for rendering relational graphs
  * in a medicine wheel circular layout. No D3 runtime dependency —
@@ -13,7 +13,7 @@ import {
   OJIBWE_NAMES,
   NODE_TYPE_COLORS,
   CEREMONY_ICONS,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 import type { MedicineWheelGraphProps, MWGraphNode, MWGraphLink } from './types.js';
 import {

@@ -2,7 +2,7 @@
  * OcapBadge — compact indicator for OCAP® compliance status.
  */
 import React from 'react';
-import type { OcapFlags } from 'medicine-wheel-ontology-core';
+import type { OcapFlags } from '@medicine-wheel/ontology-core';
 
 export interface OcapBadgeProps {
   ocap?: OcapFlags;

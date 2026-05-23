@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-data-store-postgres
+ * @medicine-wheel/data-store-postgres
  *
  * Minimal PostgreSQL/Neon provider scaffold for Medicine Wheel storage.
  * This package only establishes pool management and a provider-ready surface.

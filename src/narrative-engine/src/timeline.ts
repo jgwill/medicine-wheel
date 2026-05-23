@@ -2,8 +2,8 @@
  * Timeline Builder — generates timeline data for visualization
  * of narrative beats along chronological, directional, or ceremonial axes.
  */
-import type { NarrativeBeat, DirectionName } from 'medicine-wheel-ontology-core';
-import { DIRECTION_COLORS } from 'medicine-wheel-ontology-core';
+import type { NarrativeBeat, DirectionName } from '@medicine-wheel/ontology-core';
+import { DIRECTION_COLORS } from '@medicine-wheel/ontology-core';
 import type {
   TimelineAxis,
   TimelineEntry,

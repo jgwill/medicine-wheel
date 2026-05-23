@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-community-review
+ * @medicine-wheel/community-review
  *
  * Community-based ceremonial review protocol — implements Wilson's
  * validation through Elder review circles, consensus-seeking,

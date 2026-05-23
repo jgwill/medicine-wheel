@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-relational-index — Types
+ * @medicine-wheel/relational-index — Types
  *
  * Core type definitions for four-source epistemic dimensional indexing.
  * Wilson's epistemology recognises multiple sources of knowing:
@@ -8,7 +8,7 @@
  *   Code — implementation, algorithmic, structural knowledge
  *   Vision — aspirational, intentional, future-oriented knowledge
  */
-import type { DirectionName } from 'medicine-wheel-ontology-core';
+import type { DirectionName } from '@medicine-wheel/ontology-core';
 
 // ── Epistemic Sources ───────────────────────────────────────────
 

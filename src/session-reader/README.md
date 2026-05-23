@@ -1,7 +1,4 @@
-# medicine-wheel-session-reader
-
-> **Package rename notice:** `medicine-wheel-session-reader` is scheduled to move to `@medicine-wheel/session-reader`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/session-reader
 
 Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, session summaries, analytics extraction, and search across agent session data.
 
@@ -19,7 +16,7 @@ This package reads agent session event data from `_sessiondata/` JSONL files. Ze
 ## Installation
 
 ```bash
-npm install medicine-wheel-session-reader
+npm install @medicine-wheel/session-reader
 ```
 
 Or link locally:
@@ -49,14 +46,14 @@ import {
 
   // Constants
   EVENT_ICONS,
-} from 'medicine-wheel-session-reader';
+} from '@medicine-wheel/session-reader';
 ```
 
 ### Sub-path exports
 
 ```typescript
-import type { SessionEvent, SessionFilters } from 'medicine-wheel-session-reader/types';
-import { listSessions, searchSessions } from 'medicine-wheel-session-reader/sessions';
+import type { SessionEvent, SessionFilters } from '@medicine-wheel/session-reader/types';
+import { listSessions, searchSessions } from '@medicine-wheel/session-reader/sessions';
 ```
 
 ## API Reference

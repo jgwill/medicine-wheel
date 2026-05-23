@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-prompt-decomposition — Storage
+ * @medicine-wheel/prompt-decomposition — Storage
  *
  * Persists ontological decompositions to .pde/ folder.
  * Lineage: mcp-pde/src/storage.ts → ava-langchain storage.ts → this.
@@ -11,8 +11,8 @@
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { OJIBWE_NAMES, DIRECTION_ACTS } from 'medicine-wheel-ontology-core';
-import type { DirectionName } from 'medicine-wheel-ontology-core';
+import { OJIBWE_NAMES, DIRECTION_ACTS } from '@medicine-wheel/ontology-core';
+import type { DirectionName } from '@medicine-wheel/ontology-core';
 
 import type { OntologicalDecomposition, StoredDecomposition, ActionItem } from './types.js';
 

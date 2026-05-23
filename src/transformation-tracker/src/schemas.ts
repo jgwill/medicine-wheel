@@ -8,7 +8,7 @@ import { z } from 'zod';
 import {
   DirectionNameSchema,
   ObligationCategorySchema,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 // ── Ceremony Phase Schema (local, from ontology-core type) ──────────────────
 

@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-graph-viz — Conversion Utilities
+ * @medicine-wheel/graph-viz — Conversion Utilities
  *
  * Convert ontology-core data structures into graph visualization format.
  */
@@ -8,11 +8,11 @@ import type {
   RelationalNode,
   RelationalEdge,
   Relation,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 import {
   NODE_TYPE_COLORS,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 import type { MWGraphNode, MWGraphLink, MWGraphData, LinkStyle } from './types.js';
 

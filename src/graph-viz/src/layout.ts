@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-graph-viz — Circular Layout Engine
+ * @medicine-wheel/graph-viz — Circular Layout Engine
  *
  * Positions nodes in a medicine wheel pattern:
  * - East (right): 315°–45°
@@ -12,12 +12,12 @@
 
 import type {
   DirectionName,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 import {
   DIRECTION_COLORS,
   OJIBWE_NAMES,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 import type {
   MWGraphNode,

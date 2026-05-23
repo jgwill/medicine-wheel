@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-fire-keeper — Trajectory Analysis
+ * @medicine-wheel/fire-keeper — Trajectory Analysis
  *
  * Assesses whether the ceremony is on track by analyzing trajectory
  * history and detecting value divergence. The Fire Keeper uses these

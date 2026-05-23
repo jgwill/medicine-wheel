@@ -1,7 +1,4 @@
-# medicine-wheel-transformation-tracker
-
-> **Package rename notice:** `medicine-wheel-transformation-tracker` is scheduled to move to `@medicine-wheel/transformation-tracker`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/transformation-tracker
 
 Research transformation tracking for the Medicine Wheel Developer Suite.
 
@@ -14,7 +11,7 @@ Tracks the transformative impact of research on researchers, communities, and re
 ## Installation
 
 ```bash
-npm install medicine-wheel-transformation-tracker
+npm install @medicine-wheel/transformation-tracker
 ```
 
 ## Key Concepts

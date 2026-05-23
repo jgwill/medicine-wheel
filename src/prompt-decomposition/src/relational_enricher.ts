@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-prompt-decomposition — Relational Enricher
+ * @medicine-wheel/prompt-decomposition — Relational Enricher
  *
  * Enriches decomposition results with relational-query traversal.
  * Takes a decomposition and a relational graph, then:
@@ -19,11 +19,11 @@ import type {
   Relation,
   AccountabilityTracking,
   DirectionName,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 import {
   computeWilsonAlignment,
   findAccountabilityGaps,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 import type {
   OntologicalDecomposition,

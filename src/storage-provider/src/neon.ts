@@ -2,7 +2,7 @@
  * Neon (Postgres) Storage Provider
  */
 
-import type { DirectionName, NodeType, CeremonyType } from 'medicine-wheel-ontology-core';
+import type { DirectionName, NodeType, CeremonyType } from '@medicine-wheel/ontology-core';
 import type { StorageProvider, RelationalNode, RelationalEdge, CeremonyLog } from './interface.js';
 
 type QueryRow = Record<string, unknown>;

@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-ui-components
+ * @medicine-wheel/ui-components
  *
  * React UI components for the Medicine Wheel Developer Suite.
  */

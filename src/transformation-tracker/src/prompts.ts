@@ -6,7 +6,7 @@
  * guide the researcher toward deeper Wilson-aligned reflection.
  */
 
-import type { CeremonyPhase } from 'medicine-wheel-ontology-core';
+import type { CeremonyPhase } from '@medicine-wheel/ontology-core';
 
 /**
  * Generate reflection prompts for a given ceremony phase.

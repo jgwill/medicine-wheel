@@ -1,7 +1,4 @@
-# medicine-wheel-relational-index
-
-> **Package rename notice:** `medicine-wheel-relational-index` is scheduled to move to `@medicine-wheel/relational-index`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/relational-index
 
 Four-source epistemic dimensional indexing for the **Medicine Wheel Developer Suite**.
 
@@ -10,7 +7,7 @@ Wilson's epistemology recognises multiple sources of knowing — Land, Dream, Co
 ## Installation
 
 ```bash
-npm install medicine-wheel-relational-index
+npm install @medicine-wheel/relational-index
 ```
 
 ## Quick Start
@@ -23,7 +20,7 @@ import {
   dimensionBalance,
   measureSpiralDepth,
   indexHealth,
-} from 'medicine-wheel-relational-index';
+} from '@medicine-wheel/relational-index';
 
 // Create an empty index
 const index = createIndex();

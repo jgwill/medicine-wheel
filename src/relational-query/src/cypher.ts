@@ -1,11 +1,11 @@
 /**
- * medicine-wheel-relational-query — Cypher Query Builders
+ * @medicine-wheel/relational-query — Cypher Query Builders
  *
  * Generates Cypher queries for RSIS relational science dimensions.
  * Used by rsis-gitnexus tool handlers to query the KuzuDB graph.
  */
 
-import type { DirectionName, SunName } from 'medicine-wheel-ontology-core';
+import type { DirectionName, SunName } from '@medicine-wheel/ontology-core';
 
 /** Escape a string for safe use in Cypher string literals */
 function escapeCypher(value: string): string {

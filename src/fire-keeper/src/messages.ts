@@ -1,12 +1,12 @@
 /**
- * medicine-wheel-fire-keeper — Message Types
+ * @medicine-wheel/fire-keeper — Message Types
  *
  * A2A message type definitions for Fire Keeper communication.
  * All messages flow through the message broker; the Fire Keeper
  * is the primary consumer and producer of these message types.
  */
 
-import type { DirectionName } from 'medicine-wheel-ontology-core';
+import type { DirectionName } from '@medicine-wheel/ontology-core';
 import type { DecisionPointType, GatingConditionStatus } from './types.js';
 
 // ── Messages the Fire Keeper Receives ───────────────────────────────────────

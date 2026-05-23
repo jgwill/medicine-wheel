@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-relational-query — types
+ * @medicine-wheel/relational-query — types
  *
  * Query builder types for context-aware relational traversal
  * with Indigenous protocol awareness.
@@ -11,7 +11,7 @@ import type {
   RelationalNode,
   RelationalEdge,
   Relation,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 // ─── Query Filters ────────────────────────────────────────────
 

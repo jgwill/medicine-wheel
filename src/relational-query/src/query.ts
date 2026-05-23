@@ -2,7 +2,7 @@
  * Query Builder — fluent API for querying relational nodes and edges
  * with Indigenous protocol awareness.
  */
-import type { RelationalNode, RelationalEdge, Relation } from 'medicine-wheel-ontology-core';
+import type { RelationalNode, RelationalEdge, Relation } from '@medicine-wheel/ontology-core';
 import type {
   NodeFilter,
   EdgeFilter,

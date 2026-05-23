@@ -122,7 +122,7 @@ export async function getRedis(opts?: ConnectionOptions): Promise<RedisClientTyp
 
       newClient.on('error', (err) => {
         if (process.env.DEBUG_REDIS) {
-          console.error('[medicine-wheel-data-store] Redis error:', err);
+          console.error('[@medicine-wheel/data-store] Redis error:', err);
         }
       });
 

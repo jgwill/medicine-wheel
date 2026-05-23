@@ -1,12 +1,12 @@
 /**
- * medicine-wheel-fire-keeper — Extended Ceremony State Management
+ * @medicine-wheel/fire-keeper — Extended Ceremony State Management
  *
  * Manages the full lifecycle of ceremony state with extended phases:
  * gathering → kindling → tending → harvesting → resting.
  * Tracks quadrant status and detects completion readiness.
  */
 
-import type { DirectionName } from 'medicine-wheel-ontology-core';
+import type { DirectionName } from '@medicine-wheel/ontology-core';
 import type {
   CeremonyPhaseExtended,
   CeremonyStateExtended,

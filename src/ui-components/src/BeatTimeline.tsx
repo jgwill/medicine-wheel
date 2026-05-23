@@ -3,8 +3,8 @@
  * with direction-coded markers.
  */
 import React from 'react';
-import type { NarrativeBeat, DirectionName } from 'medicine-wheel-ontology-core';
-import { DIRECTION_COLORS } from 'medicine-wheel-ontology-core';
+import type { NarrativeBeat, DirectionName } from '@medicine-wheel/ontology-core';
+import { DIRECTION_COLORS } from '@medicine-wheel/ontology-core';
 
 const DIR_ICONS: Record<DirectionName, string> = {
   east: '🌅', south: '🔥', west: '🌊', north: '❄️',

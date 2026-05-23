@@ -1,13 +1,10 @@
-# medicine-wheel-data-store
-
-> **Package rename notice:** `medicine-wheel-data-store` is scheduled to move to `@medicine-wheel/data-store`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/data-store
 
 Shared Redis data-access layer for the Medicine Wheel Developer Suite — connection management, Node/Edge/Ceremony CRUD, session-ceremony linking, and discovery helpers.
 
 ## Overview
 
-This package provides a **unified Redis persistence layer** consumed by `mcp-medicine-wheel` and other Medicine Wheel services. It wraps the `redis` client with domain-aware helpers that honour the relational ontology defined in `medicine-wheel-ontology-core`.
+This package provides a **unified Redis persistence layer** consumed by `mcp-medicine-wheel` and other Medicine Wheel services. It wraps the `redis` client with domain-aware helpers that honour the relational ontology defined in `@medicine-wheel/ontology-core`.
 
 ### What it provides
 
@@ -21,7 +18,7 @@ This package provides a **unified Redis persistence layer** consumed by `mcp-med
 ## Installation
 
 ```bash
-npm install medicine-wheel-data-store
+npm install @medicine-wheel/data-store
 ```
 
 Or link locally:
@@ -55,13 +52,13 @@ import {
 
   // Generic Redis Helpers
   getAllFromSet, getHash, getAllHashes, setHash, addToSet, addToSortedSet,
-} from 'medicine-wheel-data-store';
+} from '@medicine-wheel/data-store';
 ```
 
 ### Quick start
 
 ```typescript
-import { getRedis, createNode, getNodesByDirection } from 'medicine-wheel-data-store';
+import { getRedis, createNode, getNodesByDirection } from '@medicine-wheel/data-store';
 
 // Connect (reuses existing client if already connected)
 const redis = await getRedis();
@@ -84,10 +81,10 @@ await disconnectRedis();
 ### Sub-path imports
 
 ```typescript
-import { getRedis } from 'medicine-wheel-data-store/connection';
-import { createNode, logCeremony } from 'medicine-wheel-data-store/store';
-import { linkSessionToCeremony } from 'medicine-wheel-data-store/session-link';
-import { getAllFromSet, setHash } from 'medicine-wheel-data-store/helpers';
+import { getRedis } from '@medicine-wheel/data-store/connection';
+import { createNode, logCeremony } from '@medicine-wheel/data-store/store';
+import { linkSessionToCeremony } from '@medicine-wheel/data-store/session-link';
+import { getAllFromSet, setHash } from '@medicine-wheel/data-store/helpers';
 ```
 
 ## API Reference
@@ -163,7 +160,7 @@ import { getAllFromSet, setHash } from 'medicine-wheel-data-store/helpers';
 
 | Package | Purpose |
 |---------|---------|
-| `medicine-wheel-ontology-core` | Shared types, schemas, and constants |
+| `@medicine-wheel/ontology-core` | Shared types, schemas, and constants |
 | `redis` | Redis client (v4+) |
 
 ## License

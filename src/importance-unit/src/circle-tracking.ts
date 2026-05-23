@@ -10,7 +10,7 @@
  * stagnation (circling without change).
  */
 
-import type { DirectionName } from 'medicine-wheel-ontology-core';
+import type { DirectionName } from '@medicine-wheel/ontology-core';
 import type { ImportanceUnit, CircleRefinement, CeremonyState } from './types.js';
 import { computeWeight } from './epistemic-weight.js';
 

@@ -1,9 +1,9 @@
 /**
- * medicine-wheel-prompt-decomposition
+ * @medicine-wheel/prompt-decomposition
  *
  * Ontology-enriched Prompt Decomposition Engine for the Medicine Wheel
  * Developer Suite. Bridges the ava-langchain-prompt-decomposition primitives
- * with medicine-wheel-ontology-core types.
+ * with @medicine-wheel/ontology-core types.
  *
  * Architecture:
  * - MedicineWheelDecomposer: heuristic decomposer grounded in Four Directions
@@ -11,7 +11,7 @@
  * - Storage: .pde/ persistence (JSON + Markdown)
  * - Types: ontology-enriched PDE types (OntologicalDecomposition, RelationalIntent, etc.)
  *
- * Lineage: mcp-pde → ava-langchain-prompt-decomposition → medicine-wheel-prompt-decomposition
+ * Lineage: mcp-pde → ava-langchain-prompt-decomposition → @medicine-wheel/prompt-decomposition
  */
 
 // Types

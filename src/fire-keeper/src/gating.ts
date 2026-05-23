@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-fire-keeper — Gate Evaluation
+ * @medicine-wheel/fire-keeper — Gate Evaluation
  *
  * Evaluates gating conditions that must be satisfied before ceremony
  * work can proceed. Implements Wilson's relational accountability

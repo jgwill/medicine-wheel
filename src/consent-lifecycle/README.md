@@ -1,7 +1,4 @@
-# medicine-wheel-consent-lifecycle
-
-> **Package rename notice:** `medicine-wheel-consent-lifecycle` is scheduled to move to `@medicine-wheel/consent-lifecycle`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/consent-lifecycle
 
 Ongoing relational consent lifecycle for the Medicine Wheel Developer Suite.
 
@@ -16,7 +13,7 @@ Wilson's relational accountability means consent is not an event — it's a *rel
 ## Installation
 
 ```bash
-npm install medicine-wheel-consent-lifecycle
+npm install @medicine-wheel/consent-lifecycle
 ```
 
 ## Key Concepts

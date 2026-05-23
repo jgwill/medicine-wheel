@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-prompt-decomposition — Types
+ * @medicine-wheel/prompt-decomposition — Types
  *
  * Ontology-enriched PDE types that bridge the ava-langchain
  * Prompt Decomposition Engine with the Medicine Wheel ontology.
@@ -10,7 +10,7 @@
  * - Adds ontological metadata (Ojibwe names, seasons, acts) to decompositions
  * - Supports relational-query traversal of dependency graphs
  *
- * Lineage: mcp-pde → ava-langchain-prompt-decomposition → medicine-wheel-prompt-decomposition
+ * Lineage: mcp-pde → ava-langchain-prompt-decomposition → @medicine-wheel/prompt-decomposition
  */
 
 import type {
@@ -19,7 +19,7 @@ import type {
   CeremonyGuidance,
   NarrativeBeat,
   AccountabilityTracking,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 // ── Epistemic Source Hints ───────────────────────────────────────────────────
 

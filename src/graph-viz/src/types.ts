@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-graph-viz — Types
+ * @medicine-wheel/graph-viz — Types
  *
  * Graph data types for Medicine Wheel visualization.
  * Built on ontology-core types.
@@ -11,7 +11,7 @@ import type {
   CeremonyType,
   RelationalNode,
   OcapFlags,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 // ── Graph Node ──────────────────────────────────────────────────────────────
 

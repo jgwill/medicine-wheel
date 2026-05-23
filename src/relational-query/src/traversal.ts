@@ -2,8 +2,8 @@
  * Graph Traversal — context-aware relationship traversal
  * with ceremony boundary and OCAP® awareness.
  */
-import type { RelationalNode, RelationalEdge, Relation } from 'medicine-wheel-ontology-core';
-import { checkOcapCompliance } from 'medicine-wheel-ontology-core';
+import type { RelationalNode, RelationalEdge, Relation } from '@medicine-wheel/ontology-core';
+import { checkOcapCompliance } from '@medicine-wheel/ontology-core';
 import type {
   TraversalOptions,
   TraversalPath,

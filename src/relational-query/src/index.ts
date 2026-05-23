@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-relational-query
+ * @medicine-wheel/relational-query
  *
  * Query builder, graph traversal, and accountability audit
  * for the Medicine Wheel relational web.

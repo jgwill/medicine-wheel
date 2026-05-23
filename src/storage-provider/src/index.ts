@@ -8,7 +8,7 @@
  * 
  * @example
  * ```ts
- * import { createProvider } from 'medicine-wheel-storage-provider';
+ * import { createProvider } from '@medicine-wheel/storage-provider';
  * 
  * const store = await createProvider(); // Defaults to JSONL unless MW_STORAGE_PROVIDER explicitly selects another backend
  * await store.createNode({ id: 'elder-1', type: 'human', ... });

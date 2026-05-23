@@ -7,7 +7,7 @@
  *
  * @example
  * ```ts
- * import { getRedis, createNode, logCeremony, linkSessionToCeremony } from 'medicine-wheel-data-store';
+ * import { getRedis, createNode, logCeremony, linkSessionToCeremony } from '@medicine-wheel/data-store';
  *
  * // Connection is auto-managed — just call store functions
  * await createNode({ id: 'elder-1', type: 'human', name: 'Elder', ... });

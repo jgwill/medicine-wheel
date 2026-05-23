@@ -1,7 +1,4 @@
-# medicine-wheel-importance-unit
-
-> **Package rename notice:** `medicine-wheel-importance-unit` is scheduled to move to `@medicine-wheel/importance-unit`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/importance-unit
 
 The ImportanceUnit is the relational unit of knowledge in Wilson's epistemology — a relationally-accountable piece of meaning that carries epistemic weight, source dimensions, accountability links, and circle depth tracking.
 
@@ -23,7 +20,7 @@ In Wilson's framework, not all knowledge is equal. Dream-state and embodied know
 ## Installation
 
 ```bash
-npm install medicine-wheel-importance-unit
+npm install @medicine-wheel/importance-unit
 ```
 
 Or link locally:
@@ -52,7 +49,7 @@ import {
 
   // Schemas
   ImportanceUnitSchema,
-} from 'medicine-wheel-importance-unit';
+} from '@medicine-wheel/importance-unit';
 
 // Create a new unit from dream-state knowing
 const unit = createUnit({
@@ -99,7 +96,7 @@ Tracks progression through the four directions. When all four quadrants have bee
 
 ## Dependencies
 
-- `medicine-wheel-ontology-core` — Foundational types (`DirectionName`, etc.)
+- `@medicine-wheel/ontology-core` — Foundational types (`DirectionName`, etc.)
 - `zod` — Runtime validation
 
 ## License

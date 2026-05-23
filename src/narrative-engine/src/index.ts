@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-narrative-engine
+ * @medicine-wheel/narrative-engine
  *
  * Beat sequencing, arc validation, cadence patterns, and timeline
  * building for the Medicine Wheel Developer Suite.

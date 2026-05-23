@@ -1,5 +1,5 @@
 import { Pool, type PoolClient, type PoolConfig } from 'pg';
-import type { CeremonyLog, RelationalEdge, RelationalNode } from 'medicine-wheel-ontology-core';
+import type { CeremonyLog, RelationalEdge, RelationalNode } from '@medicine-wheel/ontology-core';
 
 export type PostgresProviderRecord = RelationalNode | RelationalEdge | CeremonyLog;
 
@@ -26,7 +26,7 @@ function resolvePoolConfig(options?: PostgresConnectionOptions): PoolConfig {
     connectionString,
     max: options?.max ?? 10,
     idleTimeoutMillis: options?.idleTimeoutMillis ?? 30000,
-    application_name: options?.applicationName ?? 'medicine-wheel-data-store-postgres',
+    application_name: options?.applicationName ?? '@medicine-wheel/data-store-postgres',
     ssl: useSsl ? { rejectUnauthorized: true } : undefined,
   };
 }

@@ -1,7 +1,4 @@
-# medicine-wheel-ontology-core
-
-> **Package rename notice:** `medicine-wheel-ontology-core` is scheduled to move to `@medicine-wheel/ontology-core`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/ontology-core
 
 Foundational ontology layer for the Medicine Wheel Developer Suite — unified types, RDF vocabulary, Zod schemas, constants, and semantic query helpers grounded in Indigenous relational ontology.
 
@@ -22,7 +19,7 @@ This package is the **single source of truth** for the Medicine Wheel data model
 ## Installation
 
 ```bash
-npm install medicine-wheel-ontology-core
+npm install @medicine-wheel/ontology-core
 ```
 
 Or link locally:
@@ -48,7 +45,7 @@ import {
 
   // Query Helpers
   computeWilsonAlignment, checkOcapCompliance, traverseRelationalWeb,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 ```
 
 ## Key Concepts

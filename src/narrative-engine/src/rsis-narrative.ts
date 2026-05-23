@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-narrative-engine — RSIS Narrative Generators
+ * @medicine-wheel/narrative-engine — RSIS Narrative Generators
  *
  * Produces ceremony-phase-aware provenance stories, reciprocity
  * narratives, and directional observations for RSIS tool outputs.
@@ -11,8 +11,8 @@ import type {
   DirectionName,
   DirectionDistribution,
   SunName,
-} from 'medicine-wheel-ontology-core';
-import { SUN_DESCRIPTIONS } from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
+import { SUN_DESCRIPTIONS } from '@medicine-wheel/ontology-core';
 
 /**
  * Generate a human-readable provenance narrative for a code artifact

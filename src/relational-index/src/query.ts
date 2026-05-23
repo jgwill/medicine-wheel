@@ -3,7 +3,7 @@
  *
  * All query functions are pure: they read from the index without mutation.
  */
-import type { DirectionName } from 'medicine-wheel-ontology-core';
+import type { DirectionName } from '@medicine-wheel/ontology-core';
 import type { RelationalIndex, IndexEntry, EpistemicSource } from './types.js';
 
 /** Retrieve all entries from one epistemic source */

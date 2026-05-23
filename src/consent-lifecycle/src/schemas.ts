@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod';
-import { OcapFlagsSchema } from 'medicine-wheel-ontology-core';
+import { OcapFlagsSchema } from '@medicine-wheel/ontology-core';
 
 // ── Consent State Schema ────────────────────────────────────────────────────
 

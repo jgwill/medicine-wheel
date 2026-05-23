@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-fire-keeper
+ * @medicine-wheel/fire-keeper
  *
  * The Fire Keeper coordination agent for Medicine Wheel.
  * Tends the ceremony fire, ensures relational integrity through gating

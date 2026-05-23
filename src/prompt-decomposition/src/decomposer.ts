@@ -1,9 +1,9 @@
 /**
- * medicine-wheel-prompt-decomposition — Decomposer
+ * @medicine-wheel/prompt-decomposition — Decomposer
  *
  * Ontology-enriched prompt decomposition engine.
  * Reuses the PDE patterns from ava-langchain-prompt-decomposition
- * but grounds them in medicine-wheel-ontology-core types.
+ * but grounds them in @medicine-wheel/ontology-core types.
  *
  * Design:
  * - Keyword-based directional classification (same algorithm as langchainjs)
@@ -15,8 +15,8 @@
 
 import {
   DIRECTIONS, DIRECTION_ACTS, OJIBWE_NAMES, DIRECTION_SEASONS,
-} from 'medicine-wheel-ontology-core';
-import type { DirectionName, RelationalObligation, CeremonyGuidance, NarrativeBeat } from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
+import type { DirectionName, RelationalObligation, CeremonyGuidance, NarrativeBeat } from '@medicine-wheel/ontology-core';
 
 import type {
   OntologicalDecomposition,

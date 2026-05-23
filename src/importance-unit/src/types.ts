@@ -9,7 +9,7 @@
  * Grounded in Shawn Wilson's "Research Is Ceremony" framework.
  */
 
-import type { DirectionName } from 'medicine-wheel-ontology-core';
+import type { DirectionName } from '@medicine-wheel/ontology-core';
 
 // ── Epistemic Source Dimensions ─────────────────────────────────────────────
 

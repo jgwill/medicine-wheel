@@ -2,8 +2,8 @@
  * Beat Sequencer — orders and validates narrative beats
  * across the four-direction, four-act structure.
  */
-import type { NarrativeBeat, DirectionName } from 'medicine-wheel-ontology-core';
-import { DIRECTION_ACTS, ACT_DIRECTIONS } from 'medicine-wheel-ontology-core';
+import type { NarrativeBeat, DirectionName } from '@medicine-wheel/ontology-core';
+import { DIRECTION_ACTS, ACT_DIRECTIONS } from '@medicine-wheel/ontology-core';
 import type { BeatPosition, BeatInsertResult, SequencerOptions } from './types.js';
 
 const DIRECTION_ORDER: DirectionName[] = ['east', 'south', 'west', 'north'];

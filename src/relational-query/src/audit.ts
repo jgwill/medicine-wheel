@@ -6,11 +6,11 @@ import type {
   Relation,
   RelationalNode,
   RelationalEdge,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 import {
   aggregateWilsonAlignment,
   checkOcapCompliance,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 import type { AccountabilityReport } from './types.js';
 
 /** Generate an accountability report for a relational web */

@@ -1,5 +1,5 @@
 {
-  "name": "medicine-wheel-session-reader",
+  "name": "@medicine-wheel/session-reader",
   "version": "0.2.2",
   "description": "Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, session summaries, analytics extraction, and search across agent session data",
   "main": "dist/index.js",

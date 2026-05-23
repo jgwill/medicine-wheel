@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-consent-lifecycle
+ * @medicine-wheel/consent-lifecycle
  *
  * Ongoing relational consent lifecycle for the Medicine Wheel Developer Suite.
  * Consent as a living relational obligation, not a boolean checkbox.

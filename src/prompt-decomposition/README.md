@@ -1,7 +1,4 @@
-# medicine-wheel-prompt-decomposition
-
-> **Package rename notice:** `medicine-wheel-prompt-decomposition` is scheduled to move to `@medicine-wheel/prompt-decomposition`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/prompt-decomposition
 
 Ontology-enriched prompt decomposition engine for the Medicine Wheel Developer Suite.
 
@@ -9,12 +6,12 @@ Ontology-enriched prompt decomposition engine for the Medicine Wheel Developer S
 
 Extracts structured intents from natural language prompts and classifies them across the Four Directions (East/vision, South/analysis, West/validation, North/action). Detects implicit intents from hedging language, maps dependencies between tasks, and generates ceremony guidance when directional balance is poor.
 
-**Lineage:** `mcp-pde` → `ava-langchain-prompt-decomposition` → `medicine-wheel-prompt-decomposition`
+**Lineage:** `mcp-pde` → `ava-langchain-prompt-decomposition` → `@medicine-wheel/prompt-decomposition`
 
 ## Installation
 
 ```bash
-npm install medicine-wheel-prompt-decomposition
+npm install @medicine-wheel/prompt-decomposition
 ```
 
 ## Usage
@@ -22,7 +19,7 @@ npm install medicine-wheel-prompt-decomposition
 ### Basic Decomposition
 
 ```typescript
-import { MedicineWheelDecomposer } from 'medicine-wheel-prompt-decomposition';
+import { MedicineWheelDecomposer } from '@medicine-wheel/prompt-decomposition';
 
 const decomposer = new MedicineWheelDecomposer({
   extractImplicit: true,
@@ -44,7 +41,7 @@ console.log(result.actionStack);       // Ordered tasks: east→south→west→n
 ### Relational Enrichment
 
 ```typescript
-import { RelationalEnricher } from 'medicine-wheel-prompt-decomposition';
+import { RelationalEnricher } from '@medicine-wheel/prompt-decomposition';
 
 const enricher = new RelationalEnricher();
 const enriched = enricher.enrich(decomposition, {
@@ -60,7 +57,7 @@ console.log(enriched.accountabilityGaps);   // Where attention is needed
 ### Storage
 
 ```typescript
-import { saveDecomposition, loadDecomposition, listDecompositions } from 'medicine-wheel-prompt-decomposition';
+import { saveDecomposition, loadDecomposition, listDecompositions } from '@medicine-wheel/prompt-decomposition';
 
 const stored = saveDecomposition('.', result);
 // Creates .pde/{id}.json and .pde/{id}.md
@@ -88,7 +85,7 @@ const all = listDecompositions('.');
 
 ## Dependencies
 
-- `medicine-wheel-ontology-core` ^0.1.0
+- `@medicine-wheel/ontology-core` ^0.1.0
 
 ## License
 

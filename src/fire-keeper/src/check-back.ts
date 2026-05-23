@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-fire-keeper — Relational Check-Back Protocol
+ * @medicine-wheel/fire-keeper — Relational Check-Back Protocol
  *
  * Four-step verification that runs before any autonomous action.
  * Ensures every action strengthens the relational web rather than

@@ -4,7 +4,7 @@
  * A cadence maps the four directions to four phases:
  *   East → opening, South → deepening, West → integrating, North → closing
  */
-import type { NarrativeBeat, DirectionName, CeremonyLog } from 'medicine-wheel-ontology-core';
+import type { NarrativeBeat, DirectionName, CeremonyLog } from '@medicine-wheel/ontology-core';
 import type {
   CadencePattern,
   CadencePhase,

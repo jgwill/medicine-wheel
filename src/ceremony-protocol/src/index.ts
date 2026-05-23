@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-ceremony-protocol
+ * @medicine-wheel/ceremony-protocol
  *
  * Ceremony lifecycle protocol — manages ceremony state, phase transitions,
  * governance enforcement, and ceremonial review workflows.
@@ -12,7 +12,7 @@ import type {
   GovernanceConfig,
   GovernanceProtectedPath,
   GovernanceAccess,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 // ── Ceremony State ──────────────────────────────────────────────────────────
 

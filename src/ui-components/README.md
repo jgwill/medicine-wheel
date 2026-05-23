@@ -1,14 +1,11 @@
-# medicine-wheel-ui-components
-
-> **Package rename notice:** `medicine-wheel-ui-components` is scheduled to move to `@medicine-wheel/ui-components`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/ui-components
 
 React UI components for the Medicine Wheel Developer Suite — direction cards, beat timelines, node inspectors, OCAP® badges, and Wilson alignment gauges.
 
 ## Install
 
 ```bash
-npm install medicine-wheel-ui-components
+npm install @medicine-wheel/ui-components
 ```
 
 ## Components
@@ -17,7 +14,7 @@ npm install medicine-wheel-ui-components
 Displays a direction with color coding, Ojibwe name, season, and teachings.
 
 ```tsx
-import { DirectionCard } from 'medicine-wheel-ui-components';
+import { DirectionCard } from '@medicine-wheel/ui-components';
 
 <DirectionCard direction="east" showOjibwe onClick={handleClick} />
 ```
@@ -26,7 +23,7 @@ import { DirectionCard } from 'medicine-wheel-ui-components';
 Horizontal timeline of narrative beats with direction-coded markers.
 
 ```tsx
-import { BeatTimeline } from 'medicine-wheel-ui-components';
+import { BeatTimeline } from '@medicine-wheel/ui-components';
 
 <BeatTimeline beats={beats} onBeatClick={handleSelect} selectedId="b1" />
 ```
@@ -35,7 +32,7 @@ import { BeatTimeline } from 'medicine-wheel-ui-components';
 Detail panel for a RelationalNode showing type, direction, metadata, and connections.
 
 ```tsx
-import { NodeInspector } from 'medicine-wheel-ui-components';
+import { NodeInspector } from '@medicine-wheel/ui-components';
 
 <NodeInspector node={node} edges={edges} allNodes={allNodes} onNavigate={goToNode} />
 ```
@@ -44,7 +41,7 @@ import { NodeInspector } from 'medicine-wheel-ui-components';
 Compact OCAP® compliance indicator.
 
 ```tsx
-import { OcapBadge } from 'medicine-wheel-ui-components';
+import { OcapBadge } from '@medicine-wheel/ui-components';
 
 <OcapBadge ocap={relation.ocap} detailed />
 ```
@@ -53,7 +50,7 @@ import { OcapBadge } from 'medicine-wheel-ui-components';
 SVG gauge for Wilson relational alignment (0–1).
 
 ```tsx
-import { WilsonMeter } from 'medicine-wheel-ui-components';
+import { WilsonMeter } from '@medicine-wheel/ui-components';
 
 <WilsonMeter alignment={0.73} size={48} />
 ```
@@ -61,7 +58,7 @@ import { WilsonMeter } from 'medicine-wheel-ui-components';
 ## Peer dependencies
 
 - `react` ^18.0.0 || ^19.0.0
-- `medicine-wheel-ontology-core` ^0.1.0
+- `@medicine-wheel/ontology-core` ^0.1.0
 
 ## License
 

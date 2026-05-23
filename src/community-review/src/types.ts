@@ -6,7 +6,7 @@
  * and community members validate relational accountability.
  */
 
-import type { DirectionName, AccountabilityTracking, OcapFlags } from 'medicine-wheel-ontology-core';
+import type { DirectionName, AccountabilityTracking, OcapFlags } from '@medicine-wheel/ontology-core';
 
 // ── Person & Artifact Roles ─────────────────────────────────────────────────
 

@@ -1,7 +1,4 @@
-# medicine-wheel-ceremony-protocol
-
-> **Package rename notice:** `medicine-wheel-ceremony-protocol` is scheduled to move to `@medicine-wheel/ceremony-protocol`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/ceremony-protocol
 
 Ceremony lifecycle protocol for **Medicine Wheel** — manages ceremony state, phase transitions, governance enforcement, and ceremonial review workflows.
 
@@ -17,7 +14,7 @@ This package provides a protocol for managing the lifecycle of ceremonies within
 ## Installation
 
 ```bash
-npm install medicine-wheel-ceremony-protocol
+npm install @medicine-wheel/ceremony-protocol
 ```
 
 ## Usage
@@ -25,8 +22,8 @@ npm install medicine-wheel-ceremony-protocol
 ### Ceremony State
 
 ```typescript
-import { loadCeremonyState, getPhaseFraming } from 'medicine-wheel-ceremony-protocol';
-import type { RSISConfig } from 'medicine-wheel-ontology-core';
+import { loadCeremonyState, getPhaseFraming } from '@medicine-wheel/ceremony-protocol';
+import type { RSISConfig } from '@medicine-wheel/ontology-core';
 
 const config: RSISConfig = { /* ... */ };
 const state = loadCeremonyState(config);
@@ -36,7 +33,7 @@ const framing = getPhaseFraming(state?.phase);
 ### Phase Transitions
 
 ```typescript
-import { nextPhase, PHASE_ORDER } from 'medicine-wheel-ceremony-protocol';
+import { nextPhase, PHASE_ORDER } from '@medicine-wheel/ceremony-protocol';
 
 const currentPhase = 'opening';
 const next = nextPhase(currentPhase); // 'council'
@@ -51,7 +48,7 @@ import {
   checkCeremonyRequired,
   getAccessLevel,
   formatGovernanceWarning,
-} from 'medicine-wheel-ceremony-protocol';
+} from '@medicine-wheel/ceremony-protocol';
 
 const config: GovernanceConfig = { /* ... */ };
 
@@ -91,7 +88,7 @@ The protocol recognizes four ceremony phases:
 
 ## Dependencies
 
-- `medicine-wheel-ontology-core` — Core ontology types and interfaces
+- `@medicine-wheel/ontology-core` — Core ontology types and interfaces
 
 ## License
 

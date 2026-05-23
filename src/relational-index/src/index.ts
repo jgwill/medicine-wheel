@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-relational-index
+ * @medicine-wheel/relational-index
  *
  * Four-source epistemic dimensional indexing for the Medicine Wheel
  * Developer Suite. Enables querying, traversal, and cross-dimensional

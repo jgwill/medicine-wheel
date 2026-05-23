@@ -7,7 +7,7 @@
  */
 
 import { z } from 'zod';
-import { DirectionNameSchema } from 'medicine-wheel-ontology-core';
+import { DirectionNameSchema } from '@medicine-wheel/ontology-core';
 
 // ── Enums as Zod schemas ────────────────────────────────────────────────────
 

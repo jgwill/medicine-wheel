@@ -8,7 +8,7 @@ import type {
   DirectionName,
   CeremonyLog,
   Relation,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 import type { CycleTransition, CycleProgress } from './types.js';
 import { currentPhase } from './cadence.js';
 import { computeCompleteness } from './arc.js';

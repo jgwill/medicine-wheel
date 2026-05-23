@@ -5,7 +5,7 @@
  * and growth detection across the research cycle.
  */
 
-import type { DirectionName } from 'medicine-wheel-ontology-core';
+import type { DirectionName } from '@medicine-wheel/ontology-core';
 import type {
   TransformationLog,
   GrowthSnapshot,

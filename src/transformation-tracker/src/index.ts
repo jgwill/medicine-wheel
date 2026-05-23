@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-transformation-tracker
+ * @medicine-wheel/transformation-tracker
  *
  * Research transformation tracking for the Medicine Wheel Developer Suite.
  * Wilson's validity criterion: "If research doesn't change you,

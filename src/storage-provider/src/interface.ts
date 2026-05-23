@@ -12,7 +12,7 @@ import type {
   RelationalNode as OntologyRelationalNode,
   RelationalEdge as OntologyRelationalEdge,
   CeremonyLog as OntologyCeremonyLog,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 // ── Domain Types ──
 

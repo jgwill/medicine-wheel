@@ -7,7 +7,7 @@
  * responsible for that relationship's wellbeing."
  */
 
-import type { OcapFlags } from 'medicine-wheel-ontology-core';
+import type { OcapFlags } from '@medicine-wheel/ontology-core';
 
 // ── Consent State ───────────────────────────────────────────────────────────
 

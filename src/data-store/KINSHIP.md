@@ -1,8 +1,8 @@
-# KINSHIP — medicine-wheel-data-store
+# KINSHIP — @medicine-wheel/data-store
 
 ## 1. Identity and Purpose
-- **Name**: medicine-wheel-data-store
-- **Package**: `medicine-wheel-data-store`
+- **Name**: @medicine-wheel/data-store
+- **Package**: `@medicine-wheel/data-store`
 - **Location**: `/workspace/repos/jgwill/medicine-wheel/src/data-store/`
 - **Role**: Shared Redis data-access layer for the Medicine Wheel Developer Suite
 - **What this place tends**: The relational memory — Nodes, Edges, Ceremonies, Accountability tracking, and Session↔Ceremony linking — stored in Redis
@@ -10,7 +10,7 @@
 
 ## 2. Lineage and Relations
 - **Ancestors**:
-  - `medicine-wheel-ontology-core` — provides types (DirectionName, NodeType, CeremonyType, etc.)
+  - `@medicine-wheel/ontology-core` — provides types (DirectionName, NodeType, CeremonyType, etc.)
   - `/src/mcp-medicine-wheel/src/integrations/redis/relational-memory.ts` — the original 573-line RelationalMemoryStore from which this was extracted
   - `/src/ceremony-session-observer/lib/redis.ts` — session-ceremony linking logic extracted from here
   - `/src/mcp-medicine-wheel-ui/lib/redis.ts` — generic Redis helpers extracted from here

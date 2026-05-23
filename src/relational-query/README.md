@@ -1,14 +1,11 @@
-# medicine-wheel-relational-query
-
-> **Package rename notice:** `medicine-wheel-relational-query` is scheduled to move to `@medicine-wheel/relational-query`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
-
+# @medicine-wheel/relational-query
 
 Query builder, graph traversal, and accountability audit for the Medicine Wheel relational web. Protocol-aware: respects ceremony boundaries and OCAP® compliance during traversal.
 
 ## Install
 
 ```bash
-npm install medicine-wheel-relational-query
+npm install @medicine-wheel/relational-query
 ```
 
 ## Modules
@@ -17,7 +14,7 @@ npm install medicine-wheel-relational-query
 Filter, sort, and paginate nodes and edges.
 
 ```ts
-import { filterNodes, sortNodes, paginate } from 'medicine-wheel-relational-query';
+import { filterNodes, sortNodes, paginate } from '@medicine-wheel/relational-query';
 
 const elders = filterNodes(nodes, { type: 'human', direction: 'north' });
 const sorted = sortNodes(elders, { field: 'name', order: 'asc' });
@@ -28,7 +25,7 @@ const page = paginate(sorted, { offset: 0, limit: 10 });
 Context-aware graph traversal with ceremony and OCAP boundaries.
 
 ```ts
-import { traverse, shortestPath, neighborhood } from 'medicine-wheel-relational-query';
+import { traverse, shortestPath, neighborhood } from '@medicine-wheel/relational-query';
 
 const result = traverse('node-id', nodes, edges, relations, {
   maxDepth: 3,
@@ -44,7 +41,7 @@ const neighbors = neighborhood('node-id', nodes, edges, 2);
 Relational health metrics and OCAP® compliance reports.
 
 ```ts
-import { auditAccountability, relationsNeedingAttention } from 'medicine-wheel-relational-query';
+import { auditAccountability, relationsNeedingAttention } from '@medicine-wheel/relational-query';
 
 const report = auditAccountability(nodes, edges, relations);
 console.log(report.averageWilsonAlignment);
@@ -55,7 +52,7 @@ const needsWork = relationsNeedingAttention(relations, 0.5);
 
 ## Peer dependency
 
-Requires `medicine-wheel-ontology-core` ^0.1.0.
+Requires `@medicine-wheel/ontology-core` ^0.1.0.
 
 ## License
 

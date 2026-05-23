@@ -8,8 +8,8 @@ import type {
   DirectionName,
   CeremonyLog,
   Relation,
-} from 'medicine-wheel-ontology-core';
-import { aggregateWilsonAlignment, checkOcapCompliance } from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
+import { aggregateWilsonAlignment, checkOcapCompliance } from '@medicine-wheel/ontology-core';
 import type {
   ArcCompleteness,
   ArcViolation,

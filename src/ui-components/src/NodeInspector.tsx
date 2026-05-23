@@ -3,8 +3,8 @@
  * type, direction, metadata, and connected edges.
  */
 import React from 'react';
-import type { RelationalNode, RelationalEdge, DirectionName } from 'medicine-wheel-ontology-core';
-import { DIRECTION_COLORS, NODE_TYPE_COLORS } from 'medicine-wheel-ontology-core';
+import type { RelationalNode, RelationalEdge, DirectionName } from '@medicine-wheel/ontology-core';
+import { DIRECTION_COLORS, NODE_TYPE_COLORS } from '@medicine-wheel/ontology-core';
 
 const DIR_ICONS: Record<DirectionName, string> = {
   east: '🌅', south: '🔥', west: '🌊', north: '❄️',

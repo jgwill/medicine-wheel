@@ -1,8 +1,8 @@
-# KINSHIP — medicine-wheel-session-reader
+# KINSHIP — @medicine-wheel/session-reader
 
 ## 1. Identity and Purpose
-- **Name**: medicine-wheel-session-reader
-- **Package**: `medicine-wheel-session-reader`
+- **Name**: @medicine-wheel/session-reader
+- **Package**: `@medicine-wheel/session-reader`
 - **Location**: `/workspace/repos/jgwill/medicine-wheel/src/session-reader/`
 - **Role**: Session event data reader for agent sessions stored as JSONL in `_sessiondata/`
 - **What this place tends**: The observability of agent sessions — what happened, what tools were used, what feedback was given, how long sessions lasted

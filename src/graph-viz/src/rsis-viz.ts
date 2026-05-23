@@ -1,5 +1,5 @@
 /**
- * medicine-wheel-graph-viz — RSIS Visualization Utilities
+ * @medicine-wheel/graph-viz — RSIS Visualization Utilities
  *
  * Transforms relational graph data into renderable formats
  * for D3, Sigma, Mermaid, and polar charts.
@@ -11,7 +11,7 @@ import type {
   ReciprocityFlow,
   DirectionName,
   DirectionDistribution,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 // ── Kinship Graph ───────────────────────────────────────────────────────────
 

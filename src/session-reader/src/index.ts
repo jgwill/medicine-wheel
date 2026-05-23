@@ -6,7 +6,7 @@
  *
  * @example
  * ```ts
- * import { listSessions, getSessionDetail, searchSessions } from 'medicine-wheel-session-reader';
+ * import { listSessions, getSessionDetail, searchSessions } from '@medicine-wheel/session-reader';
  *
  * const sessions = await listSessions({ model: 'claude-sonnet-4-20250514' });
  * const detail = await getSessionDetail(sessions[0].id);
