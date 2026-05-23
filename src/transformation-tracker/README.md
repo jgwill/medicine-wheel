@@ -1,5 +1,8 @@
 # medicine-wheel-transformation-tracker
 
+> **Package rename notice:** `medicine-wheel-transformation-tracker` is scheduled to move to `@medicine-wheel/transformation-tracker`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 Research transformation tracking for the Medicine Wheel Developer Suite.
 
 > Wilson's validity criterion: "If research doesn't change you, you haven't done it right."
@@ -84,3 +87,4 @@ The `wilsonValidityCheck()` function evaluates five dimensions:
 ## License
 
 MIT — IAIP Collaborative, Shawinigan, QC
+

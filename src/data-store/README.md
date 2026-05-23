@@ -1,5 +1,8 @@
 # medicine-wheel-data-store
 
+> **Package rename notice:** `medicine-wheel-data-store` is scheduled to move to `@medicine-wheel/data-store`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 Shared Redis data-access layer for the Medicine Wheel Developer Suite — connection management, Node/Edge/Ceremony CRUD, session-ceremony linking, and discovery helpers.
 
 ## Overview
@@ -166,3 +169,4 @@ import { getAllFromSet, setHash } from 'medicine-wheel-data-store/helpers';
 ## License
 
 MIT — IAIP Collaborative, Shawinigan, QC
+

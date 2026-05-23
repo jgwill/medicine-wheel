@@ -1,5 +1,8 @@
 # medicine-wheel-session-reader
 
+> **Package rename notice:** `medicine-wheel-session-reader` is scheduled to move to `@medicine-wheel/session-reader`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, session summaries, analytics extraction, and search across agent session data.
 
 ## Overview
@@ -145,3 +148,4 @@ interface SessionFilters {
 ## License
 
 MIT — IAIP Collaborative, Shawinigan, QC
+

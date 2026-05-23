@@ -1,5 +1,8 @@
 # medicine-wheel-prompt-decomposition
 
+> **Package rename notice:** `medicine-wheel-prompt-decomposition` is scheduled to move to `@medicine-wheel/prompt-decomposition`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 Ontology-enriched prompt decomposition engine for the Medicine Wheel Developer Suite.
 
 ## Overview
@@ -90,3 +93,4 @@ const all = listDecompositions('.');
 ## License
 
 MIT
+

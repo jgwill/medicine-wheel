@@ -1,5 +1,8 @@
 # medicine-wheel-narrative-engine
 
+> **Package rename notice:** `medicine-wheel-narrative-engine` is scheduled to move to `@medicine-wheel/narrative-engine`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 Beat sequencing, arc validation, cadence patterns, and timeline building for the Medicine Wheel Developer Suite.
 
 ## Install
@@ -69,3 +72,4 @@ Requires `medicine-wheel-ontology-core` ^0.1.0.
 ## License
 
 MIT
+

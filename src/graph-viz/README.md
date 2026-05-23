@@ -1,5 +1,8 @@
 # medicine-wheel-graph-viz
 
+> **Package rename notice:** `medicine-wheel-graph-viz` is scheduled to move to `@medicine-wheel/graph-viz`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 Medicine Wheel graph visualization — circular layout with four-direction node positioning, ceremony-aware edges, and OCAP® indicators.
 
 ## Features
@@ -93,3 +96,4 @@ import { buildGraphData, nodesToGraphNodes, edgesToGraphLinks } from 'medicine-w
 ## License
 
 MIT — IAIP Collaborative, Shawinigan, QC
+

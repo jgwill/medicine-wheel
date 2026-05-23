@@ -1,5 +1,8 @@
 # medicine-wheel-ceremony-protocol
 
+> **Package rename notice:** `medicine-wheel-ceremony-protocol` is scheduled to move to `@medicine-wheel/ceremony-protocol`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 Ceremony lifecycle protocol for **Medicine Wheel** — manages ceremony state, phase transitions, governance enforcement, and ceremonial review workflows.
 
 ## Overview
@@ -97,3 +100,4 @@ MIT
 ## Contributing
 
 This package is part of the Medicine Wheel project. See the main repository for contribution guidelines.
+

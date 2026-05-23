@@ -1,5 +1,8 @@
 # medicine-wheel-consent-lifecycle
 
+> **Package rename notice:** `medicine-wheel-consent-lifecycle` is scheduled to move to `@medicine-wheel/consent-lifecycle`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 Ongoing relational consent lifecycle for the Medicine Wheel Developer Suite.
 
 > Consent as a living relational obligation, not a boolean checkbox.
@@ -81,3 +84,4 @@ Community-level consent transcends individual consent. It requires collective de
 ## License
 
 MIT — IAIP Collaborative, Shawinigan, QC
+

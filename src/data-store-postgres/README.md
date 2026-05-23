@@ -1,5 +1,8 @@
 # medicine-wheel-data-store-postgres
 
+> **Package rename notice:** `medicine-wheel-data-store-postgres` is scheduled to move to `@medicine-wheel/data-store-postgres`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 Minimal PostgreSQL/Neon scaffold for the Medicine Wheel workspace.
 
 What it gives the local agent:
@@ -17,3 +20,4 @@ What it does not do yet:
 - no migrations
 - no CRUD beyond pool management
 - no app wiring
+

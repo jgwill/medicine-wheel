@@ -1,5 +1,8 @@
 # medicine-wheel-relational-index
 
+> **Package rename notice:** `medicine-wheel-relational-index` is scheduled to move to `@medicine-wheel/relational-index`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 Four-source epistemic dimensional indexing for the **Medicine Wheel Developer Suite**.
 
 Wilson's epistemology recognises multiple sources of knowing — Land, Dream, Code, and Vision each teach differently. This package enables querying, traversal, and cross-dimensional mapping across those epistemic sources.
@@ -73,3 +76,4 @@ This package implements the epistemic sophistication Wilson's framework demands:
 ## License
 
 MIT
+

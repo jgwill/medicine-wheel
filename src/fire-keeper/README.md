@@ -1,5 +1,8 @@
 # medicine-wheel-fire-keeper
 
+> **Package rename notice:** `medicine-wheel-fire-keeper` is scheduled to move to `@medicine-wheel/fire-keeper`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 > The Fire Keeper — ceremony coordination agent for Medicine Wheel
 
 The Fire Keeper tends the ceremony fire, ensures relational integrity through gating conditions, and maintains Wilson alignment as an active agent — not a passive metric.
@@ -68,3 +71,4 @@ Before any autonomous action, the Fire Keeper verifies:
 ## License
 
 MIT
+

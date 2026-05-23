@@ -1,35 +1,23 @@
 #!/usr/bin/env node
 
 /**
- * Syncs ALL medicine-wheel-* package dependency versions to match their current
- * versions. Enforces lockstep versioning across the monorepo.
- *
- * Mirror of the ava-pi pattern (scripts/sync-versions.js), adapted for the
- * `medicine-wheel-` prefix used by this workspace.
+ * Syncs internal workspace dependency versions to match the current workspace
+ * versions. Enforces lockstep versioning across the published packages and does
+ * not assume a specific npm naming scheme, so legacy and scoped names both work.
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-const PREFIX = 'medicine-wheel-';
-const packagesDir = join(process.cwd(), 'src');
-const packageDirs = readdirSync(packagesDir, { withFileTypes: true })
-	.filter((d) => d.isDirectory() && !d.name.startsWith('_'))
-	.map((d) => d.name)
-	.filter((name) => existsSync(join(packagesDir, name, 'package.json')));
+import { getWorkspacePackages } from './workspace-packages.mjs';
 
+const workspacePackages = getWorkspacePackages();
 const packages = {};
 const versionMap = {};
 
-for (const dir of packageDirs) {
-	const pkgPath = join(packagesDir, dir, 'package.json');
-	try {
-		const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
-		packages[dir] = { path: pkgPath, data: pkg };
-		versionMap[pkg.name] = pkg.version;
-	} catch (e) {
-		console.error(`Failed to read ${pkgPath}:`, e.message);
-	}
+for (const workspace of workspacePackages) {
+	packages[workspace.dirName] = { path: workspace.packagePath, data: workspace.data };
+	versionMap[workspace.packageName] = workspace.version;
 }
 
 console.log('Current versions:');
@@ -57,14 +45,15 @@ try {
 	console.error(`Failed to read root package.json:`, e.message);
 }
 
+const workspaceNames = new Set(workspacePackages.map((workspace) => workspace.packageName));
+
 let totalUpdates = 0;
 for (const [, pkg] of Object.entries(packages)) {
 	let updated = false;
 	for (const section of ['dependencies', 'devDependencies', 'peerDependencies']) {
 		if (!pkg.data[section]) continue;
 		for (const [depName, currentVersion] of Object.entries(pkg.data[section])) {
-			if (!depName.startsWith(PREFIX)) continue;
-			if (!versionMap[depName]) continue;
+			if (!workspaceNames.has(depName)) continue;
 			const newVersion = `^${versionMap[depName]}`;
 			if (currentVersion !== newVersion) {
 				console.log(`\n${pkg.data.name}:`);

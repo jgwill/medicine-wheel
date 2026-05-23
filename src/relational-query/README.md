@@ -1,5 +1,8 @@
 # medicine-wheel-relational-query
 
+> **Package rename notice:** `medicine-wheel-relational-query` is scheduled to move to `@medicine-wheel/relational-query`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 Query builder, graph traversal, and accountability audit for the Medicine Wheel relational web. Protocol-aware: respects ceremony boundaries and OCAP® compliance during traversal.
 
 ## Install
@@ -57,3 +60,4 @@ Requires `medicine-wheel-ontology-core` ^0.1.0.
 ## License
 
 MIT
+

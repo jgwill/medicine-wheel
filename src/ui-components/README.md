@@ -1,5 +1,8 @@
 # medicine-wheel-ui-components
 
+> **Package rename notice:** `medicine-wheel-ui-components` is scheduled to move to `@medicine-wheel/ui-components`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 React UI components for the Medicine Wheel Developer Suite — direction cards, beat timelines, node inspectors, OCAP® badges, and Wilson alignment gauges.
 
 ## Install
@@ -63,3 +66,4 @@ import { WilsonMeter } from 'medicine-wheel-ui-components';
 ## License
 
 MIT
+

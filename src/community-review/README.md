@@ -1,5 +1,8 @@
 # medicine-wheel-community-review
 
+> **Package rename notice:** `medicine-wheel-community-review` is scheduled to move to `@medicine-wheel/community-review`. This legacy package name remains published during the migration window so existing installs keep working. A future release will deprecate the legacy name in npm.
+
+
 > Community-based ceremonial review protocol — implements Wilson's validation through Elder review circles, consensus-seeking, and relational accountability assessment.
 
 Part of the [Medicine Wheel Developer Suite](https://github.com/jgwill/medicine-wheel).
@@ -114,3 +117,4 @@ circle = closeCircle(circle, outcome);
 ## License
 
 MIT
+
