@@ -406,3 +406,15 @@ Issue being tracked via @stcissue bot.
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #56 - articles/storytelling-internal-reflective-loop-for-coherence--2605140642--2ff452b5-d091-4219-b3ad-b4899eae8d45
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-05-23T19:22:26Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/56
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
