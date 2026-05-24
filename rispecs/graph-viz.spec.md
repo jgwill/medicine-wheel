@@ -3,7 +3,7 @@
 > Medicine Wheel graph visualization — circular layout with four-direction node positioning, ceremony-aware edges, OCAP® indicators, and RSIS visualization utilities.
 
 **Version:** 0.1.1  
-**Package:** `medicine-wheel-graph-viz`  
+**Package:** `@medicine-wheel/graph-viz`  
 **Document ID:** rispec-graph-viz-v1  
 **Last Updated:** 2026-02-23  
 
@@ -172,7 +172,7 @@ toMermaidDiagram(nodes, edges): string
 
 ## Dependencies
 
-- **Runtime:** `medicine-wheel-ontology-core` ^0.1.1
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.1
 - **Peer:** `react` >=18.0.0, `react-dom` >=18.0.0
 
 ---

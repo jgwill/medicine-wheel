@@ -4,7 +4,7 @@
 
 **Goal:** Add a PostgreSQL/Neon path while keeping `ontology-core` types unchanged and converging the long-term provider abstraction in `src/storage-provider/`.
 
-**Architecture:** Keep the storage contract thin. Reuse `RelationalNode`, `RelationalEdge`, and `CeremonyLog` from `medicine-wheel-ontology-core`; use this package as a small Postgres scaffold only, while the shared provider-selection surface lives in `src/storage-provider/`.
+**Architecture:** Keep the storage contract thin. Reuse `RelationalNode`, `RelationalEdge`, and `CeremonyLog` from `@medicine-wheel/ontology-core`; use this package as a small Postgres scaffold only, while the shared provider-selection surface lives in `src/storage-provider/`.
 
 **Tech Stack:** TypeScript, `pg`, Neon/Postgres connection strings with explicit SSL selection.
 

@@ -25,7 +25,7 @@ import type {
 import { getJsonlStore } from './jsonl-store';
 
 // JSONL store for sync operations (used by seeding and legacy code paths)
-// For async provider access (Neon), use API routes or import from medicine-wheel-storage-provider directly
+// For async provider access (Neon), use API routes or import from @medicine-wheel/storage-provider directly
 const store = getJsonlStore();
 
 // ── Nodes ──

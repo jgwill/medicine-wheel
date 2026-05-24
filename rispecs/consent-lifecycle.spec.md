@@ -3,7 +3,7 @@
 > Ongoing relational consent — transforms consent from a boolean checkbox into a living relational obligation with lifecycle tracking, renewal, renegotiation, and community-level consent protocols.
 
 **Version:** 0.1.0  
-**Package:** `medicine-wheel-consent-lifecycle`  
+**Package:** `@medicine-wheel/consent-lifecycle`  
 **Document ID:** rispec-consent-lifecycle-v1  
 **Last Updated:** 2026-03-15  
 
@@ -232,7 +232,7 @@ healthCheck(records)
 
 ## Dependencies
 
-- **Runtime:** `medicine-wheel-ontology-core` ^0.1.1, `medicine-wheel-ceremony-protocol` ^0.1.0, `zod` ^3.23.0
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.1, `@medicine-wheel/ceremony-protocol` ^0.1.0, `zod` ^3.23.0
 - **Types consumed:** `OcapFlags`, `DirectionName` from ontology-core
 
 ---

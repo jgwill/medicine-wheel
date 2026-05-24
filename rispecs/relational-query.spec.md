@@ -3,7 +3,7 @@
 > Query builder for relational webs with Indigenous protocol awareness — filtering, traversal, accountability auditing, OCAP® compliance, and KuzuDB Cypher query generation.
 
 **Version:** 0.1.1  
-**Package:** `medicine-wheel-relational-query`  
+**Package:** `@medicine-wheel/relational-query`  
 **Document ID:** rispec-relational-query-v1  
 **Last Updated:** 2026-02-23  
 
@@ -224,7 +224,7 @@ formatDirectionObservation(distribution): string
 
 ## Dependencies
 
-- **Runtime:** `medicine-wheel-ontology-core` ^0.1.1
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.1
 - **Functions consumed:** `aggregateWilsonAlignment`, `checkOcapCompliance`
 
 ---

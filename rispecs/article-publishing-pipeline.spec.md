@@ -4,7 +4,7 @@
 
 **Version**: 0.1.0
 **Status**: Active
-**Package**: Shared pattern (medicine-wheel-ui-components + consuming app)
+**Package**: Shared pattern (@medicine-wheel/ui-components + consuming app)
 **Lineage**: Derived from Miadi articles system integration with medicine-wheel ui-components
 
 ---
@@ -75,9 +75,9 @@ Where `safename` = title slugified (lowercase, hyphens, alphanumeric only).
 
 ## ❄️ NORTH — Action
 
-### Integration with medicine-wheel-ui-components
+### Integration with @medicine-wheel/ui-components
 
-The `DirectionCard` component from `medicine-wheel-ui-components` provides the canonical Four Directions visual vocabulary. Consuming apps should:
+The `DirectionCard` component from `@medicine-wheel/ui-components` provides the canonical Four Directions visual vocabulary. Consuming apps should:
 1. Import or replicate the direction color scheme from `DirectionCard`
 2. Use the same icon/color mapping for visual consistency
 3. Extend with app-specific card layouts (article metadata, tags, etc.)
@@ -94,5 +94,5 @@ The `DirectionCard` component from `medicine-wheel-ui-components` provides the c
 
 - `gray-matter` — YAML frontmatter parsing
 - `react-markdown` + `remark-gfm` — Markdown rendering
-- `medicine-wheel-ui-components` — Direction theming reference
-- `medicine-wheel-ontology-core` — Direction type definitions
+- `@medicine-wheel/ui-components` — Direction theming reference
+- `@medicine-wheel/ontology-core` — Direction type definitions

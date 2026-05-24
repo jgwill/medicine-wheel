@@ -3,7 +3,7 @@
 > Foundational ontology layer for the Medicine Wheel Developer Suite. Unified TypeScript types, RDF vocabulary, Zod validation schemas, canonical constants, and semantic query helpers — grounded in Indigenous relational ontology where relationships are first-class entities.
 
 **Version:** 0.1.1  
-**Package:** `medicine-wheel-ontology-core`  
+**Package:** `@medicine-wheel/ontology-core`  
 **Document ID:** rispec-ontology-core-v1  
 **Last Updated:** 2026-02-23  
 
@@ -216,7 +216,7 @@ compactIRI('https://ontology.medicine-wheel.dev/mw#Direction') // → 'mw:Direct
 ### Canonical Direction Data
 
 ```typescript
-import { DIRECTIONS, DIRECTION_MAP, DIRECTION_COLORS, OJIBWE_NAMES, DIRECTION_SEASONS } from 'medicine-wheel-ontology-core';
+import { DIRECTIONS, DIRECTION_MAP, DIRECTION_COLORS, OJIBWE_NAMES, DIRECTION_SEASONS } from '@medicine-wheel/ontology-core';
 
 DIRECTION_COLORS.east   // '#FFD700' (gold)
 DIRECTION_COLORS.south  // '#DC143C' (crimson)
@@ -254,7 +254,7 @@ DIRECTION_INFO         // Per-direction emoji, focus, guidance
 Every type has a corresponding Zod schema for runtime validation:
 
 ```typescript
-import { RelationalNodeSchema, RelationSchema, OcapFlagsSchema } from 'medicine-wheel-ontology-core';
+import { RelationalNodeSchema, RelationSchema, OcapFlagsSchema } from '@medicine-wheel/ontology-core';
 
 // Validate at ingestion boundary
 const node = RelationalNodeSchema.parse(rawData);

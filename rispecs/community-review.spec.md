@@ -3,7 +3,7 @@
 > Community-based ceremonial review protocol — implements Wilson's validation through Elder review circles, consensus-seeking, talking circle process, and relational accountability assessment.
 
 **Version:** 0.1.0  
-**Package:** `medicine-wheel-community-review`  
+**Package:** `@medicine-wheel/community-review`  
 **Document ID:** rispec-community-review-v1  
 **Last Updated:** 2026-03-15  
 
@@ -214,7 +214,7 @@ ReviewOutcomeSchema, ReviewCircleSchema
 
 ## Dependencies
 
-- **Runtime:** `medicine-wheel-ontology-core` ^0.1.1, `medicine-wheel-ceremony-protocol` ^0.1.0, `zod` ^3.23.0
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.1, `@medicine-wheel/ceremony-protocol` ^0.1.0, `zod` ^3.23.0
 - **Types consumed:** `DirectionName`, `AccountabilityTracking`, `OcapFlags` from ontology-core
 
 ---

@@ -3,7 +3,7 @@
 > Beat sequencing, arc validation, cadence patterns, timeline building, cycle orchestration, and RSIS narrative generation for the Medicine Wheel ceremonial inquiry ecosystem.
 
 **Version:** 0.1.1  
-**Package:** `medicine-wheel-narrative-engine`  
+**Package:** `@medicine-wheel/narrative-engine`  
 **Document ID:** rispec-narrative-engine-v1  
 **Last Updated:** 2026-02-23  
 
@@ -205,7 +205,7 @@ describeSun(sun: SunName): string
 
 ## Dependencies
 
-- **Runtime:** `medicine-wheel-ontology-core` ^0.1.1
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.1
 - **Types consumed:** `NarrativeBeat`, `MedicineWheelCycle`, `DirectionName`, `CeremonyLog`, `Relation`, `CeremonyPhase`, `SunName`, `DirectionDistribution`, `CeremonyLineageEntry`
 - **Functions consumed:** `aggregateWilsonAlignment`, `checkOcapCompliance`, `DIRECTION_ACTS`, `ACT_DIRECTIONS`, `DIRECTION_COLORS`
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createProvider, detectProvider } from "medicine-wheel-storage-provider";
+import { createProvider, detectProvider } from "@medicine-wheel/storage-provider";
 
 export async function GET(request: Request) {
   try {

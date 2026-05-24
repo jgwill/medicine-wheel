@@ -3,7 +3,7 @@
 > Four-source dimensional indexing — implements relational indexing across Wilson's four epistemic source dimensions (Land, Dream, Code, Vision) for querying, retrieval, and cross-dimensional mapping of ImportanceUnits and knowledge artifacts.
 
 **Version:** 0.1.0  
-**Package:** `medicine-wheel-relational-index`  
+**Package:** `@medicine-wheel/relational-index`  
 **Document ID:** rispec-relational-index-v1  
 **Last Updated:** 2026-03-15  
 
@@ -214,7 +214,7 @@ coverageGaps(index)
 
 ## Dependencies
 
-- **Runtime:** `medicine-wheel-ontology-core` ^0.1.1, `medicine-wheel-importance-unit` ^0.1.0, `zod` ^3.23.0
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.1, `@medicine-wheel/importance-unit` ^0.1.0, `zod` ^3.23.0
 - **Types consumed:** `DirectionName` from ontology-core; `ImportanceUnit`, `EpistemicSource` from importance-unit
 
 ---

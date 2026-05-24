@@ -3,7 +3,7 @@
 > Persistence layers for the Medicine Wheel ecosystem — JSONL file-based storage for development/community use, and Redis-backed persistence for production scale.
 
 **Version:** 0.2.0  
-**Package:** `medicine-wheel-data-store`  
+**Package:** `@medicine-wheel/data-store`  
 **Document ID:** rispec-data-store-v2  
 **Last Updated:** 2026-04-04  
 
@@ -91,7 +91,7 @@ This prevents last-writer-wins data loss when the Web UI and MCP server write si
 ### 2. Redis Store (Production Scale)
 
 **Location:** `src/data-store/`  
-**Package:** `medicine-wheel-data-store`
+**Package:** `@medicine-wheel/data-store`
 
 Redis-backed persistence for production deployments. Supports Upstash, Vercel KV, and local Redis.
 
@@ -235,7 +235,7 @@ The `store/` subdirectory is created automatically by the JSONL persistence engi
 - **Types consumed:** Inline interfaces compatible with `ontology-core` types
 
 ### Redis Store
-- **Runtime:** `medicine-wheel-ontology-core` ^0.1.0, `redis` ^4.6.0
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.0, `redis` ^4.6.0
 - **Types consumed:** `RelationalNode`, `RelationalEdge`, `CeremonyLog`, `CeremonyPhase`, `OcapFlags`
 
 ---

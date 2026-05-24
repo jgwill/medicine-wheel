@@ -3,7 +3,7 @@
 > React UI components for the Medicine Wheel Developer Suite — direction cards, beat timelines, node inspectors, OCAP® badges, and Wilson alignment gauges.
 
 **Version:** 0.1.0  
-**Package:** `medicine-wheel-ui-components`  
+**Package:** `@medicine-wheel/ui-components`  
 **Document ID:** rispec-ui-components-v1  
 **Last Updated:** 2026-02-23  
 
@@ -118,7 +118,7 @@ interface WilsonMeterProps {
 
 ## Dependencies
 
-- **Runtime:** `medicine-wheel-ontology-core` ^0.1.0
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.0
 - **Peer:** `react` ^18.0.0 || ^19.0.0
 - **Types consumed:** `Direction`, `NarrativeBeat`, `RelationalNode`, `Relation`, `OcapFlags`, `AccountabilityTracking`
 

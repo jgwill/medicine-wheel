@@ -2,14 +2,14 @@
 
 ## Context
 
-The repo currently runs local/default persistence through shared JSONL stores in `lib/jsonl-store.ts` and `mcp/src/jsonl-store.ts`. The older `medicine-wheel-data-store` package is Redis-oriented. We need one provider abstraction that can preserve JSONL as the current default while supporting **Neon/Postgres** as the first production backend and leaving **Upstash/Redis** secondary.
+The repo currently runs local/default persistence through shared JSONL stores in `lib/jsonl-store.ts` and `mcp/src/jsonl-store.ts`. The older `@medicine-wheel/data-store` package is Redis-oriented. We need one provider abstraction that can preserve JSONL as the current default while supporting **Neon/Postgres** as the first production backend and leaving **Upstash/Redis** secondary.
 
 ## Available Integrations
 
 | Provider | Package | Env Vars |
 |----------|---------|----------|
-| JSONL | `medicine-wheel-storage-provider` | `MW_DATA_DIR`, `MW_STORAGE_PROVIDER=jsonl` |
-| Neon | `medicine-wheel-storage-provider` | `DATABASE_URL`, `POSTGRES_URL`, `NEON_DATABASE_URL`, `MW_STORAGE_PROVIDER=neon` |
+| JSONL | `@medicine-wheel/storage-provider` | `MW_DATA_DIR`, `MW_STORAGE_PROVIDER=jsonl` |
+| Neon | `@medicine-wheel/storage-provider` | `DATABASE_URL`, `POSTGRES_URL`, `NEON_DATABASE_URL`, `MW_STORAGE_PROVIDER=neon` |
 | Upstash | `@upstash/redis` | `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `MW_STORAGE_PROVIDER=redis` |
 
 ## Domain Types (from ontology-core)
@@ -133,4 +133,4 @@ function createProvider(): StorageProvider {
 - JSONL remains the default/local backend and stays compatible with `.mw/store/*.jsonl`
 - Ambient Postgres connection variables do not change the provider unless `MW_STORAGE_PROVIDER` explicitly selects Neon/Postgres
 - Keep existing `data-store` as-is for backwards compatibility while Redis remains secondary
-- `src/data-store-postgres` may remain as a small scaffold, but the provider abstraction converges in `medicine-wheel-storage-provider`
+- `src/data-store-postgres` may remain as a small scaffold, but the provider abstraction converges in `@medicine-wheel/storage-provider`

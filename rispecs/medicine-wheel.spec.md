@@ -3,7 +3,7 @@
 > A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development. Fifteen packages that together enable developers to create relationally accountable systems grounded in the Four Directions, Wilson's three R's, and OCAP® principles.
 
 **Version:** 0.2.0  
-**Document ID:** rispec-medicine-wheel-system-v1  
+**Document ID:** rispec-@medicine-wheel/system-v1  
 **Last Updated:** 2026-03-15  
 
 ---
@@ -17,22 +17,22 @@ Users create **complete Medicine Wheel software systems** — from ontological d
 ## Package Architecture
 
 ```
-medicine-wheel-ontology-core              ← Foundation (types, schemas, vocabulary)
-    ├── medicine-wheel-ceremony-protocol      ← Ceremony state & governance
-    ├── medicine-wheel-narrative-engine        ← Beat sequencing & arc validation
-    ├── medicine-wheel-graph-viz              ← Circular layout & visualization
-    ├── medicine-wheel-relational-query        ← Query, traversal & audit
-    ├── medicine-wheel-prompt-decomposition    ← Intent extraction & PDE
-    ├── medicine-wheel-ui-components          ← React components
-    ├── medicine-wheel-data-store             ← Redis persistence (+ redis ^4.6.0)
-    ├── medicine-wheel-importance-unit         ← Relational knowledge with epistemic weight
-    ├── medicine-wheel-fire-keeper            ← Ceremony coordination agent
-    ├── medicine-wheel-transformation-tracker  ← Research impact & growth tracking
-    ├── medicine-wheel-relational-index        ← Four-source dimensional indexing
-    ├── medicine-wheel-consent-lifecycle       ← Consent as ongoing relationship
-    └── medicine-wheel-community-review        ← Ceremonial review with Elder validation
+@medicine-wheel/ontology-core              ← Foundation (types, schemas, vocabulary)
+    ├── @medicine-wheel/ceremony-protocol      ← Ceremony state & governance
+    ├── @medicine-wheel/narrative-engine        ← Beat sequencing & arc validation
+    ├── @medicine-wheel/graph-viz              ← Circular layout & visualization
+    ├── @medicine-wheel/relational-query        ← Query, traversal & audit
+    ├── @medicine-wheel/prompt-decomposition    ← Intent extraction & PDE
+    ├── @medicine-wheel/ui-components          ← React components
+    ├── @medicine-wheel/data-store             ← Redis persistence (+ redis ^4.6.0)
+    ├── @medicine-wheel/importance-unit         ← Relational knowledge with epistemic weight
+    ├── @medicine-wheel/fire-keeper            ← Ceremony coordination agent
+    ├── @medicine-wheel/transformation-tracker  ← Research impact & growth tracking
+    ├── @medicine-wheel/relational-index        ← Four-source dimensional indexing
+    ├── @medicine-wheel/consent-lifecycle       ← Consent as ongoing relationship
+    └── @medicine-wheel/community-review        ← Ceremonial review with Elder validation
 
-medicine-wheel-session-reader                 ← JSONL session parsing (standalone)
+@medicine-wheel/session-reader                 ← JSONL session parsing (standalone)
 ```
 
 All packages depend on `ontology-core` for shared types except `session-reader` which is standalone. The six new Wilson-alignment packages have these additional dependencies:

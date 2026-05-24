@@ -3,7 +3,7 @@
 > Ceremony lifecycle protocol — manages ceremony state, phase transitions, governance enforcement, and ceremonial review workflows for the Medicine Wheel ecosystem.
 
 **Version:** 0.1.1  
-**Package:** `medicine-wheel-ceremony-protocol`  
+**Package:** `@medicine-wheel/ceremony-protocol`  
 **Document ID:** rispec-ceremony-protocol-v1  
 **Last Updated:** 2026-02-23  
 
@@ -121,7 +121,7 @@ formatGovernanceWarning(rule)
 
 ## Dependencies
 
-- **Runtime:** `medicine-wheel-ontology-core` ^0.1.1
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.1
 - **Types consumed:** `RSISConfig`, `CeremonyPhase`, `SunName`, `GovernanceConfig`, `GovernanceProtectedPath`, `GovernanceAccess`
 
 ---

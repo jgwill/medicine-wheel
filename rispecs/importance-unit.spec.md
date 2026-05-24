@@ -3,7 +3,7 @@
 > Relational knowledge tracking — implements the ImportanceUnit as a relationally-accountable piece of meaning carrying epistemic weight, source dimensions, accountability links, and circle depth tracking.
 
 **Version:** 0.1.0  
-**Package:** `medicine-wheel-importance-unit`  
+**Package:** `@medicine-wheel/importance-unit`  
 **Document ID:** rispec-importance-unit-v1  
 **Last Updated:** 2026-03-15  
 
@@ -177,7 +177,7 @@ GatingConditionStatusSchema
 
 ## Dependencies
 
-- **Runtime:** `medicine-wheel-ontology-core` ^0.1.1, `zod` ^3.23.0
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.1, `zod` ^3.23.0
 - **Types consumed:** `DirectionName` from ontology-core
 
 ---

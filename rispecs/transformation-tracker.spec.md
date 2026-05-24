@@ -3,7 +3,7 @@
 > Research impact and growth tracking — implements Wilson's validity criterion: "If research doesn't change you, you haven't done it right." Tracks transformative impact on researchers, communities, and relational networks.
 
 **Version:** 0.1.0  
-**Package:** `medicine-wheel-transformation-tracker`  
+**Package:** `@medicine-wheel/transformation-tracker`  
 **Document ID:** rispec-transformation-tracker-v1  
 **Last Updated:** 2026-03-15  
 
@@ -227,7 +227,7 @@ wilsonValidityCheck(log)
 
 ## Dependencies
 
-- **Runtime:** `medicine-wheel-ontology-core` ^0.1.1, `medicine-wheel-ceremony-protocol` ^0.1.0, `zod` ^3.23.0
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.1, `@medicine-wheel/ceremony-protocol` ^0.1.0, `zod` ^3.23.0
 - **Types consumed:** `DirectionName`, `ObligationCategory`, `AccountabilityTracking` from ontology-core
 
 ---

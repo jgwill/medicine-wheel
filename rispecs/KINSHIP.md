@@ -5,7 +5,7 @@
 
 **Framework:** RISE v1.2 Kinship Hub Protocol  
 **Last Updated:** 2025-07-17  
-**Lineage:** medicine-wheel-ontology-core → AvaLangStack → miadi-code
+**Lineage:** @medicine-wheel/ontology-core → AvaLangStack → miadi-code
 
 ---
 
@@ -59,7 +59,7 @@ The medicine-wheel rispecs define *what is* — the relational ontology, ceremon
 | Medicine Wheel Spec | AvaLangStack Package | Kinship Type | Shared Pattern | Direction |
 |---|---|---|---|---|
 | `ontology-core.spec.md` | `ava-langchain-relational-intelligence` | **Shared Ancestor** | Medicine Wheel ontology (Direction types, Relation with OcapFlags, Wilson AccountabilityTracking, RelationalNode) — ontology-core is the canonical source; relational-intelligence is the LangChain extraction implementing MedicineWheelFilter, ImportanceStore, SpiralTracker | ontology-core → relational-intelligence |
-| `prompt-decomposition.spec.md` | `ava-langchain-prompt-decomposition` | **Sibling** | Four Directions decomposition, intent extraction with hedging detection, directional balance scoring, ceremony guidance, MedicineWheelBridge. Shared lineage: `mcp-pde → ava-langchain-prompt-decomposition → medicine-wheel-prompt-decomposition` | Bidirectional — spec defines relational PDE; langchainjs provides composable chain primitives |
+| `prompt-decomposition.spec.md` | `ava-langchain-prompt-decomposition` | **Sibling** | Four Directions decomposition, intent extraction with hedging detection, directional balance scoring, ceremony guidance, MedicineWheelBridge. Shared lineage: `mcp-pde → ava-langchain-prompt-decomposition → @medicine-wheel/prompt-decomposition` | Bidirectional — spec defines relational PDE; langchainjs provides composable chain primitives |
 | `prompt-decomposition.spec.md` | `ava-langgraph-prompt-decomposition-engine` | **Cousin** | Four-node StateGraph wrapping PDE chain primitives, Three-Universe perspective analysis, ceremony gating as graph-level interrupt | prompt-decomposition.spec → langchainjs chains → langgraphjs engine |
 | `fire-keeper.spec.md` | `ava-langchain-relational-intelligence` (FireKeeper) | **Direct Kin** | Ceremony coordination agent protocol — five-phase lifecycle (gathering → kindling → tending → harvesting → resting), permission tiers, gating conditions, trajectory confidence, stop-work orders | fire-keeper.spec defines the protocol; FireKeeper class in relational-intelligence enacts it at chain level |
 | `importance-unit.spec.md` | `ava-langchain-relational-intelligence` (ImportanceStore) | **Direct Kin** | Epistemic weight tracking (Land/Dream/Code/Vision sources), circle depth, accountability links, axiological pillar framing | importance-unit.spec defines the ImportanceUnit schema; ImportanceStore manages persistence and retrieval |
@@ -68,7 +68,7 @@ The medicine-wheel rispecs define *what is* — the relational ontology, ceremon
 | `consent-lifecycle.spec.md` | `ava-langchain-relational-intelligence` (ValueGate) | **Shared Pattern** | Consent-aware gating — consent-lifecycle models consent as living relationship with full state machine (pending → granted → active → withdrawn); ValueGate implements consent-aware chain interrupts | consent-lifecycle.spec → ValueGate |
 | `narrative-engine.spec.md` | `ava-langgraph-narrative-intelligence` (ThreeUniverseProcessor, CoherenceEngine) | **Sibling** | Narrative processing at different abstraction levels — narrative-engine does beat sequencing, arc validation, cadence patterns, RSIS narrative generation; narrative-intelligence operates the Three-Universe processor (Engineer/Ceremony/Story), emotional classifier, and coherence engine at graph orchestration level | Bidirectional — different altitudes of the same narrative current |
 | `transformation-tracker.spec.md` | `ava-langchain-relational-intelligence` (future StructuralTensionChain) | **Anticipated Kin** | Tension tracking as progression signal — transformation-tracker measures Wilson validity through relational shifts, reciprocity ledger, and seven-generation scoring; a future StructuralTensionChain advances toward surfacing these signals within LangChain workflows | transformation-tracker.spec → future StructuralTensionChain |
-| `narrative-medicine-wheel-bridge.spec.md` | `ava-langchain-prompt-decomposition` (MedicineWheelBridge) | **Direct Kin** | Bridge between narrative platforms and Medicine Wheel ontology — the bridge spec establishes integration patterns (type-level, ceremony session, beat management, visual component); MedicineWheelBridge in langchainjs is the chain-level realization connecting PDE output to Four Directions classification | bridge.spec → MedicineWheelBridge |
+| `narrative-@medicine-wheel/bridge.spec.md` | `ava-langchain-prompt-decomposition` (MedicineWheelBridge) | **Direct Kin** | Bridge between narrative platforms and Medicine Wheel ontology — the bridge spec establishes integration patterns (type-level, ceremony session, beat management, visual component); MedicineWheelBridge in langchainjs is the chain-level realization connecting PDE output to Four Directions classification | bridge.spec → MedicineWheelBridge |
 | `relational-index.spec.md` | `ava-langchain-inquiry-routing` (InquiryRouter) | **Cousin** | Relational indexing for routing and retrieval — relational-index builds four-dimensional epistemic indexes (Land/Dream/Code/Vision) with cross-dimensional convergence/tension detection; InquiryRouter generates inquiries from PDE and routes via keyword-based dispatch with relational enrichment | Both perform relational indexing; relational-index advances toward epistemic pluralism, inquiry-routing advances toward operational dispatch |
 | `session-reader.spec.md` | `ava-langchain-narrative-tracing` (NarrativeTraceOrchestrator) | **Cousin** | Session management and trace correlation — session-reader parses JSONL session events into typed analytics (tool usage, duration, event counts); narrative-tracing correlates traces across systems via Langfuse with story arc visualization | session-reader advances toward local session intelligence; narrative-tracing advances toward cross-system observability |
 | `data-store.spec.md` | `ava-langgraph-narrative-intelligence` (NarrativeRedisManager) | **Shared Pattern** | Redis-based state persistence — data-store provides JSONL-to-Redis graduation path with atomic writes, cross-process sync, and `.mw/store/` convention; NarrativeRedisManager persists Three-Universe state across graph invocations | Both use Redis for durable relational state; data-store is ecosystem-wide, NarrativeRedisManager is narrative-specific |
@@ -121,12 +121,12 @@ The medicine-wheel rispecs define *what is* — the relational ontology, ceremon
 
 - `ava-langchain-prompt-decomposition` chain primitives must mirror the OntologicalDecomposition schema
 - `ava-langgraph-prompt-decomposition-engine` StateGraph must update its node processing
-- `narrative-medicine-wheel-bridge.spec.md` integration patterns may need updated PDE output handling
+- `narrative-@medicine-wheel/bridge.spec.md` integration patterns may need updated PDE output handling
 
 ### When narrative-engine.spec.md Changes
 
 - `ava-langgraph-narrative-intelligence` ThreeUniverseProcessor must update beat/arc handling
-- `narrative-medicine-wheel-bridge.spec.md` beat management patterns must be verified
+- `narrative-@medicine-wheel/bridge.spec.md` beat management patterns must be verified
 - `data-store.spec.md` beat persistence schema must remain compatible
 
 ### When a New Medicine Wheel Spec Is Added

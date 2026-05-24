@@ -3,7 +3,7 @@
 > Zero-dependency JSONL session event parser — list, filter, analyze, and search across agent session data stored in `_sessiondata/` directories.
 
 **Version:** 0.1.1  
-**Package:** `medicine-wheel-session-reader`  
+**Package:** `@medicine-wheel/session-reader`  
 **Document ID:** rispec-session-reader-v1  
 **Last Updated:** 2026-03-06  
 
@@ -30,7 +30,7 @@ Users create **session-aware tools and dashboards** where:
 
 ## Types
 
-### Sub-path: `medicine-wheel-session-reader/types`
+### Sub-path: `@medicine-wheel/session-reader/types`
 
 ```typescript
 interface SessionEvent {
@@ -88,7 +88,7 @@ interface SearchMatch {
 
 ## Sessions API
 
-### Sub-path: `medicine-wheel-session-reader/sessions`
+### Sub-path: `@medicine-wheel/session-reader/sessions`
 
 #### Listing
 

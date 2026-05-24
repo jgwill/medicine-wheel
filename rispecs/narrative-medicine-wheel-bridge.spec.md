@@ -4,7 +4,7 @@
 
 **Version**: 0.1.0
 **Status**: Active
-**Packages**: medicine-wheel-ontology-core, medicine-wheel-ceremony-protocol, medicine-wheel-narrative-engine
+**Packages**: @medicine-wheel/ontology-core, @medicine-wheel/ceremony-protocol, @medicine-wheel/narrative-engine
 **Lineage**: Integration pattern between jgwill/Miadi and jgwill/medicine-wheel
 
 ---
@@ -33,7 +33,7 @@ A bridge architecture enabling:
 
 #### Pattern 1: Type-Level Integration (ontology-core)
 ```typescript
-import { Direction, RelationalNode, WilsonAlignment } from 'medicine-wheel-ontology-core';
+import { Direction, RelationalNode, WilsonAlignment } from '@medicine-wheel/ontology-core';
 
 // Use Direction enum for content categorization
 interface Article {
@@ -44,7 +44,7 @@ interface Article {
 
 #### Pattern 2: Ceremony Session Structuring (ceremony-protocol)
 ```typescript
-import { CeremonyPhase } from 'medicine-wheel-ceremony-protocol';
+import { CeremonyPhase } from '@medicine-wheel/ceremony-protocol';
 
 // Structure agent sessions as ceremonies:
 // opening → council → integration → closure
@@ -57,7 +57,7 @@ interface AgentSession {
 
 #### Pattern 3: Narrative Beat Management (narrative-engine)
 ```typescript
-import { NarrativeBeat, ArcValidator } from 'medicine-wheel-narrative-engine';
+import { NarrativeBeat, ArcValidator } from '@medicine-wheel/narrative-engine';
 
 // Story beats mapped to ceremony phases
 interface StorySession {
@@ -70,7 +70,7 @@ interface StorySession {
 #### Pattern 4: Visual Component Reference (ui-components)
 ```typescript
 // Import or reference DirectionCard theming for consistent visual language
-import { DirectionCard } from 'medicine-wheel-ui-components';
+import { DirectionCard } from '@medicine-wheel/ui-components';
 // Or replicate the color/icon mapping for app-specific components
 ```
 
@@ -104,29 +104,29 @@ import { DirectionCard } from 'medicine-wheel-ui-components';
 ## 🌊 WEST — Validation
 
 - All Direction values must use canonical lowercase: `east`, `south`, `west`, `north`
-- Medicine Wheel packages are installed via npm: `npm install medicine-wheel-ontology-core`
+- Medicine Wheel packages are installed via npm: `npm install @medicine-wheel/ontology-core`
 - Wilson alignment scoring should be computed when relational nodes cross ceremony boundaries
 - OCAP® flags must be respected when bridging Indigenous knowledge data
 
 ## ❄️ NORTH — Action
 
 ### For Web UI Integration
-1. Install: `npm install medicine-wheel-ontology-core medicine-wheel-ui-components`
+1. Install: `npm install @medicine-wheel/ontology-core @medicine-wheel/ui-components`
 2. Import Direction types for content categorization
 3. Reference DirectionCard theming for visual consistency
 4. Use narrative-engine for beat display when showing story content
 
 ### For Terminal Agent Integration
-1. Install: `npm install medicine-wheel-ontology-core medicine-wheel-ceremony-protocol medicine-wheel-narrative-engine`
+1. Install: `npm install @medicine-wheel/ontology-core @medicine-wheel/ceremony-protocol @medicine-wheel/narrative-engine`
 2. Structure agent sessions around ceremony phases (opening → council → integration → closure)
 3. Map agent operations to Four Directions (East=understand, South=analyze, West=validate, North=execute)
 4. Use Wilson alignment to score how well agent output respects relational principles
 
-### For New medicine-wheel-miadi Packages
-When integration patterns mature, extract reusable modules as `medicine-wheel-miadi-<component>`:
-- `medicine-wheel-miadi-articles` — Article publishing pipeline with MW theming
-- `medicine-wheel-miadi-sessions` — Ceremony-structured agent sessions
-- `medicine-wheel-miadi-narrative` — Narrative beat integration for Miadi's story engine
+### For New @medicine-wheel/miadi Packages
+When integration patterns mature, extract reusable modules as `@medicine-wheel/miadi-<component>`:
+- `@medicine-wheel/miadi-articles` — Article publishing pipeline with MW theming
+- `@medicine-wheel/miadi-sessions` — Ceremony-structured agent sessions
+- `@medicine-wheel/miadi-narrative` — Narrative beat integration for Miadi's story engine
 
 ---
 
@@ -148,7 +148,7 @@ Tracks opposing narrative forces (Knowledge vs Ignorance, Trust vs Test, Change 
 
 ### Integration Pattern
 
-A future `medicine-wheel-ncp-bridge` or extension to this bridge spec could:
+A future `@medicine-wheel/ncp-bridge` or extension to this bridge spec could:
 - Map NCP throughlines to Four Directions perspectives
 - Use NCP coherence validation alongside ceremony arc validation
 - Surface Dramatica dynamics as structural tensions in Medicine Wheel charts

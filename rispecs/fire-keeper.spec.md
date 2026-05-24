@@ -3,7 +3,7 @@
 > Ceremony coordination agent — the living keeper of the ceremony that coordinates multi-agent work through relational gating, ensures Wilson alignment, and maintains ceremony as a transformative experience.
 
 **Version:** 0.1.0  
-**Package:** `medicine-wheel-fire-keeper`  
+**Package:** `@medicine-wheel/fire-keeper`  
 **Document ID:** rispec-fire-keeper-v1  
 **Last Updated:** 2026-03-15  
 
@@ -252,7 +252,7 @@ interface FireKeeperMessage {
 
 ## Dependencies
 
-- **Runtime:** `medicine-wheel-ontology-core` ^0.1.1, `medicine-wheel-ceremony-protocol` ^0.1.0, `zod` ^3.23.0
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.1, `@medicine-wheel/ceremony-protocol` ^0.1.0, `zod` ^3.23.0
 - **Types consumed:** `DirectionName`, `CeremonyPhase`, `AccountabilityTracking` from ontology-core
 
 ---
