@@ -1,9 +1,10 @@
 {
   "mcpServers": {
     "mcp-pde": {
-      "command": "node",
+      "command": "npx",
       "args": [
-        "/src/mcp-pde/dist/index.js"
+        "-y",
+        "mcp-pde"
       ],
       "env": {}
     }
