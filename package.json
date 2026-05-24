@@ -68,6 +68,9 @@
     "@medicine-wheel/relational-index": "^0.2.2",
     "@medicine-wheel/transformation-tracker": "^0.2.2",
     "@medicine-wheel/storage-provider": "^0.2.2",
+    "@medicine-wheel/community-review": "^0.2.2",
+    "@medicine-wheel/consent-lifecycle": "^0.2.2",
+    "@medicine-wheel/data-store-postgres": "^0.2.2",
     "@neondatabase/serverless": "^0.10.0"
   },
   "devDependencies": {
