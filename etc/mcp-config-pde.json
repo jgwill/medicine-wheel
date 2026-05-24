@@ -1,9 +1,9 @@
 {
   "mcpServers": {
-     "mcp-pde": {
+     "@medicine-wheel/prompt-decomposition": {
       "command": "node",
       "args": [
-        "/src/mcp-pde/dist/index.js"
+        "src/prompt-decomposition/dist/index.js"
       ],
       "env": { }
     }

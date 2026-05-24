@@ -20,7 +20,7 @@ export const WORKSPACES: Workspace[] = [
   { id: "stc",            name: "STC Workspaces",  direction: "west",  color: "#8888cc", status: "active", repo: "jgwill/stcraft",                blurb: "Structural tension charts across repos" },
   { id: "tushell",        name: "Tushell Magic Land", direction: "north", color: "#E8E8E8", status: "idle", repo: "jgwill/tushellplatform",        blurb: "Child-friendly knowledge platform" },
   { id: "articles",       name: "Articles",        direction: "east",  color: "#c9a23a", status: "idle",   repo: "jgwill/medicine-wheel#articles", blurb: "Narrative-technical research" },
-  { id: "pde",            name: "PDE",             direction: "south", color: "#9a5cc6", status: "active", repo: "jgwill/mcp-pde",                 blurb: "Four Directions prompt decomposition" },
+  { id: "pde",            name: "PDE",             direction: "south", color: "#9a5cc6", status: "active", repo: "jgwill/medicine-wheel#pde",      blurb: "Four Directions prompt decomposition" },
 ];
 
 const STATUS_DOT: Record<Workspace["status"], string> = {
