@@ -1,11 +1,11 @@
 {
-  "name": "medicine-wheel-mcp",
+  "name": "@medicine-wheel/mcp",
   "version": "4.0.0",
   "description": "Medicine Wheel MCP Server — Integrated Indigenous Paradigm Research Framework",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "medicine-wheel-mcp": "dist/index.js"
+    "@medicine-wheel/mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc && chmod +x dist/index.js",

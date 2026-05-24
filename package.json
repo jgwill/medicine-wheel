@@ -20,7 +20,8 @@
     "src/session-reader",
     "src/storage-provider",
     "src/transformation-tracker",
-    "src/ui-components"
+    "src/ui-components",
+    "mcp"
   ],
   "scripts": {
     "build:packages": "npm run build -w src/ontology-core && npm run build --workspaces --if-present",
@@ -71,6 +72,7 @@
     "@medicine-wheel/community-review": "^0.2.2",
     "@medicine-wheel/consent-lifecycle": "^0.2.2",
     "@medicine-wheel/data-store-postgres": "^0.2.2",
+    "@medicine-wheel/mcp": "^4.0.0",
     "@neondatabase/serverless": "^0.10.0"
   },
   "devDependencies": {

@@ -29,7 +29,7 @@ import { prompts } from "./prompts/index.js";
 
 const server = new Server(
   {
-    name: "medicine-wheel-mcp",
+    name: "@medicine-wheel/mcp",
     version: "4.0.0",
   },
   {
@@ -118,7 +118,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 });
 
 async function main() {
-  console.error("🌿 Medicine Wheel MCP Server v4.0 initializing...");
+  console.error("🌿 @medicine-wheel/mcp server v4.0 initializing...");
   console.error("📂 Using JSONL file-backed store (.mw/store/)");
   const transport = new StdioServerTransport();
   await server.connect(transport);

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+     "@medicine-wheel/mcp": {
+      "command": "node",
+      "args": [
+        "/workspace/repos/jgwill/medicine-wheel/mcp/dist/index.js"
+      ],
+      "env": { }
+    }
+  }
+}
