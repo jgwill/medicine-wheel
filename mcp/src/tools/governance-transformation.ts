@@ -11,17 +11,17 @@ import {
   talkingCircle, 
   requestElderValidation,
   seekConsensus
-} from "medicine-wheel-community-review";
+} from "@medicine-wheel/community-review";
 import { 
   grantConsent,
   renegotiateConsent,
   checkConsentHealth
-} from "medicine-wheel-consent-lifecycle";
+} from "@medicine-wheel/consent-lifecycle";
 import { 
   snapshotUnderstanding,
   wilsonValidityCheck,
   logReflection
-} from "medicine-wheel-transformation-tracker";
+} from "@medicine-wheel/transformation-tracker";
 import type { Tool } from "../types.js";
 import { store } from "../store.js";
 

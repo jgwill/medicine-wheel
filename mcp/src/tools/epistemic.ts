@@ -13,13 +13,11 @@ import {
   detectDeepening,
   type EpistemicSource,
   type AxiologicalPillar
-} from "medicine-wheel-importance-unit";
+} from "@medicine-wheel/importance-unit";
 import { 
-  createIndex, 
-  addEntry, 
   indexHealth, 
   dimensionBalance 
-} from "medicine-wheel-relational-index";
+} from "@medicine-wheel/relational-index";
 import type { Tool } from "../types.js";
 import { store } from "../store.js";
 

@@ -8,11 +8,11 @@
 
 import { 
   MedicineWheelDecomposer 
-} from "medicine-wheel-prompt-decomposition";
+} from "@medicine-wheel/prompt-decomposition";
 import { 
   getSessionDetail,
   listSessions
-} from "medicine-wheel-session-reader";
+} from "@medicine-wheel/session-reader";
 import type { Tool } from "../types.js";
 import { store } from "../store.js";
 

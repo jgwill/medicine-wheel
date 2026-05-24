@@ -10,11 +10,11 @@ import {
   FireKeeper, 
   relationalCheckBack,
   DEFAULT_GATES
-} from "medicine-wheel-fire-keeper";
+} from "@medicine-wheel/fire-keeper";
 import { 
   enforceCeremonyGate,
   getPhaseFraming
-} from "medicine-wheel-ceremony-protocol";
+} from "@medicine-wheel/ceremony-protocol";
 import type { Tool } from "../types.js";
 import { store } from "../store.js";
 
