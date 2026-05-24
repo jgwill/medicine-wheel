@@ -4,7 +4,7 @@
 --add-dir /src/Miadi/ \
     --add-dir /src/mcp-medicine-wheel \
     --add-dir /src/mcp-medicine-wheel-ui \
-    --add-dir /workspace/repos/jgwill/medicine-wheel/src/prompt-decomposition/ \
+    --add-dir /src/mcp-pde/ \
     --add-dir /workspace/repos/jgwill/mwds-rdfglance \
     --add-dir /workspace/repos/jgwill/mwds-react-d3-graph \
     --add-dir /src/IAIP/prototypes/artefacts/ \
@@ -51,7 +51,7 @@ Because you are a powerful orchestrator, I will have you extend the scope of wha
 ## Potential Skills to use with your subagents
 
 ### `/home/mia/.claude/skills/deep-research` 
-* Have subagents claude-opus-4.6  proceed with academic deep-search to proceed to a review and something that would cover the whole app with results.  It would extend to just .pde/2604041906--8302628d-f031-4724-b59b-4337c3e24bf0/pde-8302628d-f031-4724-b59b-4337c3e24bf0.md so you could run @medicine-wheel/prompt-decomposition with Parent_UUID 8302628d-f031-4724-b59b-4337c3e24bf0 so we'd have into that folder subfolders foreach of your inquiries.  It could be a form of validation and also potentially we'd gather INSIGHTS into enhancing the app that could be transformed from the deep-search resulting artefact into RISE framework rispecs/
+* Have subagents claude-opus-4.6  proceed with academic deep-search to proceed to a review and something that would cover the whole app with results.  It would extend to just .pde/2604041906--8302628d-f031-4724-b59b-4337c3e24bf0/pde-8302628d-f031-4724-b59b-4337c3e24bf0.md so you could run mcp-pde with Parent_UUID 8302628d-f031-4724-b59b-4337c3e24bf0 so we'd have into that folder subfolders foreach of your inquiries.  It could be a form of validation and also potentially we'd gather INSIGHTS into enhancing the app that could be transformed from the deep-search resulting artefact into RISE framework rispecs/
 
 
 ### `/home/mia/.claude/skills/rise-pde-session-multi-agents` or `/home/mia/.claude/skills/rise-pde-session-multi-agents-v2`
