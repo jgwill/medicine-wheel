@@ -418,3 +418,15 @@ Issue being tracked via @stcissue bot.
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #57 - Track npm package migration to @medicine-wheel/* scope
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-05-23T19:37:32Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/57
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
