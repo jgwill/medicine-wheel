@@ -1,7 +1,7 @@
 /**
  * Medicine Wheel MCP Server — Type Definitions
  *
- * Re-exported from @medicine-wheel/ontology-core (medicine-wheel-ontology-core).
+ * Re-exported from @medicine-wheel/ontology-core.
  * MCP server-specific types (Tool, Resource, Prompt) kept local with `any`
  * for compatibility with existing handler signatures.
  */
@@ -26,7 +26,7 @@ export type {
   TensionPhase,
   StructuralTensionChart,
   ActionStep,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 // MCP server-specific types — kept local with `any` for handler compatibility
 export interface Tool {

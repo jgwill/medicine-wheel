@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "strict": true,
+    "outDir": "dist/cli",
+    "rootDir": "cli",
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "declaration": false
+  },
+  "include": ["cli/**/*.ts"],
+  "exclude": ["node_modules", "src", "mcp", "app", "components", "hooks", "lib"]
+}

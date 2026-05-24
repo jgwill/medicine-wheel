@@ -26,6 +26,10 @@ TUG.md
 *.code-workspace
 KINSHIP.md
 *.sh
+!docker-entrypoint.sh
+!docker-build-push.sh
+cli
+tsconfig.cli.json
 MINO.md
 output
 CNAME

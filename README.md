@@ -177,9 +177,25 @@ npm install @medicine-wheel/ontology-core
 npm install @medicine-wheel/narrative-engine
 ```
 
+### App package CLI
+```bash
+# Install the published app package
+npm install -g @medicine-wheel/app
+
+# Start the server against the current directory's .mw/store
+mwsrv -D ./
+
+# Start the server in Docker with the published image
+mwsrv --docker -D /src/myapp
+
+# Talk to the running server
+mw status
+mw directions
+mw node list
+```
+
 ## License
 
 MIT  see [LICENSE](LICENSE)
-
 
 

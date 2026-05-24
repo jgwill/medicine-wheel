@@ -1,6 +1,6 @@
 /**
  * Medicine Wheel — Type Definitions
- * Re-exported from medicine-wheel-ontology-core.
+ * Re-exported from @medicine-wheel/ontology-core.
  */
 
 export type {
@@ -13,11 +13,11 @@ export type {
   NarrativeBeat,
   MedicineWheelCycle,
   Direction,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 export {
   DIRECTIONS,
   DIRECTION_COLORS,
   NODE_TYPE_COLORS,
   CEREMONY_ICONS,
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';

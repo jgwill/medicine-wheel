@@ -8,7 +8,7 @@
     "@medicine-wheel/mcp": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc && chmod +x dist/index.js",
+    "build": "tsc && node -e \"const fs=require('fs'); try { const nextMode=(fs.statSync('dist/index.js').mode & 0o777) | 0o755; fs.chmodSync('dist/index.js', nextMode); } catch (error) { if (error && error.code !== 'EPERM') throw error; console.warn('[mcp] Skipping chmod on dist/index.js:', error.message); }\"",
     "start": "node dist/index.js",
     "dev": "tsc --watch",
     "clean": "rm -rf dist"
@@ -26,20 +26,20 @@
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
-    "@medicine-wheel/ontology-core": "file:../src/ontology-core",
-    "@medicine-wheel/ceremony-protocol": "file:../src/ceremony-protocol",
-    "@medicine-wheel/community-review": "file:../src/community-review",
-    "@medicine-wheel/consent-lifecycle": "file:../src/consent-lifecycle",
-    "@medicine-wheel/fire-keeper": "file:../src/fire-keeper",
-    "@medicine-wheel/graph-viz": "file:../src/graph-viz",
-    "@medicine-wheel/importance-unit": "file:../src/importance-unit",
-    "@medicine-wheel/narrative-engine": "file:../src/narrative-engine",
-    "@medicine-wheel/prompt-decomposition": "file:../src/prompt-decomposition",
-    "@medicine-wheel/relational-index": "file:../src/relational-index",
-    "@medicine-wheel/relational-query": "file:../src/relational-query",
-    "@medicine-wheel/session-reader": "file:../src/session-reader",
-    "@medicine-wheel/transformation-tracker": "file:../src/transformation-tracker",
-    "@medicine-wheel/ui-components": "file:../src/ui-components"
+    "@medicine-wheel/ontology-core": "^0.2.3",
+    "@medicine-wheel/ceremony-protocol": "^0.2.3",
+    "@medicine-wheel/community-review": "^0.2.3",
+    "@medicine-wheel/consent-lifecycle": "^0.2.3",
+    "@medicine-wheel/fire-keeper": "^0.2.3",
+    "@medicine-wheel/graph-viz": "^0.2.3",
+    "@medicine-wheel/importance-unit": "^0.2.3",
+    "@medicine-wheel/narrative-engine": "^0.2.3",
+    "@medicine-wheel/prompt-decomposition": "^0.2.3",
+    "@medicine-wheel/relational-index": "^0.2.3",
+    "@medicine-wheel/relational-query": "^0.2.3",
+    "@medicine-wheel/session-reader": "^0.2.3",
+    "@medicine-wheel/transformation-tracker": "^0.2.3",
+    "@medicine-wheel/ui-components": "^0.2.3"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
