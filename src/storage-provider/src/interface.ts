@@ -46,6 +46,7 @@ export interface StorageProvider {
   // Edge Operations
   createEdge(edge: RelationalEdge): Promise<void>;
   getEdge(fromId: string, toId: string): Promise<RelationalEdge | null>;
+  getAllEdges(limit?: number): Promise<RelationalEdge[]>;
   getRelatedNodes(nodeId: string, direction?: 'from' | 'to' | 'both'): Promise<string[]>;
   updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): Promise<void>;
   

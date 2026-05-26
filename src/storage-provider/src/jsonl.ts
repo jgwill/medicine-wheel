@@ -124,6 +124,13 @@ export class JsonlProvider implements StorageProvider {
     return Array.from(related);
   }
 
+  async getAllEdges(limit = 100): Promise<RelationalEdge[]> {
+    return this.readEdges()
+      .sort(sortByNewest('created_at'))
+      .slice(0, limit)
+      .map((edge) => this.parseEdge(edge));
+  }
+
   async updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): Promise<void> {
     await withWriteLock(this.edgesFile, () => {
       const nextEdges = this.readEdges().map((edge) => {
