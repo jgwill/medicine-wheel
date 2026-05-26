@@ -22,8 +22,11 @@ export default function RelationsPage() {
   const loadData = useCallback(async () => {
     try {
       const [nodesRes, edgesRes] = await Promise.all([fetch("/api/nodes"), fetch("/api/edges")]);
-      const nodesData: RelationalNode[] = await nodesRes.json();
+      const nodesResponse = await nodesRes.json();
       const edgesData: RelationalEdge[] = await edgesRes.json();
+      
+      // API returns { nodes: [...], provider: '...', count: N }
+      const nodesData: RelationalNode[] = Array.isArray(nodesResponse) ? nodesResponse : (nodesResponse.nodes || []);
 
       const cx = 400, cy = 300, radius = 220;
       const graphNodes = nodesData.map((n, i) => {
@@ -32,7 +35,7 @@ export default function RelationsPage() {
       });
       setNodes(graphNodes);
       setEdges(Array.isArray(edgesData) ? edgesData : []);
-    } catch { console.error("Failed to load"); }
+    } catch (err) { console.error("Failed to load relational data:", err); }
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);

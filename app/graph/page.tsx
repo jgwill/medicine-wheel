@@ -31,8 +31,11 @@ export default function GraphPage() {
   const loadData = useCallback(async () => {
     try {
       const [nodesRes, edgesRes] = await Promise.all([fetch("/api/nodes"), fetch("/api/edges")]);
-      const nodesData: RelationalNode[] = await nodesRes.json();
+      const nodesResponse = await nodesRes.json();
       const edgesData: RelationalEdge[] = await edgesRes.json();
+      
+      // API returns { nodes: [...], provider: '...', count: N }
+      const nodesData: RelationalNode[] = Array.isArray(nodesResponse) ? nodesResponse : (nodesResponse.nodes || []);
 
       // Position nodes by direction on a circular layout
       const CX = 350, CY = 300, R = 220;
