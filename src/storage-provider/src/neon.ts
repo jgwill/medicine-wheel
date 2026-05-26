@@ -118,6 +118,11 @@ export class NeonProvider implements StorageProvider {
     return rows.map(r => r.id as string);
   }
 
+  async getAllEdges(limit = 100): Promise<RelationalEdge[]> {
+    const rows = await this.db`SELECT * FROM edges ORDER BY created_at DESC LIMIT ${limit}`;
+    return rows.map((row: Record<string, unknown>) => this.parseEdge(row));
+  }
+
   async updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): Promise<void> {
     await this.db`
       UPDATE edges SET ceremony_honored = true, last_ceremony = ${ceremonyId}
