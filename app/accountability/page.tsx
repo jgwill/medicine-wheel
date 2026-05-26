@@ -24,9 +24,11 @@ export default function AccountabilityPage() {
       fetch("/api/edges").then((r) => r.json()),
       fetch("/api/ceremonies").then((r) => r.json()),
       fetch("/api/narrative/beats").then((r) => r.json()),
-    ]).then(([res, n, e, c, b]) => {
+    ]).then(([res, nodesResponse, e, c, b]) => {
       setResources(Array.isArray(res) ? res : []);
-      setNodes(Array.isArray(n) ? n : []);
+      // API returns { nodes: [...], provider: '...', count: N }
+      const nodesData = Array.isArray(nodesResponse) ? nodesResponse : (nodesResponse.nodes || []);
+      setNodes(nodesData);
       setEdges(Array.isArray(e) ? e : []);
       setCeremonies(Array.isArray(c) ? c : []);
       setBeats(Array.isArray(b) ? b : []);

@@ -38,8 +38,11 @@ export default function NodesPage() {
         fetch(`/api/nodes?${params.toString()}`),
         fetch("/api/edges"),
       ]);
-      const nodesData: RelationalNode[] = await nodesRes.json();
+      const nodesResponse = await nodesRes.json();
       const edgesData: RelationalEdge[] = edgesRes.ok ? await edgesRes.json() : [];
+      
+      // API returns { nodes: [...], provider: '...', count: N }
+      const nodesData: RelationalNode[] = Array.isArray(nodesResponse) ? nodesResponse : (nodesResponse.nodes || []);
       setNodes(nodesData);
       setEdges(Array.isArray(edgesData) ? edgesData : []);
     } catch {
