@@ -194,8 +194,11 @@ mw directions
 mw node list
 ```
 
+The published app package installs and runs without `@medicine-wheel/mcp`. The `mw`
+CLI uses HTTP against the running server by default; MCP fallback is optional via a
+local `MW_MCP_PATH`.
+
 ## License
 
 MIT  see [LICENSE](LICENSE)
-
 

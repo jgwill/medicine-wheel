@@ -40,7 +40,7 @@ function resolveMcpPath(): string {
   const fromCwd = path.join(process.cwd(), 'mcp', 'dist', 'index.js');
   if (fs.existsSync(fromCwd)) return fromCwd;
 
-  // Installed @medicine-wheel/mcp in node_modules
+  // Optional installed @medicine-wheel/mcp package, if available.
   const fromModules = path.join(
     packageRoot, 'node_modules', '@medicine-wheel', 'mcp', 'dist', 'index.js',
   );
@@ -135,7 +135,7 @@ async function checkApi(): Promise<boolean> {
 // ── MCP JSON-RPC ──────────────────────────────────────────────────
 function mcpRaw(rpcMethod: string, params: Record<string, unknown>): string {
   if (!MW_MCP_PATH) {
-    console.error('Error: MCP server path not found. Set MW_MCP_PATH or ensure @medicine-wheel/mcp is installed.');
+    console.error('Error: MCP server path not found. Set MW_MCP_PATH or use the HTTP server via MW_API_URL.');
     process.exit(1);
   }
 
@@ -239,7 +239,7 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
 
   ENVIRONMENT
     MW_API_URL   API base URL (default: http://localhost:3940)
-    MW_MCP_PATH  MCP server path (auto-detected)
+    MW_MCP_PATH  Optional MCP server path (auto-detected when locally available)
     MW_FORMAT    Output format: pretty (default), json, quiet
 `);
 }
