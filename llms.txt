@@ -2,7 +2,7 @@
 
 > A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's, and OCAP® data sovereignty principles.
 
-**Version:** 0.2.0
+**Version:** 0.3.0 (lockstep packages) · MCP server 4.3.0
 **Language:** TypeScript (ES2022, ESM)
 **License:** MIT
 
@@ -23,6 +23,28 @@
 - [ui-components](src/ui-components): React UI components for the Medicine Wheel Developer Suite — direction cards, beat timelines, node inspectors, OCAP® badges, and Wilson alignment gauges.
 - [data-store](src/data-store): Shared Redis data-access layer for the Medicine Wheel Developer Suite — connection management, Node/Edge/Ceremony CRUD, session-ceremony linking, and discovery helpers
 - [session-reader](src/session-reader): Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, session summaries, analytics extraction, and search across agent session data
+- [storage-provider](src/storage-provider): Abstract storage layer — a unified provider interface over JSONL and Neon/Postgres backends (with a future Redis path), selected at runtime
+- [data-store-postgres](src/data-store-postgres): PostgreSQL/Neon provider scaffold — shared pool management and provider-ready storage entrypoints for cloud-backed persistence
+- [mcp](mcp): Medicine Wheel MCP Server (`@medicine-wheel/mcp`, independent 4.x line) — 64 tools across the ceremony lifecycle, relational CRUD, structural tension, narrative, Four-Directions guidance, and validators; stdio + StreamableHTTP transports
+
+## MCP Server & HTTP API
+
+The `@medicine-wheel/mcp` package exposes 64 tools over two transports:
+
+- **stdio** — `npx @medicine-wheel/mcp` (default; local JSONL store under `.mw/store/`)
+- **StreamableHTTP** — `POST /api/mcp` on the running app, JSON-RPC 2.0 with `tools/list` and `tools/call`
+
+Tool families: ceremony lifecycle (open/close, fire-keeper status, relational check-back), relational CRUD (nodes, edges, relational web), structural tension (charts, action steps, MMOT), narrative (beats, cycles, arcs), Four-Directions guidance, and validators (Wilson paradigm, OCAP® compliance, Two-Eyed Seeing bridge, accountability).
+
+**Server-mediated store (opt-in):** set `MW_API_URL` so the MCP tools read and write the same relational state the server holds through its REST API instead of a local file. The default `MW_DATA_DIR` JSONL path is unchanged.
+
+The Next.js app surfaces that relational state as REST endpoints (also consumed by the MCP HTTP store):
+
+- `GET/POST /api/nodes`, `/api/edges`, `/api/ceremonies`
+- `GET/POST /api/narrative/beats`, `/api/narrative/cycles`
+- `GET/POST /api/charts`, `/api/mmots`
+- `GET /api/directions`, `/api/health`, `/api/resources`
+- `GET/POST /api/mcp` — StreamableHTTP MCP endpoint
 
 ## Specifications (RISE Framework)
 
