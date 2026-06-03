@@ -430,3 +430,27 @@ Issue being tracked via @stcissue bot.
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #61 - release.sh leaves workspace package-lock.json files uncommitted
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-03T16:43:42Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/61
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #61 - release.sh leaves workspace package-lock.json files uncommitted
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-03T16:43:42Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/61
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
