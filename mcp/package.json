@@ -4,6 +4,11 @@
   "description": "Medicine Wheel MCP Server — Integrated Indigenous Paradigm Research Framework",
   "type": "module",
   "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./all-tools": "./dist/all-tools.js",
+    "./types": "./dist/types.js"
+  },
   "files": [
     "dist/**/*",
     "package.json",

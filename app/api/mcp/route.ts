@@ -3,11 +3,17 @@
  *
  * Enables MCP clients to connect to the Medicine Wheel server
  * via HTTP POST instead of stdio. Accepts JSON-RPC MCP messages
- * and forwards them to the server's MCP handler.
+ * and dispatches them to the same tool/resource/prompt registry
+ * that the stdio transport uses.
+ *
+ * Supported methods:
+ *   - tools/list   → lists all registered MCP tools
+ *   - tools/call   → invokes a tool by name with arguments
  *
  * @see https://github.com/jgwill/medicine-wheel/issues/69
  */
 import { NextRequest, NextResponse } from "next/server";
+import { allTools } from "@medicine-wheel/mcp/all-tools";
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,16 +33,85 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Endpoint exists and accepts MCP traffic.
-    // Full tool dispatch will be wired in a follow-up.
+    const { method, params, id } = body;
+
+    // ── tools/list ──
+    if (method === "tools/list") {
+      return NextResponse.json({
+        jsonrpc: "2.0",
+        result: {
+          tools: allTools.map((t) => ({
+            name: t.name,
+            description: t.description,
+            inputSchema: t.inputSchema,
+          })),
+        },
+        id: id ?? null,
+      });
+    }
+
+    // ── tools/call ──
+    if (method === "tools/call") {
+      const toolName = params?.name;
+      const tool = allTools.find((t) => t.name === toolName);
+      if (!tool) {
+        return NextResponse.json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32602,
+            message: `Unknown tool: ${toolName}`,
+          },
+          id: id ?? null,
+        });
+      }
+
+      try {
+        const result = await tool.handler(params?.arguments || {});
+        return NextResponse.json({
+          jsonrpc: "2.0",
+          result: {
+            content: [
+              { type: "text", text: JSON.stringify(result, null, 2) },
+            ],
+          },
+          id: id ?? null,
+        });
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        return NextResponse.json({
+          jsonrpc: "2.0",
+          result: {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    error: errorMessage,
+                    direction:
+                      "Please ensure all required parameters are provided",
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+            isError: true,
+          },
+          id: id ?? null,
+        });
+      }
+    }
+
+    // ── Unsupported method ──
     return NextResponse.json(
       {
         jsonrpc: "2.0",
         error: {
           code: -32601,
-          message: `Method '${body.method}' not yet implemented on StreamableHTTP endpoint. Use stdio transport for full tool access.`,
+          message: `Method '${method}' is not supported. Available: tools/list, tools/call`,
         },
-        id: body.id ?? null,
+        id: id ?? null,
       },
       { status: 200 }
     );
