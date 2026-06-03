@@ -176,16 +176,27 @@ export const validators: Tool[] = [
       }
 
       // Possession
-      if (plan.storage_location && (plan.storage_location.includes("on-premise") || plan.storage_location.includes("community"))) {
+      const hybridCloudPatterns = ["hybrid", "encrypted-cloud", "sovereign-cloud", "community-cloud"];
+      const isOnPremise = plan.storage_location && (plan.storage_location.includes("on-premise") || plan.storage_location.includes("community"));
+      const isHybridCloud = plan.storage_location && hybridCloudPatterns.some((p) => plan.storage_location.includes(p));
+
+      let possessionConditional = false;
+      if (isOnPremise) {
         compliant.push("✓ POSSESSION: Data stored in community custody");
+      } else if (isHybridCloud) {
+        possessionConditional = true;
+        compliant.push("⚠ POSSESSION: Hybrid/encrypted cloud — conditional pass pending sovereignty verification");
       } else {
         violations.push("✗ POSSESSION: Data must be physically/digitally possessed by community (on-premise)");
       }
 
       const isCompliant = violations.length === 0;
+      const isConditional = isCompliant && possessionConditional;
 
-      return {
-        ocap_status: isCompliant ? "COMPLIANT" : "VIOLATIONS DETECTED",
+      const possessionStatus = isOnPremise ? "✓" : isHybridCloud ? "⚠" : "✗";
+
+      const result: Record<string, unknown> = {
+        ocap_status: isConditional ? "CONDITIONAL — CLOUD SOVEREIGNTY" : isCompliant ? "COMPLIANT" : "VIOLATIONS DETECTED",
         violations,
         compliant,
         ocap_principles: {
@@ -206,11 +217,17 @@ export const validators: Tool[] = [
           },
           possession: {
             principle: "Physical/digital custody with community",
-            requirement: "On-premise storage (GC Canada or community servers); not extracted to cloud",
-            current_status: plan.storage_location?.includes("on-premise") || plan.storage_location?.includes("community") ? "✓" : "✗",
+            requirement: "On-premise storage (GC Canada or community servers); or hybrid/encrypted cloud with community-held keys",
+            current_status: possessionStatus,
           },
         },
-        recommendations: isCompliant ? [
+        recommendations: isConditional ? [
+          "Verify community holds all encryption keys — not the cloud provider",
+          "Confirm data residency jurisdiction is approved by community governance",
+          "Ensure community can extract/delete all data without vendor lock-in",
+          "Establish access log visibility for community data stewards",
+          "Schedule regular sovereignty audits with community oversight",
+        ] : isCompliant ? [
           "OCAP® compliance confirmed",
           "Maintain community governance throughout research",
           "Regular audits to ensure ongoing compliance",
@@ -230,6 +247,22 @@ export const validators: Tool[] = [
           ],
         },
       };
+
+      if (isConditional) {
+        result.cloud_sovereignty_guidance = {
+          model: "Hybrid/Encrypted Cloud",
+          requirements: [
+            "Community holds encryption keys — not the cloud provider",
+            "Data residency in jurisdiction approved by community governance",
+            "Community can extract/delete all data at any time without vendor lock-in",
+            "Access logs visible to community data stewards",
+            "Regular sovereignty audits with community oversight",
+          ],
+          note: "Cloud storage can honor OCAP® Possession when community retains effective control through encryption and governance. This is a recognized path, not an exception.",
+        };
+      }
+
+      return result;
     },
   },
   {
@@ -278,6 +311,56 @@ export const validators: Tool[] = [
           western: "Information that can be proven, tested, documented",
           indigenous: "Wisdom held in relationships, land, ceremony, stories; co-created with spirit",
           integrated: "Honor both empirical and relational ways of knowing; neither is superior",
+        },
+        "relational accountability": {
+          western: "Ethics board compliance; researcher follows institutional protocols",
+          indigenous: "Answering to all relations — human, more-than-human, land, spirit; researcher is accountable to the web of life, not just an institution",
+          integrated: "Dual accountability: institutional ethics compliance plus ongoing relational obligations to community, Elders, and the land",
+        },
+        "consent": {
+          western: "Informed consent form signed by individual participants",
+          indigenous: "Collective consent negotiated through community processes; permission granted by Elders and governance bodies, renewed throughout relationship",
+          integrated: "Individual informed consent plus community-level consent through governance structures; ongoing, not one-time",
+        },
+        "evidence": {
+          western: "Empirical data collected through controlled methods; statistically validated",
+          indigenous: "Lived experience, Elder testimony, ceremony, dreams, land observation; knowledge validated through relational integrity",
+          integrated: "Multiple evidence streams: empirical data alongside experiential knowledge, Elder wisdom, and ceremonial insight",
+        },
+        "ethics": {
+          western: "Institutional Review Board approval; do no harm principle",
+          indigenous: "Relational ethics: do good for all relations; ethics embedded in ceremony and accountability, not external review",
+          integrated: "IRB compliance plus relational ethics: community review board, Elder oversight, and ongoing accountability beyond institutional requirements",
+        },
+        "theory": {
+          western: "Testable hypothesis derived from literature review and prior empirical findings",
+          indigenous: "Teachings passed through generations; theory lives in stories, ceremony, and land-based observation",
+          integrated: "Both peer-reviewed literature and traditional teachings inform the framework; neither is privileged over the other",
+        },
+        "community": {
+          western: "Research subjects or study population; defined by demographics",
+          indigenous: "All relations — human, animal, plant, spirit, land; community includes ancestors and future generations",
+          integrated: "Defined collaboratively: demographic boundaries plus relational connections including land and more-than-human relations",
+        },
+        "reciprocity": {
+          western: "Participant compensation or token of appreciation for time",
+          indigenous: "Mutual obligation woven into relationship; gifts flow both directions continuously; research must give back more than it takes",
+          integrated: "Fair compensation plus long-term community benefit; research outputs co-owned; capacity building and knowledge return",
+        },
+        "land": {
+          western: "Research site or field location; geographic variable",
+          indigenous: "Teacher, relative, knowledge-holder; land is not a backdrop but an active participant in knowing",
+          integrated: "Research site understood as both geographic context and relational entity; land-based methods alongside site-specific data collection",
+        },
+        "time": {
+          western: "Linear progression; project timelines, deadlines, fiscal years",
+          indigenous: "Cyclical and seasonal; time measured in ceremonies, harvests, and relational readiness; things happen when they are ready",
+          integrated: "Project timelines respected while honoring relational and seasonal readiness; flexibility built into design for ceremonial timing",
+        },
+        "healing": {
+          western: "Clinical intervention; evidence-based treatment protocols",
+          indigenous: "Restoring balance in relationships — with self, community, land, and spirit; ceremony as healing; wholeness, not just symptom reduction",
+          integrated: "Clinical care plus ceremony, cultural connection, and relational restoration; outcomes measured holistically",
         },
       };
 
