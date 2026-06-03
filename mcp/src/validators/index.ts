@@ -1,4 +1,5 @@
 import type { Tool } from "../types.js";
+import { store } from "../store.js";
 
 export const validators: Tool[] = [
   {
@@ -424,32 +425,74 @@ export const validators: Tool[] = [
       const ceremonyKeywords = ["ceremony", "smudge", "tobacco", "sacred", "spirit", "prayer"];
       const accountabilityKeywords = ["reciprocity", "accountability", "reciprocal", "benefit", "responsibility"];
       
-      const hasRelational = relationshipKeywords.some(k => description.includes(k));
-      const hasCeremony = ceremonyKeywords.some(k => description.includes(k));
-      const hasAccountability = accountabilityKeywords.some(k => description.includes(k));
+      const hasRelational_text = relationshipKeywords.some(k => description.includes(k));
+      const hasCeremony_text = ceremonyKeywords.some(k => description.includes(k));
+      const hasAccountability_text = accountabilityKeywords.some(k => description.includes(k));
+
+      // --- Store-based evidence (additive signal) ---
+      const storeCeremonies = store.getAllCeremonies();
+      const storeNodes = store.getAllNodes();
+      const storeEdges = store.edges?.getAll?.() ?? [];
+
+      // Ceremonies in the store are direct evidence of ceremony integration
+      const hasCeremonyInStore = storeCeremonies.length > 0;
+      // Relations/edges are evidence of relational thinking
+      const hasRelationsInStore = storeEdges.length > 0;
+      // Knowledge nodes with accountability metadata
+      const hasAccountabilityNodes = storeNodes.some(
+        n => n.metadata?.axiologicalPillar === "axiology" || 
+             n.description?.toLowerCase().includes("accountability") ||
+             n.description?.toLowerCase().includes("reciprocity")
+      );
+
+      // Combine text evidence with store evidence (store strengthens but text path remains fallback)
+      const hasRelational = hasRelational_text || hasRelationsInStore;
+      const hasCeremony = hasCeremony_text || hasCeremonyInStore;
+      const hasAccountability = hasAccountability_text || hasAccountabilityNodes;
 
       return {
         framework: "Shawn Wilson's Indigenous Research Paradigm",
         research_description,
+        store_evidence: {
+          ceremonies_logged: storeCeremonies.length,
+          relations_mapped: storeEdges.length,
+          knowledge_nodes: storeNodes.length,
+          ceremony_signal: hasCeremonyInStore ? "✓ Ceremonies found in relational store" : "○ No ceremonies logged yet",
+          relational_signal: hasRelationsInStore ? "✓ Relations mapped in store" : "○ No relations mapped yet",
+          accountability_signal: hasAccountabilityNodes ? "✓ Accountability evidence in store" : "○ No accountability nodes yet",
+          note: "Store evidence supplements text analysis. Logged ceremonies and relations are direct evidence of paradigm alignment."
+        },
         ontology_assessment: {
           principle: "Reality is relational; everything interconnected; identity = roles in relationships",
           indicators: relationshipKeywords,
           present: hasRelational,
-          status: hasRelational ? "✓ Relational ontology evident" : "✗ Appears individualistic; missing relational framing",
+          status: hasRelational 
+            ? (hasRelational_text 
+              ? "✓ Relational ontology evident in description" 
+              : "✓ Relational ontology evident from mapped relations in store")
+            : "✗ Appears individualistic; missing relational framing",
           teaching: "Once in relationship, you are responsible for that relationship's wellbeing",
         },
         epistemology_assessment: {
           principle: "Knowledge co-created via relations, stories, land observation, ceremony; not extracted",
           indicators: ceremonyKeywords,
           present: hasCeremony,
-          status: hasCeremony ? "✓ Ceremony as epistemology recognized" : "✗ Extractive approach; knowledge seen as commodity to gather",
+          status: hasCeremony 
+            ? (hasCeremony_text 
+              ? "✓ Ceremony as epistemology recognized in description"
+              : "✓ Ceremony as epistemology evident from logged ceremonies in store")
+            : "✗ Extractive approach; knowledge seen as commodity to gather",
           teaching: "Knowledge has spirit; treat respectfully, not as property",
         },
         axiology_assessment: {
           principle: "Ethics of relational accountability; researcher answers to all relations; reciprocity mandatory",
           indicators: accountabilityKeywords,
           present: hasAccountability,
-          status: hasAccountability ? "✓ Accountability and reciprocity present" : "✗ One-way benefit; lacks reciprocity",
+          status: hasAccountability 
+            ? (hasAccountability_text 
+              ? "✓ Accountability and reciprocity present in description"
+              : "✓ Accountability evident from store knowledge nodes")
+            : "✗ One-way benefit; lacks reciprocity",
           teaching: "Researcher must live congruently with topic; embody values researched",
         },
         overall_alignment: {

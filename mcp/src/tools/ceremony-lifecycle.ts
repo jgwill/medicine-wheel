@@ -70,6 +70,14 @@ export const ceremonyLifecycleTools: Tool[] = [
           items: { type: "string" },
           description: "Medicines used in the ceremony (e.g. Tobacco, Cedar, Sage, Sweetgrass)",
         },
+        inquiryRef: {
+          type: "string",
+          description: "Reference to the parent inquiry or research cycle (optional, for linking to Fire Keeper tracking)",
+        },
+        cycleId: {
+          type: "string",
+          description: "ID of the medicine wheel cycle this ceremony belongs to (optional)",
+        },
       },
       required: ["intention"],
     },
@@ -80,6 +88,8 @@ export const ceremonyLifecycleTools: Tool[] = [
           direction = "east",
           participants = [],
           medicines = [],
+          inquiryRef,
+          cycleId,
         } = args;
 
         const ceremonyId = `ceremony:${Date.now()}:${Math.random().toString(36).slice(2, 7)}`;
@@ -92,6 +102,7 @@ export const ceremonyLifecycleTools: Tool[] = [
           medicines_used: medicines,
           intentions: [intention],
           timestamp: new Date().toISOString(),
+          research_context: inquiryRef || cycleId ? JSON.stringify({ inquiryRef, cycleId }) : undefined,
         });
 
         return {
@@ -99,6 +110,8 @@ export const ceremonyLifecycleTools: Tool[] = [
           status: "opened",
           direction,
           intention,
+          ...(inquiryRef && { inquiryRef }),
+          ...(cycleId && { cycleId }),
         };
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
