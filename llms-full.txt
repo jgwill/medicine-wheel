@@ -2,7 +2,7 @@
 
 > A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's (Respect, Reciprocity, Responsibility), and OCAP® data sovereignty principles.
 
-**Version:** 0.2.0
+**Version:** 0.3.0 (lockstep packages) · MCP server 4.3.0
 **Language:** TypeScript (ES2022, ESM, strict mode)
 **Runtime:** Node.js
 **Validation:** Zod ^3.23.0
@@ -30,8 +30,11 @@
 15. [Package 13: ui-components](#package-13-ui-components)
 16. [Package 14: data-store](#package-14-data-store)
 17. [Package 15: session-reader](#package-15-session-reader)
-18. [End-to-End Usage](#end-to-end-usage)
-19. [Specifications](#specifications)
+18. [Package 16: storage-provider](#package-16-storage-provider)
+19. [Package 17: data-store-postgres](#package-17-data-store-postgres)
+20. [MCP Server (@medicine-wheel/mcp)](#mcp-server-medicine-wheelmcp)
+21. [End-to-End Usage](#end-to-end-usage)
+22. [Specifications](#specifications)
 
 ---
 
@@ -2150,6 +2153,96 @@ Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, s
 ### Dependencies
 
 -   None (only Node.js built-ins)
+
+---
+
+## Package 16: storage-provider
+
+```bash
+npm install @medicine-wheel/storage-provider
+```
+
+**Version:** 0.3.0
+
+### Overview
+
+Abstract storage layer for Medicine Wheel data behind a single `StorageProvider` interface, with JSONL and Neon/Postgres backends (and a future Redis path). The active backend is selected at runtime, so tools and apps persist relational state without binding to one engine.
+
+### Exports
+
+-   `createProvider` — async factory returning the configured `StorageProvider`
+-   `detectProvider` — resolves the `ProviderType` from the environment
+-   `JsonlProvider`, `NeonProvider` — concrete backends
+-   `neon`, `NeonQueryFunction` — Neon serverless driver helpers
+-   types — `StorageProvider`, `ProviderType`, `RelationalNode`, `RelationalEdge`, `CeremonyLog`
+
+### Usage
+
+```ts
+import { createProvider } from '@medicine-wheel/storage-provider';
+const store = await createProvider();
+```
+
+---
+
+## Package 17: data-store-postgres
+
+```bash
+npm install @medicine-wheel/data-store-postgres
+```
+
+**Version:** 0.3.0
+
+### Overview
+
+PostgreSQL/Neon provider scaffold for the Medicine Wheel Developer Suite — shared connection-pool management and provider-ready storage entrypoints for cloud-backed persistence.
+
+### Exports
+
+-   `createPostgresPool`, `getPostgresPool` — pooled connection management
+-   types — `PostgresProviderRecord`, `PostgresConnectionOptions`
+
+### Dependencies
+
+-   `@neondatabase/serverless`
+
+---
+
+## MCP Server (@medicine-wheel/mcp)
+
+```bash
+npx @medicine-wheel/mcp        # stdio transport
+```
+
+**Version:** 4.3.0 (independent of the 0.x lockstep line)
+
+### Overview
+
+The Model Context Protocol server exposes **64 tools** that let an agent conduct Indigenous-paradigm research through the Medicine Wheel — over two transports:
+
+-   **stdio** — default; persists to a local JSONL store under `.mw/store/`
+-   **StreamableHTTP** — `POST /api/mcp` on the running app, JSON-RPC 2.0 (`tools/list`, `tools/call`), dispatched against the same tool registry as stdio
+
+### Tool families (64 total)
+
+-   **Four Directions** (13): East (3) vision/spirit/new-relation · South (3) growth/mentorship/embodied-data · West (3) reflection/emotional/strawberry-teaching · North (4) wisdom/elder-council/spirit-feeding/story-archiving
+-   **Validators** (4): `wilson_paradigm_checker`, `ocap_compliance_checker`, `two_eyed_seeing_bridge`, `accountability_validator`
+-   **Discovery** (11) & **Integrations** (10): node/edge/ceremony/beat/cycle search, relational web, cross-system bridges
+-   **Structural Tension** (12): charts, action steps, telescoping, MMOT (creator moment of truth)
+-   **Ceremony Lifecycle** (4): `mw_ceremony_open`/`close`, `mw_fire_keeper_status`, `mw_relational_check_back`
+-   **Coordination** (3), **Epistemic** (2), **Governance/Transformation** (3), **Reasoning Observability** (2)
+
+### Server-mediated store (opt-in)
+
+Set `MW_API_URL` to make the tools read and write the live relational state the app holds through its REST API, instead of a local JSONL file. The default `MW_DATA_DIR` JSONL behavior is preserved — the HTTP store is purely additive.
+
+### App REST API (consumed by the MCP HTTP store)
+
+-   `GET/POST /api/nodes`, `/api/edges`, `/api/ceremonies`
+-   `GET/POST /api/narrative/beats`, `/api/narrative/cycles`
+-   `GET/POST /api/charts`, `/api/mmots`
+-   `GET /api/directions`, `/api/health`, `/api/resources`
+-   `GET/POST /api/mcp` — StreamableHTTP MCP endpoint
 
 ---
 

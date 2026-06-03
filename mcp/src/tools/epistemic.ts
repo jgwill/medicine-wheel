@@ -124,7 +124,7 @@ export const epistemicTools: Tool[] = [
     handler: async (args) => {
       try {
         const { unit_id, shift } = args;
-        const node = store.getNode(unit_id);
+        const node = (await store.getNode(unit_id));
         
         if (!node || !node.metadata?.is_importance_unit) {
           return { status: "error", message: `ImportanceUnit ${unit_id} not found.` };

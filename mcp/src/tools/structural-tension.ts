@@ -129,7 +129,7 @@ export const structuralTensionTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const chart = store.getChart(args.chart_id);
+        const chart = (await store.getChart(args.chart_id));
         if (!chart) {
           return { status: "not_found", message: `Chart ${args.chart_id} not found` };
         }
@@ -190,7 +190,7 @@ export const structuralTensionTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const parentChart = store.getChart(args.chart_id);
+        const parentChart = (await store.getChart(args.chart_id));
         if (!parentChart) {
           return { status: "not_found", message: `Parent chart ${args.chart_id} not found` };
         }
@@ -275,7 +275,7 @@ export const structuralTensionTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const chart = store.getChart(args.chart_id);
+        const chart = (await store.getChart(args.chart_id));
         if (!chart) {
           return { status: "not_found", message: `Chart ${args.chart_id} not found` };
         }
@@ -331,7 +331,7 @@ export const structuralTensionTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const chart = store.getChart(args.chart_id);
+        const chart = (await store.getChart(args.chart_id));
         if (!chart) {
           return { status: "not_found", message: `Chart ${args.chart_id} not found` };
         }
@@ -406,7 +406,7 @@ export const structuralTensionTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const chart = store.getChart(args.chart_id);
+        const chart = (await store.getChart(args.chart_id));
         if (!chart) {
           return { status: "not_found", message: `Chart ${args.chart_id} not found` };
         }
@@ -444,7 +444,7 @@ export const structuralTensionTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const chart = store.getChart(args.chart_id);
+        const chart = (await store.getChart(args.chart_id));
         if (!chart) {
           return { status: "not_found", message: `Chart ${args.chart_id} not found` };
         }
@@ -501,7 +501,7 @@ export const structuralTensionTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const charts = store.getAllCharts(args.direction);
+        const charts = (await store.getAllCharts(args.direction));
 
         return {
           count: charts.length,
@@ -561,7 +561,7 @@ export const structuralTensionTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const chart = store.getChart(args.chart_id);
+        const chart = (await store.getChart(args.chart_id));
         if (!chart) {
           return { status: "not_found", message: `Chart ${args.chart_id} not found` };
         }
@@ -625,7 +625,7 @@ export const structuralTensionTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const chart = store.getChart(args.chart_id);
+        const chart = (await store.getChart(args.chart_id));
         if (!chart) {
           return { status: "not_found", message: `Chart ${args.chart_id} not found` };
         }
@@ -667,7 +667,7 @@ export const structuralTensionTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const chart = store.getChart(args.chart_id);
+        const chart = (await store.getChart(args.chart_id));
         if (!chart) {
           return { status: "not_found", message: `Chart ${args.chart_id} not found` };
         }
@@ -710,7 +710,7 @@ export const structuralTensionTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const chart = store.getChart(args.chart_id);
+        const chart = (await store.getChart(args.chart_id));
         if (!chart) {
           return { status: "not_found", message: `Chart ${args.chart_id} not found` };
         }

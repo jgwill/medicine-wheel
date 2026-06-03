@@ -395,6 +395,7 @@ export class JsonlStore {
 
   // === Edges ===
   createEdge(edge: StoredEdge): void { this.edges.add(edge); }
+  getAllEdges(): StoredEdge[] { return this.edges.getAll(); }
   getEdgesForNode(nodeId: string): StoredEdge[] { return this.edges.getForNode(nodeId); }
   getRelatedNodeIds(nodeId: string): string[] { return this.edges.getRelatedNodeIds(nodeId); }
   updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): void {
