@@ -1,7 +1,7 @@
 # Plugin Integration Framework
 
 > **Status**: proposal
-> **RISE Guidance**: [llms-rise-framework.txt](https://llms.jgwill.com/llms-rise-framework.txt) v1.2
+> **RISE Guidance**: [RISE Framework for LLMs](https://llms.jgwill.com/llms-rise-framework.txt) v1.2 — a creative-oriented methodology for specification creation through structural tension dynamics (Reverse-engineer → Intent-extract → Specify → Export)
 
 ## Desired Outcome
 
@@ -43,7 +43,7 @@ Plugins declare and demonstrate relational accountability:
 
 - **Wilson Alignment** — plugins declare which Wilson paradigm principles they honor and how
 - **OCAP Compliance** — plugins specify their data access scope and demonstrate ownership, control, access, and possession alignment
-- **Consent Participation** — plugins declare their consent lifecycle participation level: passive (receive notifications only), active (contribute metadata), or governing (participate in consent decisions)
+- **Consent Participation** — plugins declare their consent lifecycle participation level: passive (receive notifications only), active (contribute metadata), or governing (propose consent decisions — restricted to Propose or Act permission tiers)
 
 ## Plugin Lifecycle
 
@@ -86,7 +86,7 @@ Plugins declare and operate within a permission tier:
 
 **Current Reality**: Individual ceremony cycles produce transformation data, but cross-cycle pattern recognition requires manual analysis. No automated pathway exists for longitudinal insight.
 
-**Natural Progression**: The plugin registers as a Ceremony Phase Transition observer and Consent Cascade listener at the Observe tier. It accumulates anonymized transformation signals across cycles (respecting OCAP declarations). When patterns emerge, the plugin advances to Propose tier to suggest ceremony themes informed by historical patterns.
+**Natural Progression**: The plugin registers as a Ceremony Phase Transition observer and Consent Cascade listener at the Observe tier. It accumulates anonymized transformation signals across cycles (respecting OCAP declarations). When patterns emerge, the plugin submits a tier advancement request to Fire Keeper, which evaluates Wilson alignment and OCAP compliance before granting Propose tier. At Propose tier, the plugin suggests ceremony themes informed by historical patterns.
 
 **Resolution**: The research team creates longitudinal transformation insights that naturally feed into future ceremony planning. Pattern recognition advances through structural dynamics rather than forced analysis.
 
