@@ -21,8 +21,17 @@
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
+import { viewSkills, installSkill } from './skills';
 
 const DOCKER_IMAGE = 'jgwill/medicine-wheel:app';
+
+const C = {
+  bold:  '\x1b[1m',
+  dim:   '\x1b[2m',
+  green: '\x1b[32m',
+  south: '\x1b[31m',
+  reset: '\x1b[0m',
+};
 const DEFAULT_PORT = 3940;
 const CONTAINER_PORT = 3940;
 
@@ -200,6 +209,26 @@ function runLocal(opts: {
   proc.on('exit', (code) => process.exit(code ?? 0));
 }
 
+// ── Skill ─────────────────────────────────────────────────────────
+function cmdSkill(positional: string[]): void {
+  const sub = positional[0] ?? 'view';
+
+  switch (sub) {
+    case 'view':
+    case 'list':
+      viewSkills('srv', C);
+      break;
+    case 'install': {
+      const name = positional[1]; // undefined means install all
+      installSkill('srv', name, C);
+      break;
+    }
+    default:
+      console.error(`Unknown skill sub-command: ${sub}`);
+      console.error("Available: view, install");
+  }
+}
+
 // ── Help ──────────────────────────────────────────────────────────
 function showHelp(): void {
   console.log(`
@@ -219,6 +248,10 @@ OPTIONS
   --pull                  Pull/update Docker image before starting
   --no-open               Do not auto-open browser
   --help, -h              Show this help
+
+SKILLS
+  mwsrv skill view                List available server skills
+  mwsrv skill install [name]      Install a skill (or all)
 
 EXAMPLES
   # Start locally (uses current directory's .mw/store)
@@ -245,9 +278,14 @@ ENVIRONMENT
 
 // ── Main ──────────────────────────────────────────────────────────
 async function main(): Promise<void> {
-  const { flags } = parseArgs(process.argv);
+  const { flags, positional } = parseArgs(process.argv);
 
   if (flags['help'] || flags['h']) { showHelp(); return; }
+
+  if (positional[0] === 'skill' || positional[0] === 'sk') {
+    cmdSkill(positional.slice(1));
+    return;
+  }
 
   const port = Number(flags['port'] ?? flags['p'] ?? DEFAULT_PORT);
   const directory = String(flags['directory'] ?? flags['D'] ?? process.cwd());

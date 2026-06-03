@@ -12,6 +12,7 @@
 import { spawnSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
+import { viewSkills, installSkill } from './skills';
 
 // ── Config ────────────────────────────────────────────────────────
 const MW_API_URL = process.env.MW_API_URL ?? 'http://localhost:3940';
@@ -228,6 +229,10 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
     mw validate ocap <data_plan_json>      OCAP® compliance check
     mw validate accountability <plan_json> Accountability audit
     mw validate bridge <concept> [dir]     Two-Eyed Seeing bridge
+
+  SKILLS
+    mw skill view                          List available CLI skills
+    mw skill install [name]                Install a skill (or all)
 
   MEMORY
     mw memory store <key> <value> [dir]   Store relational memory
@@ -631,6 +636,26 @@ function cmdValidate(positional: string[]): void {
   }
 }
 
+// ── Skill ─────────────────────────────────────────────────────────
+function cmdSkill(positional: string[]): void {
+  const sub = positional[0] ?? 'view';
+
+  switch (sub) {
+    case 'view':
+    case 'list':
+      viewSkills('cli', C);
+      break;
+    case 'install': {
+      const name = positional[1]; // undefined means install all
+      installSkill('cli', name, C);
+      break;
+    }
+    default:
+      console.error(`Unknown skill sub-command: ${sub}`);
+      console.error("Available: view, install");
+  }
+}
+
 // ── Memory ────────────────────────────────────────────────────────
 function cmdMemory(positional: string[]): void {
   const sub = positional[0] ?? 'store';
@@ -675,6 +700,7 @@ async function main(): Promise<void> {
     case 'mmot':                          cmdMmot(rest); break;
     case 'validate': case 'v':            cmdValidate(rest); break;
     case 'memory': case 'mem':            cmdMemory(rest); break;
+    case 'skill': case 'sk':            cmdSkill(rest); break;
     case 'arc':
       mcpCall('get_narrative_arc', { cycle_id: rest[0] ?? '' });
       break;
