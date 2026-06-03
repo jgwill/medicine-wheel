@@ -144,6 +144,54 @@ mw skill run ceremony-guide "Community data review"
 `,
   },
 
+  {
+    name: 'rise-spec-advisor',
+    title: 'RISE Spec Advisor (Mission 3)',
+    description: 'Orchestrate subagents to recommend upgrades or new RISE framework specs',
+    target: 'cli',
+    body: `# Skill: RISE Spec Advisor (Mission 3)
+
+## Purpose
+Orchestrate subagents (claude-opus-4.6) to analyse existing RISE specifications
+and recommend upgrades, new specs, or new proposals (e.g. "plugin proposal").
+
+## Guidance
+Fetch the RISE framework reference before analysis:
+\`\`\`
+https://llms.jgwill.com/llms-rise-framework.txt
+\`\`\`
+
+## Input
+- Path to \`rispecs/\` directory (default: project root)
+- Optional: focus area or specific spec file to evaluate
+
+## Workflow
+1. **Scan** — Inventory existing \`.spec.md\` and \`.proposal.md\` files in \`rispecs/\`
+2. **Fetch** — Retrieve the RISE framework guidance from the URL above
+3. **Analyse** — For each spec, evaluate alignment with RISE principles:
+   - Creative orientation over reactive approaches
+   - Structural tension dynamics
+   - Advancing vs oscillating patterns
+   - SpecLang syntax compliance
+4. **Recommend** — Produce one of:
+   - **Upgrade** — Concrete changes to bring an existing spec closer to RISE
+   - **New spec** — A new \`.spec.md\` file for an uncovered capability
+   - **New proposal** — A new \`.proposal.md\` for emerging ideas (e.g. plugin proposal)
+
+## Output
+- Summary table of scanned specs with RISE alignment score
+- Ranked list of recommendations (upgrade / new spec / new proposal)
+- For each recommendation: rationale, structural tension analysis, and draft outline
+
+## Usage
+\`\`\`
+mw skill run rise-spec-advisor
+mw skill run rise-spec-advisor --focus "plugin proposal"
+mw skill run rise-spec-advisor --spec rispecs/fire-keeper.spec.md
+\`\`\`
+`,
+  },
+
   // ── Server skills (mwsrv) ─────────────────────────────────────
   {
     name: 'docker-setup',
