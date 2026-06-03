@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "fs";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -11,26 +12,20 @@ import {
   GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
-import { eastTools } from "./tools/east.js";
-import { southTools } from "./tools/south.js";
-import { westTools } from "./tools/west.js";
-import { northTools } from "./tools/north.js";
-import { validators } from "./validators/index.js";
-import { integrationTools } from "./tools/integrations.js";
-import { discoveryTools } from "./tools/discovery.js";
-import { structuralTensionTools } from "./tools/structural-tension.js";
-import { ceremonyLifecycleTools } from "./tools/ceremony-lifecycle.js";
-import { epistemicTools } from "./tools/epistemic.js";
-import { coordinationTools } from "./tools/coordination.js";
-import { governanceTransformationTools } from "./tools/governance-transformation.js";
-import { reasoningObservabilityTools } from "./tools/reasoning-observability.js";
+import { allTools } from "./all-tools.js";
 import { resources } from "./resources/index.js";
 import { prompts } from "./prompts/index.js";
 
+// Single source of truth: derive name/version from package.json so the
+// serverInfo advertised over MCP never drifts from the published version.
+const pkg = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
+) as { name: string; version: string };
+
 const server = new Server(
   {
-    name: "@medicine-wheel/mcp",
-    version: "4.0.0",
+    name: pkg.name,
+    version: pkg.version,
   },
   {
     capabilities: {
@@ -40,22 +35,6 @@ const server = new Server(
     },
   }
 );
-
-const allTools = [
-  ...eastTools,
-  ...southTools,
-  ...westTools,
-  ...northTools,
-  ...validators,
-  ...integrationTools,
-  ...discoveryTools,
-  ...structuralTensionTools,
-  ...ceremonyLifecycleTools,
-  ...epistemicTools,
-  ...coordinationTools,
-  ...governanceTransformationTools,
-  ...reasoningObservabilityTools,
-];
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
@@ -118,7 +97,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 });
 
 async function main() {
-  console.error("🌿 @medicine-wheel/mcp server v4.0 initializing...");
+  console.error(`🌿 ${pkg.name} server v${pkg.version} initializing...`);
   console.error("📂 Using JSONL file-backed store (.mw/store/)");
   const transport = new StdioServerTransport();
   await server.connect(transport);

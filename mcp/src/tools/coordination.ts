@@ -44,14 +44,48 @@ export const coordinationTools: Tool[] = [
       try {
         const { inquiryRef } = args;
         const alignment = keeper.checkRelationalAlignment(inquiryRef);
+
+        // Check store for ceremonies linked to this inquiry
+        const allCeremonies = (await store.getAllCeremonies());
+        const linkedCeremonies = allCeremonies.filter(c => {
+          if (c.research_context) {
+            try {
+              const ctx = JSON.parse(c.research_context);
+              return ctx.inquiryRef === inquiryRef;
+            } catch {
+              return c.research_context === inquiryRef;
+            }
+          }
+          return false;
+        });
+
+        const openCeremonies = linkedCeremonies.filter(c => c.type === "opening");
+        const closedCeremonies = linkedCeremonies.filter(c => c.type === "closing");
+        // Active ceremonies = openings that don't have a matching closing
+        const activeCeremonies = openCeremonies.filter(
+          opening => !closedCeremonies.some(closing => closing.research_context === opening.id)
+        );
+
         const state = keeper.checkCeremonyState(inquiryRef);
+        const hasActiveFromStore = activeCeremonies.length > 0;
+        const phase_framing = state?.ceremonyPhase 
+          ? getPhaseFraming(state.ceremonyPhase as any)
+          : hasActiveFromStore 
+            ? `Active ceremony in store: ${activeCeremonies[0].id} (direction: ${activeCeremonies[0].direction})`
+            : "No active ceremony";
 
         return {
           status: alignment.aligned ? "aligned" : "tension",
           confidence: alignment.confidence,
           issues: alignment.issues,
-          phase: state?.ceremonyPhase,
-          phase_framing: state ? getPhaseFraming(state.ceremonyPhase as any) : "No active ceremony",
+          phase: state?.ceremonyPhase || (hasActiveFromStore ? "active" : undefined),
+          phase_framing,
+          active_ceremonies: hasActiveFromStore ? activeCeremonies.map(c => ({
+            id: c.id,
+            direction: c.direction,
+            intention: c.intentions?.[0],
+            timestamp: c.timestamp
+          })) : undefined,
           teaching: "The Fire Keeper tends the fire so the ceremony can proceed with relational integrity."
         };
       } catch (error) {
@@ -82,7 +116,47 @@ export const coordinationTools: Tool[] = [
         const state = keeper.checkCeremonyState(inquiryRef);
         
         if (!state) {
-          return { status: "error", message: `No active ceremony found for ${inquiryRef}` };
+          // Fallback: check store for active ceremonies linked to this inquiry
+          const allCeremonies = (await store.getAllCeremonies());
+          const linkedCeremonies = allCeremonies.filter(c => {
+            if (c.research_context) {
+              try {
+                const ctx = JSON.parse(c.research_context);
+                return ctx.inquiryRef === inquiryRef;
+              } catch {
+                return c.research_context === inquiryRef;
+              }
+            }
+            return false;
+          });
+          
+          const hasActive = linkedCeremonies.some(c => c.type === "opening");
+          
+          if (!hasActive) {
+            return { status: "error", message: `No active ceremony found for ${inquiryRef}. Open a ceremony first with mw_ceremony_open.` };
+          }
+          
+          // Build minimal context from store data for the check-back
+          const context = {
+            ceremonyState: { ceremonyPhase: "active", inquiryRef },
+            wilsonAlignment: keeper.checkRelationalAlignment(inquiryRef).confidence,
+            ocapCompliant: true
+          } as any;
+          
+          const result = relationalCheckBack(action, context);
+          
+          return {
+            approved: result.approved,
+            summary: result.summary,
+            steps: result.steps.map(s => ({
+              step: s.step,
+              question: s.question,
+              passed: s.passed,
+              reason: s.reason
+            })),
+            source: "store-fallback",
+            teaching: "Before you act, listen. Every action moves the web."
+          };
         }
 
         // Build context for check-back

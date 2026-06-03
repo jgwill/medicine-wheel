@@ -1,17 +1,30 @@
 /**
- * MCP Store — JSONL-Backed Persistence
+ * MCP Store — Persistence Layer Router
  *
- * Replaces the previous in-memory-only store with the shared JSONL
- * persistence layer. Data created in the Web UI is now visible here,
- * and data created via MCP tools is visible in the Web UI.
+ * Selects the storage backend based on environment configuration:
  *
- * Delegates all operations to JsonlStore from ./jsonl-store.ts.
- * The exported `store` singleton has the same API as the old InMemoryStore.
+ * - MW_API_URL set → HttpStore (delegates to the server REST API)
+ * - Default        → JsonlStore (local .mw/store/ JSONL files)
  *
- * @see mcp/src/jsonl-store.ts — the underlying JSONL persistence engine
+ * The HttpStore opt-in enables the MCP tools to read/write the same
+ * relational state the server holds, without direct file access.
+ *
+ * @see mcp/src/jsonl-store.ts — local JSONL persistence engine
+ * @see mcp/src/http-store.ts  — HTTP-backed server adapter
  * @see https://github.com/jgwill/medicine-wheel/issues/26
+ * @see https://github.com/jgwill/medicine-wheel/issues/69
  */
 
 import { getJsonlStore } from './jsonl-store.js';
+import { HttpStore } from './http-store.js';
 
-export const store = getJsonlStore();
+function createStore() {
+  const apiUrl = process.env.MW_API_URL;
+  if (apiUrl) {
+    console.error(`🌐 Medicine Wheel MCP: using HTTP store at ${apiUrl}`);
+    return new HttpStore(apiUrl);
+  }
+  return getJsonlStore();
+}
+
+export const store = createStore();
