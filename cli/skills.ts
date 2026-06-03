@@ -152,7 +152,7 @@ mw skill run ceremony-guide "Community data review"
     body: `# Skill: RISE Spec Advisor (Mission 3)
 
 ## Purpose
-Orchestrate subagents (claude-opus-4.6) to analyse existing RISE specifications
+Orchestrate subagents (claude-opus-4.6) to analyze existing RISE specifications
 and recommend upgrades, new specs, or new proposals (e.g. "plugin proposal").
 
 ## Guidance
@@ -168,7 +168,7 @@ https://llms.jgwill.com/llms-rise-framework.txt
 ## Workflow
 1. **Scan** — Inventory existing \`.spec.md\` and \`.proposal.md\` files in \`rispecs/\`
 2. **Fetch** — Retrieve the RISE framework guidance from the URL above
-3. **Analyse** — For each spec, evaluate alignment with RISE principles:
+3. **Analyze** — For each spec, evaluate alignment with RISE principles:
    - Creative orientation over reactive approaches
    - Structural tension dynamics
    - Advancing vs oscillating patterns
