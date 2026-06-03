@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "fs";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -27,10 +28,16 @@ import { reasoningObservabilityTools } from "./tools/reasoning-observability.js"
 import { resources } from "./resources/index.js";
 import { prompts } from "./prompts/index.js";
 
+// Single source of truth: derive name/version from package.json so the
+// serverInfo advertised over MCP never drifts from the published version.
+const pkg = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf-8"),
+) as { name: string; version: string };
+
 const server = new Server(
   {
-    name: "@medicine-wheel/mcp",
-    version: "4.0.0",
+    name: pkg.name,
+    version: pkg.version,
   },
   {
     capabilities: {
@@ -118,7 +125,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 });
 
 async function main() {
-  console.error("🌿 @medicine-wheel/mcp server v4.0 initializing...");
+  console.error(`🌿 ${pkg.name} server v${pkg.version} initializing...`);
   console.error("📂 Using JSONL file-backed store (.mw/store/)");
   const transport = new StdioServerTransport();
   await server.connect(transport);
