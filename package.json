@@ -82,6 +82,7 @@
     "@medicine-wheel/fire-keeper": "^0.2.7",
     "@medicine-wheel/graph-viz": "^0.2.7",
     "@medicine-wheel/importance-unit": "^0.2.7",
+    "@medicine-wheel/mcp": "^4.2.7",
     "@medicine-wheel/narrative-engine": "^0.2.7",
     "@medicine-wheel/ontology-core": "^0.2.7",
     "@medicine-wheel/prompt-decomposition": "^0.2.7",
