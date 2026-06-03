@@ -41,11 +41,11 @@ export const discoveryTools: Tool[] = [
 
         let nodes;
         if (type) {
-          nodes = store.getNodesByType(type);
+          nodes = (await store.getNodesByType(type));
         } else if (direction) {
-          nodes = store.getNodesByDirection(direction);
+          nodes = (await store.getNodesByDirection(direction));
         } else {
-          nodes = store.getAllNodes(limit);
+          nodes = (await store.getAllNodes(limit));
         }
 
         const sorted = nodes
@@ -99,11 +99,11 @@ export const discoveryTools: Tool[] = [
 
         let ceremonies;
         if (direction) {
-          ceremonies = store.getCeremoniesByDirection(direction);
+          ceremonies = (await store.getCeremoniesByDirection(direction));
         } else if (type) {
-          ceremonies = store.getCeremoniesByType(type);
+          ceremonies = (await store.getCeremoniesByType(type));
         } else {
-          ceremonies = store.getAllCeremonies(limit);
+          ceremonies = (await store.getAllCeremonies(limit));
         }
 
         const sorted = ceremonies.slice(0, limit);
@@ -149,9 +149,9 @@ export const discoveryTools: Tool[] = [
 
         let beats;
         if (direction) {
-          beats = store.getBeatsByDirection(direction);
+          beats = (await store.getBeatsByDirection(direction));
         } else {
-          beats = store.getAllBeats(limit);
+          beats = (await store.getAllBeats(limit));
         }
 
         const sorted = beats.slice(0, limit);
@@ -197,7 +197,7 @@ export const discoveryTools: Tool[] = [
       try {
         const { status = "all" } = args;
 
-        const { active, archived } = store.getAllCycles();
+        const { active, archived } = (await store.getAllCycles());
 
         let cycles;
         if (status === "active") {
@@ -258,7 +258,7 @@ export const discoveryTools: Tool[] = [
       try {
         const { beat_id, depth = 2 } = args;
 
-        const beat = store.getBeat(beat_id);
+        const beat = (await store.getBeat(beat_id));
         if (!beat) {
           return {
             status: "not_found",
@@ -269,14 +269,14 @@ export const discoveryTools: Tool[] = [
         // Get linked ceremonies
         const ceremonies = [];
         for (const ceremonyId of beat.ceremonies) {
-          const ceremony = store.getCeremony(ceremonyId);
+          const ceremony = (await store.getCeremony(ceremonyId));
           if (ceremony) ceremonies.push(ceremony);
         }
 
         // Get honored relations and their webs
         const relationWebs = [];
         for (const nodeId of beat.relations_honored) {
-          const web = store.getRelationalWeb(nodeId, depth);
+          const web = (await store.getRelationalWeb(nodeId, depth));
           relationWebs.push({
             center_node_id: nodeId,
             nodes: web.nodes,
@@ -339,7 +339,7 @@ export const discoveryTools: Tool[] = [
       try {
         const { query, type, direction, limit = 20 } = args;
 
-        const nodes = store.searchNodes(query, { type, direction, limit });
+        const nodes = (await store.searchNodes(query, { type, direction, limit }));
 
         return {
           query,
@@ -374,7 +374,7 @@ export const discoveryTools: Tool[] = [
     handler: async (args) => {
       try {
         const { node_id } = args;
-        const node = store.getNode(node_id);
+        const node = (await store.getNode(node_id));
         if (!node) {
           return {
             status: "not_found",
@@ -412,7 +412,7 @@ export const discoveryTools: Tool[] = [
     handler: async (args) => {
       try {
         const { ceremony_id } = args;
-        const ceremony = store.getCeremony(ceremony_id);
+        const ceremony = (await store.getCeremony(ceremony_id));
         if (!ceremony) {
           return {
             status: "not_found",
@@ -450,7 +450,7 @@ export const discoveryTools: Tool[] = [
     handler: async (args) => {
       try {
         const { cycle_id } = args;
-        const cycle = store.getCycle(cycle_id);
+        const cycle = (await store.getCycle(cycle_id));
         if (!cycle) {
           return {
             status: "not_found",
@@ -496,9 +496,9 @@ export const discoveryTools: Tool[] = [
 
         let edges;
         if (node_id) {
-          edges = store.getEdgesForNode(node_id);
+          edges = (await store.getEdgesForNode(node_id));
         } else {
-          edges = store.edges.getAll();
+          edges = (await store.getAllEdges());
         }
 
         const limited = edges.slice(0, limit);
@@ -536,7 +536,7 @@ export const discoveryTools: Tool[] = [
     handler: async (args) => {
       try {
         const { chart_id } = args;
-        const mmots = store.getMmotsByChart(chart_id);
+        const mmots = (await store.getMmotsByChart(chart_id));
 
         return {
           count: mmots.length,

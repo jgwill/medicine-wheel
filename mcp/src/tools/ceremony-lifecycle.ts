@@ -150,7 +150,7 @@ export const ceremonyLifecycleTools: Tool[] = [
       try {
         const { ceremony_id, summary = "", learnings = [] } = args;
 
-        const opening = store.getCeremony(ceremony_id);
+        const opening = (await store.getCeremony(ceremony_id));
         if (!opening) {
           return {
             status: "error",
@@ -214,7 +214,7 @@ export const ceremonyLifecycleTools: Tool[] = [
         let direction = directionArg || "east";
 
         if (ceremony_id) {
-          const ceremony = store.getCeremony(ceremony_id);
+          const ceremony = (await store.getCeremony(ceremony_id));
           if (!ceremony) {
             return {
               status: "error",

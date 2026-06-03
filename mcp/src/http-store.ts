@@ -120,19 +120,6 @@ async function httpPost<T>(url: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function httpPut<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(url, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`HTTP PUT ${url} failed: ${res.status} ${res.statusText} — ${text}`);
-  }
-  return res.json() as Promise<T>;
-}
-
 // ── HttpStore ──
 
 export class HttpStore {
@@ -201,8 +188,12 @@ export class HttpStore {
     );
   }
 
+  async getAllEdges(): Promise<StoredEdge[]> {
+    return httpGet<StoredEdge[]>(`${this.baseUrl}/api/edges`);
+  }
+
   async getEdgesForNode(nodeId: string): Promise<StoredEdge[]> {
-    const edges = await httpGet<StoredEdge[]>(`${this.baseUrl}/api/edges`);
+    const edges = await this.getAllEdges();
     return edges.filter(e => e.from_id === nodeId || e.to_id === nodeId);
   }
 

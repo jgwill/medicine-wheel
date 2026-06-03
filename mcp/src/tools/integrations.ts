@@ -161,7 +161,7 @@ export const integrationTools: Tool[] = [
       try {
         const { node_id, depth = 2 } = args;
 
-        const web = store.getRelationalWeb(node_id, depth);
+        const web = (await store.getRelationalWeb(node_id, depth));
 
         return {
           center_node_id: node_id,
@@ -245,7 +245,7 @@ export const integrationTools: Tool[] = [
         // Update relationship edges as ceremony-honored
         if (args.relations_honored) {
           for (const nodeId of args.relations_honored) {
-            const related = store.getRelatedNodeIds(nodeId);
+            const related = (await store.getRelatedNodeIds(nodeId));
             for (const relatedId of related) {
               store.updateEdgeCeremony(nodeId, relatedId, ceremonyId);
             }
@@ -409,7 +409,7 @@ export const integrationTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const cycle = store.getCycle(args.cycle_id);
+        const cycle = (await store.getCycle(args.cycle_id));
         if (!cycle) {
           return {
             status: "not_found",
@@ -417,7 +417,7 @@ export const integrationTools: Tool[] = [
           };
         }
 
-        const allBeats = store.getAllBeats(200);
+        const allBeats = (await store.getAllBeats(200));
         const eastBeats = allBeats.filter(b => b.direction === 'east');
         const southBeats = allBeats.filter(b => b.direction === 'south');
         const westBeats = allBeats.filter(b => b.direction === 'west');
@@ -490,7 +490,7 @@ export const integrationTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const cycle = store.getCycle(args.cycle_id);
+        const cycle = (await store.getCycle(args.cycle_id));
         if (!cycle) {
           return {
             status: "not_found",
@@ -567,7 +567,7 @@ export const integrationTools: Tool[] = [
       try {
         const { cycle_id, new_direction } = args;
 
-        const cycle = store.getCycle(cycle_id);
+        const cycle = (await store.getCycle(cycle_id));
         if (!cycle) {
           return {
             status: "not_found",
@@ -631,7 +631,7 @@ export const integrationTools: Tool[] = [
       try {
         const { node_id, description, metadata, direction } = args;
 
-        const node = store.getNode(node_id);
+        const node = (await store.getNode(node_id));
         if (!node) {
           return {
             status: "not_found",

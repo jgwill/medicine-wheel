@@ -46,7 +46,7 @@ export const coordinationTools: Tool[] = [
         const alignment = keeper.checkRelationalAlignment(inquiryRef);
 
         // Check store for ceremonies linked to this inquiry
-        const allCeremonies = store.getAllCeremonies();
+        const allCeremonies = (await store.getAllCeremonies());
         const linkedCeremonies = allCeremonies.filter(c => {
           if (c.research_context) {
             try {
@@ -117,7 +117,7 @@ export const coordinationTools: Tool[] = [
         
         if (!state) {
           // Fallback: check store for active ceremonies linked to this inquiry
-          const allCeremonies = store.getAllCeremonies();
+          const allCeremonies = (await store.getAllCeremonies());
           const linkedCeremonies = allCeremonies.filter(c => {
             if (c.research_context) {
               try {

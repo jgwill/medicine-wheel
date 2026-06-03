@@ -430,9 +430,9 @@ export const validators: Tool[] = [
       const hasAccountability_text = accountabilityKeywords.some(k => description.includes(k));
 
       // --- Store-based evidence (additive signal) ---
-      const storeCeremonies = store.getAllCeremonies();
-      const storeNodes = store.getAllNodes();
-      const storeEdges = store.edges?.getAll?.() ?? [];
+      const storeCeremonies = (await store.getAllCeremonies());
+      const storeNodes = (await store.getAllNodes());
+      const storeEdges = (await store.getAllEdges());
 
       // Ceremonies in the store are direct evidence of ceremony integration
       const hasCeremonyInStore = storeCeremonies.length > 0;
