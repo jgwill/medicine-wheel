@@ -10,7 +10,7 @@
     "tsconfig.json"
   ],
   "bin": {
-    "mcp": "dist/index.js"
+    "medicine-wheel-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc && node -e \"const fs=require('fs'); try { const nextMode=(fs.statSync('dist/index.js').mode & 0o777) | 0o755; fs.chmodSync('dist/index.js', nextMode); } catch (error) { if (error && error.code !== 'EPERM') throw error; console.warn('[mcp] Skipping chmod on dist/index.js:', error.message); }\"",
