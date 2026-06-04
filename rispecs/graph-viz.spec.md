@@ -2,10 +2,10 @@
 
 > Medicine Wheel graph visualization — circular layout with four-direction node positioning, ceremony-aware edges, OCAP® indicators, and RSIS visualization utilities.
 
-**Version:** 0.1.1  
+**Version:** 0.4.0  
 **Package:** `@medicine-wheel/graph-viz`  
 **Document ID:** rispec-graph-viz-v1  
-**Last Updated:** 2026-02-23  
+**Last Updated:** 2026-06-04  
 
 ---
 
@@ -138,6 +138,10 @@ buildGraphData(nodes, edges, relations?): MWGraphData
 
 ## React Component
 
+> **Static renderer — unchanged.** `<MedicineWheelGraph>` remains the pure-SVG,
+> dependency-free renderer. It is exported from the package root (`.`) and pulls
+> no interactive libraries.
+
 ```typescript
 <MedicineWheelGraph
   data={graphData}
@@ -157,6 +161,72 @@ buildGraphData(nodes, edges, relations?): MWGraphData
 
 ---
 
+## Interactive Renderer (React Flow)
+
+> **New output strategy (v0.4.0).** A second, *interactive* renderer built on
+> [React Flow](https://reactflow.dev) (`@xyflow/react`). It consumes the same
+> renderer-agnostic layout engine — `applyWheelLayout` seeds node x/y — and adds
+> drag, pan, zoom, and a minimap while **preserving the four-direction circular
+> semantics**. The static SVG renderer above is unaffected.
+
+### Poisoning guard — `./interactive` subpath export
+
+The interactive renderer ships behind a dedicated subpath so that static/server
+consumers (`fire-keeper`, `session-reader`) never pull React Flow:
+
+```jsonc
+// package.json "exports"
+".":            "./dist/index.js"             // static — no React Flow
+"./interactive":"./dist/interactive/index.js" // interactive — React Flow
+```
+
+`@xyflow/react` is declared as an **optional peer dependency**
+(`peerDependenciesMeta["@xyflow/react"].optional = true`) — it is never an
+auto-installed runtime dependency of the package. Apps that use `./interactive`
+install `@xyflow/react` themselves and import its stylesheet once at the app
+level: `import '@xyflow/react/dist/style.css'`.
+
+### `<MedicineWheelFlowGraph>`
+
+```typescript
+import { MedicineWheelFlowGraph } from '@medicine-wheel/graph-viz/interactive';
+
+<MedicineWheelFlowGraph
+  data={graphData}              // MWGraphData — re-laid-out on every change
+  layout={{ radius: 250 }}      // Partial<WheelLayoutConfig> for applyWheelLayout
+  height={600}
+  darkMode
+  showNodeLabels
+  showOcapIndicators
+  showWilsonHalos
+  showQuadrants                 // four-direction backdrop (DirectionQuadrant)
+  showDirectionLabels           // East/South/West/North + Ojibwe names
+  showMiniMap
+  showControls
+  onNodeClick={(node) => {}}    // receives the original MWGraphNode
+/>
+```
+
+**Behaviour:**
+- Self-contained — wraps its own `<ReactFlowProvider>`; safe under
+  `next/dynamic({ ssr: false })`.
+- Seeds positions with `applyWheelLayout` (each node spread defensively so the
+  caller's state is never mutated), then hands drag/pan/zoom to React Flow via
+  `useNodesState` / `useEdgesState`, re-syncing through `useEffect` when `data`
+  changes (so asynchronously-loaded data renders).
+- **Custom node** (`MedicineWheelNode`): direction-colored circle, node-type
+  icon, OCAP® badge, Wilson alignment halo, selection ring; hidden centered
+  handles route edges to node centers.
+- **Edges** carry style via `strokeDasharray` (`solid`/`dashed`/`dotted`/
+  `ceremony`); ceremony-honored edges are gold + animated. Synthetic edge ids
+  (`source->target#index`) preserve parallel edges.
+- **`DirectionQuadrant`** draws the four sectors with `quadrantArcPath` inside a
+  React Flow `<ViewportPortal>` (so the backdrop pans/zooms with the canvas);
+  the whole backdrop is `pointer-events: none` so it never steals gestures.
+- `<MiniMap>` + `<Controls>` for navigation; `<Background>` dot grid.
+
+---
+
 ## RSIS Visualization Utilities
 
 ```typescript
@@ -172,8 +242,9 @@ toMermaidDiagram(nodes, edges): string
 
 ## Dependencies
 
-- **Runtime:** `@medicine-wheel/ontology-core` ^0.1.1
+- **Runtime:** `@medicine-wheel/ontology-core` ^0.4.0
 - **Peer:** `react` >=18.0.0, `react-dom` >=18.0.0
+- **Optional peer (`./interactive` only):** `@xyflow/react` >=12.0.0
 
 ---
 
