@@ -2,9 +2,9 @@
 
 > A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development. Fifteen packages that together enable developers to create relationally accountable systems grounded in the Four Directions, Wilson's three R's, and OCAP® principles.
 
-**Version:** 0.2.0  
+**Version:** 0.2.1  
 **Document ID:** rispec-@medicine-wheel/system-v1  
-**Last Updated:** 2026-03-15  
+**Last Updated:** 2026-06-04  
 
 ---
 
@@ -74,6 +74,14 @@ Each rispec describes one package. To implement the full system:
 | [`relational-index.spec.md`](./relational-index.spec.md) | Indexing | Four-source dimensional indexing (Land/Dream/Code/Vision) |
 | [`consent-lifecycle.spec.md`](./consent-lifecycle.spec.md) | Consent | Consent as ongoing relationship, lifecycle, cascade |
 | [`community-review.spec.md`](./community-review.spec.md) | Review | Community review circles, Elder validation, consensus |
+
+### Companion Capability Specs
+
+Capability specs extend a package with an optional advancing layer rather than describing a separate package:
+
+| Rispec | Extends | Role |
+|--------|---------|------|
+| [`decomposition-strategies.spec.md`](./decomposition-strategies.spec.md) | prompt-decomposition | Strategy framework — depth on demand via multi-pass elaboration & dual-framing reconciliation over the deterministic Four Directions foundation |
 
 ---
 

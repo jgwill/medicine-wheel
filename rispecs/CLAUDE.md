@@ -13,6 +13,7 @@ This folder contains RISE framework specifications for all Medicine Wheel packag
 | `graph-viz.spec.md` | graph-viz | Circular layout, SVG paths, data converters |
 | `relational-query.spec.md` | relational-query | Query, traversal, audit, Cypher |
 | `prompt-decomposition.spec.md` | prompt-decomposition | Intent extraction, Four Directions PDE |
+| `decomposition-strategies.spec.md` | prompt-decomposition (capability) | Strategy framework — depth on demand: multi-pass & dual-framing over the deterministic foundation |
 | `ui-components.spec.md` | ui-components | React components |
 
 ## How to Read
