@@ -3,6 +3,7 @@
 import "@xyflow/react/dist/style.css";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import type { ChangeEvent } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -34,6 +35,11 @@ import {
   upsertCurrentGraphLayout,
   type GraphLayoutStore,
 } from "@/lib/graph-layout-storage";
+import {
+  DEFAULT_GRAPH_ANIMATION_ENABLED,
+  loadStoredGraphAnimationPreference,
+  persistGraphAnimationPreference,
+} from "@/lib/graph-animation-storage";
 import { toast } from "sonner";
 
 // React Flow touches `window`/`document`, so the interactive renderer is
@@ -84,6 +90,9 @@ export default function GraphPage() {
   const [selectedNode, setSelectedNode] = useState<MWGraphNode | null>(null);
   const [loading, setLoading] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
+  const [animationsEnabled, setAnimationsEnabled] = useState(
+    DEFAULT_GRAPH_ANIMATION_ENABLED,
+  );
   const [layoutName, setLayoutName] = useState("");
   const [layoutsHydrated, setLayoutsHydrated] = useState(false);
   const [layoutStore, setLayoutStore] = useState<GraphLayoutStore>(() =>
@@ -137,6 +146,10 @@ export default function GraphPage() {
     layoutStoreRef.current = storedLayouts;
     setLayoutStore(storedLayouts);
     setLayoutsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    setAnimationsEnabled(loadStoredGraphAnimationPreference());
   }, []);
 
   useEffect(() => {
@@ -215,6 +228,18 @@ export default function GraphPage() {
     [router],
   );
 
+  const handleAnimationsEnabledChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const enabled = event.target.checked;
+      setAnimationsEnabled(enabled);
+
+      if (!persistGraphAnimationPreference(enabled)) {
+        toast.error("Could not save graph animation preference");
+      }
+    },
+    [],
+  );
+
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -241,7 +266,19 @@ export default function GraphPage() {
         </div>
 
         <div className="flex gap-6">
-          <div className="flex-1 rounded-xl border border-white/10 overflow-hidden">
+          <div className="relative flex-1 rounded-xl border border-white/10 overflow-hidden">
+            {!loading && graph.nodes.length > 0 && (
+              <label className="absolute right-3 top-3 z-10 inline-flex items-center gap-2 rounded-md border border-white/10 bg-[#0a0a1a]/80 px-2 py-1 text-[11px] text-gray-300 shadow-sm backdrop-blur">
+                <input
+                  type="checkbox"
+                  checked={animationsEnabled}
+                  onChange={handleAnimationsEnabledChange}
+                  className="h-3 w-3 accent-yellow-400"
+                  aria-label="Animate graph edges"
+                />
+                <span>Animation</span>
+              </label>
+            )}
             {loading ? (
               <div className="flex items-center justify-center h-[600px] text-gray-500">Loading graph data...</div>
             ) : graph.nodes.length === 0 ? (
@@ -256,6 +293,7 @@ export default function GraphPage() {
                 height={600}
                 darkMode
                 showNodeLabels={showLabels}
+                animationsEnabled={animationsEnabled}
                 nodePositions={activeLayout.positions}
                 onNodeClick={(node) => setSelectedNode(node)}
                 onNodeDoubleClick={navigateToNode}

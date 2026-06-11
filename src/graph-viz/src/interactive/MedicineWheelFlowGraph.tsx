@@ -73,6 +73,8 @@ export interface MedicineWheelFlowGraphProps {
   showMiniMap?: boolean;
   /** Show pan/zoom controls. Default: true. */
   showControls?: boolean;
+  /** Enable React Flow edge animation for ceremonied links. Default: true. */
+  animationsEnabled?: boolean;
   /** Custom CSS class on the wrapper. */
   className?: string;
   /** Node positions to apply after the default layout seed. */
@@ -125,7 +127,11 @@ function linkStrokeDash(style?: MWGraphLink['style']): string | undefined {
   }
 }
 
-function toFlowEdge(link: MWGraphLink, index: number): Edge {
+function toFlowEdge(
+  link: MWGraphLink,
+  index: number,
+  animationsEnabled: boolean,
+): Edge {
   const ceremony = link.ceremonyHonored === true;
   const stroke = link.color ?? (ceremony ? '#FFD700' : '#777');
   return {
@@ -135,7 +141,7 @@ function toFlowEdge(link: MWGraphLink, index: number): Edge {
     source: link.source,
     target: link.target,
     label: link.label,
-    animated: ceremony,
+    animated: animationsEnabled && ceremony,
     style: {
       stroke,
       strokeWidth: link.width ?? 1 + (link.strength ?? 0.5) * 2,
@@ -195,6 +201,7 @@ function FlowGraphInner({
   showDirectionLabels = true,
   showMiniMap = true,
   showControls = true,
+  animationsEnabled = true,
   className,
   nodePositions,
   onNodeClick,
@@ -224,7 +231,7 @@ function FlowGraphInner({
         }),
       ),
     );
-    setEdges(data.links.map((l, i) => toFlowEdge(l, i)));
+    setEdges(data.links.map((l, i) => toFlowEdge(l, i, animationsEnabled)));
   }, [
     data,
     layout,
@@ -232,6 +239,7 @@ function FlowGraphInner({
     showOcapIndicators,
     showWilsonHalos,
     darkMode,
+    animationsEnabled,
     nodePositions,
     setNodes,
     setEdges,
