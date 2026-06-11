@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/mcp",
-  "version": "4.4.1",
+  "version": "4.4.2",
   "description": "Medicine Wheel MCP Server — Integrated Indigenous Paradigm Research Framework",
   "type": "module",
   "main": "dist/index.js",
