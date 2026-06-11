@@ -29,6 +29,7 @@ import {
   type Edge,
   type NodeTypes,
   type NodeMouseHandler,
+  type OnNodeDrag,
 } from '@xyflow/react';
 
 import { NODE_TYPE_COLORS } from '@medicine-wheel/ontology-core';
@@ -38,6 +39,7 @@ import type {
   MWGraphData,
   MWGraphNode,
   MWGraphLink,
+  MWGraphNodePositions,
   WheelLayoutConfig,
 } from '../types.js';
 import {
@@ -73,8 +75,14 @@ export interface MedicineWheelFlowGraphProps {
   showControls?: boolean;
   /** Custom CSS class on the wrapper. */
   className?: string;
+  /** Node positions to apply after the default layout seed. */
+  nodePositions?: MWGraphNodePositions;
   /** Fired when a node is clicked, with the original MWGraphNode. */
   onNodeClick?: (node: MWGraphNode) => void;
+  /** Fired when a node is double-clicked, with the original MWGraphNode. */
+  onNodeDoubleClick?: (node: MWGraphNode) => void;
+  /** Fired when user-dragged node positions should be persisted. */
+  onNodePositionsChange?: (positions: MWGraphNodePositions) => void;
 }
 
 const NODE_TYPES: NodeTypes = { medicineWheel: MedicineWheelNode };
@@ -140,6 +148,39 @@ function toFlowEdge(link: MWGraphLink, index: number): Edge {
   };
 }
 
+function applyNodePositions(
+  nodes: MWGraphNode[],
+  positions?: MWGraphNodePositions,
+): MWGraphNode[] {
+  if (!positions) return nodes;
+
+  return nodes.map((node) => {
+    const position = positions[node.id];
+    if (!position) return node;
+
+    return {
+      ...node,
+      x: position.x,
+      y: position.y,
+    };
+  });
+}
+
+function flowNodePositions(
+  nodes: Node<MedicineWheelNodeData>[],
+): MWGraphNodePositions {
+  const positions: MWGraphNodePositions = {};
+
+  for (const node of nodes) {
+    const { x, y } = node.position;
+    if (Number.isFinite(x) && Number.isFinite(y)) {
+      positions[node.id] = { x, y };
+    }
+  }
+
+  return positions;
+}
+
 // ── Inner (inside ReactFlowProvider) ─────────────────────────────────────────
 
 function FlowGraphInner({
@@ -155,7 +196,10 @@ function FlowGraphInner({
   showMiniMap = true,
   showControls = true,
   className,
+  nodePositions,
   onNodeClick,
+  onNodeDoubleClick,
+  onNodePositionsChange,
 }: MedicineWheelFlowGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<MedicineWheelNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -168,8 +212,10 @@ function FlowGraphInner({
       { nodes: data.nodes.map((n) => ({ ...n })), links: data.links },
       layout,
     );
+    const positionedNodes = applyNodePositions(laidOut.nodes, nodePositions);
+
     setNodes(
-      laidOut.nodes.map((n) =>
+      positionedNodes.map((n) =>
         toFlowNode(n, {
           showLabel: showNodeLabels,
           showOcap: showOcapIndicators,
@@ -186,6 +232,7 @@ function FlowGraphInner({
     showOcapIndicators,
     showWilsonHalos,
     darkMode,
+    nodePositions,
     setNodes,
     setEdges,
   ]);
@@ -196,6 +243,22 @@ function FlowGraphInner({
       if (original && onNodeClick) onNodeClick(original);
     },
     [onNodeClick],
+  );
+
+  const handleNodeDoubleClick = useCallback<NodeMouseHandler>(
+    (_event, flowNode) => {
+      const original = (flowNode.data as MedicineWheelNodeData | undefined)?.node;
+      if (original && onNodeDoubleClick) onNodeDoubleClick(original);
+    },
+    [onNodeDoubleClick],
+  );
+
+  const handleNodeDragStop = useCallback<OnNodeDrag<Node<MedicineWheelNodeData>>>(
+    (_event, _flowNode, flowNodes) => {
+      if (!onNodePositionsChange) return;
+      onNodePositionsChange(flowNodePositions(flowNodes));
+    },
+    [onNodePositionsChange],
   );
 
   const minimapNodeColor = useCallback((flowNode: Node) => {
@@ -217,6 +280,8 @@ function FlowGraphInner({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
+        onNodeDragStop={handleNodeDragStop}
         fitView
         proOptions={{ hideAttribution: true }}
         colorMode={darkMode ? 'dark' : 'light'}
