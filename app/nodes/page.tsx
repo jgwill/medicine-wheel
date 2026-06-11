@@ -26,6 +26,7 @@ export default function NodesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedNode, setExpandedNode] = useState<string | null>(null);
   const [showAddNode, setShowAddNode] = useState(false);
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
 
   const loadNodes = useCallback(async () => {
     setLoading(true);
@@ -53,6 +54,23 @@ export default function NodesPage() {
   }, [filterType, filterDirection]);
 
   useEffect(() => { loadNodes(); }, [loadNodes]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setFocusedNodeId(params.get("node"));
+  }, []);
+
+  useEffect(() => {
+    if (loading || !focusedNodeId || !nodes.some((node) => node.id === focusedNodeId)) return;
+
+    setExpandedNode(focusedNodeId);
+    window.requestAnimationFrame(() => {
+      document.getElementById(`node-${focusedNodeId}`)?.scrollIntoView({
+        block: "center",
+        behavior: "smooth",
+      });
+    });
+  }, [focusedNodeId, loading, nodes]);
 
   const filteredNodes = nodes.filter((node) => {
     if (!searchQuery) return true;
@@ -145,7 +163,11 @@ export default function NodesPage() {
       ) : (
         <div className="space-y-2">
           {filteredNodes.map((node) => (
-            <div key={node.id} className={`border rounded-lg bg-card overflow-hidden transition-all ${expandedNode === node.id ? "ring-2 ring-primary" : ""}`}>
+            <div
+              key={node.id}
+              id={`node-${node.id}`}
+              className={`border rounded-lg bg-card overflow-hidden transition-all ${expandedNode === node.id ? "ring-2 ring-primary" : ""}`}
+            >
               <button
                 onClick={() => setExpandedNode(expandedNode === node.id ? null : node.id)}
                 className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-secondary/30"
