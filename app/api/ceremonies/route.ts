@@ -12,7 +12,9 @@ export async function GET(request: Request) {
 
     if (direction) {
       ceremonies = ceremonies.filter((c) => c.direction === direction);
-    } else if (type) {
+    }
+
+    if (type) {
       ceremonies = ceremonies.filter((c) => c.type === type);
     }
 

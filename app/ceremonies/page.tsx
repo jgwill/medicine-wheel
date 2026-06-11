@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, Suspense, useMemo } from "react";
+import { useCallback, useEffect, useState, Suspense, useMemo } from "react";
 import type { FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { type CeremonyLog, DIRECTION_COLORS, CEREMONY_ICONS, type DirectionName, type CeremonyType } from "@/lib/types";
+import { extractCeremonyLogs } from "@/lib/ceremony-response";
 import { toast } from "sonner";
 
 function CeremoniesContent() {
@@ -14,15 +15,24 @@ function CeremoniesContent() {
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadCeremonies = useCallback(async () => {
     const params = new URLSearchParams();
     if (filterDir !== "all") params.set("direction", filterDir);
     if (filterType !== "all") params.set("type", filterType);
-    fetch(`/api/ceremonies?${params}`)
-      .then((r) => r.json())
-      .then((data) => setCeremonies(Array.isArray(data) ? data : []))
-      .catch(() => setCeremonies([]));
+
+    try {
+      const res = await fetch(`/api/ceremonies?${params}`);
+      if (!res.ok) throw new Error("Failed to load ceremonies");
+      const data = await res.json();
+      setCeremonies(extractCeremonyLogs(data));
+    } catch {
+      setCeremonies([]);
+    }
   }, [filterDir, filterType]);
+
+  useEffect(() => {
+    loadCeremonies();
+  }, [loadCeremonies]);
 
   async function logCeremony(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -39,8 +49,7 @@ function CeremoniesContent() {
     if (res.ok) {
       toast.success("Ceremony logged");
       setShowForm(false);
-      const data = await fetch("/api/ceremonies").then((r) => r.json());
-      setCeremonies(Array.isArray(data) ? data : []);
+      await loadCeremonies();
     } else { toast.error("Failed to log ceremony"); }
   }
 
