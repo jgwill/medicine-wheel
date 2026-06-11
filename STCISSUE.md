@@ -454,3 +454,195 @@ Issue being tracked via @stcissue bot.
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #63 - 'DATABASE_URL' variable for neon provider conflictual
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-03T17:06:16Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/63
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #63 - 'DATABASE_URL' variable for neon provider conflictual
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-03T17:06:23Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/63
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #65 - Enhancement: wilson_paradigm_checker should validate against actual ceremonial logs, not just text
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-03T17:31:06Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/65
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #64 - Enhancement: ocap_compliance_checker nuanced view for encrypted cloud storage
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-03T17:31:06Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/64
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #67 - Enhancement: Expand two_eyed_seeing_bridge dictionary for common research concepts
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-03T17:31:06Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/67
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #66 - Bug/UX: mw_relational_check_back fails to find 'active' ceremony despite open session
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-03T17:31:06Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/66
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #68 - PR #62 feedback: expose plugin integration as a kinship bridge for Miadi orchestration
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-03T18:33:45Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/68
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #69 - MCP must reach storage *through the server endpoint* (port), not direct JSONL — add HTTP transport + upgrade skill/docs
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-03T21:59:33Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/69
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #70 - Epic: Server-mediated relational truth for MCP tools — orchestrate non-breaking enhancements (wraps #64 #65 #66 #67 #69)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-03T22:01:24Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/70
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #67 - Enhancement: Expand two_eyed_seeing_bridge dictionary for common research concepts
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-03T23:20:12Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/67
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #72 - Proposal: Decomposition Strategies for the Medicine-Wheel Developer Kit (RISE spec + MCP)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-04T09:37:02Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/72
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #72 - Proposal: Decomposition Strategies for the Medicine-Wheel Developer Kit (RISE spec + MCP)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-04T09:37:02Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/72
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #73 - Skills: integrate MCP tool guidance alongside CLI skills (58 tools across 12 domains)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-04T09:59:29Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/73
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #73 - Skills: integrate MCP tool guidance alongside CLI skills (58 tools across 12 domains)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-04T09:59:29Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/73
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #74 - Interactive ontology navigation — React Flow renderer for graph-viz
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-04T13:00:06Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/74
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #74 - Interactive ontology navigation — React Flow renderer for graph-viz
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-04T13:00:07Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/74
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+

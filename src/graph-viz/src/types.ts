@@ -46,6 +46,13 @@ export interface MWGraphNode {
   metadata?: Record<string, unknown>;
 }
 
+export interface MWGraphNodePosition {
+  x: number;
+  y: number;
+}
+
+export type MWGraphNodePositions = Record<string, MWGraphNodePosition>;
+
 // ── Graph Link ──────────────────────────────────────────────────────────────
 
 export type LinkStyle = 'solid' | 'dashed' | 'dotted' | 'ceremony';

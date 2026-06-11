@@ -14,6 +14,8 @@ export { MedicineWheelGraph } from './MedicineWheelGraph.js';
 // ── Types ───────────────────────────────────────────────────────────────────
 export type {
   MWGraphNode,
+  MWGraphNodePosition,
+  MWGraphNodePositions,
   MWGraphLink,
   MWGraphData,
   LinkStyle,
