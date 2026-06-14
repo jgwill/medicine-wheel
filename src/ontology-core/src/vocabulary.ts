@@ -1,8 +1,14 @@
 /**
- * @medicine-wheel/ontology-core — RDF Vocabulary
+ * @medicine-wheel/ontology-core — Medicine Wheel Vocabulary
  *
- * Namespace IRIs and predicate constants for Medicine Wheel concepts,
- * bridging Indigenous relational ontology with semantic web standards.
+ * Domain namespace IRIs and label constants for Medicine Wheel concepts.
+ * These are the kinship graph's own labels — first-class names for Directions,
+ * Relations, Ceremonies, and accountability concepts.
+ *
+ * The standard semantic-web namespaces (rdf/rdfs/owl/skos/prov/shacl), the
+ * combined `PREFIXES` map, and the IRI utilities (`prefixed`/`expandIRI`/
+ * `compactIRI`) now live in the OPTIONAL `rdf-interop.ts` adapter. The kinship
+ * graph is primary; RDF/OWL is interop-only.
  *
  * Namespaces:
  *   mw:   — Medicine Wheel core concepts
@@ -20,29 +26,6 @@ export const OCAP_NS = 'https://ontology.medicine-wheel.dev/ocap#' as const;
 export const REL_NS = 'https://ontology.medicine-wheel.dev/rel#' as const;
 export const CER_NS = 'https://ontology.medicine-wheel.dev/cer#' as const;
 export const BEAT_NS = 'https://ontology.medicine-wheel.dev/beat#' as const;
-
-// Standard ontology namespaces for interop
-export const RDF_NS = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' as const;
-export const RDFS_NS = 'http://www.w3.org/2000/01/rdf-schema#' as const;
-export const OWL_NS = 'http://www.w3.org/2002/07/owl#' as const;
-export const SKOS_NS = 'http://www.w3.org/2004/02/skos/core#' as const;
-export const PROV_NS = 'http://www.w3.org/ns/prov#' as const;
-export const SHACL_NS = 'http://www.w3.org/ns/shacl#' as const;
-
-export const PREFIXES = {
-  mw: MW_NS,
-  ids: IDS_NS,
-  ocap: OCAP_NS,
-  rel: REL_NS,
-  cer: CER_NS,
-  beat: BEAT_NS,
-  rdf: RDF_NS,
-  rdfs: RDFS_NS,
-  owl: OWL_NS,
-  skos: SKOS_NS,
-  prov: PROV_NS,
-  sh: SHACL_NS,
-} as const;
 
 // ── Medicine Wheel Classes (mw:) ───────────────────────────────────────────
 
@@ -178,31 +161,5 @@ export const BEAT = {
   relationsHonored: `${BEAT_NS}relationsHonored`,
 } as const;
 
-/**
- * Generate a prefixed IRI string (e.g., "mw:Direction")
- */
-export function prefixed(namespace: keyof typeof PREFIXES, localName: string): string {
-  return `${namespace}:${localName}`;
-}
-
-/**
- * Expand a prefixed IRI to full form (e.g., "mw:Direction" → full IRI)
- */
-export function expandIRI(prefixedIRI: string): string {
-  const [prefix, local] = prefixedIRI.split(':');
-  const ns = PREFIXES[prefix as keyof typeof PREFIXES];
-  if (!ns) throw new Error(`Unknown prefix: ${prefix}`);
-  return `${ns}${local}`;
-}
-
-/**
- * Compact a full IRI to prefixed form if possible
- */
-export function compactIRI(fullIRI: string): string {
-  for (const [prefix, ns] of Object.entries(PREFIXES)) {
-    if (fullIRI.startsWith(ns)) {
-      return `${prefix}:${fullIRI.slice(ns.length)}`;
-    }
-  }
-  return fullIRI;
-}
+// IRI utilities (prefixed / expandIRI / compactIRI) and the combined PREFIXES
+// map live in the optional `rdf-interop.ts` adapter.

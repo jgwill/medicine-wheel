@@ -8,6 +8,7 @@
  */
 
 import { z } from 'zod';
+import { KINSHIP_EDGE_TYPES } from './kinship';
 
 // ── Enums as Zod schemas ────────────────────────────────────────────────────
 
@@ -48,6 +49,22 @@ export const AccessLevelSchema = z.enum([
 export const PossessionLocationSchema = z.enum([
   'on-premise', 'community-server', 'cloud-sovereign', 'cloud-shared',
 ]);
+
+// ── Kinship Edge Vocabulary ─────────────────────────────────────────────────
+
+/** Validates a governed kinship-edge name against the registry. */
+export const KinshipEdgeNameSchema = z.enum(
+  Object.keys(KINSHIP_EDGE_TYPES) as [string, ...string[]],
+);
+
+/** Validates a full kinship-edge-type descriptor. */
+export const KinshipEdgeTypeSchema = z.object({
+  name: z.string(),
+  symmetry: z.enum(['symmetric', 'asymmetric']),
+  inverse: z.string().optional(),
+  description: z.string(),
+  defaultObligations: z.array(ObligationCategorySchema).optional(),
+});
 
 // ── Core Schemas ────────────────────────────────────────────────────────────
 
@@ -120,17 +137,28 @@ export const CeremonyContextSchema = z.object({
   ceremony_honored: z.boolean(),
 });
 
+/** Validates the context that authorizes and bounds a relation. */
+export const RelationContextSchema = z.object({
+  authorized_by: z.string().optional(),
+  active_context: z.string().optional(),
+  valid_when: z.string().optional(),
+  forbidden_when: z.string().optional(),
+  authorized_kin: z.array(z.string()).optional(),
+});
+
 export const RelationSchema = z.object({
   id: z.string(),
   from_id: z.string(),
   to_id: z.string(),
   relationship_type: z.string(),
+  kinship_type: KinshipEdgeNameSchema.optional(),
   strength: z.number().min(0).max(1),
   direction: DirectionNameSchema.optional(),
   ceremony_context: CeremonyContextSchema.optional(),
   obligations: z.array(RelationalObligationSchema),
   ocap: OcapFlagsSchema,
   accountability: AccountabilityTrackingSchema,
+  context: RelationContextSchema.optional(),
   metadata: z.record(z.unknown()),
   created_at: z.string(),
   updated_at: z.string(),

@@ -12,6 +12,7 @@ import type {
   RelationalEdge,
   Relation,
 } from '@medicine-wheel/ontology-core';
+import type { ProtocolGuard, TraversalContext, GuardEscalation } from './guards.js';
 
 // ─── Query Filters ────────────────────────────────────────────
 
@@ -81,10 +82,14 @@ export interface TraversalOptions {
   direction: TraversalDirection;
   edgeFilter?: EdgeFilter;
   nodeFilter?: NodeFilter;
-  /** Stop traversal at nodes without ceremony-honored edges */
+  /** Stop traversal at nodes without ceremony-honored edges (built-in guard) */
   respectCeremonyBoundaries?: boolean;
-  /** Only follow OCAP-compliant relations */
+  /** Only follow OCAP-compliant relations (built-in guard) */
   ocapOnly?: boolean;
+  /** Additional protocol guards evaluated before each edge crossing */
+  guards?: ProtocolGuard[];
+  /** Runtime context (identity, ceremony state) supplied to the guards */
+  context?: TraversalContext;
 }
 
 export interface TraversalPath {
@@ -98,6 +103,8 @@ export interface TraversalResult {
   paths: TraversalPath[];
   visitedNodes: Set<string>;
   maxDepthReached: boolean;
+  /** Edge crossings a protocol guard refused, surfaced for delegation. */
+  escalations: GuardEscalation[];
 }
 
 // ─── Accountability Audit ─────────────────────────────────────

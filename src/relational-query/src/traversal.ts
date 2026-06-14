@@ -3,15 +3,14 @@
  * with ceremony boundary and OCAP® awareness.
  */
 import type { RelationalNode, RelationalEdge, Relation } from '@medicine-wheel/ontology-core';
-import { checkOcapCompliance } from '@medicine-wheel/ontology-core';
 import type {
   TraversalOptions,
   TraversalPath,
   TraversalResult,
-  EdgeFilter,
-  NodeFilter,
 } from './types.js';
 import { filterEdges, filterNodes } from './query.js';
+import type { ProtocolGuard, GuardEscalation } from './guards.js';
+import { ceremonyBoundaryGuard, ocapComplianceGuard, evaluateGuards } from './guards.js';
 
 const DEFAULT_OPTIONS: TraversalOptions = {
   maxDepth: 3,
@@ -59,19 +58,21 @@ export function traverse(
     filteredEdges = filterEdges(edges, options.edgeFilter);
   }
 
-  // OCAP filter: only follow edges whose relations are compliant
-  if (options.ocapOnly) {
-    const compliantRelIds = new Set(
-      relations
-        .filter(r => r.ocap && checkOcapCompliance(r.ocap).compliant)
-        .map(r => r.id)
-    );
-    // Keep edges that match compliant relation IDs or have no relation mapping
-    filteredEdges = filteredEdges.filter(e => {
-      const relId = `${e.from_id}-${e.to_id}`;
-      const reverseId = `${e.to_id}-${e.from_id}`;
-      return compliantRelIds.has(relId) || compliantRelIds.has(reverseId) || !relations.some(r => r.id === relId || r.id === reverseId);
-    });
+  // Assemble the protocol-guard stack. The former `respectCeremonyBoundaries`
+  // and `ocapOnly` booleans are now built-in guards, evaluated per crossing
+  // alongside any caller-supplied guards.
+  const guards: ProtocolGuard[] = [];
+  if (options.respectCeremonyBoundaries) guards.push(ceremonyBoundaryGuard);
+  if (options.ocapOnly) guards.push(ocapComplianceGuard);
+  if (options.guards) guards.push(...options.guards);
+  const guardContext = options.context ?? {};
+
+  // Map an edge (by endpoint pair, in either direction) to its first-class
+  // Relation, so guards can read the relation's OCAP flags and context.
+  const relationLookup = new Map<string, Relation>();
+  for (const r of relations) {
+    relationLookup.set(`${r.from_id}|${r.to_id}`, r);
+    relationLookup.set(`${r.to_id}|${r.from_id}`, r);
   }
 
   // Build adjacency
@@ -86,6 +87,7 @@ export function traverse(
 
   // BFS traversal
   const paths: TraversalPath[] = [];
+  const escalations: GuardEscalation[] = [];
   const visited = new Set<string>([rootId]);
   let maxDepthReached = false;
 
@@ -110,9 +112,21 @@ export function traverse(
     for (const { nodeId, edge } of neighbors) {
       if (visited.has(nodeId)) continue;
 
-      // Ceremony boundary check
-      if (options.respectCeremonyBoundaries && !edge.ceremony_honored) {
-        continue;
+      // Protocol guards: evaluate before crossing the edge. A blocked crossing
+      // is recorded as an escalation (delegation), not a silent skip.
+      if (guards.length > 0) {
+        const relation = relationLookup.get(`${edge.from_id}|${edge.to_id}`);
+        const { decision, guard } = evaluateGuards(guards, edge, relation, guardContext);
+        if (!decision.allowed) {
+          escalations.push({
+            fromId: current.nodeId,
+            toId: nodeId,
+            guard: guard ?? 'unknown',
+            reason: decision.reason,
+            escalateTo: decision.escalateTo,
+          });
+          continue;
+        }
       }
 
       const node = nodeMap.get(nodeId);
@@ -144,7 +158,7 @@ export function traverse(
     }
   }
 
-  return { root: rootNode, paths, visitedNodes: visited, maxDepthReached };
+  return { root: rootNode, paths, visitedNodes: visited, maxDepthReached, escalations };
 }
 
 /** Find shortest path between two nodes */

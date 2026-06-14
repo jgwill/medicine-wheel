@@ -19,6 +19,7 @@ export type {
   RelationalObligation,
   OcapFlags,
   AccountabilityTracking,
+  RelationContext,
   Relation,
   CeremonyType,
   CeremonyGuidance,
@@ -60,14 +61,31 @@ export type {
   MedicineWheelView,
 } from './types';
 
-// ── RDF Vocabulary ──────────────────────────────────────────────────────────
+// ── Kinship Edge Vocabulary ─────────────────────────────────────────────────
+export type { KinshipEdgeType, KinshipEdgeName, EdgeSymmetry } from './kinship';
+export {
+  KINSHIP_EDGE_TYPES,
+  KINSHIP_EDGE_NAMES,
+  getKinshipEdgeType,
+  isKinshipEdgeName,
+  inverseEdge,
+} from './kinship';
+
+// ── Medicine Wheel Vocabulary (kinship-graph labels) ────────────────────────
 export {
   MW_NS, IDS_NS, OCAP_NS, REL_NS, CER_NS, BEAT_NS,
+  MW, CER, OCAP, REL, IDS, BEAT,
+} from './vocabulary';
+
+// ── RDF Interop Adapter (OPTIONAL — the kinship graph is primary) ───────────
+// RDF/OWL is no longer the backbone; it is an optional serialization adapter.
+export * as rdfInterop from './rdf-interop';
+// Back-compat named re-exports, now sourced from the adapter.
+export {
   RDF_NS, RDFS_NS, OWL_NS, SKOS_NS, PROV_NS, SHACL_NS,
   PREFIXES,
-  MW, CER, OCAP, REL, IDS, BEAT,
   prefixed, expandIRI, compactIRI,
-} from './vocabulary';
+} from './rdf-interop';
 
 // ── Constants ───────────────────────────────────────────────────────────────
 export {
@@ -106,6 +124,8 @@ export {
   ConsentStateSchema,
   AccessLevelSchema,
   PossessionLocationSchema,
+  KinshipEdgeNameSchema,
+  KinshipEdgeTypeSchema,
   DirectionSchema,
   RelationalNodeSchema,
   RelationalEdgeSchema,
@@ -113,6 +133,7 @@ export {
   OcapFlagsSchema,
   AccountabilityTrackingSchema,
   CeremonyContextSchema,
+  RelationContextSchema,
   RelationSchema,
   CeremonyGuidanceSchema,
   CeremonyLogSchema,

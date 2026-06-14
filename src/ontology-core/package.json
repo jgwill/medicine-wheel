@@ -29,6 +29,12 @@
       "require": "./dist/vocabulary.js",
       "default": "./dist/vocabulary.js"
     },
+    "./rdf-interop": {
+      "import": "./dist/rdf-interop.js",
+      "types": "./dist/rdf-interop.d.ts",
+      "require": "./dist/rdf-interop.js",
+      "default": "./dist/rdf-interop.js"
+    },
     "./constants": {
       "import": "./dist/constants.js",
       "types": "./dist/constants.d.ts",

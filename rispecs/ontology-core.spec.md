@@ -186,9 +186,15 @@ Additional types for the Relational Science Integration System:
 
 ---
 
-## RDF Vocabulary
+## RDF Interop Adapter (optional)
 
-Six custom namespaces bridge Indigenous ontology with semantic web:
+> The non-hierarchical kinship graph (`kinship.ts`) is the canonical model. RDF/OWL
+> is **not the backbone** — it is an optional serialization/interop adapter exposed as
+> the `rdfInterop` namespace (and via the `./rdf-interop` subpath). Import it only to
+> serialize OUT to triple stores or knowledge-graph ecosystems. See `kinship-graph.spec.md`.
+
+Six **Medicine Wheel domain namespaces** carry the kinship graph's own labels (these live
+in `vocabulary.ts`, not the RDF adapter):
 
 | Prefix | Namespace | Purpose |
 |--------|-----------|---------|
@@ -199,14 +205,15 @@ Six custom namespaces bridge Indigenous ontology with semantic web:
 | `ids:` | `https://ontology.medicine-wheel.dev/ids#` | Indigenous Data Sovereignty |
 | `beat:` | `https://ontology.medicine-wheel.dev/beat#` | Narrative beats |
 
-Standard interop namespaces: `rdf:`, `rdfs:`, `owl:`, `skos:`, `prov:`, `sh:` (SHACL).
-
-### IRI Utilities
+Standard interop namespaces (`rdf:`, `rdfs:`, `owl:`, `skos:`, `prov:`, `sh:` (SHACL)),
+the combined `PREFIXES` map, and the IRI utilities live in the **`rdf-interop` adapter**:
 
 ```typescript
-prefixed('mw', 'Direction')   // → 'mw:Direction'
-expandIRI('mw:Direction')     // → 'https://ontology.medicine-wheel.dev/mw#Direction'
-compactIRI('https://ontology.medicine-wheel.dev/mw#Direction') // → 'mw:Direction'
+import { rdfInterop } from '@medicine-wheel/ontology-core';
+rdfInterop.prefixed('mw', 'Direction')   // → 'mw:Direction'
+rdfInterop.expandIRI('mw:Direction')     // → 'https://ontology.medicine-wheel.dev/mw#Direction'
+rdfInterop.compactIRI('https://ontology.medicine-wheel.dev/mw#Direction') // → 'mw:Direction'
+// Back-compat: the named exports (prefixed, expandIRI, compactIRI, PREFIXES) remain at the root.
 ```
 
 ---

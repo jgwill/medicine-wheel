@@ -23,6 +23,20 @@ export type {
   AccountabilityReport,
 } from './types.js';
 
+// Protocol guards (avoidance protocols)
+export type {
+  TraversalContext,
+  GuardDecision,
+  ProtocolGuard,
+  GuardEscalation,
+} from './guards.js';
+export {
+  ceremonyBoundaryGuard,
+  ocapComplianceGuard,
+  avoidanceProtocolGuard,
+  evaluateGuards,
+} from './guards.js';
+
 // Query builder
 export {
   filterNodes,
@@ -64,3 +78,12 @@ export {
   formatReciprocityObservation,
   formatDirectionObservation,
 } from './cypher.js';
+
+// RDF → flat kinship-graph migration
+export type { RdfTriple, MigrationOptions, KinshipGraph } from './migrate.js';
+export {
+  rdfToKinshipGraph,
+  kinshipGraphToCypher,
+  kinshipGraphToJsonl,
+  localName,
+} from './migrate.js';

@@ -37,6 +37,37 @@ const path = shortestPath('from-id', 'to-id', nodes, edges);
 const neighbors = neighborhood('node-id', nodes, edges, 2);
 ```
 
+### Protocol Guards (avoidance protocols)
+Conditional edge filters evaluated **before** a crossing. A guard does not veto —
+when a boundary is reached it returns an escalation directive (delegate to a
+custodian). The legacy `respectCeremonyBoundaries`/`ocapOnly` booleans are now
+built-in guards; `avoidanceProtocolGuard` reads a relation's `context`.
+
+```ts
+import { traverse, avoidanceProtocolGuard } from '@medicine-wheel/relational-query';
+
+const result = traverse('node-id', nodes, edges, relations, {
+  maxDepth: 3,
+  guards: [avoidanceProtocolGuard],
+  context: { identity: 'agent-mia', ceremonyState: 'open' },
+});
+
+// Crossings a guard refused, surfaced for delegation:
+result.escalations; // [{ fromId, toId, guard, reason, escalateTo }]
+```
+
+### RDF → Flat Kinship-Graph Migration
+Map RDF triples onto co-equal nodes + named relations. `rdfs:subClassOf` and
+`rdf:type` flatten to the `co-emerges-with` edge — never a re-introduced hierarchy.
+
+```ts
+import { rdfToKinshipGraph, kinshipGraphToCypher, kinshipGraphToJsonl } from '@medicine-wheel/relational-query';
+
+const graph = rdfToKinshipGraph(triples, { source: 'treaty-dataset' });
+const cypher = kinshipGraphToCypher(graph); // MERGE statements for KuzuDB
+const jsonl = kinshipGraphToJsonl(graph);   // newline-delimited node/relation records
+```
+
 ### Accountability Audit
 Relational health metrics and OCAP® compliance reports.
 

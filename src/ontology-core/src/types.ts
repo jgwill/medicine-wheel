@@ -9,6 +9,8 @@
  * first-class entities, not just labeled edges.
  */
 
+import type { KinshipEdgeName } from './kinship';
+
 // ── Direction Types ─────────────────────────────────────────────────────────
 
 export type DirectionName = 'east' | 'south' | 'west' | 'north';
@@ -109,6 +111,25 @@ export interface AccountabilityTracking {
 }
 
 /**
+ * Context that authorizes and bounds a relation — the metadata that makes a
+ * relation valid in some circles and not others. Optional and additive:
+ * existing relations carry none. Consumed by the protocol-guard stack in
+ * `@medicine-wheel/relational-query` to permit or escalate traversal.
+ */
+export interface RelationContext {
+  /** Who authorized this relation (person, council, ceremony, or source dataset). */
+  authorized_by?: string;
+  /** The ceremony state or scope in which this relation is currently valid. */
+  active_context?: string;
+  /** Condition describing when the relation is traversable (free-form expression). */
+  valid_when?: string;
+  /** Condition describing when the relation must NOT be traversed. */
+  forbidden_when?: string;
+  /** Identities permitted to traverse this relation. */
+  authorized_kin?: string[];
+}
+
+/**
  * First-class Relation entity.
  * Extends RelationalEdge with ceremony context, OCAP® metadata,
  * and accountability tracking — making relationships ontological
@@ -122,6 +143,13 @@ export interface Relation {
   to_id: string;
   /** Type of relationship (e.g., kinship, treaty, ceremony, mentorship) */
   relationship_type: string;
+  /**
+   * Governed kinship-edge name from the kinship vocabulary (e.g.
+   * 'holds-responsibility-for'). Optional and additive — `relationship_type`
+   * is retained for back-compat; `kinship_type` references the registry in
+   * `kinship.ts` and carries symmetry + inverse for directional reasoning.
+   */
+  kinship_type?: KinshipEdgeName;
   /** Relational strength (0–1) */
   strength: number;
   /** Direction alignment */
@@ -138,6 +166,8 @@ export interface Relation {
   ocap: OcapFlags;
   /** Wilson relational accountability tracking */
   accountability: AccountabilityTracking;
+  /** Context that authorizes and bounds this relation (feeds protocol guards). */
+  context?: RelationContext;
   /** Metadata */
   metadata: Record<string, unknown>;
   created_at: string;

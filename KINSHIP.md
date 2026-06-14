@@ -42,8 +42,10 @@
 - Tensions held:
   - Formal bridge between ontology-core `StructuralTensionChart` type and coaia-narrative Entity/Relation JSONL — alignment confirmed, formal adapter not built
   - rispecs may contain storage contracts that predate the `.mw/` convergence decision — review needed
+  - Taxonomy→kinship-graph reorganization underway — RDF/OWL demoted from backbone to optional interop adapter; named contextual edges + protocol guards added so relations carry the meaning. Tracked in `rispecs/kinship-graph.spec.md` and `rispecs/kinship-graph-refactor.plan.md`
 
 ## 5. Accountability and Change Log
 - Steward(s): Guillaume (jgwill)
 - Relational change log:
   - [2026-03-21] [pi-mono] — KINSHIP.md created. Compass role formalized. Relation to `.mw/` workspace established. Convergence issue: miadisabelle/workspace-openclaw#28
+  - [2026-06-14] — Kinship-graph refactor (Stages 0–6). Added named kinship-edge vocabulary (`kinship.ts`), edge context metadata (`RelationContext`), and protocol guards with escalation (`relational-query/guards.ts`). RDF/OWL demoted from backbone to optional `rdf-interop` adapter; added RDF→flat-kinship migration. Specs: `rispecs/kinship-graph.spec.md`, `rispecs/kinship-graph-refactor.plan.md`. Grounding: Abundant Intelligences (IFRC). All additive stages back-compatible; full suite 68/68 green.
