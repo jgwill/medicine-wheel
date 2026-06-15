@@ -22,6 +22,7 @@ import type {
   MedicineWheelCycle,
 } from '@/lib/types';
 
+import { extractCycles, normalizeMedicineWheelCycle } from './cycle-response';
 import { getJsonlStore } from './jsonl-store';
 
 // JSONL store for sync operations (used by seeding and legacy code paths)
@@ -151,7 +152,7 @@ export function createBeat(data: Omit<NarrativeBeat, 'id' | 'timestamp'> & { id?
 
 export function getAllCycles(): MedicineWheelCycle[] {
   const { active, archived } = store.getAllCycles();
-  return [...active, ...archived] as unknown as MedicineWheelCycle[];
+  return extractCycles([...active, ...archived]);
 }
 
 export function createCycle(data: { research_question: string; current_direction?: string }): MedicineWheelCycle {
@@ -168,7 +169,7 @@ export function createCycle(data: { research_question: string; current_direction
     ocap_compliant: false,
   };
   store.createCycle(cycle as any);
-  return cycle;
+  return normalizeMedicineWheelCycle(cycle) ?? cycle;
 }
 
 // ── Seed Data ──

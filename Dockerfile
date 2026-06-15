@@ -28,7 +28,6 @@ RUN npm ci --legacy-peer-deps --ignore-scripts
 # Copy Next.js application source
 COPY app/ ./app/
 COPY components/ ./components/
-COPY hooks/ ./hooks/
 COPY lib/ ./lib/
 COPY public/ ./public/
 COPY next.config.mjs postcss.config.mjs tsconfig.json next-env.d.ts ./

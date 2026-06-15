@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { type MedicineWheelCycle, DIRECTION_COLORS, type DirectionName } from "@/lib/types";
+import { extractCycles } from "@/lib/cycle-response";
 import { toast } from "sonner";
 
 export default function CyclesPage() {
@@ -11,7 +12,10 @@ export default function CyclesPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/narrative/cycles").then((r) => r.json()).then((d) => setCycles(Array.isArray(d) ? d : [])).catch(() => setCycles([]));
+    fetch("/api/narrative/cycles")
+      .then((r) => r.json())
+      .then((d) => setCycles(extractCycles(d)))
+      .catch(() => setCycles([]));
   }, []);
 
   async function createCycle(e: FormEvent<HTMLFormElement>) {
@@ -23,7 +27,7 @@ export default function CyclesPage() {
       toast.success("Cycle created");
       setShowForm(false);
       const data = await fetch("/api/narrative/cycles").then((r) => r.json());
-      setCycles(Array.isArray(data) ? data : []);
+      setCycles(extractCycles(data));
     } else { toast.error("Failed"); }
   }
 

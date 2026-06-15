@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { type NarrativeBeat, type MedicineWheelCycle, DIRECTION_COLORS, type DirectionName } from "@/lib/types";
+import { extractCycles } from "@/lib/cycle-response";
 
 export default function NarrativePage() {
   const [beats, setBeats] = useState<NarrativeBeat[]>([]);
@@ -10,7 +11,7 @@ export default function NarrativePage() {
 
   useEffect(() => {
     Promise.all([fetch("/api/narrative/beats").then((r) => r.json()), fetch("/api/narrative/cycles").then((r) => r.json())])
-      .then(([b, c]) => { setBeats(Array.isArray(b) ? b : []); setCycles(Array.isArray(c) ? c : []); })
+      .then(([b, c]) => { setBeats(Array.isArray(b) ? b : []); setCycles(extractCycles(c)); })
       .catch(() => {});
   }, []);
 
