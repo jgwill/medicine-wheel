@@ -646,3 +646,183 @@ Issue being tracked via @stcissue bot.
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #76 - Graph Data Design: persist named node dispositions in browser storage
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-11T19:17:22Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/76
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #76 - Graph Data Design: persist named node dispositions in browser storage
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-11T19:17:37Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/76
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #77 - Graph User Experience: layout controls, node drill-through, and graph navigation sidebar
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-11T19:17:55Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/77
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #77 - Graph User Experience: layout controls, node drill-through, and graph navigation sidebar
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-11T19:19:04Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/77
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #77 - Graph User Experience: layout controls, node drill-through, and graph navigation sidebar
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-11T19:36:27Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/77
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #74 - Interactive ontology navigation — React Flow renderer for graph-viz
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-11T19:37:23Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/74
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #76 - Graph Data Design: persist named node dispositions in browser storage
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-11T19:37:43Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/76
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #78 - Graph: add persisted animation pause control
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-11T21:34:47Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/78
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #79 - Ceremonies: show saved ceremony logs after reload
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-11T21:34:47Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/79
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #79 - Ceremonies: show saved ceremony logs after reload
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-11T21:45:04Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/79
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #78 - Graph: add persisted animation pause control
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-11T21:45:05Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/78
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #80 - Graph saved disposition drops prior node positions after another drag
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-15T11:13:53Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/80
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #80 - Graph saved disposition drops prior node positions after another drag
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-15T11:28:32Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/80
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #81 - Structural tension chart ID returned by create is not found by link/complete tools
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-15T14:43:12Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/81
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #82 - mw_ceremony_close returns fetch failed for open ceremony
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-15T14:50:07Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/82
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
