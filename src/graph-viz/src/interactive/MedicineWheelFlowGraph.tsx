@@ -25,6 +25,7 @@ import {
   MiniMap,
   useNodesState,
   useEdgesState,
+  useReactFlow,
   type Node,
   type Edge,
   type NodeTypes,
@@ -210,6 +211,7 @@ function FlowGraphInner({
 }: MedicineWheelFlowGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<MedicineWheelNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const { getNodes } = useReactFlow<Node<MedicineWheelNodeData>, Edge>();
 
   // Re-layout whenever data or display flags change. `applyWheelLayout`
   // mutates node.x/node.y in place, so spread each node defensively to avoid
@@ -264,9 +266,12 @@ function FlowGraphInner({
   const handleNodeDragStop = useCallback<OnNodeDrag<Node<MedicineWheelNodeData>>>(
     (_event, _flowNode, flowNodes) => {
       if (!onNodePositionsChange) return;
-      onNodePositionsChange(flowNodePositions(flowNodes));
+      const draggedNodesById = new Map(flowNodes.map((node) => [node.id, node]));
+      const currentNodes = getNodes().map((node) => draggedNodesById.get(node.id) ?? node);
+
+      onNodePositionsChange(flowNodePositions(currentNodes));
     },
-    [onNodePositionsChange],
+    [getNodes, onNodePositionsChange],
   );
 
   const minimapNodeColor = useCallback((flowNode: Node) => {

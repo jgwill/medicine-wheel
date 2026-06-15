@@ -9,6 +9,7 @@ import {
   saveNamedGraphLayout,
   selectGraphLayout,
   sanitizeGraphPositions,
+  upsertActiveGraphLayout,
   upsertCurrentGraphLayout,
 } from "../lib/graph-layout-storage";
 
@@ -86,5 +87,36 @@ describe("graph layout storage", () => {
 
     const selectedCurrent = selectGraphLayout(second, CURRENT_GRAPH_LAYOUT_ID);
     expect(getActiveGraphLayout(selectedCurrent).id).toBe(CURRENT_GRAPH_LAYOUT_ID);
+  });
+
+  it("merges dragged positions into the active named disposition without dropping prior nodes", () => {
+    const saved = saveNamedGraphLayout(
+      upsertCurrentGraphLayout(
+        parseGraphLayoutStore(null),
+        {
+          nodeA: { x: 10, y: 20 },
+          nodeB: { x: 30, y: 40 },
+        },
+        "2026-06-11T00:00:00.000Z",
+      ),
+      "Council Layout",
+      {
+        nodeA: { x: 10, y: 20 },
+        nodeB: { x: 30, y: 40 },
+      },
+      "2026-06-11T00:01:00.000Z",
+    );
+
+    const updated = upsertActiveGraphLayout(
+      saved,
+      { nodeB: { x: 90, y: 120 } },
+      "2026-06-11T00:02:00.000Z",
+    );
+
+    expect(updated.activeLayoutId).toBe("layout:council-layout");
+    expect(getActiveGraphLayout(updated).positions).toEqual({
+      nodeA: { x: 10, y: 20 },
+      nodeB: { x: 90, y: 120 },
+    });
   });
 });

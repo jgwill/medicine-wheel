@@ -219,6 +219,42 @@ export function upsertCurrentGraphLayout(
   };
 }
 
+export function upsertActiveGraphLayout(
+  store: GraphLayoutStore,
+  positions: MWGraphNodePositions,
+  updatedAt: string = nowIso(),
+): GraphLayoutStore {
+  const activeLayout = getActiveGraphLayout(store);
+  const mergedPositions = sanitizeGraphPositions({
+    ...activeLayout.positions,
+    ...positions,
+  });
+  const updatedLayout: GraphLayoutDisposition = {
+    ...activeLayout,
+    positions: mergedPositions,
+    updatedAt,
+    nodeCount: Object.keys(mergedPositions).length,
+  };
+
+  if (updatedLayout.id === CURRENT_GRAPH_LAYOUT_ID) {
+    const savedLayouts = store.layouts.filter((layout) => layout.id !== CURRENT_GRAPH_LAYOUT_ID);
+
+    return {
+      version: GRAPH_LAYOUT_STORE_VERSION,
+      activeLayoutId: CURRENT_GRAPH_LAYOUT_ID,
+      layouts: [updatedLayout, ...savedLayouts],
+    };
+  }
+
+  return {
+    version: GRAPH_LAYOUT_STORE_VERSION,
+    activeLayoutId: updatedLayout.id,
+    layouts: store.layouts.map((layout) =>
+      layout.id === updatedLayout.id ? updatedLayout : layout,
+    ),
+  };
+}
+
 export function saveNamedGraphLayout(
   store: GraphLayoutStore,
   name: string,

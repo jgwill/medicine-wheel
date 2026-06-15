@@ -32,6 +32,7 @@ import {
   persistGraphLayoutStore,
   saveNamedGraphLayout,
   selectGraphLayout,
+  upsertActiveGraphLayout,
   upsertCurrentGraphLayout,
   type GraphLayoutStore,
 } from "@/lib/graph-layout-storage";
@@ -187,19 +188,23 @@ export default function GraphPage() {
 
   const handleNodePositionsChange = useCallback(
     (positions: MWGraphNodePositions) => {
-      saveLayoutStore(upsertCurrentGraphLayout(layoutStoreRef.current, positions));
+      saveLayoutStore(upsertActiveGraphLayout(layoutStoreRef.current, positions));
     },
     [saveLayoutStore],
   );
 
   const saveNamedLayout = useCallback(() => {
-    const name = layoutName.trim();
+    const active = getActiveGraphLayout(layoutStoreRef.current);
+    const name =
+      layoutName.trim() ||
+      (active.id !== CURRENT_GRAPH_LAYOUT_ID ? active.name : "");
+
     if (!name) {
       toast.error("Name the disposition first");
       return;
     }
 
-    const positions = getActiveGraphLayout(layoutStoreRef.current).positions;
+    const positions = active.positions;
     if (Object.keys(positions).length === 0) {
       toast.error("Move a node before saving");
       return;
@@ -329,7 +334,11 @@ export default function GraphPage() {
                     onKeyDown={(event) => {
                       if (event.key === "Enter") saveNamedLayout();
                     }}
-                    placeholder="Name disposition"
+                    placeholder={
+                      activeLayout.id === CURRENT_GRAPH_LAYOUT_ID
+                        ? "Name disposition"
+                        : activeLayout.name
+                    }
                     className="min-w-0 flex-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-gray-500"
                   />
                   <button
