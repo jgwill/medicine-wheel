@@ -826,3 +826,111 @@ Issue being tracked via @stcissue bot.
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #83 - Fix /narrative/cycles crash on legacy cycles without beats
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-15T15:53:38Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/83
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #84 - Validation: Episode 068 plan-review audio steering UX for film-production work
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-21T21:25:43Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/84
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #84 - Validation: Episode 068 plan-review audio steering UX for film-production work
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-21T21:25:43Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/84
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #86 - Add @medicine-wheel/perception-layer for witnessed production events
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-24T22:34:53Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/86
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #85 - Episode 068: ship film-production vertical slice from real episode-066 transcript
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-24T22:34:53Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/85
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #85 - Episode 068: ship film-production vertical slice from real episode-066 transcript
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-24T22:34:54Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/85
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #86 - Add @medicine-wheel/perception-layer for witnessed production events
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-24T22:34:54Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/86
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #87 - Add @medicine-wheel/narrative-cluster plus storyteller/production ceremony gates
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-24T22:34:59Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/87
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #87 - Add @medicine-wheel/narrative-cluster plus storyteller/production ceremony gates
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-24T22:34:59Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/87
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
