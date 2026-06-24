@@ -1,0 +1,42 @@
+{
+  "name": "@medicine-wheel/narrative-cluster",
+  "version": "0.4.8",
+  "description": "Narrative Cluster Processor — turn witnessed perceptual events / rushes into thematic clusters, narrative beats, and a Film Edit Brief (EDL markers)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "film-production",
+    "narrative",
+    "cluster",
+    "edit-brief",
+    "edl",
+    "indigenous"
+  ],
+  "author": "jgwill",
+  "license": "MIT",
+  "dependencies": {
+    "@medicine-wheel/ontology-core": "^0.4.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

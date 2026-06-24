@@ -81,3 +81,13 @@ export {
   returnToCircle,
   ceremonialHold,
 } from './outcomes.js';
+
+// ── Storyteller Perspective Gate (Jerry thread — runtime quality boundary) ────
+export type {
+  StorytellerSignature,
+  StorytellerGateResult,
+} from './storyteller.js';
+export {
+  storytellerGate,
+  enforceStorytellerGate,
+} from './storyteller.js';

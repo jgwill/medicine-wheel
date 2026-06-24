@@ -1,0 +1,42 @@
+{
+  "name": "@medicine-wheel/perception-layer",
+  "version": "0.4.8",
+  "description": "Eyes & ears of agent-supported film production — witness a belt-device recording as typed perceptual events and seed a production knowledge graph",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "film-production",
+    "perception",
+    "eyes-and-ears",
+    "indigenous",
+    "witnessing"
+  ],
+  "author": "jgwill",
+  "license": "MIT",
+  "dependencies": {
+    "@medicine-wheel/ontology-core": "^0.4.8",
+    "@medicine-wheel/session-reader": "^0.4.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
