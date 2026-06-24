@@ -934,3 +934,39 @@ Issue being tracked via @stcissue bot.
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #89 - [film-production] MCP tool surface for perception / narrative-cluster / storyteller / production-ceremony
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-24T23:38:16Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/89
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #90 - [film-production] Runtime Zod schemas for ProductionRelation and ProductionEntityKind
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-24T23:38:17Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/90
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #91 - [film-production] Provenance + OCAP consent review for the episode-066 transcript fixture
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-24T23:38:18Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/91
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
