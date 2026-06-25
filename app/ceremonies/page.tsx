@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { type CeremonyLog, DIRECTION_COLORS, CEREMONY_ICONS, type DirectionName, type CeremonyType } from "@/lib/types";
 import { extractCeremonyLogs } from "@/lib/ceremony-response";
+import { relativeTime, absoluteTime } from "@/lib/format-time";
 import { toast } from "sonner";
 
 function CeremoniesContent() {
@@ -138,7 +139,7 @@ function CeremoniesContent() {
                 <span className="text-2xl">{CEREMONY_ICONS[c.type]}</span>
                 <div>
                   <div className="font-medium text-sm capitalize">{c.type.replace("_", " ")}</div>
-                  <div className="text-xs text-muted-foreground">{c.direction} · {new Date(c.timestamp).toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground"><span className="capitalize">{c.direction}</span> · <span title={absoluteTime(c.timestamp)}>{relativeTime(c.timestamp)}</span></div>
                 </div>
               </div>
               <div className="flex items-center gap-2">

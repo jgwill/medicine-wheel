@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { type NarrativeBeat, type MedicineWheelCycle, DIRECTION_COLORS, type DirectionName } from "@/lib/types";
 import { extractCycles } from "@/lib/cycle-response";
+import { relativeTime, absoluteTime } from "@/lib/format-time";
 
 export default function NarrativePage() {
   const [beats, setBeats] = useState<NarrativeBeat[]>([]);
@@ -32,7 +33,7 @@ export default function NarrativePage() {
               <h2 className="text-lg font-semibold">Active Cycle</h2>
               <p className="text-sm text-muted-foreground italic">&ldquo;{activeCycle.research_question}&rdquo;</p>
             </div>
-            <span className="text-xs text-muted-foreground">Started {new Date(activeCycle.start_date).toLocaleDateString()}</span>
+            <span className="text-xs text-muted-foreground" title={absoluteTime(activeCycle.start_date)}>Started {relativeTime(activeCycle.start_date)}</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
@@ -96,7 +97,7 @@ export default function NarrativePage() {
                 </div>
                 <div className="text-right text-xs text-muted-foreground">
                   <div className="capitalize">{beat.direction} · Act {beat.act}</div>
-                  <div>{new Date(beat.timestamp).toLocaleDateString()}</div>
+                  <div title={absoluteTime(beat.timestamp)}>{relativeTime(beat.timestamp)}</div>
                 </div>
               </div>
             </div>

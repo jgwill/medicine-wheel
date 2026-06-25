@@ -10,6 +10,7 @@ import {
   NODE_TYPE_COLORS,
   DIRECTION_COLORS,
 } from "@/lib/types";
+import { relativeTime, absoluteTime } from "@/lib/format-time";
 import { toast } from "sonner";
 
 const NODE_TYPES: NodeType[] = ["human", "land", "spirit", "ancestor", "future", "knowledge"];
@@ -195,7 +196,7 @@ export default function NodesPage() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div><span className="text-muted-foreground">Type:</span> <span className="capitalize">{node.type}</span></div>
                     {node.direction && <div><span className="text-muted-foreground">Direction:</span> <span className="capitalize">{node.direction}</span></div>}
-                    <div><span className="text-muted-foreground">Created:</span> {new Date(node.created_at).toLocaleDateString()}</div>
+                    <div><span className="text-muted-foreground">Created:</span> <span title={absoluteTime(node.created_at)}>{relativeTime(node.created_at)}</span></div>
                     <div><span className="text-muted-foreground">ID:</span> <code className="text-xs">{node.id.slice(0, 8)}…</code></div>
                   </div>
                   <div>

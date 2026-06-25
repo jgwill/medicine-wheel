@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import type { MouseEvent, FormEvent } from "react";
 import { type RelationalNode, type RelationalEdge, NODE_TYPE_COLORS, type NodeType } from "@/lib/types";
+import { relativeTime, absoluteTime } from "@/lib/format-time";
 import { toast } from "sonner";
 
 interface GraphNode extends RelationalNode {
@@ -136,7 +137,7 @@ export default function RelationsPage() {
               <div className="mt-3 space-y-2 text-sm">
                 <div><span className="text-muted-foreground">Type:</span> {selectedNode.type}</div>
                 {selectedNode.direction && <div><span className="text-muted-foreground">Direction:</span> {selectedNode.direction}</div>}
-                <div><span className="text-muted-foreground">Created:</span> {new Date(selectedNode.created_at).toLocaleDateString()}</div>
+                <div><span className="text-muted-foreground">Created:</span> <span title={absoluteTime(selectedNode.created_at)}>{relativeTime(selectedNode.created_at)}</span></div>
               </div>
               <div className="mt-4">
                 <h4 className="text-sm font-medium mb-2">Connected Edges</h4>
