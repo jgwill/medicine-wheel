@@ -84,7 +84,7 @@
     "@medicine-wheel/fire-keeper": "^0.4.9",
     "@medicine-wheel/graph-viz": "^0.4.9",
     "@medicine-wheel/importance-unit": "^0.4.9",
-    "@medicine-wheel/mcp": "^4.4.8",
+    "@medicine-wheel/mcp": "^4.4.10",
     "@medicine-wheel/narrative-cluster": "^0.4.9",
     "@medicine-wheel/narrative-engine": "^0.4.9",
     "@medicine-wheel/ontology-core": "^0.4.9",
