@@ -41,6 +41,9 @@ export type {
   AncestorRelation,
   FutureRelation,
   CosmicRelation,
+  // Production (film & media) relation subtype — additive
+  ProductionEntityKind,
+  ProductionRelation,
   // RSIS types
   SunName,
   CeremonyPhase,

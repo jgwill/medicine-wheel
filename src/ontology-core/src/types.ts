@@ -477,6 +477,43 @@ export interface CosmicRelation extends Relation {
   entity?: string;
 }
 
+// ── Production Relation Subtype (film & media as knowledge practice) ──────────
+// Additive support for agent-supported film production. Film entities are NOT
+// new NodeTypes — they ride on existing `knowledge` nodes carrying a
+// `metadata.kind: ProductionEntityKind` discriminator, connected by
+// ProductionRelation edges. This mirrors LandRelation/AncestorRelation and
+// leaves the NodeType / CeremonyType unions (and their Zod schemas) untouched.
+
+/** Discriminator for film/production entities riding on `knowledge` nodes. */
+export type ProductionEntityKind =
+  | 'shot'
+  | 'rush'
+  | 'sequence'
+  | 'scene'
+  | 'recording'
+  | 'collaborator'
+  | 'edit-brief';
+
+/**
+ * A relation grounded in film/media production. Knowledge emerges through
+ * witnessed relationship (Wilson; Renaud) rather than extractive capture —
+ * `witnessed-by` records the participant that witnessed a rush, not merely a
+ * source that owns it.
+ */
+export interface ProductionRelation extends Relation {
+  relationship_type:
+    | 'shot-of'
+    | 'rush-of'
+    | 'sequence-of'
+    | 'witnessed-by'
+    | 'directed-by'
+    | 'sounds-in';
+  /** The production session / episode this relation belongs to. */
+  production_id?: string;
+  /** Timecode or transcript offset anchoring this relation. */
+  timecode?: string;
+}
+
 // ── MCP Tool/Resource/Prompt types ──────────────────────────────────────────
 
 export interface MWTool {

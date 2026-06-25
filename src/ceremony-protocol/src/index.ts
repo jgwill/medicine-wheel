@@ -230,3 +230,19 @@ export function enforceCeremonyGate(
 
   return { blocked: false };
 }
+
+// ── Relational Production Protocol (Renaud thread — Research is Ceremony) ──────
+export type {
+  ProductionStage,
+  ProductionProtocolStep,
+  ProductionProtocolStage,
+  ProductionSession,
+} from './production.js';
+export {
+  PRODUCTION_STAGE_ORDER,
+  STAGE_TO_PHASE,
+  RELATIONAL_PRODUCTION_PROTOCOL,
+  openProductionSession,
+  advanceProductionStage,
+  closeProductionSession,
+} from './production.js';
