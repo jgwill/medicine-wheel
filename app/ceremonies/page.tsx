@@ -56,6 +56,7 @@ function CeremoniesContent() {
 
   const directions: DirectionName[] = ["east", "south", "west", "north"];
   const cTypes: CeremonyType[] = ["smudging", "talking_circle", "spirit_feeding", "opening", "closing"];
+  const DIRECTION_ICONS: Record<DirectionName, string> = { east: "🌅", south: "🌞", west: "🌄", north: "❄️" };
 
   const phaseMap: Record<DirectionName, string> = { east: "opening", south: "council", west: "integration", north: "closure" };
   const currentPhase = useMemo(() => {
@@ -134,17 +135,24 @@ function CeremoniesContent() {
         {ceremonies.map((c) => (
           <div key={c.id} className="border rounded-lg bg-card overflow-hidden cursor-pointer hover:border-ring/50 transition-colors"
             style={{ borderTopColor: DIRECTION_COLORS[c.direction], borderTopWidth: 3 }} onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}>
-            <div className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{CEREMONY_ICONS[c.type]}</span>
-                <div>
-                  <div className="font-medium text-sm capitalize">{c.type.replace("_", " ")}</div>
-                  <div className="text-xs text-muted-foreground"><span className="capitalize">{c.direction}</span> · <span title={absoluteTime(c.timestamp)}>{relativeTime(c.timestamp)}</span></div>
+            <div className="p-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-2xl shrink-0">{CEREMONY_ICONS[c.type]}</span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm capitalize">{c.type.replace("_", " ")}</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium capitalize border"
+                      style={{ borderColor: DIRECTION_COLORS[c.direction], color: DIRECTION_COLORS[c.direction] }}>
+                      {DIRECTION_ICONS[c.direction]} {c.direction}
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground" title={absoluteTime(c.timestamp)}>{relativeTime(c.timestamp)}</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 {c.participants.length > 0 && <span className="px-2 py-0.5 rounded-full bg-secondary text-xs">{c.participants.length} participant{c.participants.length !== 1 ? "s" : ""}</span>}
                 {c.medicines_used.length > 0 && <span className="px-2 py-0.5 rounded-full bg-secondary text-xs">🌿 {c.medicines_used.length}</span>}
+                <span className="text-muted-foreground text-sm w-4 text-center" aria-hidden>{expandedId === c.id ? "▲" : "▼"}</span>
               </div>
             </div>
             {expandedId === c.id && (
@@ -152,7 +160,7 @@ function CeremoniesContent() {
                 {c.intentions.length > 0 && <div><div className="text-xs font-medium text-muted-foreground uppercase mb-1">Intentions</div>{c.intentions.map((int, i) => <p key={i} className="text-sm">{int}</p>)}</div>}
                 {c.participants.length > 0 && <div><div className="text-xs font-medium text-muted-foreground uppercase mb-1">Participants</div><div className="flex flex-wrap gap-1">{c.participants.map((p) => <span key={p} className="px-2 py-0.5 rounded bg-secondary text-xs">{p}</span>)}</div></div>}
                 {c.medicines_used.length > 0 && <div><div className="text-xs font-medium text-muted-foreground uppercase mb-1">Medicines</div><div className="flex flex-wrap gap-1">{c.medicines_used.map((m) => <span key={m} className="px-2 py-0.5 rounded bg-secondary text-xs">🌿 {m}</span>)}</div></div>}
-                {c.research_context && <div><div className="text-xs font-medium text-muted-foreground uppercase mb-1">Research Context</div><p className="text-sm">{c.research_context}</p></div>}
+                {c.research_context && <div><div className="text-xs font-medium text-muted-foreground uppercase mb-1">Research Context</div><code className="inline-block px-2 py-1 rounded bg-secondary/60 text-xs font-mono text-muted-foreground break-all">{c.research_context}</code></div>}
               </div>
             )}
           </div>
