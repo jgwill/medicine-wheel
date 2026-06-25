@@ -19,8 +19,10 @@ export default function RelationsPage() {
   const [showAddNode, setShowAddNode] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
   const [dragging, setDragging] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
+    setLoading(true);
     try {
       const [nodesRes, edgesRes] = await Promise.all([fetch("/api/nodes"), fetch("/api/edges")]);
       const nodesResponse = await nodesRes.json();
@@ -37,6 +39,7 @@ export default function RelationsPage() {
       setNodes(graphNodes);
       setEdges(Array.isArray(edgesData) ? edgesData : []);
     } catch (err) { console.error("Failed to load relational data:", err); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
@@ -101,7 +104,12 @@ export default function RelationsPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 border rounded-lg bg-card overflow-hidden">
+        <div className="lg:col-span-2 border rounded-lg bg-card overflow-hidden relative">
+          {(loading || nodes.length === 0) && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center text-center text-muted-foreground pointer-events-none">
+              {loading ? "Loading relational web…" : "No nodes yet — add one to begin mapping relations."}
+            </div>
+          )}
           <svg ref={svgRef} viewBox="0 0 800 600" className="w-full h-[600px] cursor-crosshair"
             onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp}>
             {filteredEdges.map((edge) => {

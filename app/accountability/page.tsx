@@ -16,6 +16,7 @@ export default function AccountabilityPage() {
   const [ceremonies, setCeremonies] = useState<any[]>([]);
   const [beats, setBeats] = useState<any[]>([]);
   const [expandedRes, setExpandedRes] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
@@ -32,7 +33,7 @@ export default function AccountabilityPage() {
       setEdges(Array.isArray(e) ? e : []);
       setCeremonies(Array.isArray(c) ? c : []);
       setBeats(Array.isArray(b) ? b : []);
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   const ceremoniedCount = edges.filter((e: any) => e.ceremony_honored).length;
@@ -42,6 +43,8 @@ export default function AccountabilityPage() {
       <h1 className="text-2xl font-bold mb-2">Accountability & Frameworks</h1>
       <p className="text-sm text-muted-foreground mb-6">Relational accountability metrics and Indigenous research frameworks</p>
 
+      {loading && <div className="text-center py-16 text-muted-foreground">Loading accountability metrics…</div>}
+      {!loading && (<>
       {/* Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="p-4 rounded-lg border bg-card text-center">
@@ -92,6 +95,7 @@ export default function AccountabilityPage() {
           </div>
         ))}
       </div>
+      </>)}
     </div>
   );
 }

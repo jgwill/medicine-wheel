@@ -9,11 +9,13 @@ export default function NarrativePage() {
   const [beats, setBeats] = useState<NarrativeBeat[]>([]);
   const [cycles, setCycles] = useState<MedicineWheelCycle[]>([]);
   const [expandedBeat, setExpandedBeat] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([fetch("/api/narrative/beats").then((r) => r.json()), fetch("/api/narrative/cycles").then((r) => r.json())])
       .then(([b, c]) => { setBeats(Array.isArray(b) ? b : []); setCycles(extractCycles(c)); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const activeCycle = cycles[0];
@@ -84,8 +86,9 @@ export default function NarrativePage() {
       {/* Beat List */}
       <h2 className="text-lg font-semibold mb-3">Narrative Beats ({beats.length})</h2>
       <div className="space-y-3">
-        {beats.length === 0 && <div className="text-center py-8 text-muted-foreground">No beats recorded yet.</div>}
-        {beats.map((beat) => (
+        {loading && <div className="text-center py-8 text-muted-foreground">Loading narrative beats…</div>}
+        {!loading && beats.length === 0 && <div className="text-center py-8 text-muted-foreground">No beats recorded yet.</div>}
+        {!loading && beats.map((beat) => (
           <div key={beat.id} className="border rounded-lg bg-card overflow-hidden cursor-pointer hover:border-ring/50"
             style={{ borderLeftColor: DIRECTION_COLORS[beat.direction as DirectionName], borderLeftWidth: 4 }}
             onClick={() => setExpandedBeat(expandedBeat === beat.id ? null : beat.id)}>

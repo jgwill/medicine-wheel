@@ -15,12 +15,14 @@ function CeremoniesContent() {
   const [filterType, setFilterType] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const loadCeremonies = useCallback(async () => {
     const params = new URLSearchParams();
     if (filterDir !== "all") params.set("direction", filterDir);
     if (filterType !== "all") params.set("type", filterType);
 
+    setLoading(true);
     try {
       const res = await fetch(`/api/ceremonies?${params}`);
       if (!res.ok) throw new Error("Failed to load ceremonies");
@@ -28,8 +30,13 @@ function CeremoniesContent() {
       setCeremonies(extractCeremonyLogs(data));
     } catch {
       setCeremonies([]);
+    } finally {
+      setLoading(false);
     }
   }, [filterDir, filterType]);
+
+  const filtersActive = filterDir !== "all" || filterType !== "all";
+  const clearFilters = () => { setFilterDir("all"); setFilterType("all"); };
 
   useEffect(() => {
     loadCeremonies();
@@ -112,6 +119,9 @@ function CeremoniesContent() {
           <option value="all">All Types</option>
           {cTypes.map((t) => <option key={t} value={t}>{t.replace("_", " ")}</option>)}
         </select>
+        {filtersActive && (
+          <button onClick={clearFilters} className="px-3 py-1 rounded-md border text-xs text-muted-foreground hover:text-foreground">Clear filters</button>
+        )}
       </div>
 
       {showForm && (
@@ -131,8 +141,14 @@ function CeremoniesContent() {
       )}
 
       <div className="space-y-3">
-        {ceremonies.length === 0 && <div className="text-center py-12 text-muted-foreground"><p>No ceremonies found. Log your first ceremony to begin.</p></div>}
-        {ceremonies.map((c) => (
+        {loading && <div className="text-center py-12 text-muted-foreground">Loading ceremonies…</div>}
+        {!loading && ceremonies.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>{filtersActive ? "No ceremonies match these filters." : "No ceremonies found. Log your first ceremony to begin."}</p>
+            {filtersActive && <button onClick={clearFilters} className="text-sm mt-2 underline hover:text-foreground">Clear filters</button>}
+          </div>
+        )}
+        {!loading && ceremonies.map((c) => (
           <div key={c.id} className="border rounded-lg bg-card overflow-hidden cursor-pointer hover:border-ring/50 transition-colors"
             style={{ borderTopColor: DIRECTION_COLORS[c.direction], borderTopWidth: 3 }} onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}>
             <div className="p-4 flex items-center justify-between gap-3">
