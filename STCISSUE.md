@@ -970,3 +970,147 @@ Issue being tracked via @stcissue bot.
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #92 - UI: Complete the ceremony log card (expand affordance, direction chip, research-context formatting)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-25T14:07:04Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/92
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #92 - UI: Complete the ceremony log card (expand affordance, direction chip, research-context formatting)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-25T14:07:04Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/92
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #93 - UI: Consistent loading & empty states across data views
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-25T14:07:05Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/93
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #93 - UI: Consistent loading & empty states across data views
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-25T14:07:05Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/93
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #94 - UI: Human-readable, recency-aware timestamps (shared format-time helper)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-25T14:07:07Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/94
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #94 - UI: Human-readable, recency-aware timestamps (shared format-time helper)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-25T14:07:08Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/94
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #92 - UI: Complete the ceremony log card (expand affordance, direction chip, research-context formatting)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-25T14:07:20Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/92
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #93 - UI: Consistent loading & empty states across data views
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-25T14:07:21Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/93
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #94 - UI: Human-readable, recency-aware timestamps (shared format-time helper)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-25T14:07:22Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/94
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #92 - UI: Complete the ceremony log card (expand affordance, direction chip, research-context formatting)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-25T14:39:09Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/92
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #93 - UI: Consistent loading & empty states across data views
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-25T14:39:11Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/93
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #94 - UI: Human-readable, recency-aware timestamps (shared format-time helper)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-06-25T14:39:13Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/94
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
