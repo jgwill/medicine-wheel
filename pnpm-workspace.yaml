@@ -17,3 +17,5 @@ packages:
   - src/transformation-tracker
   - src/ui-components
   - mcp
+allowBuilds:
+  sharp: set this to true or false
