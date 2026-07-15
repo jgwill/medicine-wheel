@@ -38,6 +38,17 @@ CREATE TABLE IF NOT EXISTS ceremonies (
   research_context TEXT
 );
 
+-- Inquiry Weaves table (registered read-side projections from @miadi/inquiry-weave)
+CREATE TABLE IF NOT EXISTS inquiry_weaves (
+  id TEXT PRIMARY KEY,
+  payload JSONB NOT NULL,
+  episode_path TEXT NOT NULL,
+  episode_number INTEGER NOT NULL,
+  issue TEXT NOT NULL,
+  artefact_id TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes for efficient queries
 CREATE INDEX IF NOT EXISTS idx_nodes_type ON nodes(type);
 CREATE INDEX IF NOT EXISTS idx_nodes_direction ON nodes(direction);
@@ -46,6 +57,10 @@ CREATE INDEX IF NOT EXISTS idx_ceremonies_type ON ceremonies(type);
 CREATE INDEX IF NOT EXISTS idx_ceremonies_timestamp ON ceremonies(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_edges_from ON edges(from_id);
 CREATE INDEX IF NOT EXISTS idx_edges_to ON edges(to_id);
+CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_episode_path ON inquiry_weaves(episode_path);
+CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_episode_number ON inquiry_weaves(episode_number);
+CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_issue ON inquiry_weaves(issue);
+CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_artefact_id ON inquiry_weaves(artefact_id);
 
 -- Updated_at trigger for nodes
 CREATE OR REPLACE FUNCTION update_updated_at_column()

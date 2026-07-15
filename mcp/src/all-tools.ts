@@ -19,6 +19,7 @@ import { epistemicTools } from "./tools/epistemic.js";
 import { coordinationTools } from "./tools/coordination.js";
 import { governanceTransformationTools } from "./tools/governance-transformation.js";
 import { reasoningObservabilityTools } from "./tools/reasoning-observability.js";
+import { inquiryWeaveTools } from "./tools/inquiry-weaves.js";
 
 export const allTools: Tool[] = [
   ...eastTools,
@@ -34,4 +35,5 @@ export const allTools: Tool[] = [
   ...coordinationTools,
   ...governanceTransformationTools,
   ...reasoningObservabilityTools,
+  ...inquiryWeaveTools,
 ];

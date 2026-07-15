@@ -104,6 +104,46 @@ interface StoredMmot {
   step4_feedback: string;
 }
 
+interface StoredInquiryWeave {
+  id: string;
+  weave: 1;
+  artefact: {
+    id: string;
+    path?: string;
+    [key: string]: unknown;
+  };
+  issue: string;
+  issue_url?: string;
+  episode: {
+    path: string;
+    number: number;
+    [key: string]: unknown;
+  };
+  last_sync: {
+    state: 'never-synced' | 'in-sync' | 'stale' | 'episode-copy-diverged';
+    at?: string;
+    tree_sha256?: string;
+    file_count?: number;
+    bytes_total?: number;
+    [key: string]: unknown;
+  };
+  source: {
+    package: string;
+    record_path?: string;
+    registered_at: string;
+    updated_at: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface InquiryWeaveFilters {
+  episode_path?: string;
+  episode_number?: number;
+  issue?: string;
+  artefact?: string;
+}
+
 // ── File Lock ──
 
 function withWriteLock<T>(filePath: string, fn: () => T): T {
@@ -348,6 +388,7 @@ class EdgeCollection {
 // ── JsonlStore ──
 
 export class JsonlStore {
+  readonly name = 'jsonl';
   readonly dataDir: string;
 
   readonly nodes:      JsonlCollection<StoredNode>;
@@ -357,6 +398,7 @@ export class JsonlStore {
   readonly cycles:     JsonlCollection<StoredCycle>;
   readonly charts:     JsonlCollection<StoredChart>;
   readonly mmots:      JsonlCollection<StoredMmot>;
+  readonly inquiryWeaves: JsonlCollection<StoredInquiryWeave>;
 
   constructor(dataDir?: string) {
     this.dataDir = dataDir || process.env.MW_DATA_DIR || resolveProjectDataDir();
@@ -372,6 +414,9 @@ export class JsonlStore {
     this.cycles     = new JsonlCollection<StoredCycle>   (path.join(this.dataDir, 'cycles.jsonl'));
     this.charts     = new JsonlCollection<StoredChart>   (path.join(this.dataDir, 'charts.jsonl'));
     this.mmots      = new JsonlCollection<StoredMmot>    (path.join(this.dataDir, 'mmots.jsonl'));
+    this.inquiryWeaves = new JsonlCollection<StoredInquiryWeave>(
+      path.join(this.dataDir, 'inquiry-weaves.jsonl')
+    );
   }
 
   // === Nodes ===
@@ -473,6 +518,38 @@ export class JsonlStore {
   // === MMOT ===
   saveMmot(mmot: StoredMmot): void { this.mmots.set(mmot.id, mmot); }
   getMmotsByChart(chartId: string): StoredMmot[] { return this.mmots.filter(m => m.chart_id === chartId); }
+
+  // === Inquiry Weaves ===
+  registerInquiryWeave(record: StoredInquiryWeave): void {
+    this.inquiryWeaves.set(record.id, record);
+  }
+
+  getInquiryWeave(id: string): StoredInquiryWeave | undefined {
+    return this.inquiryWeaves.get(id);
+  }
+
+  listInquiryWeaves(filters: InquiryWeaveFilters = {}): StoredInquiryWeave[] {
+    return this.inquiryWeaves.filter(record => matchesInquiryWeaveFilters(record, filters));
+  }
+}
+
+function matchesInquiryWeaveFilters(
+  record: StoredInquiryWeave,
+  filters: InquiryWeaveFilters,
+): boolean {
+  if (filters.episode_path !== undefined && record.episode?.path !== filters.episode_path) {
+    return false;
+  }
+  if (filters.episode_number !== undefined && record.episode?.number !== filters.episode_number) {
+    return false;
+  }
+  if (filters.issue !== undefined && record.issue !== filters.issue) {
+    return false;
+  }
+  if (filters.artefact !== undefined && record.artefact?.id !== filters.artefact) {
+    return false;
+  }
+  return true;
 }
 
 // ── Path Resolution ──

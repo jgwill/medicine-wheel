@@ -22,6 +22,9 @@ export type {
   RelationalNode,
   RelationalEdge,
   CeremonyLog,
+  WeaveRecord,
+  WeaveSyncState,
+  InquiryWeaveFilters,
   ProviderType,
 } from './interface.js';
 

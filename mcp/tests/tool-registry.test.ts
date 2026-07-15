@@ -60,6 +60,13 @@ describe('allTools registry', () => {
     const names = new Set(allTools.map(t => t.name));
     expect(names.has('create_structural_tension_chart')).toBe(true);
   });
+
+  it('includes Inquiry Weave registration tools', () => {
+    const names = new Set(allTools.map(t => t.name));
+    expect(names.has('register_inquiry_weave')).toBe(true);
+    expect(names.has('list_inquiry_weaves')).toBe(true);
+    expect(names.has('get_inquiry_weave')).toBe(true);
+  });
 });
 
 describe('tools/list simulation', () => {

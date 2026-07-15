@@ -2,7 +2,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
 import type { DirectionName, NodeType, CeremonyType } from '@medicine-wheel/ontology-core';
-import type { StorageProvider, RelationalNode, RelationalEdge, CeremonyLog } from './interface.js';
+import type {
+  StorageProvider,
+  RelationalNode,
+  RelationalEdge,
+  CeremonyLog,
+  WeaveRecord,
+  InquiryWeaveFilters,
+} from './interface.js';
 
 interface StoredNode {
   id: string;
@@ -46,12 +53,14 @@ export class JsonlProvider implements StorageProvider {
   private readonly nodesFile: string;
   private readonly edgesFile: string;
   private readonly ceremoniesFile: string;
+  private readonly inquiryWeavesFile: string;
 
   constructor(dataDir?: string) {
     this.dataDir = path.resolve(dataDir ?? resolveProjectDataDir());
     this.nodesFile = path.join(this.dataDir, 'nodes.jsonl');
     this.edgesFile = path.join(this.dataDir, 'edges.jsonl');
     this.ceremoniesFile = path.join(this.dataDir, 'ceremonies.jsonl');
+    this.inquiryWeavesFile = path.join(this.dataDir, 'inquiry-weaves.jsonl');
   }
 
   async connect(): Promise<void> {
@@ -185,6 +194,18 @@ export class JsonlProvider implements StorageProvider {
       .map((ceremony) => this.parseCeremony(ceremony));
   }
 
+  async registerInquiryWeave(record: WeaveRecord): Promise<void> {
+    await this.upsertById(this.inquiryWeavesFile, record);
+  }
+
+  async getInquiryWeave(id: string): Promise<WeaveRecord | null> {
+    return this.readInquiryWeaves().find((record) => record.id === id) ?? null;
+  }
+
+  async listInquiryWeaves(filters: InquiryWeaveFilters = {}): Promise<WeaveRecord[]> {
+    return this.readInquiryWeaves().filter((record) => matchesInquiryWeaveFilters(record, filters));
+  }
+
   private readNodes(): StoredNode[] {
     return readJsonl<StoredNode>(this.nodesFile);
   }
@@ -195,6 +216,10 @@ export class JsonlProvider implements StorageProvider {
 
   private readCeremonies(): StoredCeremony[] {
     return readJsonl<StoredCeremony>(this.ceremoniesFile);
+  }
+
+  private readInquiryWeaves(): WeaveRecord[] {
+    return readJsonl<WeaveRecord>(this.inquiryWeavesFile);
   }
 
   private async upsertById<T extends { id: string }>(filePath: string, item: T): Promise<void> {
@@ -338,6 +363,22 @@ function edgeKey(edge: Pick<StoredEdge, 'from_id' | 'to_id'>): string {
 
 function sortByNewest<T extends Record<K, string>, K extends keyof T>(field: K) {
   return (left: T, right: T): number => Date.parse(right[field]) - Date.parse(left[field]);
+}
+
+function matchesInquiryWeaveFilters(record: WeaveRecord, filters: InquiryWeaveFilters): boolean {
+  if (filters.episode_path !== undefined && record.episode?.path !== filters.episode_path) {
+    return false;
+  }
+  if (filters.episode_number !== undefined && record.episode?.number !== filters.episode_number) {
+    return false;
+  }
+  if (filters.issue !== undefined && record.issue !== filters.issue) {
+    return false;
+  }
+  if (filters.artefact !== undefined && record.artefact?.id !== filters.artefact) {
+    return false;
+  }
+  return true;
 }
 
 function isProcessAlive(pid: number): boolean {

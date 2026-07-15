@@ -3,7 +3,14 @@
  */
 
 import type { DirectionName, NodeType, CeremonyType } from '@medicine-wheel/ontology-core';
-import type { StorageProvider, RelationalNode, RelationalEdge, CeremonyLog } from './interface.js';
+import type {
+  StorageProvider,
+  RelationalNode,
+  RelationalEdge,
+  CeremonyLog,
+  WeaveRecord,
+  InquiryWeaveFilters,
+} from './interface.js';
 
 type QueryRow = Record<string, unknown>;
 type NeonQueryFunction = (strings: TemplateStringsArray, ...params: unknown[]) => Promise<QueryRow[]>;
@@ -17,6 +24,7 @@ export class NeonProvider implements StorageProvider {
     if (!url) throw new Error('DATABASE_URL, POSTGRES_URL, or NEON_DATABASE_URL must be set');
     const { neon } = await import('@neondatabase/serverless');
     this.sql = neon(url);
+    await this.ensureInquiryWeavesTable();
   }
 
   async disconnect(): Promise<void> {
@@ -199,6 +207,64 @@ export class NeonProvider implements StorageProvider {
       research_context: (row.research_context as string) || undefined,
     };
   }
+
+  // ── Inquiry Weave Operations ──
+
+  async registerInquiryWeave(record: WeaveRecord): Promise<void> {
+    await this.db`
+      INSERT INTO inquiry_weaves (id, payload, episode_path, episode_number, issue, artefact_id, updated_at)
+      VALUES (
+        ${record.id},
+        ${JSON.stringify(record)},
+        ${record.episode.path},
+        ${record.episode.number},
+        ${record.issue},
+        ${record.artefact.id},
+        NOW()
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        payload = EXCLUDED.payload,
+        episode_path = EXCLUDED.episode_path,
+        episode_number = EXCLUDED.episode_number,
+        issue = EXCLUDED.issue,
+        artefact_id = EXCLUDED.artefact_id,
+        updated_at = NOW()
+    `;
+  }
+
+  async getInquiryWeave(id: string): Promise<WeaveRecord | null> {
+    const rows = await this.db`SELECT payload FROM inquiry_weaves WHERE id = ${id}`;
+    if (rows.length === 0) return null;
+    return parseJsonValue<WeaveRecord>(rows[0].payload, null as unknown as WeaveRecord);
+  }
+
+  async listInquiryWeaves(filters: InquiryWeaveFilters = {}): Promise<WeaveRecord[]> {
+    const records = await this.getAllInquiryWeaves();
+    return records.filter((record) => matchesInquiryWeaveFilters(record, filters));
+  }
+
+  private async getAllInquiryWeaves(): Promise<WeaveRecord[]> {
+    const rows = await this.db`SELECT payload FROM inquiry_weaves ORDER BY updated_at DESC`;
+    return rows.map((row) => parseJsonValue<WeaveRecord>(row.payload, null as unknown as WeaveRecord));
+  }
+
+  private async ensureInquiryWeavesTable(): Promise<void> {
+    await this.db`
+      CREATE TABLE IF NOT EXISTS inquiry_weaves (
+        id TEXT PRIMARY KEY,
+        payload JSONB NOT NULL,
+        episode_path TEXT NOT NULL,
+        episode_number INTEGER NOT NULL,
+        issue TEXT NOT NULL,
+        artefact_id TEXT NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_episode_path ON inquiry_weaves(episode_path)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_episode_number ON inquiry_weaves(episode_number)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_issue ON inquiry_weaves(issue)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_artefact_id ON inquiry_weaves(artefact_id)`;
+  }
 }
 
 function getConnectionString(): string | undefined {
@@ -221,4 +287,20 @@ function parseJsonValue<T>(value: unknown, fallback: T): T {
     }
   }
   return value as T;
+}
+
+function matchesInquiryWeaveFilters(record: WeaveRecord, filters: InquiryWeaveFilters): boolean {
+  if (filters.episode_path !== undefined && record.episode?.path !== filters.episode_path) {
+    return false;
+  }
+  if (filters.episode_number !== undefined && record.episode?.number !== filters.episode_number) {
+    return false;
+  }
+  if (filters.issue !== undefined && record.issue !== filters.issue) {
+    return false;
+  }
+  if (filters.artefact !== undefined && record.artefact?.id !== filters.artefact) {
+    return false;
+  }
+  return true;
 }

@@ -27,6 +27,51 @@ export interface RelationalEdge extends Omit<OntologyRelationalEdge, 'id'> {
 
 export type CeremonyLog = OntologyCeremonyLog;
 
+export type WeaveSyncState =
+  | 'never-synced'
+  | 'in-sync'
+  | 'stale'
+  | 'episode-copy-diverged';
+
+export interface WeaveRecord extends Record<string, unknown> {
+  id: string;
+  weave: 1;
+  artefact: {
+    id: string;
+    path?: string;
+    [key: string]: unknown;
+  };
+  issue: string;
+  issue_url?: string;
+  episode: {
+    path: string;
+    number: number;
+    [key: string]: unknown;
+  };
+  last_sync: {
+    state: WeaveSyncState;
+    at?: string;
+    tree_sha256?: string;
+    file_count?: number;
+    bytes_total?: number;
+    [key: string]: unknown;
+  };
+  source: {
+    package: string;
+    record_path?: string;
+    registered_at: string;
+    updated_at: string;
+    [key: string]: unknown;
+  };
+}
+
+export interface InquiryWeaveFilters {
+  episode_path?: string;
+  episode_number?: number;
+  issue?: string;
+  artefact?: string;
+}
+
 // ── Provider Interface ──
 
 export interface StorageProvider {
@@ -57,6 +102,11 @@ export interface StorageProvider {
   getCeremoniesByDirection(direction: DirectionName): Promise<CeremonyLog[]>;
   getCeremoniesByType(type: CeremonyType): Promise<CeremonyLog[]>;
   getAllCeremonies(limit?: number): Promise<CeremonyLog[]>;
+
+  // Inquiry Weave Operations
+  registerInquiryWeave(record: WeaveRecord): Promise<void>;
+  getInquiryWeave(id: string): Promise<WeaveRecord | null>;
+  listInquiryWeaves(filters?: InquiryWeaveFilters): Promise<WeaveRecord[]>;
 }
 
 export type ProviderType = 'jsonl' | 'neon' | 'redis' | 'auto';

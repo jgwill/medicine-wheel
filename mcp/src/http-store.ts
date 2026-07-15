@@ -97,6 +97,46 @@ interface StoredMmot {
   step4_feedback: string;
 }
 
+interface StoredInquiryWeave {
+  id: string;
+  weave: 1;
+  artefact: {
+    id: string;
+    path?: string;
+    [key: string]: unknown;
+  };
+  issue: string;
+  issue_url?: string;
+  episode: {
+    path: string;
+    number: number;
+    [key: string]: unknown;
+  };
+  last_sync: {
+    state: 'never-synced' | 'in-sync' | 'stale' | 'episode-copy-diverged';
+    at?: string;
+    tree_sha256?: string;
+    file_count?: number;
+    bytes_total?: number;
+    [key: string]: unknown;
+  };
+  source: {
+    package: string;
+    record_path?: string;
+    registered_at: string;
+    updated_at: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface InquiryWeaveFilters {
+  episode_path?: string;
+  episode_number?: number;
+  issue?: string;
+  artefact?: string;
+}
+
 // ── Helpers ──
 
 async function httpGet<T>(url: string): Promise<T> {
@@ -123,6 +163,7 @@ async function httpPost<T>(url: string, body: unknown): Promise<T> {
 // ── HttpStore ──
 
 export class HttpStore {
+  readonly name = 'http';
   private readonly baseUrl: string;
 
   constructor(baseUrl: string) {
@@ -411,6 +452,33 @@ export class HttpStore {
       console.error(`[http-store] getMmotsByChart: /api/mmots not available`);
       return [];
     }
+  }
+
+  // === Inquiry Weaves ===
+
+  async registerInquiryWeave(record: StoredInquiryWeave): Promise<void> {
+    await httpPost(`${this.baseUrl}/api/inquiry-weaves`, record);
+  }
+
+  async getInquiryWeave(id: string): Promise<StoredInquiryWeave | undefined> {
+    const data = await httpGet<{ inquiry_weave: StoredInquiryWeave | null }>(
+      `${this.baseUrl}/api/inquiry-weaves/${encodeURIComponent(id)}`
+    );
+    return data.inquiry_weave ?? undefined;
+  }
+
+  async listInquiryWeaves(filters: InquiryWeaveFilters = {}): Promise<StoredInquiryWeave[]> {
+    const params = new URLSearchParams();
+    if (filters.episode_path !== undefined) params.set('episode_path', filters.episode_path);
+    if (filters.episode_number !== undefined) params.set('episode_number', String(filters.episode_number));
+    if (filters.issue !== undefined) params.set('issue', filters.issue);
+    if (filters.artefact !== undefined) params.set('artefact', filters.artefact);
+
+    const query = params.size > 0 ? `?${params.toString()}` : '';
+    const data = await httpGet<{ inquiry_weaves: StoredInquiryWeave[] }>(
+      `${this.baseUrl}/api/inquiry-weaves${query}`
+    );
+    return data.inquiry_weaves ?? [];
   }
 }
 
