@@ -67,6 +67,13 @@ describe('allTools registry', () => {
     expect(names.has('list_inquiry_weaves')).toBe(true);
     expect(names.has('get_inquiry_weave')).toBe(true);
   });
+
+  it('includes Plan Perspective registration tools', () => {
+    const names = new Set(allTools.map(t => t.name));
+    expect(names.has('register_plan_perspective')).toBe(true);
+    expect(names.has('list_plan_perspectives')).toBe(true);
+    expect(names.has('get_plan_perspective')).toBe(true);
+  });
 });
 
 describe('tools/list simulation', () => {

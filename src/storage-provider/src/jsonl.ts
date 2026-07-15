@@ -9,7 +9,13 @@ import type {
   CeremonyLog,
   WeaveRecord,
   InquiryWeaveFilters,
+  PlanPerspectiveRecord,
+  PlanPerspectiveFilters,
 } from './interface.js';
+import {
+  mergePlanPerspectiveRecords,
+  matchesPlanPerspectiveFilters,
+} from './plan-perspectives.js';
 
 interface StoredNode {
   id: string;
@@ -54,6 +60,7 @@ export class JsonlProvider implements StorageProvider {
   private readonly edgesFile: string;
   private readonly ceremoniesFile: string;
   private readonly inquiryWeavesFile: string;
+  private readonly planPerspectivesFile: string;
 
   constructor(dataDir?: string) {
     this.dataDir = path.resolve(dataDir ?? resolveProjectDataDir());
@@ -61,6 +68,7 @@ export class JsonlProvider implements StorageProvider {
     this.edgesFile = path.join(this.dataDir, 'edges.jsonl');
     this.ceremoniesFile = path.join(this.dataDir, 'ceremonies.jsonl');
     this.inquiryWeavesFile = path.join(this.dataDir, 'inquiry-weaves.jsonl');
+    this.planPerspectivesFile = path.join(this.dataDir, 'plan-perspectives.jsonl');
   }
 
   async connect(): Promise<void> {
@@ -206,6 +214,31 @@ export class JsonlProvider implements StorageProvider {
     return this.readInquiryWeaves().filter((record) => matchesInquiryWeaveFilters(record, filters));
   }
 
+  async registerPlanPerspective(record: PlanPerspectiveRecord): Promise<PlanPerspectiveRecord> {
+    let merged = record;
+    await withWriteLock(this.planPerspectivesFile, () => {
+      const records = readJsonl<PlanPerspectiveRecord>(this.planPerspectivesFile);
+      const existing = records.find((candidate) => candidate.id === record.id);
+      merged = existing ? mergePlanPerspectiveRecords(existing, record) : record;
+      const nextRecords = records.filter((candidate) => candidate.id !== record.id);
+      nextRecords.push(merged);
+      writeJsonl(this.planPerspectivesFile, nextRecords);
+    });
+    return merged;
+  }
+
+  async getPlanPerspective(id: string): Promise<PlanPerspectiveRecord | null> {
+    return this.readPlanPerspectives().find((record) => record.id === id) ?? null;
+  }
+
+  async listPlanPerspectives(
+    filters: PlanPerspectiveFilters = {},
+  ): Promise<PlanPerspectiveRecord[]> {
+    return this.readPlanPerspectives().filter((record) =>
+      matchesPlanPerspectiveFilters(record, filters),
+    );
+  }
+
   private readNodes(): StoredNode[] {
     return readJsonl<StoredNode>(this.nodesFile);
   }
@@ -220,6 +253,10 @@ export class JsonlProvider implements StorageProvider {
 
   private readInquiryWeaves(): WeaveRecord[] {
     return readJsonl<WeaveRecord>(this.inquiryWeavesFile);
+  }
+
+  private readPlanPerspectives(): PlanPerspectiveRecord[] {
+    return readJsonl<PlanPerspectiveRecord>(this.planPerspectivesFile);
   }
 
   private async upsertById<T extends { id: string }>(filePath: string, item: T): Promise<void> {

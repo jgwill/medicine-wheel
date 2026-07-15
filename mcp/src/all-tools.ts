@@ -20,6 +20,7 @@ import { coordinationTools } from "./tools/coordination.js";
 import { governanceTransformationTools } from "./tools/governance-transformation.js";
 import { reasoningObservabilityTools } from "./tools/reasoning-observability.js";
 import { inquiryWeaveTools } from "./tools/inquiry-weaves.js";
+import { planPerspectiveTools } from "./tools/plan-perspectives.js";
 
 export const allTools: Tool[] = [
   ...eastTools,
@@ -36,4 +37,5 @@ export const allTools: Tool[] = [
   ...governanceTransformationTools,
   ...reasoningObservabilityTools,
   ...inquiryWeaveTools,
+  ...planPerspectiveTools,
 ];

@@ -49,6 +49,15 @@ CREATE TABLE IF NOT EXISTS inquiry_weaves (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Plan Perspectives table (registered read-side projections from @miadi/plan-insight)
+CREATE TABLE IF NOT EXISTS plan_perspectives (
+  id TEXT PRIMARY KEY,
+  payload JSONB NOT NULL,
+  session_id TEXT NOT NULL,
+  episode_paths TEXT[] NOT NULL DEFAULT '{}',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Indexes for efficient queries
 CREATE INDEX IF NOT EXISTS idx_nodes_type ON nodes(type);
 CREATE INDEX IF NOT EXISTS idx_nodes_direction ON nodes(direction);
@@ -61,6 +70,8 @@ CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_episode_path ON inquiry_weaves(epi
 CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_episode_number ON inquiry_weaves(episode_number);
 CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_issue ON inquiry_weaves(issue);
 CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_artefact_id ON inquiry_weaves(artefact_id);
+CREATE INDEX IF NOT EXISTS idx_plan_perspectives_session_id ON plan_perspectives(session_id);
+CREATE INDEX IF NOT EXISTS idx_plan_perspectives_episode_paths ON plan_perspectives USING GIN(episode_paths);
 
 -- Updated_at trigger for nodes
 CREATE OR REPLACE FUNCTION update_updated_at_column()

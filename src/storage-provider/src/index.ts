@@ -25,8 +25,18 @@ export type {
   WeaveRecord,
   WeaveSyncState,
   InquiryWeaveFilters,
+  PlanPerspectiveRecord,
+  PlanPerspectiveEpisode,
+  PlanPerspectiveFilters,
   ProviderType,
 } from './interface.js';
+
+// Plan Perspective merge/filter semantics (shared across providers)
+export {
+  mergePlanPerspectiveRecords,
+  unionPlanPerspectiveEpisodes,
+  matchesPlanPerspectiveFilters,
+} from './plan-perspectives.js';
 
 // Factory
 export { createProvider, detectProvider } from './factory.js';

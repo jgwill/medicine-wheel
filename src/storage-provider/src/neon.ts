@@ -10,7 +10,13 @@ import type {
   CeremonyLog,
   WeaveRecord,
   InquiryWeaveFilters,
+  PlanPerspectiveRecord,
+  PlanPerspectiveFilters,
 } from './interface.js';
+import {
+  mergePlanPerspectiveRecords,
+  matchesPlanPerspectiveFilters,
+} from './plan-perspectives.js';
 
 type QueryRow = Record<string, unknown>;
 type NeonQueryFunction = (strings: TemplateStringsArray, ...params: unknown[]) => Promise<QueryRow[]>;
@@ -25,6 +31,7 @@ export class NeonProvider implements StorageProvider {
     const { neon } = await import('@neondatabase/serverless');
     this.sql = neon(url);
     await this.ensureInquiryWeavesTable();
+    await this.ensurePlanPerspectivesTable();
   }
 
   async disconnect(): Promise<void> {
@@ -264,6 +271,87 @@ export class NeonProvider implements StorageProvider {
     await this.db`CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_episode_number ON inquiry_weaves(episode_number)`;
     await this.db`CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_issue ON inquiry_weaves(issue)`;
     await this.db`CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_artefact_id ON inquiry_weaves(artefact_id)`;
+  }
+
+  // ── Plan Perspective Operations ──
+
+  async registerPlanPerspective(record: PlanPerspectiveRecord): Promise<PlanPerspectiveRecord> {
+    const existing = await this.getPlanPerspective(record.id);
+    const merged = existing ? mergePlanPerspectiveRecords(existing, record) : record;
+    const episodePaths = merged.episodes.map((episode) => episode.path);
+
+    await this.db`
+      INSERT INTO plan_perspectives (id, payload, session_id, episode_paths, updated_at)
+      VALUES (
+        ${merged.id},
+        ${JSON.stringify(merged)},
+        ${merged.plan.session_id},
+        ${episodePaths},
+        NOW()
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        payload = EXCLUDED.payload,
+        session_id = EXCLUDED.session_id,
+        episode_paths = EXCLUDED.episode_paths,
+        updated_at = NOW()
+    `;
+
+    return merged;
+  }
+
+  async getPlanPerspective(id: string): Promise<PlanPerspectiveRecord | null> {
+    const rows = await this.db`SELECT payload FROM plan_perspectives WHERE id = ${id}`;
+    if (rows.length === 0) return null;
+    return parseJsonValue<PlanPerspectiveRecord>(
+      rows[0].payload,
+      null as unknown as PlanPerspectiveRecord,
+    );
+  }
+
+  async listPlanPerspectives(
+    filters: PlanPerspectiveFilters = {},
+  ): Promise<PlanPerspectiveRecord[]> {
+    let rows: QueryRow[];
+    if (filters.id !== undefined) {
+      rows = await this.db`SELECT payload FROM plan_perspectives WHERE id = ${filters.id}`;
+    } else if (filters.session_id !== undefined) {
+      rows = await this.db`
+        SELECT payload FROM plan_perspectives
+        WHERE session_id = ${filters.session_id}
+        ORDER BY updated_at DESC
+      `;
+    } else if (filters.episode_path !== undefined) {
+      rows = await this.db`
+        SELECT payload FROM plan_perspectives
+        WHERE episode_paths @> ARRAY[${filters.episode_path}]
+        ORDER BY updated_at DESC
+      `;
+    } else {
+      rows = await this.db`SELECT payload FROM plan_perspectives ORDER BY updated_at DESC`;
+    }
+
+    return rows
+      .map((row) =>
+        parseJsonValue<PlanPerspectiveRecord>(
+          row.payload,
+          null as unknown as PlanPerspectiveRecord,
+        ),
+      )
+      .filter((record) => record !== null && matchesPlanPerspectiveFilters(record, filters));
+  }
+
+  private async ensurePlanPerspectivesTable(): Promise<void> {
+    await this.db`
+      CREATE TABLE IF NOT EXISTS plan_perspectives (
+        id TEXT PRIMARY KEY,
+        payload JSONB NOT NULL,
+        session_id TEXT NOT NULL,
+        episode_paths TEXT[] NOT NULL DEFAULT '{}',
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_plan_perspectives_session_id ON plan_perspectives(session_id)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_plan_perspectives_episode_paths ON plan_perspectives USING GIN(episode_paths)`;
   }
 }
 

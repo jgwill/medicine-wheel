@@ -144,6 +144,60 @@ interface InquiryWeaveFilters {
   artefact?: string;
 }
 
+interface StoredPlanPerspectiveEpisode {
+  path: string;
+  number?: number;
+  [key: string]: unknown;
+}
+
+interface StoredPlanPerspective {
+  id: string;
+  perspective: 1;
+  plan: {
+    session_id: string;
+    plan_path?: string;
+    plan_filename: string;
+    plan_sha256: string;
+    captured_at?: string;
+    [key: string]: unknown;
+  };
+  narrative: {
+    title: string;
+    body_markdown: string;
+    mia_context?: string;
+    [key: string]: unknown;
+  };
+  lineage?: {
+    user_inputs_path?: string;
+    input_count?: number;
+    first_input_at?: string;
+    last_input_at?: string;
+    excerpts?: string[];
+    [key: string]: unknown;
+  };
+  episodes: StoredPlanPerspectiveEpisode[];
+  source: {
+    package?: string;
+    generator?: {
+      system?: string;
+      agent?: string;
+      model?: string;
+      producer_session_id?: string;
+      [key: string]: unknown;
+    };
+    registered_at: string;
+    updated_at: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface PlanPerspectiveFilters {
+  episode_path?: string;
+  session_id?: string;
+  id?: string;
+}
+
 // ── File Lock ──
 
 function withWriteLock<T>(filePath: string, fn: () => T): T {
@@ -399,6 +453,7 @@ export class JsonlStore {
   readonly charts:     JsonlCollection<StoredChart>;
   readonly mmots:      JsonlCollection<StoredMmot>;
   readonly inquiryWeaves: JsonlCollection<StoredInquiryWeave>;
+  readonly planPerspectives: JsonlCollection<StoredPlanPerspective>;
 
   constructor(dataDir?: string) {
     this.dataDir = dataDir || process.env.MW_DATA_DIR || resolveProjectDataDir();
@@ -416,6 +471,9 @@ export class JsonlStore {
     this.mmots      = new JsonlCollection<StoredMmot>    (path.join(this.dataDir, 'mmots.jsonl'));
     this.inquiryWeaves = new JsonlCollection<StoredInquiryWeave>(
       path.join(this.dataDir, 'inquiry-weaves.jsonl')
+    );
+    this.planPerspectives = new JsonlCollection<StoredPlanPerspective>(
+      path.join(this.dataDir, 'plan-perspectives.jsonl')
     );
   }
 
@@ -531,6 +589,22 @@ export class JsonlStore {
   listInquiryWeaves(filters: InquiryWeaveFilters = {}): StoredInquiryWeave[] {
     return this.inquiryWeaves.filter(record => matchesInquiryWeaveFilters(record, filters));
   }
+
+  // === Plan Perspectives ===
+  registerPlanPerspective(record: StoredPlanPerspective): StoredPlanPerspective {
+    const existing = this.planPerspectives.get(record.id);
+    const merged = existing ? mergeStoredPlanPerspectives(existing, record) : record;
+    this.planPerspectives.set(merged.id, merged);
+    return merged;
+  }
+
+  getPlanPerspective(id: string): StoredPlanPerspective | undefined {
+    return this.planPerspectives.get(id);
+  }
+
+  listPlanPerspectives(filters: PlanPerspectiveFilters = {}): StoredPlanPerspective[] {
+    return this.planPerspectives.filter(record => matchesPlanPerspectiveFilters(record, filters));
+  }
 }
 
 function matchesInquiryWeaveFilters(
@@ -547,6 +621,58 @@ function matchesInquiryWeaveFilters(
     return false;
   }
   if (filters.artefact !== undefined && record.artefact?.id !== filters.artefact) {
+    return false;
+  }
+  return true;
+}
+
+/** Union episode relations by exact path; a known number backfills an entry missing one. */
+function unionStoredPlanPerspectiveEpisodes(
+  episodes: readonly StoredPlanPerspectiveEpisode[],
+): StoredPlanPerspectiveEpisode[] {
+  const byPath = new Map<string, StoredPlanPerspectiveEpisode>();
+  for (const episode of episodes) {
+    if (typeof episode?.path !== 'string' || episode.path.length === 0) continue;
+    const existing = byPath.get(episode.path);
+    if (!existing) {
+      byPath.set(episode.path, { ...episode });
+    } else if (existing.number === undefined && typeof episode.number === 'number') {
+      existing.number = episode.number;
+    }
+  }
+  return [...byPath.values()];
+}
+
+/** Upsert merge pinned by @miadi/plan-insight: incoming wins, episodes union, registered_at survives. */
+function mergeStoredPlanPerspectives(
+  existing: StoredPlanPerspective,
+  incoming: StoredPlanPerspective,
+): StoredPlanPerspective {
+  return {
+    ...incoming,
+    episodes: unionStoredPlanPerspectiveEpisodes([...existing.episodes, ...incoming.episodes]),
+    source: {
+      ...incoming.source,
+      registered_at: existing.source.registered_at,
+      updated_at: incoming.source.updated_at,
+    },
+  };
+}
+
+function matchesPlanPerspectiveFilters(
+  record: StoredPlanPerspective,
+  filters: PlanPerspectiveFilters,
+): boolean {
+  if (filters.id !== undefined && record.id !== filters.id) {
+    return false;
+  }
+  if (filters.session_id !== undefined && record.plan?.session_id !== filters.session_id) {
+    return false;
+  }
+  if (
+    filters.episode_path !== undefined &&
+    !record.episodes?.some(episode => episode?.path === filters.episode_path)
+  ) {
     return false;
   }
   return true;

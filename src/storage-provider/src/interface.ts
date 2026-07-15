@@ -72,6 +72,59 @@ export interface InquiryWeaveFilters {
   artefact?: string;
 }
 
+export interface PlanPerspectiveEpisode {
+  path: string;
+  number?: number;
+  [key: string]: unknown;
+}
+
+export interface PlanPerspectiveRecord extends Record<string, unknown> {
+  id: string;
+  perspective: 1;
+  plan: {
+    session_id: string;
+    plan_path?: string;
+    plan_filename: string;
+    plan_sha256: string;
+    captured_at?: string;
+    [key: string]: unknown;
+  };
+  narrative: {
+    title: string;
+    body_markdown: string;
+    mia_context?: string;
+    [key: string]: unknown;
+  };
+  lineage?: {
+    user_inputs_path?: string;
+    input_count?: number;
+    first_input_at?: string;
+    last_input_at?: string;
+    excerpts?: string[];
+    [key: string]: unknown;
+  };
+  episodes: PlanPerspectiveEpisode[];
+  source: {
+    package?: string;
+    generator?: {
+      system?: string;
+      agent?: string;
+      model?: string;
+      producer_session_id?: string;
+      [key: string]: unknown;
+    };
+    registered_at: string;
+    updated_at: string;
+    [key: string]: unknown;
+  };
+}
+
+export interface PlanPerspectiveFilters {
+  episode_path?: string;
+  session_id?: string;
+  id?: string;
+}
+
 // ── Provider Interface ──
 
 export interface StorageProvider {
@@ -107,6 +160,11 @@ export interface StorageProvider {
   registerInquiryWeave(record: WeaveRecord): Promise<void>;
   getInquiryWeave(id: string): Promise<WeaveRecord | null>;
   listInquiryWeaves(filters?: InquiryWeaveFilters): Promise<WeaveRecord[]>;
+
+  // Plan Perspective Operations
+  registerPlanPerspective(record: PlanPerspectiveRecord): Promise<PlanPerspectiveRecord>;
+  getPlanPerspective(id: string): Promise<PlanPerspectiveRecord | null>;
+  listPlanPerspectives(filters?: PlanPerspectiveFilters): Promise<PlanPerspectiveRecord[]>;
 }
 
 export type ProviderType = 'jsonl' | 'neon' | 'redis' | 'auto';

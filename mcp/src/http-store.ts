@@ -137,6 +137,54 @@ interface InquiryWeaveFilters {
   artefact?: string;
 }
 
+interface StoredPlanPerspective {
+  id: string;
+  perspective: 1;
+  plan: {
+    session_id: string;
+    plan_path?: string;
+    plan_filename: string;
+    plan_sha256: string;
+    captured_at?: string;
+    [key: string]: unknown;
+  };
+  narrative: {
+    title: string;
+    body_markdown: string;
+    mia_context?: string;
+    [key: string]: unknown;
+  };
+  lineage?: {
+    user_inputs_path?: string;
+    input_count?: number;
+    first_input_at?: string;
+    last_input_at?: string;
+    excerpts?: string[];
+    [key: string]: unknown;
+  };
+  episodes: { path: string; number?: number; [key: string]: unknown }[];
+  source: {
+    package?: string;
+    generator?: {
+      system?: string;
+      agent?: string;
+      model?: string;
+      producer_session_id?: string;
+      [key: string]: unknown;
+    };
+    registered_at: string;
+    updated_at: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+interface PlanPerspectiveFilters {
+  episode_path?: string;
+  session_id?: string;
+  id?: string;
+}
+
 // ── Helpers ──
 
 async function httpGet<T>(url: string): Promise<T> {
@@ -479,6 +527,39 @@ export class HttpStore {
       `${this.baseUrl}/api/inquiry-weaves${query}`
     );
     return data.inquiry_weaves ?? [];
+  }
+
+  // === Plan Perspectives ===
+
+  async registerPlanPerspective(record: StoredPlanPerspective): Promise<StoredPlanPerspective> {
+    const data = await httpPost<{ record?: StoredPlanPerspective }>(
+      `${this.baseUrl}/api/plan-perspectives`,
+      record
+    );
+    return data.record ?? record;
+  }
+
+  async getPlanPerspective(id: string): Promise<StoredPlanPerspective | undefined> {
+    const res = await fetch(`${this.baseUrl}/api/plan-perspectives/${encodeURIComponent(id)}`);
+    if (res.status === 404) return undefined;
+    if (!res.ok) {
+      throw new Error(`HTTP GET /api/plan-perspectives/${id} failed: ${res.status} ${res.statusText}`);
+    }
+    const data = (await res.json()) as { record?: StoredPlanPerspective | null };
+    return data.record ?? undefined;
+  }
+
+  async listPlanPerspectives(filters: PlanPerspectiveFilters = {}): Promise<StoredPlanPerspective[]> {
+    const params = new URLSearchParams();
+    if (filters.episode_path !== undefined) params.set('episode_path', filters.episode_path);
+    if (filters.session_id !== undefined) params.set('session_id', filters.session_id);
+    if (filters.id !== undefined) params.set('id', filters.id);
+
+    const query = params.size > 0 ? `?${params.toString()}` : '';
+    const data = await httpGet<{ plan_perspectives: StoredPlanPerspective[] }>(
+      `${this.baseUrl}/api/plan-perspectives${query}`
+    );
+    return data.plan_perspectives ?? [];
   }
 }
 
