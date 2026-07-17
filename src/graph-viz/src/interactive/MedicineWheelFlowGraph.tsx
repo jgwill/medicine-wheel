@@ -209,9 +209,15 @@ function prefersReducedMotion(): boolean {
 
 /** Medicine-wheel glyph (circle + four-direction cross) for the control. */
 function WheelGlyph() {
+  // React Flow's controls CSS fills svg shapes; fill must be forced off so
+  // the glyph reads as a wheel, not a dot.
   return (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.4}>
-      <circle cx="8" cy="8" r="6.3" />
+    <svg
+      viewBox="0 0 16 16"
+      style={{ fill: 'none', stroke: 'currentColor' }}
+      strokeWidth={1.4}
+    >
+      <circle cx="8" cy="8" r="6.3" style={{ fill: 'none' }} />
       <line x1="8" y1="1.7" x2="8" y2="14.3" />
       <line x1="1.7" y1="8" x2="14.3" y2="8" />
     </svg>
