@@ -94,3 +94,64 @@
 .mw-context-menu-item:not(:disabled):hover {
   background: rgba(255, 255, 255, 0.08);
 }
+
+/* ── Node hover & focus states ─────────────────────────────────────── */
+
+.react-flow__node {
+  cursor: grab;
+}
+
+.react-flow__node.dragging {
+  cursor: grabbing;
+}
+
+.react-flow__node > div {
+  transition: transform 150ms ease;
+}
+
+.react-flow__node:hover > div {
+  transform: scale(1.06);
+}
+
+/* ── Hover neighbor-dimming: the circle holds its relations in light ── */
+
+.mw-hovering .react-flow__node:not(.mw-neighbor) {
+  opacity: 0.22;
+  transition: opacity 200ms ease;
+}
+
+.react-flow__node {
+  transition: opacity 200ms ease;
+}
+
+/* ── Selection halo breath ─────────────────────────────────────────── */
+
+@keyframes mw-halo-breathe {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+.mw-selection-halo {
+  animation: mw-halo-breathe 2.4s var(--ease-in-out, ease-in-out) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mw-selection-halo {
+    animation: none;
+  }
+
+  .react-flow__node > div,
+  .react-flow__node,
+  .mw-hovering .react-flow__node:not(.mw-neighbor) {
+    transition: none;
+  }
+
+  .react-flow__node:hover > div {
+    transform: none;
+  }
+}

@@ -91,9 +91,13 @@ export function MedicineWheelEdge({
 
   if (!sourceNode || !targetNode) return null;
 
-  const link = (data as { link?: MWGraphLink } | undefined)?.link;
+  const edgeData = data as
+    | { link?: MWGraphLink; dimmed?: boolean }
+    | undefined;
+  const link = edgeData?.link;
   const ceremony = link?.ceremonyHonored === true;
   const curvature = link?.curvature ?? 0;
+  const dimmed = edgeData?.dimmed === true;
 
   const sr = (sourceNode.measured.width ?? 26) / 2;
   const tr = (targetNode.measured.width ?? 26) / 2;
@@ -112,11 +116,14 @@ export function MedicineWheelEdge({
   const mid = arcMidpoint(from.x, from.y, to.x, to.y, curvature);
 
   const gradientId = `mw-ceremony-${id}`;
-  const edgeStyle: React.CSSProperties = ceremony
-    ? { ...style, stroke: `url(#${gradientId})` }
-    : { ...style };
+  const edgeStyle: React.CSSProperties = {
+    ...style,
+    ...(ceremony ? { stroke: `url(#${gradientId})` } : undefined),
+    ...(dimmed ? { opacity: 0.1 } : undefined),
+    transition: 'opacity 200ms ease',
+  };
 
-  const showParticle = ceremony && animated && !prefersReducedMotion;
+  const showParticle = ceremony && animated && !prefersReducedMotion && !dimmed;
 
   return (
     <>
@@ -167,6 +174,8 @@ export function MedicineWheelEdge({
               lineHeight: '14px',
               whiteSpace: 'nowrap',
               pointerEvents: 'all',
+              opacity: dimmed ? 0.1 : 1,
+              transition: 'opacity 200ms ease',
             }}
           >
             {label}

@@ -592,6 +592,55 @@ function FlowGraphInner({
     [],
   );
 
+  // ── Hover: dim everything that is not in relation with the node ────────
+  const [hoverId, setHoverId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!hoverId) {
+      setNodes((nds) =>
+        nds.map((n) => (n.className ? { ...n, className: undefined } : n)),
+      );
+      setEdges((eds) =>
+        eds.map((e) => {
+          const d = e.data as { dimmed?: boolean } | undefined;
+          return d?.dimmed ? { ...e, data: { ...d, dimmed: false } } : e;
+        }),
+      );
+      return;
+    }
+
+    const neighbors = new Set([hoverId]);
+    for (const l of data.links) {
+      if (l.source === hoverId) neighbors.add(l.target);
+      if (l.target === hoverId) neighbors.add(l.source);
+    }
+
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        className: neighbors.has(n.id) ? 'mw-neighbor' : undefined,
+      })),
+    );
+    setEdges((eds) =>
+      eds.map((e) => ({
+        ...e,
+        data: {
+          ...e.data,
+          dimmed: !(e.source === hoverId || e.target === hoverId),
+        },
+      })),
+    );
+  }, [hoverId, data.links, setNodes, setEdges]);
+
+  const handleNodeMouseEnter = useCallback<NodeMouseHandler>(
+    (_event, flowNode) => setHoverId(flowNode.id),
+    [],
+  );
+  const handleNodeMouseLeave = useCallback<NodeMouseHandler>(
+    () => setHoverId(null),
+    [],
+  );
+
   /** Center the camera on a node — the "focus relations" gesture. */
   const focusNode = useCallback(
     (nodeId: string) => {
@@ -602,6 +651,8 @@ function FlowGraphInner({
         zoom: 1.4,
         duration: prefersReducedMotion() ? 0 : 700,
       });
+      // Hold the relation highlight on the focused being.
+      setHoverId(nodeId);
     },
     [getNodes, setCenter],
   );
@@ -636,6 +687,7 @@ function FlowGraphInner({
       style={{ ...wrapperStyle, position: 'relative' }}
     >
       <ReactFlow
+        className={hoverId ? 'mw-hovering' : undefined}
         nodes={nodes}
         edges={edges}
         nodeTypes={NODE_TYPES}
@@ -645,6 +697,8 @@ function FlowGraphInner({
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
         onNodeDragStop={handleNodeDragStop}
+        onNodeMouseEnter={handleNodeMouseEnter}
+        onNodeMouseLeave={handleNodeMouseLeave}
         onNodeContextMenu={handleNodeContextMenu}
         onEdgeContextMenu={handleEdgeContextMenu}
         onPaneContextMenu={handlePaneContextMenu}

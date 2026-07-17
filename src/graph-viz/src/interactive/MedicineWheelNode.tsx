@@ -16,6 +16,7 @@ import {
 } from '@medicine-wheel/ontology-core';
 
 import type { MWGraphNode } from '../types.js';
+import { DIRECTION_PRESENTATION } from './DirectionQuadrant.js';
 
 /** Data carried on each React Flow node. */
 export interface MedicineWheelNodeData extends Record<string, unknown> {
@@ -104,15 +105,21 @@ function MedicineWheelNodeComponent({ data, selected, isConnectable }: NodeProps
         />
       )}
 
-      {/* Selection ring */}
+      {/* Selection halo — colored by the node's direction (never ceremony
+          gold): being chosen is information about where the being lives. */}
       {selected && (
         <span
+          className="mw-selection-halo"
           style={{
             position: 'absolute',
             inset: -9,
             borderRadius: '9999px',
-            border: '2px solid #FFD700',
-            opacity: 0.9,
+            ['--mw-halo' as string]: node.direction
+              ? DIRECTION_PRESENTATION[node.direction].ink
+              : 'var(--mw-fg, #e5e7eb)',
+            boxShadow:
+              '0 0 0 2px var(--mw-halo), 0 0 16px 4px var(--mw-halo)',
+            opacity: 0.75,
           }}
         />
       )}
