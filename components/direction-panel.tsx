@@ -1,6 +1,6 @@
 "use client";
 
-import { type Direction, DIRECTION_COLORS, CEREMONY_ICONS } from "@/lib/types";
+import { type Direction } from "@/lib/types";
 import { X } from "lucide-react";
 import Link from "next/link";
 
@@ -10,14 +10,20 @@ interface DirectionPanelProps {
 }
 
 export function DirectionPanel({ direction, onClose }: DirectionPanelProps) {
+  const dirVar = `var(--mw-${direction.name})`;
+  const inkVar = `var(--mw-${direction.name}-ink)`;
+
   return (
-    <div className="w-full max-w-2xl rounded-xl border bg-card p-6 shadow-lg animate-in slide-in-from-bottom-4">
+    <div
+      className="w-full max-w-2xl rounded-xl border bg-card p-6 shadow-lg animate-in slide-in-from-bottom-4"
+      style={{ borderColor: `var(--mw-${direction.name}-border)` }}
+    >
       <div className="flex items-start justify-between mb-4">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-3">
             <span
               className="w-4 h-4 rounded-full inline-block"
-              style={{ backgroundColor: DIRECTION_COLORS[direction.name] }}
+              style={{ backgroundColor: dirVar }}
             />
             {direction.ojibwe}
             <span className="text-muted-foreground text-lg capitalize">({direction.name})</span>
@@ -41,7 +47,7 @@ export function DirectionPanel({ direction, onClose }: DirectionPanelProps) {
               <span
                 key={m}
                 className="px-3 py-1 rounded-full text-sm border"
-                style={{ borderColor: DIRECTION_COLORS[direction.name] }}
+                style={{ borderColor: dirVar, color: inkVar }}
               >
                 🌿 {m}
               </span>
@@ -56,7 +62,7 @@ export function DirectionPanel({ direction, onClose }: DirectionPanelProps) {
           <ul className="space-y-1">
             {direction.teachings.map((t) => (
               <li key={t} className="text-sm flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: DIRECTION_COLORS[direction.name] }} />
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: dirVar }} />
                 {t}
               </li>
             ))}
@@ -77,18 +83,24 @@ export function DirectionPanel({ direction, onClose }: DirectionPanelProps) {
         </div>
       </div>
 
-      <div className="flex gap-3 mt-6 pt-4 border-t">
+      <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t">
         <Link
-          href={`/ceremonies?direction=${direction.name}`}
+          href={`/graph?direction=${direction.name}`}
           className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
         >
-          View Ceremonies
+          Open in graph
+        </Link>
+        <Link
+          href={`/ceremonies?direction=${direction.name}`}
+          className="px-4 py-2 rounded-md border text-sm font-medium hover:bg-secondary"
+        >
+          View ceremonies
         </Link>
         <Link
           href={`/relations?direction=${direction.name}`}
           className="px-4 py-2 rounded-md border text-sm font-medium hover:bg-secondary"
         >
-          View Relations
+          View relations
         </Link>
       </div>
     </div>
