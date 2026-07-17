@@ -7,7 +7,6 @@ import {
   type RelationalNode,
   type RelationalEdge,
   type DirectionName,
-  NODE_TYPE_COLORS,
 } from "@/lib/types";
 import { relativeTime, absoluteTime } from "@/lib/format-time";
 import { toast } from "sonner";
@@ -31,7 +30,7 @@ function NodeChip({ node, id }: { node?: NodeRecord; id: string }) {
       className={`mw-badge${directionClass} hover:brightness-125 transition-all`}
       title={node.direction ? `${node.name} · ${node.direction} — see on the wheel` : `${node.name} — see on the wheel`}
     >
-      <span className="w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: NODE_TYPE_COLORS[node.type] }} aria-hidden />
+      <span className="w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: `var(--mw-node-${node.type})` }} aria-hidden />
       {node.name}
       {node.direction && <span className="ml-1.5" aria-hidden>{DIRECTION_ICONS[node.direction]}</span>}
     </Link>
@@ -40,7 +39,7 @@ function NodeChip({ node, id }: { node?: NodeRecord; id: string }) {
 
 function CeremonyMark({ honored }: { honored: boolean }) {
   return honored ? (
-    <span className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--mw-east)" }} title="This relation has been honored in ceremony">
+    <span className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--mw-ceremony)" }} title="This relation has been honored in ceremony">
       <span aria-hidden>✦</span> honored
     </span>
   ) : (
@@ -369,7 +368,7 @@ export default function RelationsPage() {
               Both nodes remain in the wheel. This cannot be undone.
             </p>
             {deletingEdge.ceremony_honored && (
-              <p className="text-sm" style={{ color: "var(--mw-east-ink)" }}>
+              <p className="text-sm" style={{ color: "var(--mw-ceremony)" }}>
                 ✦ This relation was honored in ceremony — release it with intention.
               </p>
             )}

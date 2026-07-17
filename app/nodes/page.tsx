@@ -8,7 +8,6 @@ import {
   type RelationalEdge,
   type NodeType,
   type DirectionName,
-  NODE_TYPE_COLORS,
 } from "@/lib/types";
 import { relativeTime, absoluteTime } from "@/lib/format-time";
 import { toast } from "sonner";
@@ -223,7 +222,7 @@ export default function NodesPage() {
             className={`p-3 rounded-lg border text-center transition-all ${filterType === t ? "ring-2 ring-primary bg-secondary" : "hover:bg-secondary/50"}`}>
             <div className="text-2xl mb-1">{NODE_TYPE_ICONS[t]}</div>
             <div className="text-sm font-medium capitalize">{t}</div>
-            <div className="text-lg font-bold" style={{ color: NODE_TYPE_COLORS[t] }}>{typeCounts[t]}</div>
+            <div className="text-lg font-bold" style={{ color: `var(--mw-node-${t})` }}>{typeCounts[t]}</div>
           </button>
         ))}
       </div>
@@ -272,7 +271,7 @@ export default function NodesPage() {
                   aria-expanded={isExpanded}
                   className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-secondary/30"
                 >
-                  <span className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ backgroundColor: NODE_TYPE_COLORS[node.type] + "30" }}>
+                  <span className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ backgroundColor: `color-mix(in srgb, var(--mw-node-${node.type}) 20%, transparent)` }}>
                     {NODE_TYPE_ICONS[node.type]}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -345,7 +344,7 @@ export default function NodesPage() {
                                   <span aria-hidden>{e.from_id === node.id ? "→" : "←"}</span>
                                   {other?.name || "?"}
                                   <span className="text-xs text-muted-foreground">({Math.round(e.strength * 100)}%)</span>
-                                  {e.ceremony_honored && <span style={{ color: "var(--mw-east)" }} title="Ceremony honored">✦</span>}
+                                  {e.ceremony_honored && <span style={{ color: "var(--mw-ceremony)" }} title="Ceremony honored">✦</span>}
                                 </div>
                               );
                             })
