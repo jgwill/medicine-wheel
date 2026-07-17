@@ -296,6 +296,7 @@ function FlowGraphInner({
         onNodeDoubleClick={handleNodeDoubleClick}
         onNodeDragStop={handleNodeDragStop}
         fitView
+        deleteKeyCode={null}
         proOptions={{ hideAttribution: true }}
         colorMode={darkMode ? 'dark' : 'light'}
         minZoom={0.2}
