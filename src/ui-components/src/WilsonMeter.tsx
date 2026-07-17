@@ -1,8 +1,6 @@
 /**
  * WilsonMeter — visual gauge for Wilson relational alignment (0–1).
  */
-import React from 'react';
-
 export interface WilsonMeterProps {
   /** Alignment value 0–1 */
   alignment: number;
@@ -15,9 +13,9 @@ export interface WilsonMeterProps {
 }
 
 function alignmentColor(value: number): string {
-  if (value >= 0.7) return '#22c55e';
-  if (value >= 0.4) return '#f59e0b';
-  return '#ef4444';
+  if (value >= 0.7) return 'var(--mw-wilson-high, #22c55e)';
+  if (value >= 0.4) return 'var(--mw-wilson-mid, #f59e0b)';
+  return 'var(--mw-wilson-low, #ef4444)';
 }
 
 export function WilsonMeter({
@@ -78,7 +76,7 @@ export function WilsonMeter({
         </text>
       </svg>
       {showLabel && (
-        <span style={{ fontSize: '10px', opacity: 0.5 }}>Wilson</span>
+        <span style={{ fontSize: '10px', opacity: 0.65 }}>Wilson</span>
       )}
     </div>
   );

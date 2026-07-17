@@ -2,13 +2,15 @@
  * NodeInspector — detail panel for a RelationalNode showing
  * type, direction, metadata, and connected edges.
  */
-import React from 'react';
 import type { RelationalNode, RelationalEdge, DirectionName } from '@medicine-wheel/ontology-core';
 import { DIRECTION_COLORS, NODE_TYPE_COLORS } from '@medicine-wheel/ontology-core';
 
 const DIR_ICONS: Record<DirectionName, string> = {
   east: '🌅', south: '🔥', west: '🌊', north: '❄️',
 };
+
+const dirVar = (d: DirectionName) => `var(--mw-${d}, ${DIRECTION_COLORS[d]})`;
+const dirInk = (d: DirectionName) => `var(--mw-${d}-ink, ${DIRECTION_COLORS[d]})`;
 
 export interface NodeInspectorProps {
   node: RelationalNode;
@@ -31,28 +33,31 @@ export function NodeInspector({
   onNavigate,
   className = '',
 }: NodeInspectorProps) {
-  const color = node.direction ? DIRECTION_COLORS[node.direction] : '#888';
+  const color = node.direction ? dirVar(node.direction) : '#888';
+  const ink = node.direction ? dirInk(node.direction) : '#aaa';
   const icon = node.direction ? DIR_ICONS[node.direction] : '◯';
-  const typeColor = NODE_TYPE_COLORS[node.type] ?? '#888';
+  const typeColor = NODE_TYPE_COLORS[node.type]
+    ? `var(--mw-node-${node.type}, ${NODE_TYPE_COLORS[node.type]})`
+    : '#888';
   const nodeMap = new Map(allNodes.map(n => [n.id, n]));
 
   // Find connected edges
   const connectedEdges = edges.filter(e => e.from_id === node.id || e.to_id === node.id);
 
   return (
-    <div className={className} style={{ borderRadius: '12px', border: `1px solid ${color}40`, overflow: 'hidden' }}>
+    <div className={className} style={{ borderRadius: 'var(--radius-lg, 12px)', border: `1px solid color-mix(in srgb, ${color} 25%, transparent)`, overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ padding: '16px', borderBottom: `1px solid ${color}20`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ padding: '16px', borderBottom: `1px solid color-mix(in srgb, ${color} 13%, transparent)`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '20px' }}>{icon}</span>
           <div>
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>{node.name}</h3>
             <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-              <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: `${typeColor}20`, color: typeColor }}>
+              <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: `color-mix(in srgb, ${typeColor} 13%, transparent)`, color: typeColor }}>
                 {node.type}
               </span>
               {node.direction && (
-                <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: `${color}20`, color, textTransform: 'capitalize' }}>
+                <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '4px', background: `color-mix(in srgb, ${color} 13%, transparent)`, color: ink, textTransform: 'capitalize' }}>
                   {node.direction}
                 </span>
               )}
@@ -62,7 +67,8 @@ export function NodeInspector({
         {onClose && (
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', opacity: 0.5, color: 'inherit' }}
+            className="mw-row"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', opacity: 0.65, color: 'inherit', padding: '2px 6px' }}
             aria-label="Close inspector"
           >
             ✕
@@ -73,7 +79,7 @@ export function NodeInspector({
       {/* Metadata */}
       {node.metadata && Object.keys(node.metadata).length > 0 && (
         <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(128,128,128,0.1)' }}>
-          <h4 style={{ margin: '0 0 8px', fontSize: '12px', opacity: 0.5, textTransform: 'uppercase' }}>Metadata</h4>
+          <h4 style={{ margin: '0 0 8px', fontSize: '12px', opacity: 0.65, textTransform: 'uppercase' }}>Metadata</h4>
           {Object.entries(node.metadata).map(([key, value]) => (
             <div key={key} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '2px 0' }}>
               <span style={{ opacity: 0.6 }}>{key}</span>
@@ -86,17 +92,18 @@ export function NodeInspector({
       {/* Relations */}
       {connectedEdges.length > 0 && (
         <div style={{ padding: '12px 16px' }}>
-          <h4 style={{ margin: '0 0 8px', fontSize: '12px', opacity: 0.5, textTransform: 'uppercase' }}>
+          <h4 style={{ margin: '0 0 8px', fontSize: '12px', opacity: 0.65, textTransform: 'uppercase' }}>
             Relations ({connectedEdges.length})
           </h4>
           {connectedEdges.map((edge, i) => {
             const otherId = edge.from_id === node.id ? edge.to_id : edge.from_id;
             const otherNode = nodeMap.get(otherId);
-            const otherColor = otherNode?.direction ? DIRECTION_COLORS[otherNode.direction] : '#888';
+            const otherInk = otherNode?.direction ? dirInk(otherNode.direction) : '#aaa';
 
             return (
               <div
                 key={i}
+                className={onNavigate ? 'mw-row' : undefined}
                 onClick={() => onNavigate?.(otherId)}
                 role={onNavigate ? 'button' : undefined}
                 tabIndex={onNavigate ? 0 : undefined}
@@ -114,17 +121,24 @@ export function NodeInspector({
                 }}
               >
                 <div>
-                  <span style={{ opacity: 0.5, fontSize: '11px' }}>{edge.relationship_type}</span>
+                  <span style={{ opacity: 0.65, fontSize: '11px' }}>{edge.relationship_type}</span>
                   <span style={{ margin: '0 6px' }}>→</span>
-                  <span style={{ color: otherColor, fontWeight: 500 }}>
+                  <span style={{ color: otherInk, fontWeight: 500 }}>
                     {otherNode?.name ?? otherId}
                   </span>
                 </div>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', opacity: 0.5 }}>
+                  <span style={{ fontSize: '11px', opacity: 0.65 }}>
                     {(edge.strength * 100).toFixed(0)}%
                   </span>
-                  {edge.ceremony_honored && <span style={{ fontSize: '10px' }}>🔥</span>}
+                  {edge.ceremony_honored && (
+                    <span
+                      title="Ceremony honored"
+                      style={{ fontSize: '10px', filter: 'drop-shadow(0 0 3px var(--mw-ceremony, #FFD700))' }}
+                    >
+                      🔥
+                    </span>
+                  )}
                 </div>
               </div>
             );
@@ -133,7 +147,7 @@ export function NodeInspector({
       )}
 
       {/* Footer */}
-      <div style={{ padding: '8px 16px', fontSize: '11px', opacity: 0.4, borderTop: '1px solid rgba(128,128,128,0.1)' }}>
+      <div style={{ padding: '8px 16px', fontSize: '11px', opacity: 0.6, borderTop: '1px solid rgba(128,128,128,0.1)', fontFamily: 'var(--font-mono, ui-monospace)' }}>
         ID: {node.id} · Created: {new Date(node.created_at).toLocaleDateString()}
       </div>
     </div>

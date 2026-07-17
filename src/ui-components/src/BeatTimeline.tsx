@@ -2,13 +2,14 @@
  * BeatTimeline — displays narrative beats along a horizontal timeline
  * with direction-coded markers.
  */
-import React from 'react';
 import type { NarrativeBeat, DirectionName } from '@medicine-wheel/ontology-core';
 import { DIRECTION_COLORS } from '@medicine-wheel/ontology-core';
 
 const DIR_ICONS: Record<DirectionName, string> = {
   east: '🌅', south: '🔥', west: '🌊', north: '❄️',
 };
+
+const dirVar = (d: DirectionName) => `var(--mw-${d}, ${DIRECTION_COLORS[d]})`;
 
 export interface BeatTimelineProps {
   beats: NarrativeBeat[];
@@ -55,7 +56,7 @@ export function BeatTimeline({
       {/* Beat markers */}
       <div style={{ display: 'flex', alignItems: 'center', height: '100%', padding: '0 16px', gap: '0' }}>
         {sorted.map((beat, i) => {
-          const color = DIRECTION_COLORS[beat.direction];
+          const color = dirVar(beat.direction);
           const icon = DIR_ICONS[beat.direction];
           const isSelected = beat.id === selectedId;
           const leftPercent = sorted.length === 1 ? 50 : (i / (sorted.length - 1)) * 100;
@@ -63,6 +64,7 @@ export function BeatTimeline({
           return (
             <div
               key={beat.id}
+              className={onBeatClick ? 'mw-beat' : undefined}
               onClick={() => onBeatClick?.(beat)}
               role={onBeatClick ? 'button' : undefined}
               tabIndex={onBeatClick ? 0 : undefined}
@@ -79,23 +81,23 @@ export function BeatTimeline({
               }}
             >
               {/* Act label */}
-              <span style={{ fontSize: '10px', opacity: 0.5, marginBottom: '4px' }}>
+              <span style={{ fontSize: '10px', opacity: 0.65, marginBottom: '4px' }}>
                 Act {beat.act}
               </span>
 
               {/* Marker */}
-              <div style={{
+              <div className="mw-beat-marker" style={{
                 width: isSelected ? '36px' : '28px',
                 height: isSelected ? '36px' : '28px',
                 borderRadius: '50%',
-                background: `${color}30`,
+                background: `color-mix(in srgb, ${color} 19%, transparent)`,
                 border: `2px solid ${color}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: isSelected ? '16px' : '14px',
                 transition: 'all 0.2s ease',
-                boxShadow: isSelected ? `0 0 12px ${color}40` : 'none',
+                boxShadow: isSelected ? `0 0 12px color-mix(in srgb, ${color} 25%, transparent)` : 'none',
               }}>
                 {icon}
               </div>

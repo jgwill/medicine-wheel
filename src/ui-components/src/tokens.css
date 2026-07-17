@@ -240,6 +240,12 @@
   background:   color-mix(in srgb, var(--dir, transparent) 10%, var(--mw-card));
 }
 
+/* Beat marker recipe (BeatTimeline) */
+.mw-beat { cursor: pointer; }
+.mw-beat-marker { transition: transform var(--duration-fast) var(--ease-out); }
+.mw-beat:hover .mw-beat-marker,
+.mw-beat:focus-visible .mw-beat-marker { transform: scale(1.1); }
+
 /* Interactive row recipe (inspector relations, list rows) */
 .mw-row {
   border-radius: var(--radius-sm);
