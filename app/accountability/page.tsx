@@ -36,11 +36,15 @@ export default function AccountabilityPage() {
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    document.title = "Accountability · Medicine Wheel";
+  }, []);
+
   const ceremoniedCount = edges.filter((e: any) => e.ceremony_honored).length;
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold mb-2">Accountability & Frameworks</h1>
+      <h1 className="mw-h1 mb-2">Accountability & frameworks</h1>
       <p className="text-sm text-muted-foreground mb-6">Relational accountability metrics and Indigenous research frameworks</p>
 
       {loading && <div className="text-center py-16 text-muted-foreground">Loading accountability metrics…</div>}
@@ -49,26 +53,26 @@ export default function AccountabilityPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="p-4 rounded-lg border bg-card text-center">
           <p className="text-3xl font-bold">{nodes.length}</p>
-          <p className="text-sm text-muted-foreground">Relations Mapped</p>
+          <p className="text-sm text-muted-foreground">Relations mapped</p>
           <p className="text-xs text-muted-foreground">{nodes.length} nodes · {edges.length} edges</p>
         </div>
         <div className="p-4 rounded-lg border bg-card text-center">
           <p className="text-3xl font-bold">{ceremonies.length}</p>
-          <p className="text-sm text-muted-foreground">Ceremonies Logged</p>
+          <p className="text-sm text-muted-foreground">Ceremonies logged</p>
         </div>
         <div className="p-4 rounded-lg border bg-card text-center">
           <p className="text-3xl font-bold">{beats.length}</p>
-          <p className="text-sm text-muted-foreground">Narrative Beats</p>
+          <p className="text-sm text-muted-foreground">Narrative beats</p>
         </div>
         <div className="p-4 rounded-lg border bg-card text-center">
-          <p className="text-3xl font-bold text-green-500">{ceremoniedCount > 0 ? "✓" : "○"}</p>
-          <p className="text-sm text-muted-foreground">Relations Ceremonied</p>
+          <p className="text-3xl font-bold" style={{ color: "var(--mw-wilson-high)" }}>{ceremoniedCount > 0 ? "✓" : "○"}</p>
+          <p className="text-sm text-muted-foreground">Relations ceremonied</p>
           <p className="text-xs text-muted-foreground">{ceremoniedCount}/{edges.length} edges ceremonied</p>
         </div>
       </div>
 
       {/* Frameworks */}
-      <h2 className="text-lg font-semibold mb-4">Indigenous Research Frameworks</h2>
+      <h2 className="mw-h2 mb-4">Indigenous research frameworks</h2>
       <div className="space-y-3">
         {resources.map((res) => (
           <div key={res.id} className="border rounded-lg bg-card overflow-hidden cursor-pointer hover:border-ring/50"

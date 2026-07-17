@@ -3,10 +3,13 @@
 import { useCallback, useEffect, useState, Suspense, useMemo } from "react";
 import type { FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
-import { type CeremonyLog, DIRECTION_COLORS, CEREMONY_ICONS, type DirectionName, type CeremonyType } from "@/lib/types";
+import { type CeremonyLog, CEREMONY_ICONS, type DirectionName, type CeremonyType } from "@/lib/types";
 import { extractCeremonyLogs } from "@/lib/ceremony-response";
 import { relativeTime, absoluteTime } from "@/lib/format-time";
 import { toast } from "sonner";
+
+const dirVar = (d: string) => `var(--mw-${d})`;
+const dirInk = (d: string) => `var(--mw-${d}-ink)`;
 
 function CeremoniesContent() {
   const searchParams = useSearchParams();
@@ -42,6 +45,10 @@ function CeremoniesContent() {
     loadCeremonies();
   }, [loadCeremonies]);
 
+  useEffect(() => {
+    document.title = "Ceremonies · Medicine Wheel";
+  }, []);
+
   async function logCeremony(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
@@ -58,7 +65,7 @@ function CeremoniesContent() {
       toast.success("Ceremony logged");
       setShowForm(false);
       await loadCeremonies();
-    } else { toast.error("Failed to log ceremony"); }
+    } else { toast.error("Could not save the ceremony — check the form and try again"); }
   }
 
   const directions: DirectionName[] = ["east", "south", "west", "north"];
@@ -85,10 +92,10 @@ function CeremoniesContent() {
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Ceremonies</h1>
+          <h1 className="mw-h1">Ceremonies</h1>
           <p className="text-sm text-muted-foreground">{ceremonies.length} ceremony logs</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium">+ Log Ceremony</button>
+        <button onClick={() => setShowForm(!showForm)} className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90">Log ceremony</button>
       </div>
 
       <div className="mb-6 p-4 rounded-lg border bg-card/50 backdrop-blur">
@@ -110,13 +117,13 @@ function CeremoniesContent() {
         <div className="flex gap-1">
           <button onClick={() => setFilterDir("all")} className={`px-3 py-1 rounded-full text-xs font-medium border ${filterDir === "all" ? "bg-secondary" : ""}`}>All</button>
           {directions.map((d) => (
-            <button key={d} onClick={() => setFilterDir(d)} className={`px-3 py-1 rounded-full text-xs font-medium border capitalize ${filterDir === d ? "bg-secondary" : ""}`} style={filterDir === d ? { borderColor: DIRECTION_COLORS[d] } : {}}>
+            <button key={d} onClick={() => setFilterDir(d)} className={`px-3 py-1 rounded-full text-xs font-medium border capitalize hover:bg-secondary/60 ${filterDir === d ? "bg-secondary" : ""}`} style={filterDir === d ? { borderColor: dirVar(d) } : {}}>
               {d}
             </button>
           ))}
         </div>
         <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="px-3 py-1 rounded-md border bg-background text-xs">
-          <option value="all">All Types</option>
+          <option value="all">All types</option>
           {cTypes.map((t) => <option key={t} value={t}>{t.replace("_", " ")}</option>)}
         </select>
         {filtersActive && (
@@ -136,7 +143,7 @@ function CeremoniesContent() {
           <input name="medicines" placeholder="Medicines used (comma-separated)" className="px-3 py-2 rounded-md border bg-background text-sm" />
           <textarea name="intention" placeholder="Intention" rows={2} className="px-3 py-2 rounded-md border bg-background text-sm sm:col-span-2" />
           <input name="context" placeholder="Research context (optional)" className="px-3 py-2 rounded-md border bg-background text-sm" />
-          <button type="submit" className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">Log Ceremony</button>
+          <button type="submit" className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:opacity-90">Log ceremony</button>
         </form>
       )}
 
@@ -144,13 +151,13 @@ function CeremoniesContent() {
         {loading && <div className="text-center py-12 text-muted-foreground">Loading ceremonies…</div>}
         {!loading && ceremonies.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            <p>{filtersActive ? "No ceremonies match these filters." : "No ceremonies found. Log your first ceremony to begin."}</p>
+            <p>{filtersActive ? "No ceremonies match these filters." : "No ceremonies yet. Log the first one to open the circle."}</p>
             {filtersActive && <button onClick={clearFilters} className="text-sm mt-2 underline hover:text-foreground">Clear filters</button>}
           </div>
         )}
         {!loading && ceremonies.map((c) => (
           <div key={c.id} className="border rounded-lg bg-card overflow-hidden cursor-pointer hover:border-ring/50 transition-colors"
-            style={{ borderTopColor: DIRECTION_COLORS[c.direction], borderTopWidth: 3 }} onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}>
+            style={{ borderTopColor: dirVar(c.direction), borderTopWidth: 3 }} onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}>
             <div className="p-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <span className="text-2xl shrink-0">{CEREMONY_ICONS[c.type]}</span>
@@ -158,7 +165,7 @@ function CeremoniesContent() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-sm capitalize">{c.type.replace("_", " ")}</span>
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium capitalize border"
-                      style={{ borderColor: DIRECTION_COLORS[c.direction], color: DIRECTION_COLORS[c.direction] }}>
+                      style={{ borderColor: `var(--mw-${c.direction}-border)`, color: dirInk(c.direction) }}>
                       {DIRECTION_ICONS[c.direction]} {c.direction}
                     </span>
                   </div>

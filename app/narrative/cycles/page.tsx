@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { type MedicineWheelCycle, DIRECTION_COLORS, type DirectionName } from "@/lib/types";
+import { type MedicineWheelCycle, type DirectionName } from "@/lib/types";
 import { extractCycles } from "@/lib/cycle-response";
 import { toast } from "sonner";
+
+const dirVar = (d: string) => `var(--mw-${d})`;
+const dirInk = (d: string) => `var(--mw-${d}-ink)`;
 
 export default function CyclesPage() {
   const [cycles, setCycles] = useState<MedicineWheelCycle[]>([]);
@@ -18,6 +21,10 @@ export default function CyclesPage() {
       .catch(() => setCycles([]));
   }, []);
 
+  useEffect(() => {
+    document.title = "Cycles · Medicine Wheel";
+  }, []);
+
   async function createCycle(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
@@ -28,7 +35,7 @@ export default function CyclesPage() {
       setShowForm(false);
       const data = await fetch("/api/narrative/cycles").then((r) => r.json());
       setCycles(extractCycles(data));
-    } else { toast.error("Failed"); }
+    } else { toast.error("Could not create the cycle — try again"); }
   }
 
   const dirOrder: DirectionName[] = ["east", "south", "west", "north"];
@@ -37,18 +44,18 @@ export default function CyclesPage() {
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Medicine Wheel Cycles</h1>
+          <h1 className="mw-h1">Cycles</h1>
           <p className="text-sm text-muted-foreground">{cycles.length} research cycles</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium">+ New Cycle</button>
+        <button onClick={() => setShowForm(!showForm)} className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90">New cycle</button>
       </div>
 
       {showForm && (
         <form onSubmit={createCycle} className="mb-6 p-4 border rounded-lg bg-card">
           <textarea name="question" placeholder="What is your research question?" rows={3} required className="w-full px-3 py-2 rounded-md border bg-background text-sm mb-3" />
           <div className="flex gap-2">
-            <button type="submit" className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm">Create Cycle</button>
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 rounded-md border text-sm">Cancel</button>
+            <button type="submit" className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:opacity-90">Create cycle</button>
+            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 rounded-md border text-sm hover:bg-secondary/60">Cancel</button>
           </div>
         </form>
       )}
@@ -78,7 +85,7 @@ export default function CyclesPage() {
                       return (
                         <path key={dir}
                           d={`M 24 24 L ${x1} ${y1} A 20 20 0 0 1 ${x2} ${y2} Z`}
-                          fill={DIRECTION_COLORS[dir]}
+                          fill={dirVar(dir)}
                           opacity={completed ? 0.9 : 0.2}
                         />
                       );
@@ -89,7 +96,7 @@ export default function CyclesPage() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold mb-1">{cycle.research_question}</h3>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="capitalize" style={{ color: DIRECTION_COLORS[cycle.current_direction as DirectionName] }}>
+                      <span className="capitalize" style={{ color: dirInk(cycle.current_direction) }}>
                         ● {cycle.current_direction}
                       </span>
                       <span>{cycle.beats.length} beats</span>
@@ -101,7 +108,7 @@ export default function CyclesPage() {
                     <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{
                         width: `${progress}%`,
-                        background: `linear-gradient(to right, ${DIRECTION_COLORS.east}, ${DIRECTION_COLORS.south}, ${DIRECTION_COLORS.west}, ${DIRECTION_COLORS.north})`,
+                        background: "linear-gradient(to right, var(--mw-east), var(--mw-south), var(--mw-west), var(--mw-north))",
                       }} />
                     </div>
                   </div>
@@ -114,7 +121,7 @@ export default function CyclesPage() {
                     {dirOrder.map((dir) => {
                       const active = dirOrder.indexOf(dir) <= dirIdx;
                       return (
-                        <div key={dir} className="text-center p-2 rounded-md border" style={{ borderColor: active ? DIRECTION_COLORS[dir] : "var(--color-border)", opacity: active ? 1 : 0.4 }}>
+                        <div key={dir} className="text-center p-2 rounded-md border" style={{ borderColor: active ? dirVar(dir) : "var(--color-border)", opacity: active ? 1 : 0.4 }}>
                           <p className="text-xs capitalize font-medium">{dir}</p>
                           <p className="text-sm">{active ? "✓" : "○"}</p>
                         </div>
