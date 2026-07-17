@@ -76,10 +76,10 @@ function CeremoniesContent() {
   }, [ceremonies]);
 
   const phaseFramings: Record<string, string> = {
-    opening: "🔥 We are in the Opening phase — setting intentions and acknowledging relationships",
-    council: "🔥 We are in the Council phase — deepening understanding through dialogue",
-    integration: "🔥 We are in the Integration phase — weaving learnings together",
-    closure: "🔥 We are in the Closure phase — honoring what has been shared",
+    opening: "We are in the Opening phase — setting intentions and acknowledging relationships",
+    council: "We are in the Council phase — deepening understanding through dialogue",
+    integration: "We are in the Integration phase — weaving learnings together",
+    closure: "We are in the Closure phase — honoring what has been shared",
   };
   const phases = ["opening", "council", "integration", "closure"];
   const nextPhase = phases[(phases.indexOf(currentPhase) + 1) % 4];
