@@ -15,7 +15,7 @@
  * at the app level:  `import '@xyflow/react/dist/style.css'`.
  */
 
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -41,7 +41,20 @@ import {
 
 import { NODE_TYPE_COLORS } from '@medicine-wheel/ontology-core';
 
-import { applyWheelLayout, DEFAULT_LAYOUT } from '../layout.js';
+import type { DirectionName, NodeType } from '@medicine-wheel/ontology-core';
+
+import {
+  applyWheelLayout,
+  DEFAULT_LAYOUT,
+  directionForPoint,
+} from '../layout.js';
+import {
+  GraphContextMenu,
+  GraphMenuItem,
+  GraphMenuDivider,
+  CreateNodeInlineForm,
+  type GraphMenuState,
+} from './GraphContextMenu.js';
 import type {
   MWGraphData,
   MWGraphNode,
@@ -101,6 +114,19 @@ export interface MedicineWheelFlowGraphProps {
   enableConnections?: boolean;
   /** Fired when a connection gesture completes between two nodes. */
   onRelationCreate?: (sourceId: string, targetId: string) => void;
+  /** Fired from the node menu's "Open node". Falls back to onNodeDoubleClick. */
+  onNodeOpen?: (node: MWGraphNode) => void;
+  /** Fired from the pane menu's "Create node here" inline form. */
+  onNodeCreateRequest?: (request: {
+    name: string;
+    type: NodeType;
+    direction?: DirectionName;
+    position: { x: number; y: number };
+  }) => void;
+  /** Fired from the edge menu's "Honor ceremony". */
+  onEdgeCeremonyRequest?: (link: MWGraphLink) => void;
+  /** Fired from the edge menu's confirmed "Release relation". */
+  onEdgeDeleteRequest?: (link: MWGraphLink) => void;
 }
 
 const NODE_TYPES: NodeTypes = { medicineWheel: MedicineWheelNode };
@@ -272,10 +298,78 @@ function FlowGraphInner({
   onNodePositionsChange,
   enableConnections = false,
   onRelationCreate,
+  onNodeOpen,
+  onNodeCreateRequest,
+  onEdgeCeremonyRequest,
+  onEdgeDeleteRequest,
 }: MedicineWheelFlowGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<MedicineWheelNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const { getNodes, fitView } = useReactFlow<Node<MedicineWheelNodeData>, Edge>();
+  const { getNodes, fitView, setCenter, screenToFlowPosition } =
+    useReactFlow<Node<MedicineWheelNodeData>, Edge>();
+
+  // ── Context menus ────────────────────────────────────────────────────────
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [menu, setMenu] = useState<GraphMenuState | null>(null);
+
+  const clampToPane = useCallback((clientX: number, clientY: number) => {
+    const pane = wrapperRef.current?.getBoundingClientRect();
+    if (!pane) return { x: clientX, y: clientY };
+    return {
+      x: Math.max(0, Math.min(clientX - pane.left, pane.width - 230)),
+      y: Math.max(0, Math.min(clientY - pane.top, pane.height - 250)),
+    };
+  }, []);
+
+  const handleNodeContextMenu = useCallback<NodeMouseHandler<Node<MedicineWheelNodeData>>>(
+    (event, flowNode) => {
+      event.preventDefault();
+      setMenu({
+        kind: 'node',
+        nodeId: flowNode.id,
+        ...clampToPane(event.clientX, event.clientY),
+      });
+    },
+    [clampToPane],
+  );
+
+  const handleEdgeContextMenu = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault();
+      setMenu({
+        kind: 'edge',
+        edgeId: edge.id,
+        ...clampToPane(event.clientX, event.clientY),
+      });
+    },
+    [clampToPane],
+  );
+
+  const handlePaneContextMenu = useCallback(
+    (event: React.MouseEvent | MouseEvent) => {
+      event.preventDefault();
+      const { clientX, clientY } = event as React.MouseEvent;
+      const flow = screenToFlowPosition({ x: clientX, y: clientY });
+      setMenu({
+        kind: 'pane',
+        ...clampToPane(clientX, clientY),
+        flowX: flow.x,
+        flowY: flow.y,
+      });
+    },
+    [clampToPane, screenToFlowPosition],
+  );
+
+  const closeMenu = useCallback(() => setMenu(null), []);
+
+  useEffect(() => {
+    if (!menu) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenu(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menu]);
 
   // ── Ceremonial re-layout: rAF polar-lerp back to the wheel ──────────────
   const animRef = useRef<number | null>(null);
@@ -444,6 +538,7 @@ function FlowGraphInner({
 
   const handleNodeClick = useCallback<NodeMouseHandler>(
     (_event, flowNode) => {
+      setMenu(null);
       const original = (flowNode.data as MedicineWheelNodeData | undefined)?.node;
       if (original && onNodeClick) onNodeClick(original);
     },
@@ -497,6 +592,33 @@ function FlowGraphInner({
     [],
   );
 
+  /** Center the camera on a node — the "focus relations" gesture. */
+  const focusNode = useCallback(
+    (nodeId: string) => {
+      const flowNode = getNodes().find((n) => n.id === nodeId);
+      if (!flowNode) return;
+      const r = (flowNode.measured?.width ?? 26) / 2;
+      setCenter(flowNode.position.x + r, flowNode.position.y + r, {
+        zoom: 1.4,
+        duration: prefersReducedMotion() ? 0 : 700,
+      });
+    },
+    [getNodes, setCenter],
+  );
+
+  const menuNode =
+    menu?.kind === 'node'
+      ? (nodes.find((n) => n.id === menu.nodeId)?.data as
+          | MedicineWheelNodeData
+          | undefined)?.node
+      : undefined;
+  const menuLink =
+    menu?.kind === 'edge'
+      ? (edges.find((e) => e.id === menu.edgeId)?.data as
+          | { link?: MWGraphLink }
+          | undefined)?.link
+      : undefined;
+
   const minimapNodeColor = useCallback((flowNode: Node) => {
     const n = (flowNode.data as MedicineWheelNodeData | undefined)?.node;
     return n?.color ?? (n ? NODE_TYPE_COLORS[n.type] : undefined) ?? '#888';
@@ -508,7 +630,11 @@ function FlowGraphInner({
   );
 
   return (
-    <div className={className} style={wrapperStyle}>
+    <div
+      ref={wrapperRef}
+      className={className}
+      style={{ ...wrapperStyle, position: 'relative' }}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -519,6 +645,11 @@ function FlowGraphInner({
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
         onNodeDragStop={handleNodeDragStop}
+        onNodeContextMenu={handleNodeContextMenu}
+        onEdgeContextMenu={handleEdgeContextMenu}
+        onPaneContextMenu={handlePaneContextMenu}
+        onPaneClick={closeMenu}
+        onMoveStart={closeMenu}
         fitView
         deleteKeyCode={null}
         zoomOnDoubleClick={false}
@@ -575,6 +706,124 @@ function FlowGraphInner({
           />
         )}
       </ReactFlow>
+
+      {/* ── Context menus ────────────────────────────────────────────── */}
+      {menu?.kind === 'node' && menuNode && (
+        <GraphContextMenu
+          x={menu.x}
+          y={menu.y}
+          title={`${menuNode.label} · ${menuNode.type}${menuNode.direction ? ` · ${menuNode.direction}` : ''}`}
+        >
+          <GraphMenuItem
+            label="Open node"
+            onSelect={() => {
+              setMenu(null);
+              (onNodeOpen ?? onNodeDoubleClick)?.(menuNode);
+            }}
+          />
+          <GraphMenuItem
+            label="Focus relations"
+            hint="Center the wheel on this being"
+            onSelect={() => {
+              setMenu(null);
+              focusNode(menuNode.id);
+            }}
+          />
+        </GraphContextMenu>
+      )}
+
+      {menu?.kind === 'edge' && menuLink && (
+        <GraphContextMenu
+          x={menu.x}
+          y={menu.y}
+          title={`${menuLink.label ?? 'relation'} · ${menuLink.source} → ${menuLink.target}`}
+        >
+          {menuLink.ceremonyHonored ? (
+            <GraphMenuItem label="Ceremony honored ✦" disabled />
+          ) : (
+            <GraphMenuItem
+              label="Honor ceremony"
+              hint="Mark this relation as ceremony-honored"
+              disabled={!onEdgeCeremonyRequest}
+              onSelect={() => {
+                setMenu(null);
+                onEdgeCeremonyRequest?.(menuLink);
+              }}
+            />
+          )}
+          {onEdgeDeleteRequest && (
+            <>
+              <GraphMenuDivider />
+              {menu.confirmRelease ? (
+                <GraphMenuItem
+                  label="Confirm release"
+                  hint="The relation will be removed"
+                  danger
+                  onSelect={() => {
+                    setMenu(null);
+                    onEdgeDeleteRequest(menuLink);
+                  }}
+                />
+              ) : (
+                <GraphMenuItem
+                  label="Release relation"
+                  danger
+                  onSelect={() =>
+                    setMenu({ ...menu, confirmRelease: true })
+                  }
+                />
+              )}
+            </>
+          )}
+        </GraphContextMenu>
+      )}
+
+      {menu?.kind === 'pane' && (
+        <GraphContextMenu x={menu.x} y={menu.y}>
+          {menu.creating ? (
+            <CreateNodeInlineForm
+              direction={directionForPoint(menu.flowX, menu.flowY, layout)}
+              onSubmit={({ name, type }) => {
+                setMenu(null);
+                onNodeCreateRequest?.({
+                  name,
+                  type,
+                  direction: directionForPoint(menu.flowX, menu.flowY, layout),
+                  position: { x: menu.flowX, y: menu.flowY },
+                });
+              }}
+              onCancel={() => setMenu(null)}
+            />
+          ) : (
+            <>
+              {onNodeCreateRequest && (
+                <GraphMenuItem
+                  label="Create node here"
+                  hint={`${directionForPoint(menu.flowX, menu.flowY, layout)} quadrant`}
+                  onSelect={() => setMenu({ ...menu, creating: true })}
+                />
+              )}
+              <GraphMenuItem
+                label="Return to the wheel"
+                onSelect={() => {
+                  setMenu(null);
+                  relayoutToWheel();
+                }}
+              />
+              <GraphMenuItem
+                label="Fit view"
+                onSelect={() => {
+                  setMenu(null);
+                  fitView({
+                    padding: 0.15,
+                    duration: prefersReducedMotion() ? 0 : 500,
+                  });
+                }}
+              />
+            </>
+          )}
+        </GraphContextMenu>
+      )}
     </div>
   );
 }

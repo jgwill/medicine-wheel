@@ -38,7 +38,7 @@ export interface DirectionQuadrantProps {
  * standalone. Direction color = information: these tints only ever mark
  * the direction they belong to.
  */
-const DIRECTION_PRESENTATION: Record<
+export const DIRECTION_PRESENTATION: Record<
   DirectionName,
   { fill: string; stroke: string; ink: string }
 > = {

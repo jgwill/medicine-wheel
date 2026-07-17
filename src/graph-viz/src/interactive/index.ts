@@ -24,6 +24,15 @@ export {
 export { MedicineWheelEdge } from './MedicineWheelEdge.js';
 
 export {
+  GraphContextMenu,
+  GraphMenuItem,
+  GraphMenuDivider,
+  DirectionBadge,
+  CreateNodeInlineForm,
+  type GraphMenuState,
+} from './GraphContextMenu.js';
+
+export {
   DirectionQuadrant,
   type DirectionQuadrantProps,
 } from './DirectionQuadrant.js';

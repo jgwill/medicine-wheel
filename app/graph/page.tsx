@@ -23,6 +23,7 @@ import {
   applyWheelLayout,
   buildGraphData,
   type MWGraphData,
+  type MWGraphLink,
   type MWGraphNode,
   type MWGraphNodePositions,
 } from "@medicine-wheel/graph-viz";
@@ -271,6 +272,83 @@ export default function GraphPage() {
     [],
   );
 
+  const handleNodeCreateRequest = useCallback(
+    async (request: {
+      name: string;
+      type: string;
+      direction?: string;
+      position: { x: number; y: number };
+    }) => {
+      try {
+        const res = await fetch("/api/nodes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: request.name,
+            type: request.type,
+            direction: request.direction,
+          }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { node } = await res.json();
+        // Seat the new being exactly where the circle was opened.
+        if (node?.id) {
+          saveLayoutStore(
+            upsertActiveGraphLayout(layoutStoreRef.current, {
+              [node.id]: request.position,
+            }),
+          );
+        }
+        toast.success(`${request.name} placed in the ${request.direction ?? "center"}`);
+      } catch {
+        toast.error("Could not create the node");
+      } finally {
+        await loadData();
+      }
+    },
+    [loadData, saveLayoutStore],
+  );
+
+  const handleEdgeCeremonyRequest = useCallback(
+    async (link: MWGraphLink) => {
+      try {
+        const res = await fetch(
+          `/api/edges?from=${encodeURIComponent(link.source)}&to=${encodeURIComponent(link.target)}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ceremony_honored: true }),
+          },
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        toast.success("Ceremony honored — the thread turns gold");
+      } catch {
+        toast.error("Could not honor the ceremony");
+      } finally {
+        await loadData();
+      }
+    },
+    [loadData],
+  );
+
+  const handleEdgeDeleteRequest = useCallback(
+    async (link: MWGraphLink) => {
+      try {
+        const res = await fetch(
+          `/api/edges?from=${encodeURIComponent(link.source)}&to=${encodeURIComponent(link.target)}`,
+          { method: "DELETE" },
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        toast.success("Relation released");
+      } catch {
+        toast.error("Could not release the relation");
+      } finally {
+        await loadData();
+      }
+    },
+    [loadData],
+  );
+
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -331,6 +409,10 @@ export default function GraphPage() {
                 onNodePositionsChange={handleNodePositionsChange}
                 enableConnections
                 onRelationCreate={handleRelationCreate}
+                onNodeOpen={navigateToNode}
+                onNodeCreateRequest={handleNodeCreateRequest}
+                onEdgeCeremonyRequest={handleEdgeCeremonyRequest}
+                onEdgeDeleteRequest={handleEdgeDeleteRequest}
               />
             )}
           </div>

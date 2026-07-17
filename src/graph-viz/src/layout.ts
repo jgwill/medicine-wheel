@@ -245,6 +245,29 @@ export function curvedLinkPath(
 }
 
 /**
+ * Which direction quadrant a flow-space point falls in.
+ * Useful for quadrant-aware interactions (e.g. "create node here").
+ */
+export function directionForPoint(
+  x: number,
+  y: number,
+  config: Partial<WheelLayoutConfig> = {}
+): DirectionName {
+  const cfg: WheelLayoutConfig = { ...DEFAULT_LAYOUT, ...config };
+  const offset = cfg.startAngle ?? 0;
+  const deg =
+    (((Math.atan2(y - cfg.centerY, x - cfg.centerX) * 180) / Math.PI -
+      offset) %
+      360 +
+      360) %
+    360;
+  if (deg >= 315 || deg < 45) return 'east';
+  if (deg < 135) return 'south';
+  if (deg < 225) return 'west';
+  return 'north';
+}
+
+/**
  * Generate a direction label position (outside the wheel).
  */
 export function directionLabelPosition(

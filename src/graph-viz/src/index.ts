@@ -33,6 +33,7 @@ export {
   quadrantArcPath,
   curvedLinkPath,
   directionLabelPosition,
+  directionForPoint,
 } from './layout.js';
 
 // ── Data Converters ─────────────────────────────────────────────────────────
