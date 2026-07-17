@@ -29,12 +29,15 @@ import {
   useReactFlow,
   addEdge,
   ConnectionMode,
+  SelectionMode,
+  Panel,
   type Node,
   type Edge,
   type NodeTypes,
   type EdgeTypes,
   type NodeMouseHandler,
   type OnNodeDrag,
+  type OnNodesChange,
   type OnConnect,
   type IsValidConnection,
 } from '@xyflow/react';
@@ -152,6 +155,9 @@ function toFlowNode(
     id: node.id,
     type: 'medicineWheel',
     position: { x: node.x ?? 0, y: node.y ?? 0 },
+    // Announced by screen readers when the node takes keyboard focus —
+    // the native title tooltip is not reliably read.
+    ariaLabel: `${node.label}, ${node.type}${node.direction ? `, ${node.direction} direction` : ''}`,
     data: {
       node,
       showLabel: opts.showLabel,
@@ -250,6 +256,18 @@ function prefersReducedMotion(): boolean {
   );
 }
 
+const SHORTCUTS: { keys: string; does: string }[] = [
+  { keys: 'Drag node', does: 'Move a being (position is remembered)' },
+  { keys: 'Drag from edge dots', does: 'Weave a relation to another being' },
+  { keys: 'Right-click', does: 'Menu — node, relation, or canvas' },
+  { keys: 'Shift + drag', does: 'Select several beings with a box' },
+  { keys: 'Ctrl/⌘ + click', does: 'Add or remove from the selection' },
+  { keys: 'Tab / Shift+Tab', does: 'Walk the beings by keyboard' },
+  { keys: 'Enter / Space', does: 'Select the focused being' },
+  { keys: 'Arrow keys', does: 'Nudge the selected being' },
+  { keys: 'Esc', does: 'Close menus and this panel' },
+];
+
 /** Medicine-wheel glyph (circle + four-direction cross) for the control. */
 function WheelGlyph() {
   // React Flow's controls CSS fills svg shapes; fill must be forced off so
@@ -317,6 +335,7 @@ function FlowGraphInner({
   // ── Context menus ────────────────────────────────────────────────────────
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<GraphMenuState | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   const clampToPane = useCallback((clientX: number, clientY: number) => {
     const pane = wrapperRef.current?.getBoundingClientRect();
@@ -369,13 +388,16 @@ function FlowGraphInner({
   const closeMenu = useCallback(() => setMenu(null), []);
 
   useEffect(() => {
-    if (!menu) return;
+    if (!menu && !showShortcuts) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMenu(null);
+      if (event.key === 'Escape') {
+        setMenu(null);
+        setShowShortcuts(false);
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [menu]);
+  }, [menu, showShortcuts]);
 
   // ── Ceremonial re-layout: rAF polar-lerp back to the wheel ──────────────
   const animRef = useRef<number | null>(null);
@@ -559,6 +581,41 @@ function FlowGraphInner({
     [onNodeDoubleClick],
   );
 
+  // Keyboard moves (arrow keys on a focused node) never pass through
+  // onNodeDragStop — persist settled position changes on a debounce so a
+  // nudged being is remembered too. The echo check keeps this cheap.
+  const persistTimer = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (persistTimer.current !== null) window.clearTimeout(persistTimer.current);
+    },
+    [],
+  );
+
+  const schedulePersist = useCallback(() => {
+    if (!onNodePositionsChange) return;
+    if (persistTimer.current !== null) window.clearTimeout(persistTimer.current);
+    persistTimer.current = window.setTimeout(() => {
+      persistTimer.current = null;
+      const positions = flowNodePositions(getNodes());
+      lastEmittedPositions.current = positions;
+      onNodePositionsChange(positions);
+    }, 600);
+  }, [getNodes, onNodePositionsChange]);
+
+  const handleNodesChange = useCallback<
+    OnNodesChange<Node<MedicineWheelNodeData>>
+  >(
+    (changes) => {
+      onNodesChange(changes);
+      if (changes.some((c) => c.type === 'position' && !c.dragging)) {
+        schedulePersist();
+      }
+    },
+    [onNodesChange, schedulePersist],
+  );
+
   const handleNodeDragStop = useCallback<OnNodeDrag<Node<MedicineWheelNodeData>>>(
     (_event, _flowNode, flowNodes) => {
       if (!onNodePositionsChange) return;
@@ -730,7 +787,7 @@ function FlowGraphInner({
         edges={edges}
         nodeTypes={NODE_TYPES}
         edgeTypes={EDGE_TYPES}
-        onNodesChange={onNodesChange}
+        onNodesChange={handleNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
@@ -745,6 +802,11 @@ function FlowGraphInner({
         fitView
         deleteKeyCode={null}
         zoomOnDoubleClick={false}
+        nodesFocusable
+        edgesFocusable
+        selectionKeyCode="Shift"
+        selectionMode={SelectionMode.Partial}
+        multiSelectionKeyCode={['Meta', 'Control']}
         nodesConnectable={enableConnections}
         connectionMode={ConnectionMode.Loose}
         connectionRadius={30}
@@ -784,7 +846,51 @@ function FlowGraphInner({
             >
               <WheelGlyph />
             </ControlButton>
+            <ControlButton
+              onClick={() => setShowShortcuts((s) => !s)}
+              title="Keyboard shortcuts"
+              aria-label="Keyboard shortcuts"
+              aria-expanded={showShortcuts}
+            >
+              <span style={{ fontSize: 13, fontWeight: 700 }}>?</span>
+            </ControlButton>
           </Controls>
+        )}
+        {showShortcuts && (
+          <Panel
+            position="bottom-left"
+            className="mw-shortcuts-panel nodrag nopan"
+            style={{
+              marginLeft: 52,
+              marginBottom: 12,
+              padding: '10px 12px',
+              borderRadius: 10,
+              background: 'var(--mw-card, #12122a)',
+              border: '1px solid var(--mw-border, rgba(255, 255, 255, 0.12))',
+              boxShadow: '0 10px 28px rgba(0, 0, 0, 0.5)',
+              color: 'var(--mw-fg, #e5e7eb)',
+              fontSize: 12,
+              maxWidth: 320,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 11,
+                color: 'var(--mw-muted, #9ca3af)',
+                marginBottom: 6,
+              }}
+            >
+              Working the wheel
+            </div>
+            <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '3px 10px', margin: 0 }}>
+              {SHORTCUTS.map((s) => (
+                <React.Fragment key={s.keys}>
+                  <dt style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{s.keys}</dt>
+                  <dd style={{ margin: 0, color: 'var(--mw-muted, #9ca3af)' }}>{s.does}</dd>
+                </React.Fragment>
+              ))}
+            </dl>
+          </Panel>
         )}
         {showMiniMap && (
           <MiniMap
