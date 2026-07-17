@@ -127,6 +127,11 @@ export interface MedicineWheelFlowGraphProps {
   onEdgeCeremonyRequest?: (link: MWGraphLink) => void;
   /** Fired from the edge menu's confirmed "Release relation". */
   onEdgeDeleteRequest?: (link: MWGraphLink) => void;
+  /**
+   * Ambient emphasis on one direction's beings (e.g. deep-link from the
+   * home wheel via ?direction=). Hover emphasis takes precedence.
+   */
+  highlightDirection?: DirectionName;
 }
 
 const NODE_TYPES: NodeTypes = { medicineWheel: MedicineWheelNode };
@@ -302,6 +307,7 @@ function FlowGraphInner({
   onNodeCreateRequest,
   onEdgeCeremonyRequest,
   onEdgeDeleteRequest,
+  highlightDirection,
 }: MedicineWheelFlowGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<MedicineWheelNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -592,11 +598,34 @@ function FlowGraphInner({
     [],
   );
 
-  // ── Hover: dim everything that is not in relation with the node ────────
+  // ── Emphasis: dim everything outside the current attention ─────────────
+  // Two sources, hover winning over the ambient direction highlight:
+  // hovering a node keeps its relations lit; `highlightDirection` keeps a
+  // whole quadrant's beings lit (deep-link from the home wheel).
   const [hoverId, setHoverId] = useState<string | null>(null);
 
+  const emphasis = useMemo(() => {
+    if (hoverId) {
+      const kept = new Set([hoverId]);
+      for (const l of data.links) {
+        if (l.source === hoverId) kept.add(l.target);
+        if (l.target === hoverId) kept.add(l.source);
+      }
+      return { nodes: kept, edgeAnchors: new Set([hoverId]) };
+    }
+    if (highlightDirection) {
+      const kept = new Set(
+        data.nodes
+          .filter((n) => n.direction === highlightDirection)
+          .map((n) => n.id),
+      );
+      return kept.size > 0 ? { nodes: kept, edgeAnchors: kept } : null;
+    }
+    return null;
+  }, [hoverId, highlightDirection, data]);
+
   useEffect(() => {
-    if (!hoverId) {
+    if (!emphasis) {
       setNodes((nds) =>
         nds.map((n) => (n.className ? { ...n, className: undefined } : n)),
       );
@@ -609,16 +638,10 @@ function FlowGraphInner({
       return;
     }
 
-    const neighbors = new Set([hoverId]);
-    for (const l of data.links) {
-      if (l.source === hoverId) neighbors.add(l.target);
-      if (l.target === hoverId) neighbors.add(l.source);
-    }
-
     setNodes((nds) =>
       nds.map((n) => ({
         ...n,
-        className: neighbors.has(n.id) ? 'mw-neighbor' : undefined,
+        className: emphasis.nodes.has(n.id) ? 'mw-neighbor' : undefined,
       })),
     );
     setEdges((eds) =>
@@ -626,11 +649,14 @@ function FlowGraphInner({
         ...e,
         data: {
           ...e.data,
-          dimmed: !(e.source === hoverId || e.target === hoverId),
+          dimmed: !(
+            emphasis.edgeAnchors.has(e.source) ||
+            emphasis.edgeAnchors.has(e.target)
+          ),
         },
       })),
     );
-  }, [hoverId, data.links, setNodes, setEdges]);
+  }, [emphasis, setNodes, setEdges]);
 
   const handleNodeMouseEnter = useCallback<NodeMouseHandler>(
     (_event, flowNode) => setHoverId(flowNode.id),
@@ -656,6 +682,18 @@ function FlowGraphInner({
     },
     [getNodes, setCenter],
   );
+
+  // Honor MWGraphData.focusedNodeId ("triggers zoom animation", types.ts):
+  // once the node is seeded, sweep the camera to it — once per focus value.
+  const lastFocusedRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const id = data.focusedNodeId;
+    if (!id || id === lastFocusedRef.current) return;
+    if (!nodes.some((n) => n.id === id)) return; // not seeded yet
+    lastFocusedRef.current = id;
+    // Let React Flow measure the node before centering on it.
+    requestAnimationFrame(() => focusNode(id));
+  }, [data.focusedNodeId, nodes, focusNode]);
 
   const menuNode =
     menu?.kind === 'node'
@@ -687,7 +725,7 @@ function FlowGraphInner({
       style={{ ...wrapperStyle, position: 'relative' }}
     >
       <ReactFlow
-        className={hoverId ? 'mw-hovering' : undefined}
+        className={emphasis ? 'mw-hovering' : undefined}
         nodes={nodes}
         edges={edges}
         nodeTypes={NODE_TYPES}

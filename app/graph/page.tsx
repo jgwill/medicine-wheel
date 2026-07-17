@@ -87,10 +87,15 @@ function graphNodePositions(data: MWGraphData): MWGraphNodePositions {
   return positions;
 }
 
+const DIRECTION_NAMES = ["east", "south", "west", "north"] as const;
+type DirectionParam = (typeof DIRECTION_NAMES)[number];
+
 export default function GraphPage() {
   const router = useRouter();
   const [graph, setGraph] = useState<MWGraphData>({ nodes: [], links: [] });
   const [selectedNode, setSelectedNode] = useState<MWGraphNode | null>(null);
+  const [focusedNodeId, setFocusedNodeId] = useState<string | undefined>(undefined);
+  const [highlightDirection, setHighlightDirection] = useState<DirectionParam | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
   const [animationsEnabled, setAnimationsEnabled] = useState(
@@ -154,6 +159,30 @@ export default function GraphPage() {
   useEffect(() => {
     setAnimationsEnabled(loadStoredGraphAnimationPreference());
   }, []);
+
+  // Deep links: ?node=<id> focuses a being; ?direction=<dir> keeps that
+  // quadrant's beings lit (arriving from the home wheel).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const node = params.get("node");
+    if (node) setFocusedNodeId(node);
+    const direction = params.get("direction");
+    if (direction && (DIRECTION_NAMES as readonly string[]).includes(direction)) {
+      setHighlightDirection(direction as DirectionParam);
+    }
+  }, []);
+
+  // Surface the deep-linked node in the side panel once data arrives.
+  useEffect(() => {
+    if (!focusedNodeId || graph.nodes.length === 0) return;
+    const node = graph.nodes.find((n) => n.id === focusedNodeId);
+    if (node) setSelectedNode(node);
+  }, [focusedNodeId, graph.nodes]);
+
+  const graphData = useMemo<MWGraphData>(
+    () => (focusedNodeId ? { ...graph, focusedNodeId } : graph),
+    [graph, focusedNodeId],
+  );
 
   useEffect(() => {
     layoutStoreRef.current = layoutStore;
@@ -398,7 +427,7 @@ export default function GraphPage() {
               </div>
             ) : (
               <MedicineWheelFlowGraph
-                data={graph}
+                data={graphData}
                 height={600}
                 darkMode
                 showNodeLabels={showLabels}
@@ -413,6 +442,7 @@ export default function GraphPage() {
                 onNodeCreateRequest={handleNodeCreateRequest}
                 onEdgeCeremonyRequest={handleEdgeCeremonyRequest}
                 onEdgeDeleteRequest={handleEdgeDeleteRequest}
+                highlightDirection={highlightDirection}
               />
             )}
           </div>
