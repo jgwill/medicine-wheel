@@ -15,13 +15,14 @@
  * at the app level:  `import '@xyflow/react/dist/style.css'`.
  */
 
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
   Background,
   BackgroundVariant,
   Controls,
+  ControlButton,
   MiniMap,
   useNodesState,
   useEdgesState,
@@ -194,6 +195,29 @@ function flowNodePositions(
 // echoed positions are compared with sub-pixel tolerance, not strictly.
 const POSITION_EPSILON = 0.01;
 
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+}
+
+/** Medicine-wheel glyph (circle + four-direction cross) for the control. */
+function WheelGlyph() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.4}>
+      <circle cx="8" cy="8" r="6.3" />
+      <line x1="8" y1="1.7" x2="8" y2="14.3" />
+      <line x1="1.7" y1="8" x2="14.3" y2="8" />
+    </svg>
+  );
+}
+
 function samePositions(
   a: MWGraphNodePositions,
   b: MWGraphNodePositions,
@@ -231,7 +255,80 @@ function FlowGraphInner({
 }: MedicineWheelFlowGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<MedicineWheelNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-  const { getNodes } = useReactFlow<Node<MedicineWheelNodeData>, Edge>();
+  const { getNodes, fitView } = useReactFlow<Node<MedicineWheelNodeData>, Edge>();
+
+  // ── Ceremonial re-layout: rAF polar-lerp back to the wheel ──────────────
+  const animRef = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (animRef.current !== null) cancelAnimationFrame(animRef.current);
+    },
+    [],
+  );
+
+  /**
+   * Animate nodes to `target` positions by interpolating radius and angle
+   * around the wheel center, so nodes sweep along arcs — the wheel
+   * gathering its relations — rather than sliding in straight lines.
+   */
+  const animatePositions = useCallback(
+    (target: MWGraphNodePositions, ms = 600) => {
+      if (animRef.current !== null) cancelAnimationFrame(animRef.current);
+
+      const apply = (positions: MWGraphNodePositions) =>
+        setNodes((nds) =>
+          nds.map((n) =>
+            positions[n.id] ? { ...n, position: positions[n.id] } : n,
+          ),
+        );
+
+      if (ms <= 0 || prefersReducedMotion()) {
+        apply(target);
+        return;
+      }
+
+      const cfg: WheelLayoutConfig = { ...DEFAULT_LAYOUT, ...layout };
+      const toPolar = (p: { x: number; y: number }) => ({
+        r: Math.hypot(p.x - cfg.centerX, p.y - cfg.centerY),
+        a: Math.atan2(p.y - cfg.centerY, p.x - cfg.centerX),
+      });
+      const from = new Map(
+        getNodes().map((n) => [n.id, toPolar(n.position)]),
+      );
+
+      const t0 = performance.now();
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - t0) / ms);
+        const e = easeInOutCubic(t);
+        const frame: MWGraphNodePositions = {};
+
+        for (const [id, dest] of Object.entries(target)) {
+          const a = from.get(id);
+          if (!a) {
+            frame[id] = dest;
+            continue;
+          }
+          const b = toPolar(dest);
+          // Shortest angular path so nodes never take the long way around.
+          const da =
+            ((b.a - a.a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+          const r = a.r + (b.r - a.r) * e;
+          const ang = a.a + da * e;
+          frame[id] = {
+            x: cfg.centerX + r * Math.cos(ang),
+            y: cfg.centerY + r * Math.sin(ang),
+          };
+        }
+
+        apply(t < 1 ? frame : target);
+        animRef.current = t < 1 ? requestAnimationFrame(tick) : null;
+      };
+
+      animRef.current = requestAnimationFrame(tick);
+    },
+    [getNodes, setNodes, layout],
+  );
 
   // Positions we last emitted through onNodePositionsChange. When the parent
   // persists them and hands the same values back via the `nodePositions`
@@ -300,6 +397,30 @@ function FlowGraphInner({
     setNodes,
     setEdges,
   ]);
+
+  /**
+   * "Return to the wheel": re-run the canonical layout and sweep every node
+   * back to its place. The result is persisted as the new disposition.
+   */
+  const relayoutToWheel = useCallback(() => {
+    const laidOut = applyWheelLayout(
+      { nodes: data.nodes.map((n) => ({ ...n })), links: data.links },
+      layout,
+    );
+    const target: MWGraphNodePositions = {};
+    for (const n of laidOut.nodes) {
+      if (Number.isFinite(n.x) && Number.isFinite(n.y)) {
+        target[n.id] = { x: n.x!, y: n.y! };
+      }
+    }
+
+    animatePositions(target, 600);
+    fitView({ padding: 0.15, duration: 600 });
+
+    // Mark as our own emit so the persisted echo does not rebuild nodes.
+    lastEmittedPositions.current = target;
+    onNodePositionsChange?.(target);
+  }, [data, layout, animatePositions, fitView, onNodePositionsChange]);
 
   const handleNodeClick = useCallback<NodeMouseHandler>(
     (_event, flowNode) => {
@@ -380,7 +501,17 @@ function FlowGraphInner({
           size={4}
           color={darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}
         />
-        {showControls && <Controls showInteractive={false} />}
+        {showControls && (
+          <Controls showInteractive={false}>
+            <ControlButton
+              onClick={relayoutToWheel}
+              title="Return to the wheel"
+              aria-label="Return to the wheel"
+            >
+              <WheelGlyph />
+            </ControlButton>
+          </Controls>
+        )}
         {showMiniMap && (
           <MiniMap
             pannable
