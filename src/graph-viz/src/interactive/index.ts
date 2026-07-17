@@ -21,6 +21,8 @@ export {
   type MedicineWheelNodeData,
 } from './MedicineWheelNode.js';
 
+export { MedicineWheelEdge } from './MedicineWheelEdge.js';
+
 export {
   DirectionQuadrant,
   type DirectionQuadrantProps,

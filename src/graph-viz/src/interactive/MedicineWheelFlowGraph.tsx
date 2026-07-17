@@ -29,6 +29,7 @@ import {
   type Node,
   type Edge,
   type NodeTypes,
+  type EdgeTypes,
   type NodeMouseHandler,
   type OnNodeDrag,
 } from '@xyflow/react';
@@ -47,6 +48,7 @@ import {
   MedicineWheelNode,
   type MedicineWheelNodeData,
 } from './MedicineWheelNode.js';
+import { MedicineWheelEdge } from './MedicineWheelEdge.js';
 import { DirectionQuadrant } from './DirectionQuadrant.js';
 
 // ── Props ───────────────────────────────────────────────────────────────────
@@ -89,6 +91,7 @@ export interface MedicineWheelFlowGraphProps {
 }
 
 const NODE_TYPES: NodeTypes = { medicineWheel: MedicineWheelNode };
+const EDGE_TYPES: EdgeTypes = { medicineWheel: MedicineWheelEdge };
 
 // ── Mappers ─────────────────────────────────────────────────────────────────
 
@@ -139,6 +142,7 @@ function toFlowEdge(
     // MWGraphLink has no id; synthesize a stable, collision-safe id so
     // parallel edges between the same pair are preserved.
     id: `${link.source}->${link.target}#${index}`,
+    type: 'medicineWheel',
     source: link.source,
     target: link.target,
     label: link.label,
@@ -147,10 +151,8 @@ function toFlowEdge(
       stroke,
       strokeWidth: link.width ?? 1 + (link.strength ?? 0.5) * 2,
       strokeDasharray: linkStrokeDash(link.style),
-      opacity: 0.6,
+      opacity: ceremony ? 0.85 : 0.6,
     },
-    labelStyle: { fill: '#aaa', fontSize: 10 },
-    labelBgStyle: { fill: 'transparent' },
     data: { link },
   };
 }
@@ -344,6 +346,7 @@ function FlowGraphInner({
         nodes={nodes}
         edges={edges}
         nodeTypes={NODE_TYPES}
+        edgeTypes={EDGE_TYPES}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
