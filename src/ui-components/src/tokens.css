@@ -1,35 +1,35 @@
 /**
  * medicine-wheel-ui-components — Design Tokens
  * Source of truth for Medicine Wheel colors, type, spacing, radius, motion.
- * Mirror of Miadi Design System `colors_and_type.css`.
  *
  * Consume from an app with:
  *   @import "medicine-wheel-ui-components/tokens.css";
  * Or a bundler path:
  *   @import "../../src/ui-components/src/tokens.css";
  *
- * Assumes a webfont file at /fonts/Stereohead.otf (app serves it publicly).
+ * Direction colors: canonical semantic colors live in
+ * @medicine-wheel/ontology-core (DIRECTION_COLORS). The tokens below are
+ * PRESENTATION colors tuned for the midnight-indigo ground — notably West,
+ * whose canonical #1a1a2e is invisible on dark and is presented as a
+ * slate-plum family instead. Use `--mw-<dir>` for fills/borders/dots and
+ * `--mw-<dir>-ink` for text (WCAG AA on the ground).
+ *
+ * Display/body/mono font families are provided by the app via next/font
+ * variables (--font-fraunces, --font-inter, --font-jbmono); the stacks
+ * below fall back gracefully when consumed outside the app.
  */
 
-@font-face {
-  font-family: 'Stereohead';
-  src: url('/fonts/Stereohead.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
 :root {
-  /* Base */
-  --mw-bg:          oklch(0.145 0 0);
-  --mw-card:        oklch(0.185 0 0);
-  --mw-card-2:      oklch(0.21 0 0);
-  --mw-secondary:   oklch(0.269 0 0);
-  --mw-border:      oklch(0.3 0 0);
-  --mw-fg:          oklch(0.985 0 0);
-  --mw-muted:       oklch(0.708 0 0);
+  /* Ground — midnight indigo */
+  --mw-bg:          #0A0A1A;
+  --mw-card:        #12122A;
+  --mw-card-2:      #181836;
+  --mw-secondary:   #1E1E3E;
+  --mw-border:      #2B2B4E;
+  --mw-fg:          #F0EFF7;
+  --mw-muted:       #A9A7C5;
   --mw-primary:     oklch(0.785 0.115 85);
-  --mw-primary-fg:  oklch(0.145 0 0);
+  --mw-primary-fg:  #0A0A1A;
   --mw-ring:        oklch(0.785 0.115 85);
   --mw-destructive: oklch(0.396 0.141 25.723);
 
@@ -39,29 +39,47 @@
   --mw-stc-accent:  #0891b2;
   --mw-stc-border:  #374151;
 
-  /* Four Direction colors */
+  /* Four Direction presentation colors (fills, borders, dots) */
   --mw-east:        #FFD700;
-  --mw-south:       #DC143C;
-  --mw-west:        #1a1a2e;
-  --mw-north:       #E8E8E8;
+  --mw-south:       #DC2626;
+  --mw-west:        #6B7A99;
+  --mw-north:       #F7F5F0;
 
-  --mw-east-tint:   #FFD70015;
-  --mw-south-tint:  #DC143C15;
-  --mw-west-tint:   #2a2a4a;
-  --mw-north-tint:  #E8E8E810;
+  /* Direction ink — text-safe on the midnight ground (WCAG AA) */
+  --mw-east-ink:    #FFD700;
+  --mw-south-ink:   #FF7B72;
+  --mw-west-ink:    #9FAEC9;
+  --mw-north-ink:   #F7F5F0;
+
+  /* Direction surface tints (panel backgrounds that belong to a direction) */
+  --mw-east-tint:   #FFD70014;
+  --mw-south-tint:  #DC262617;
+  --mw-west-tint:   #6B7A9920;
+  --mw-north-tint:  #F7F5F00F;
+
+  /* Direction quadrant washes (large-area backdrops, e.g. wheel quadrants) */
+  --mw-east-quadrant:  #FFD7000A;
+  --mw-south-quadrant: #DC26260D;
+  --mw-west-quadrant:  #6B7A9914;
+  --mw-north-quadrant: #F7F5F008;
 
   --mw-east-border:  #FFD70060;
-  --mw-south-border: #DC143C60;
-  --mw-west-border:  #5a5a8060;
-  --mw-north-border: #E8E8E860;
+  --mw-south-border: #DC262660;
+  --mw-west-border:  #6B7A9970;
+  --mw-north-border: #F7F5F060;
 
-  --mw-west-display: #8888cc; /* legible stand-in for near-black west on dark bg */
+  /* Back-compat alias — prefer --mw-west-ink */
+  --mw-west-display: var(--mw-west-ink);
+
+  /* Ceremony gold — RESERVED. Only ceremony-honored elements may glow. */
+  --mw-ceremony:      #FFD700;
+  --mw-ceremony-glow: 0 0 12px #FFD70055;
 
   /* oklch direction tokens (for gradients) */
   --color-east:   oklch(0.85 0.15 85);
   --color-south:  oklch(0.55 0.22 25);
-  --color-west:   oklch(0.25 0.05 270);
-  --color-north:  oklch(0.92 0.01 0);
+  --color-west:   oklch(0.6 0.05 270);
+  --color-north:  oklch(0.96 0.005 90);
 
   /* Node type colors — ancestor/knowledge retuned for contrast vs human */
   --mw-node-human:     #e8913a;
@@ -77,9 +95,16 @@
   --mw-wilson-low:    #ef4444;
 
   /* Typography */
-  --font-display: 'Stereohead', 'Nunito', system-ui, sans-serif;
-  --font-sans:    'Nunito', system-ui, -apple-system, sans-serif;
-  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+  --font-display: var(--font-fraunces, 'Fraunces'), 'Iowan Old Style', Georgia, serif;
+  --font-sans:    var(--font-inter, 'Inter'), system-ui, -apple-system, sans-serif;
+  --font-mono:    var(--font-jbmono, 'JetBrains Mono'), ui-monospace, 'SF Mono', monospace;
+
+  /* Semantic type scale */
+  --text-display: clamp(2.5rem, 1.75rem + 3vw, 3.75rem); /* home hero only */
+  --text-title:   2rem;      /* page titles */
+  --text-section: 1.25rem;   /* section headings */
+  --text-body:    1rem;
+  --text-caption: 0.75rem;
 
   --text-xs:   0.75rem;
   --text-sm:   0.875rem;
@@ -119,12 +144,19 @@
   --radius-lg:   0.75rem;
   --radius-full: 9999px;
 
+  /* Focus */
+  --focus-ring-width:  2px;
+  --focus-ring-offset: 2px;
+
   /* Motion */
   --duration-fast:    150ms;
   --duration-default: 200ms;
   --duration-slow:    300ms;
   --duration-pulse:   3s;
   --duration-glow:    2s;
+  --duration-breathe: 7s;
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
   /* Layout */
   --max-w-content: 80rem;
@@ -132,24 +164,31 @@
   --nav-height:    4rem;
 }
 
+/* Focus — one visible ring everywhere, keyboard only */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--focus-ring-width) solid var(--mw-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
 /* Type classes */
 .mw-display {
   font-family: var(--font-display);
-  font-size:   var(--text-4xl);
-  font-weight: var(--weight-normal);
+  font-size:   var(--text-display);
+  font-weight: var(--weight-medium);
   line-height: var(--leading-tight);
-  letter-spacing: 0.02em;
+  letter-spacing: -0.015em;
 }
 .mw-h1 {
   font-family: var(--font-display);
-  font-size:   var(--text-3xl);
-  font-weight: var(--weight-normal);
+  font-size:   var(--text-title);
+  font-weight: var(--weight-medium);
   line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
 }
 .mw-h2 {
-  font-family: var(--font-display);
-  font-size:   var(--text-2xl);
-  font-weight: var(--weight-normal);
+  font-family: var(--font-sans);
+  font-size:   var(--text-section);
+  font-weight: var(--weight-semibold);
   line-height: var(--leading-tight);
 }
 .mw-h3 {
@@ -181,6 +220,34 @@
 .mw-card--west-left  { border-left: 4px solid var(--mw-west); }
 .mw-card--north-left { border-left: 4px solid var(--mw-north); }
 
+/* Direction card recipe — set `--dir` (fill) and `--dir-ink` (text) inline */
+.mw-dir-card {
+  border:        1px solid var(--mw-border);
+  border-radius: var(--radius-lg);
+  background:    var(--mw-card);
+  transition:    transform var(--duration-default) var(--ease-out),
+                 border-color var(--duration-default) ease,
+                 background var(--duration-default) ease;
+}
+.mw-dir-card:hover,
+.mw-dir-card:focus-visible {
+  transform:    translateY(-2px);
+  border-color: color-mix(in srgb, var(--dir, var(--mw-border)) 55%, transparent);
+  background:   color-mix(in srgb, var(--dir, transparent) 7%, var(--mw-card));
+}
+.mw-dir-card--selected {
+  border-color: var(--dir, var(--mw-ring));
+  background:   color-mix(in srgb, var(--dir, transparent) 10%, var(--mw-card));
+}
+
+/* Interactive row recipe (inspector relations, list rows) */
+.mw-row {
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast) ease;
+}
+.mw-row:hover,
+.mw-row:focus-visible { background: var(--mw-secondary); }
+
 /* Buttons */
 .mw-btn {
   display:       inline-flex;
@@ -194,7 +261,6 @@
   cursor:        pointer;
   transition:    all var(--duration-default) ease;
   border:        none;
-  outline:       none;
 }
 .mw-btn--primary   { background: var(--mw-primary); color: var(--mw-primary-fg); }
 .mw-btn--primary:hover { filter: brightness(0.9); }
@@ -217,10 +283,10 @@
   background:    var(--mw-secondary);
   color:         var(--mw-fg);
 }
-.mw-badge--east    { background: var(--mw-east-tint); color: var(--mw-east); border: 1px solid var(--mw-east-border); }
-.mw-badge--south   { background: #DC143C25; color: #ff6b80; border: 1px solid #DC143C50; }
-.mw-badge--west    { background: var(--mw-west-tint); color: var(--mw-west-display); border: 1px solid var(--mw-west-border); }
-.mw-badge--north   { background: var(--mw-north-tint); color: var(--mw-north); border: 1px solid var(--mw-north-border); }
+.mw-badge--east    { background: var(--mw-east-tint);  color: var(--mw-east-ink);  border: 1px solid var(--mw-east-border); }
+.mw-badge--south   { background: var(--mw-south-tint); color: var(--mw-south-ink); border: 1px solid var(--mw-south-border); }
+.mw-badge--west    { background: var(--mw-west-tint);  color: var(--mw-west-ink);  border: 1px solid var(--mw-west-border); }
+.mw-badge--north   { background: var(--mw-north-tint); color: var(--mw-north-ink); border: 1px solid var(--mw-north-border); }
 .mw-badge--success { background: #14532d40; color: var(--mw-wilson-high); }
 .mw-badge--warning { background: #78350f40; color: var(--mw-wilson-mid); }
 .mw-badge--error   { background: #7f1d1d40; color: var(--mw-wilson-low); }
@@ -235,7 +301,6 @@
   color:         var(--mw-fg);
   font-family:   var(--font-sans);
   font-size:     var(--text-sm);
-  outline:       none;
   transition:    border-color var(--duration-fast);
 }
 .mw-input:focus { border-color: var(--mw-ring); }
@@ -255,7 +320,7 @@
   transition: width var(--duration-slow);
 }
 .mw-progress-fill--directions {
-  background: linear-gradient(to right, var(--mw-east), var(--mw-south), #6060a0, var(--mw-north));
+  background: linear-gradient(to right, var(--mw-east), var(--mw-south), var(--mw-west), var(--mw-north));
 }
 
 /* Dots */
@@ -269,7 +334,7 @@
 .mw-dot--inactive { background: var(--mw-muted); }
 .mw-dot--east     { background: var(--mw-east); }
 .mw-dot--south    { background: var(--mw-south); }
-.mw-dot--west     { background: var(--mw-west-display); }
+.mw-dot--west     { background: var(--mw-west); }
 .mw-dot--north    { background: var(--mw-north); }
 
 /* Animations */
@@ -281,9 +346,20 @@
   0%, 100% { filter: brightness(1); }
   50%       { filter: brightness(1.3); }
 }
+@keyframes mw-breathe {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50%       { opacity: 1;    transform: scale(1.015); }
+}
 @keyframes mw-spin {
   to { transform: rotate(360deg); }
 }
-.mw-pulse { animation: mw-pulse-center var(--duration-pulse) ease-in-out infinite; }
-.mw-glow  { animation: mw-glow var(--duration-glow) ease-in-out infinite; }
-.mw-spin  { animation: mw-spin 1s linear infinite; }
+.mw-pulse   { animation: mw-pulse-center var(--duration-pulse) ease-in-out infinite; }
+.mw-glow    { animation: mw-glow var(--duration-glow) ease-in-out infinite; }
+.mw-breathe { animation: mw-breathe var(--duration-breathe) var(--ease-in-out) infinite; transform-origin: center; }
+.mw-spin    { animation: mw-spin 1s linear infinite; }
+
+/* Reduced motion — decorative animation stops; spinners stay functional */
+@media (prefers-reduced-motion: reduce) {
+  .mw-pulse, .mw-glow, .mw-breathe { animation: none; }
+  .mw-dir-card, .mw-dir-card:hover { transform: none; }
+}

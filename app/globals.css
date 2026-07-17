@@ -1,44 +1,48 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 @import "../src/ui-components/src/tokens.css";
 
+/*
+ * Tailwind theme mirrors tokens.css (the source of truth).
+ * Fonts arrive via next/font in app/layout.tsx as
+ * --font-fraunces / --font-inter / --font-jbmono.
+ */
 @theme inline {
-  --color-background: oklch(0.145 0 0);
-  --color-foreground: oklch(0.985 0 0);
-  --color-card: oklch(0.185 0 0);
-  --color-card-foreground: oklch(0.985 0 0);
-  --color-popover: oklch(0.185 0 0);
-  --color-popover-foreground: oklch(0.985 0 0);
-  --color-primary: oklch(0.785 0.115 85);
-  --color-primary-foreground: oklch(0.145 0 0);
-  --color-secondary: oklch(0.269 0 0);
-  --color-secondary-foreground: oklch(0.985 0 0);
-  --color-muted: oklch(0.269 0 0);
-  --color-muted-foreground: oklch(0.708 0 0);
-  --color-accent: oklch(0.269 0 0);
-  --color-accent-foreground: oklch(0.985 0 0);
-  --color-destructive: oklch(0.396 0.141 25.723);
-  --color-destructive-foreground: oklch(0.985 0 0);
-  --color-border: oklch(0.3 0 0);
-  --color-input: oklch(0.3 0 0);
-  --color-ring: oklch(0.785 0.115 85);
+  --color-background: var(--mw-bg);
+  --color-foreground: var(--mw-fg);
+  --color-card: var(--mw-card);
+  --color-card-foreground: var(--mw-fg);
+  --color-popover: var(--mw-card);
+  --color-popover-foreground: var(--mw-fg);
+  --color-primary: var(--mw-primary);
+  --color-primary-foreground: var(--mw-primary-fg);
+  --color-secondary: var(--mw-secondary);
+  --color-secondary-foreground: var(--mw-fg);
+  --color-muted: var(--mw-secondary);
+  --color-muted-foreground: var(--mw-muted);
+  --color-accent: var(--mw-secondary);
+  --color-accent-foreground: var(--mw-fg);
+  --color-destructive: var(--mw-destructive);
+  --color-destructive-foreground: var(--mw-fg);
+  --color-border: var(--mw-border);
+  --color-input: var(--mw-border);
+  --color-ring: var(--mw-ring);
   --radius: 0.625rem;
 
-  --color-east: oklch(0.85 0.15 85);
-  --color-south: oklch(0.55 0.22 25);
-  --color-west: oklch(0.25 0.05 270);
-  --color-north: oklch(0.92 0.01 0);
+  --color-east: var(--mw-east);
+  --color-south: var(--mw-south);
+  --color-west: var(--mw-west);
+  --color-north: var(--mw-north);
 
-  --color-node-human: oklch(0.72 0.15 55);
-  --color-node-land: oklch(0.6 0.16 145);
-  --color-node-spirit: oklch(0.6 0.18 300);
-  --color-node-ancestor: oklch(0.48 0.09 55);   /* deep copper — #8a5a2a */
-  --color-node-future: oklch(0.7 0.12 230);
-  --color-node-knowledge: oklch(0.83 0.18 110); /* lime-gold — #c8d42a */
+  --color-node-human: var(--mw-node-human);
+  --color-node-land: var(--mw-node-land);
+  --color-node-spirit: var(--mw-node-spirit);
+  --color-node-ancestor: var(--mw-node-ancestor);
+  --color-node-future: var(--mw-node-future);
+  --color-node-knowledge: var(--mw-node-knowledge);
 
-  --font-sans: 'Nunito', system-ui, -apple-system, sans-serif;
-  --font-display: 'Stereohead', 'Nunito', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-sans: var(--font-inter, 'Inter'), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-fraunces, 'Fraunces'), 'Iowan Old Style', Georgia, serif;
+  --font-mono: var(--font-jbmono, 'JetBrains Mono'), ui-monospace, monospace;
 }
 
 @layer base {
@@ -49,10 +53,15 @@
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
   }
-  h1, h2 {
+  /* Display face is reserved for page titles + home hero (h1 only) */
+  h1 {
     font-family: var(--font-display);
-    font-weight: normal;
-    letter-spacing: 0.01em;
+    font-weight: var(--weight-medium);
+    letter-spacing: -0.01em;
+  }
+  h2 {
+    font-family: var(--font-sans);
+    font-weight: var(--weight-semibold);
   }
 }
 
@@ -66,3 +75,7 @@
 }
 .animate-pulse-center { animation: pulse-center 3s ease-in-out infinite; }
 .animate-glow { animation: glow 2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-center, .animate-glow { animation: none; }
+}
