@@ -188,6 +188,24 @@ function flowNodePositions(
   return positions;
 }
 
+// Persistence layers may round coordinates (e.g. to 2 decimals), so the
+// echoed positions are compared with sub-pixel tolerance, not strictly.
+const POSITION_EPSILON = 0.01;
+
+function samePositions(
+  a: MWGraphNodePositions,
+  b: MWGraphNodePositions,
+): boolean {
+  const keys = Object.keys(a);
+  if (keys.length !== Object.keys(b).length) return false;
+  return keys.every(
+    (k) =>
+      b[k] &&
+      Math.abs(a[k].x - b[k].x) <= POSITION_EPSILON &&
+      Math.abs(a[k].y - b[k].y) <= POSITION_EPSILON,
+  );
+}
+
 // ── Inner (inside ReactFlowProvider) ─────────────────────────────────────────
 
 function FlowGraphInner({
@@ -213,10 +231,44 @@ function FlowGraphInner({
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const { getNodes } = useReactFlow<Node<MedicineWheelNodeData>, Edge>();
 
+  // Positions we last emitted through onNodePositionsChange. When the parent
+  // persists them and hands the same values back via the `nodePositions`
+  // prop, the re-layout effect must not rebuild every flow node — React Flow
+  // already holds those positions, and the rebuild wipes selection state.
+  const lastEmittedPositions = React.useRef<MWGraphNodePositions | null>(null);
+  const lastLayoutConfig = React.useRef<unknown[] | null>(null);
+
   // Re-layout whenever data or display flags change. `applyWheelLayout`
   // mutates node.x/node.y in place, so spread each node defensively to avoid
   // mutating objects owned by the parent's React state.
   useEffect(() => {
+    const config = [
+      data,
+      layout,
+      showNodeLabels,
+      showOcapIndicators,
+      showWilsonHalos,
+      darkMode,
+      animationsEnabled,
+    ];
+    const configUnchanged =
+      lastLayoutConfig.current !== null &&
+      lastLayoutConfig.current.length === config.length &&
+      config.every((v, i) => Object.is(v, lastLayoutConfig.current![i]));
+
+    // Drag-stop echo: only the nodePositions prop changed, and it matches
+    // what we ourselves emitted. Skip the rebuild.
+    if (
+      configUnchanged &&
+      nodePositions &&
+      lastEmittedPositions.current &&
+      (nodePositions === lastEmittedPositions.current ||
+        samePositions(nodePositions, lastEmittedPositions.current))
+    ) {
+      return;
+    }
+    lastLayoutConfig.current = config;
+
     const laidOut = applyWheelLayout(
       { nodes: data.nodes.map((n) => ({ ...n })), links: data.links },
       layout,
@@ -269,7 +321,9 @@ function FlowGraphInner({
       const draggedNodesById = new Map(flowNodes.map((node) => [node.id, node]));
       const currentNodes = getNodes().map((node) => draggedNodesById.get(node.id) ?? node);
 
-      onNodePositionsChange(flowNodePositions(currentNodes));
+      const positions = flowNodePositions(currentNodes);
+      lastEmittedPositions.current = positions;
+      onNodePositionsChange(positions);
     },
     [getNodes, onNodePositionsChange],
   );
