@@ -11,6 +11,13 @@ import type {
   InquiryWeaveFilters,
   PlanPerspectiveRecord,
   PlanPerspectiveFilters,
+  NodePatch,
+  EdgePatch,
+} from './interface.js';
+import {
+  NodeNotFoundError,
+  EdgeNotFoundError,
+  NodeHasRelationsError,
 } from './interface.js';
 import {
   mergePlanPerspectiveRecords,
@@ -109,6 +116,52 @@ export class JsonlProvider implements StorageProvider {
       .map((node) => this.parseNode(node));
   }
 
+  async updateNode(id: string, patch: NodePatch): Promise<RelationalNode> {
+    return withWriteLock(this.nodesFile, () => {
+      const nodes = this.readNodes();
+      const index = nodes.findIndex((candidate) => candidate.id === id);
+      if (index === -1) throw new NodeNotFoundError(id);
+
+      const current = nodes[index];
+      const next: StoredNode = {
+        ...current,
+        ...(patch.name !== undefined ? { name: patch.name } : {}),
+        ...(patch.type !== undefined ? { type: patch.type } : {}),
+        ...(patch.description !== undefined ? { description: patch.description } : {}),
+        ...(patch.metadata !== undefined ? { metadata: patch.metadata } : {}),
+        updated_at: new Date().toISOString(),
+      };
+      if (patch.direction !== undefined) {
+        next.direction = patch.direction === null ? undefined : patch.direction;
+      }
+
+      nodes[index] = next;
+      writeJsonl(this.nodesFile, nodes);
+      return this.parseNode(next);
+    });
+  }
+
+  async deleteNode(id: string): Promise<void> {
+    await withWriteLock(this.nodesFile, () => {
+      const nodes = this.readNodes();
+      if (!nodes.some((candidate) => candidate.id === id)) {
+        throw new NodeNotFoundError(id);
+      }
+
+      const relationCount = this.readEdges().filter(
+        (edge) => edge.from_id === id || edge.to_id === id,
+      ).length;
+      if (relationCount > 0) {
+        throw new NodeHasRelationsError(id, relationCount);
+      }
+
+      writeJsonl(
+        this.nodesFile,
+        nodes.filter((candidate) => candidate.id !== id),
+      );
+    });
+  }
+
   async createEdge(edge: RelationalEdge): Promise<void> {
     await this.upsertEdge({
       ...edge,
@@ -162,6 +215,45 @@ export class JsonlProvider implements StorageProvider {
       });
 
       writeJsonl(this.edgesFile, nextEdges);
+    });
+  }
+
+  async updateEdge(fromId: string, toId: string, patch: EdgePatch): Promise<RelationalEdge> {
+    return withWriteLock(this.edgesFile, () => {
+      const edges = this.readEdges();
+      const index = edges.findIndex(
+        (candidate) => candidate.from_id === fromId && candidate.to_id === toId,
+      );
+      if (index === -1) throw new EdgeNotFoundError(fromId, toId);
+
+      const next: StoredEdge = {
+        ...edges[index],
+        ...(patch.relationship_type !== undefined
+          ? { relationship_type: patch.relationship_type }
+          : {}),
+        ...(patch.strength !== undefined ? { strength: patch.strength } : {}),
+        ...(patch.ceremony_honored !== undefined
+          ? { ceremony_honored: patch.ceremony_honored }
+          : {}),
+        ...(patch.obligations !== undefined ? { obligations: patch.obligations } : {}),
+      };
+
+      edges[index] = next;
+      writeJsonl(this.edgesFile, edges);
+      return this.parseEdge(next);
+    });
+  }
+
+  async deleteEdge(fromId: string, toId: string): Promise<void> {
+    await withWriteLock(this.edgesFile, () => {
+      const edges = this.readEdges();
+      const remaining = edges.filter(
+        (candidate) => !(candidate.from_id === fromId && candidate.to_id === toId),
+      );
+      if (remaining.length === edges.length) {
+        throw new EdgeNotFoundError(fromId, toId);
+      }
+      writeJsonl(this.edgesFile, remaining);
     });
   }
 
@@ -292,6 +384,7 @@ export class JsonlProvider implements StorageProvider {
 
   private parseEdge(edge: StoredEdge): RelationalEdge {
     return {
+      id: edge.id ?? `${edge.from_id}:${edge.to_id}`,
       from_id: edge.from_id,
       to_id: edge.to_id,
       relationship_type: edge.relationship_type,

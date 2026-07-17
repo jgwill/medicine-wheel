@@ -12,6 +12,13 @@ import type {
   InquiryWeaveFilters,
   PlanPerspectiveRecord,
   PlanPerspectiveFilters,
+  NodePatch,
+  EdgePatch,
+} from './interface.js';
+import {
+  NodeNotFoundError,
+  EdgeNotFoundError,
+  NodeHasRelationsError,
 } from './interface.js';
 import {
   mergePlanPerspectiveRecords,
@@ -82,6 +89,49 @@ export class NeonProvider implements StorageProvider {
     return rows.map((row: Record<string, unknown>) => this.parseNode(row));
   }
 
+  async updateNode(id: string, patch: NodePatch): Promise<RelationalNode> {
+    const existing = await this.getNode(id);
+    if (!existing) throw new NodeNotFoundError(id);
+
+    const next: RelationalNode = {
+      ...existing,
+      ...(patch.name !== undefined ? { name: patch.name } : {}),
+      ...(patch.type !== undefined ? { type: patch.type } : {}),
+      ...(patch.description !== undefined ? { description: patch.description } : {}),
+      ...(patch.metadata !== undefined ? { metadata: patch.metadata } : {}),
+      updated_at: new Date().toISOString(),
+    };
+    if (patch.direction !== undefined) {
+      next.direction = patch.direction === null ? undefined : patch.direction;
+    }
+
+    await this.db`
+      UPDATE nodes SET
+        name = ${next.name},
+        type = ${next.type},
+        description = ${next.description ?? ''},
+        direction = ${next.direction || null},
+        metadata = ${JSON.stringify(next.metadata)},
+        updated_at = ${next.updated_at}
+      WHERE id = ${id}
+    `;
+
+    return next;
+  }
+
+  async deleteNode(id: string): Promise<void> {
+    const existing = await this.db`SELECT id FROM nodes WHERE id = ${id}`;
+    if (existing.length === 0) throw new NodeNotFoundError(id);
+
+    const counts = await this.db`
+      SELECT COUNT(*)::int AS count FROM edges WHERE from_id = ${id} OR to_id = ${id}
+    `;
+    const relationCount = Number(counts[0]?.count ?? 0);
+    if (relationCount > 0) throw new NodeHasRelationsError(id, relationCount);
+
+    await this.db`DELETE FROM nodes WHERE id = ${id}`;
+  }
+
   private parseNode(row: Record<string, unknown>): RelationalNode {
     return {
       id: row.id as string,
@@ -145,8 +195,44 @@ export class NeonProvider implements StorageProvider {
     `;
   }
 
+  async updateEdge(fromId: string, toId: string, patch: EdgePatch): Promise<RelationalEdge> {
+    const existing = await this.getEdge(fromId, toId);
+    if (!existing) throw new EdgeNotFoundError(fromId, toId);
+
+    const next: RelationalEdge = {
+      ...existing,
+      ...(patch.relationship_type !== undefined
+        ? { relationship_type: patch.relationship_type }
+        : {}),
+      ...(patch.strength !== undefined ? { strength: patch.strength } : {}),
+      ...(patch.ceremony_honored !== undefined
+        ? { ceremony_honored: patch.ceremony_honored }
+        : {}),
+      ...(patch.obligations !== undefined ? { obligations: patch.obligations } : {}),
+    };
+
+    await this.db`
+      UPDATE edges SET
+        relationship_type = ${next.relationship_type},
+        strength = ${next.strength},
+        ceremony_honored = ${next.ceremony_honored},
+        obligations = ${JSON.stringify(next.obligations)}
+      WHERE from_id = ${fromId} AND to_id = ${toId}
+    `;
+
+    return next;
+  }
+
+  async deleteEdge(fromId: string, toId: string): Promise<void> {
+    const deleted = await this.db`
+      DELETE FROM edges WHERE from_id = ${fromId} AND to_id = ${toId} RETURNING from_id
+    `;
+    if (deleted.length === 0) throw new EdgeNotFoundError(fromId, toId);
+  }
+
   private parseEdge(row: Record<string, unknown>): RelationalEdge {
     return {
+      id: `${row.from_id as string}:${row.to_id as string}`,
       from_id: row.from_id as string,
       to_id: row.to_id as string,
       relationship_type: row.relationship_type as string,

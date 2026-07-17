@@ -27,6 +27,56 @@ export interface RelationalEdge extends Omit<OntologyRelationalEdge, 'id'> {
 
 export type CeremonyLog = OntologyCeremonyLog;
 
+/** Partial update for a node. `direction: null` releases the node from its direction. */
+export interface NodePatch {
+  name?: string;
+  type?: NodeType;
+  description?: string;
+  direction?: DirectionName | null;
+  metadata?: Record<string, unknown>;
+}
+
+/** Partial update for an edge (identified by from_id + to_id). */
+export interface EdgePatch {
+  relationship_type?: string;
+  strength?: number;
+  ceremony_honored?: boolean;
+  obligations?: string[];
+}
+
+// ── Typed Errors ──
+// Providers throw these so API layers can answer with honest status codes.
+
+export class NodeNotFoundError extends Error {
+  readonly code = 'NODE_NOT_FOUND';
+  constructor(readonly nodeId: string) {
+    super(`Node not found: ${nodeId}`);
+    this.name = 'NodeNotFoundError';
+  }
+}
+
+export class EdgeNotFoundError extends Error {
+  readonly code = 'EDGE_NOT_FOUND';
+  constructor(readonly fromId: string, readonly toId: string) {
+    super(`Relation not found between ${fromId} and ${toId}`);
+    this.name = 'EdgeNotFoundError';
+  }
+}
+
+/**
+ * Deleting a node with living relations is refused: relational accountability
+ * means severing each relation consciously before releasing the node.
+ */
+export class NodeHasRelationsError extends Error {
+  readonly code = 'NODE_HAS_RELATIONS';
+  constructor(readonly nodeId: string, readonly relationCount: number) {
+    super(
+      `This node holds ${relationCount} relation${relationCount === 1 ? '' : 's'} — release them first`,
+    );
+    this.name = 'NodeHasRelationsError';
+  }
+}
+
 export type WeaveSyncState =
   | 'never-synced'
   | 'in-sync'
@@ -140,13 +190,21 @@ export interface StorageProvider {
   getNodesByType(type: NodeType): Promise<RelationalNode[]>;
   getNodesByDirection(direction: DirectionName): Promise<RelationalNode[]>;
   getAllNodes(limit?: number): Promise<RelationalNode[]>;
-  
+  /** Throws NodeNotFoundError when the node does not exist. */
+  updateNode(id: string, patch: NodePatch): Promise<RelationalNode>;
+  /** Throws NodeNotFoundError or NodeHasRelationsError (refusal, never cascade). */
+  deleteNode(id: string): Promise<void>;
+
   // Edge Operations
   createEdge(edge: RelationalEdge): Promise<void>;
   getEdge(fromId: string, toId: string): Promise<RelationalEdge | null>;
   getAllEdges(limit?: number): Promise<RelationalEdge[]>;
   getRelatedNodes(nodeId: string, direction?: 'from' | 'to' | 'both'): Promise<string[]>;
   updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): Promise<void>;
+  /** Throws EdgeNotFoundError when no relation exists between the pair. */
+  updateEdge(fromId: string, toId: string, patch: EdgePatch): Promise<RelationalEdge>;
+  /** Throws EdgeNotFoundError when no relation exists between the pair. */
+  deleteEdge(fromId: string, toId: string): Promise<void>;
   
   // Ceremony Operations
   logCeremony(ceremony: CeremonyLog): Promise<void>;

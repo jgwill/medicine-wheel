@@ -29,6 +29,15 @@ export type {
   PlanPerspectiveEpisode,
   PlanPerspectiveFilters,
   ProviderType,
+  NodePatch,
+  EdgePatch,
+} from './interface.js';
+
+// Typed errors (thrown by update/delete operations)
+export {
+  NodeNotFoundError,
+  EdgeNotFoundError,
+  NodeHasRelationsError,
 } from './interface.js';
 
 // Plan Perspective merge/filter semantics (shared across providers)
