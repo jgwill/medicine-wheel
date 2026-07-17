@@ -34,6 +34,7 @@ export {
   curvedLinkPath,
   directionLabelPosition,
   directionForPoint,
+  constrainToWheel,
 } from './layout.js';
 
 // ── Data Converters ─────────────────────────────────────────────────────────

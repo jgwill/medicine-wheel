@@ -245,6 +245,54 @@ export function curvedLinkPath(
 }
 
 /**
+ * Constrain a point to the wheel's geometry, in polar space.
+ *
+ * - Beings with a direction stay in the ring band (innerRadius..radius);
+ *   in `sector` mode they also stay inside their direction's quadrant.
+ * - Beings without a direction stay in the heart (within innerRadius).
+ *
+ * Used as a drag/nudge interceptor: the wheel guides the hand instead of
+ * a Cartesian grid fighting it.
+ */
+export function constrainToWheel(
+  point: { x: number; y: number },
+  config: Partial<WheelLayoutConfig> = {},
+  direction?: DirectionName,
+  mode: 'ring' | 'sector' = 'ring'
+): { x: number; y: number } {
+  const cfg: WheelLayoutConfig = { ...DEFAULT_LAYOUT, ...config };
+  const inner = cfg.innerRadius ?? 60;
+  const dx = point.x - cfg.centerX;
+  const dy = point.y - cfg.centerY;
+  let r = Math.hypot(dx, dy);
+  let deg = ((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360;
+
+  if (direction) {
+    r = Math.min(Math.max(r, inner), cfg.radius);
+
+    if (mode === 'sector') {
+      const { start, end } = DIRECTION_ANGLES[direction];
+      const pad = (cfg.quadrantPadding ?? 5) / 2 + 2;
+      const s = start + pad;
+      const e = (end < start ? end + 360 : end) - pad;
+      // Handle the east wrap: bring the angle into the sector's frame.
+      let a = deg;
+      if (end < start && a < s) a += 360;
+      deg = Math.min(Math.max(a, s), e) % 360;
+    }
+  } else {
+    // Directionless beings live at the heart of the wheel.
+    r = Math.min(r, Math.max(inner - 8, 0));
+  }
+
+  const rad = degToRad(deg);
+  return {
+    x: cfg.centerX + r * Math.cos(rad),
+    y: cfg.centerY + r * Math.sin(rad),
+  };
+}
+
+/**
  * Which direction quadrant a flow-space point falls in.
  * Useful for quadrant-aware interactions (e.g. "create node here").
  */

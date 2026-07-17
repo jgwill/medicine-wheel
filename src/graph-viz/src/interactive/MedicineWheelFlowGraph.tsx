@@ -50,6 +50,7 @@ import {
   applyWheelLayout,
   DEFAULT_LAYOUT,
   directionForPoint,
+  constrainToWheel,
 } from '../layout.js';
 import {
   GraphContextMenu,
@@ -135,6 +136,12 @@ export interface MedicineWheelFlowGraphProps {
    * home wheel via ?direction=). Hover emphasis takes precedence.
    */
   highlightDirection?: DirectionName;
+  /**
+   * Radial snapping while dragging/nudging. Default: 'off'.
+   * 'ring': beings stay in their band (direction ring / center heart).
+   * 'sector': additionally, beings stay inside their direction quadrant.
+   */
+  radialSnap?: 'off' | 'ring' | 'sector';
 }
 
 const NODE_TYPES: NodeTypes = { medicineWheel: MedicineWheelNode };
@@ -326,6 +333,7 @@ function FlowGraphInner({
   onEdgeCeremonyRequest,
   onEdgeDeleteRequest,
   highlightDirection,
+  radialSnap = 'off',
 }: MedicineWheelFlowGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<MedicineWheelNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -604,16 +612,39 @@ function FlowGraphInner({
     }, 600);
   }, [getNodes, onNodePositionsChange]);
 
+  const directionById = useMemo(
+    () => new Map(data.nodes.map((n) => [n.id, n.direction])),
+    [data.nodes],
+  );
+
   const handleNodesChange = useCallback<
     OnNodesChange<Node<MedicineWheelNodeData>>
   >(
     (changes) => {
-      onNodesChange(changes);
-      if (changes.some((c) => c.type === 'position' && !c.dragging)) {
+      // Radial snapping: constrain drags AND keyboard nudges in polar
+      // space — the wheel guides the hand, not a Cartesian grid.
+      const next =
+        radialSnap === 'off'
+          ? changes
+          : changes.map((c) =>
+              c.type === 'position' && c.position
+                ? {
+                    ...c,
+                    position: constrainToWheel(
+                      c.position,
+                      layout,
+                      directionById.get(c.id),
+                      radialSnap,
+                    ),
+                  }
+                : c,
+            );
+      onNodesChange(next);
+      if (next.some((c) => c.type === 'position' && !c.dragging)) {
         schedulePersist();
       }
     },
-    [onNodesChange, schedulePersist],
+    [onNodesChange, schedulePersist, radialSnap, layout, directionById],
   );
 
   const handleNodeDragStop = useCallback<OnNodeDrag<Node<MedicineWheelNodeData>>>(

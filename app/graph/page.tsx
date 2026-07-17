@@ -96,6 +96,7 @@ export default function GraphPage() {
   const [selectedNode, setSelectedNode] = useState<MWGraphNode | null>(null);
   const [focusedNodeId, setFocusedNodeId] = useState<string | undefined>(undefined);
   const [highlightDirection, setHighlightDirection] = useState<DirectionParam | undefined>(undefined);
+  const [radialSnap, setRadialSnap] = useState<"off" | "ring" | "sector">("off");
   const [loading, setLoading] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
   const [animationsEnabled, setAnimationsEnabled] = useState(
@@ -397,6 +398,15 @@ export default function GraphPage() {
             >
               Labels {showLabels ? "ON" : "OFF"}
             </button>
+            <button
+              onClick={() =>
+                setRadialSnap((s) => (s === "off" ? "ring" : s === "ring" ? "sector" : "off"))
+              }
+              className={`px-3 py-1.5 rounded text-sm ${radialSnap !== "off" ? "bg-white/10" : "bg-white/5"}`}
+              title="Radial snapping: the wheel guides dragged beings — ring keeps them in their band, sector also inside their quadrant"
+            >
+              Snap {radialSnap === "off" ? "OFF" : radialSnap.toUpperCase()}
+            </button>
             <button onClick={loadData} className="px-3 py-1.5 rounded text-sm bg-white/5 hover:bg-white/10 inline-flex items-center gap-2">
               <RefreshCw className="h-4 w-4" /> Refresh
             </button>
@@ -443,6 +453,7 @@ export default function GraphPage() {
                 onEdgeCeremonyRequest={handleEdgeCeremonyRequest}
                 onEdgeDeleteRequest={handleEdgeDeleteRequest}
                 highlightDirection={highlightDirection}
+                radialSnap={radialSnap}
               />
             )}
           </div>
