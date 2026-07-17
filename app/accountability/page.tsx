@@ -36,10 +36,6 @@ export default function AccountabilityPage() {
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    document.title = "Accountability · Medicine Wheel";
-  }, []);
-
   const ceremoniedCount = edges.filter((e: any) => e.ceremony_honored).length;
 
   return (

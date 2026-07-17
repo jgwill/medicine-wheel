@@ -45,10 +45,6 @@ function CeremoniesContent() {
     loadCeremonies();
   }, [loadCeremonies]);
 
-  useEffect(() => {
-    document.title = "Ceremonies · Medicine Wheel";
-  }, []);
-
   async function logCeremony(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);

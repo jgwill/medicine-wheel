@@ -21,10 +21,6 @@ export default function NarrativePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    document.title = "Narrative · Medicine Wheel";
-  }, []);
-
   const activeCycle = cycles[0];
   const dirOrder: DirectionName[] = ["east", "south", "west", "north"];
   const dirIdx = activeCycle ? dirOrder.indexOf(activeCycle.current_direction as DirectionName) : 0;

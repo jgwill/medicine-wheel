@@ -19,10 +19,6 @@ export default function BeatsPage() {
     fetch("/api/narrative/beats").then((r) => r.json()).then((d) => setBeats(Array.isArray(d) ? d : [])).catch(() => setBeats([]));
   }, []);
 
-  useEffect(() => {
-    document.title = "Beats · Medicine Wheel";
-  }, []);
-
   const directions: DirectionName[] = ["east", "south", "west", "north"];
   const filteredBeats = filterDir === "all" ? beats : beats.filter((b) => b.direction === filterDir);
 

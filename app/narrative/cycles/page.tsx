@@ -21,10 +21,6 @@ export default function CyclesPage() {
       .catch(() => setCycles([]));
   }, []);
 
-  useEffect(() => {
-    document.title = "Cycles · Medicine Wheel";
-  }, []);
-
   async function createCycle(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
