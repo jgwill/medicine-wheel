@@ -56,3 +56,35 @@
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* ── Weaving relations ─────────────────────────────────────────────── */
+
+/* Cardinal source handles: hidden until the node is hovered/selected */
+.react-flow__node .mw-node-handle {
+  width: 9px;
+  height: 9px;
+  border-radius: 9999px;
+  background: var(--mw-north, #f7f5f0);
+  border: 1.5px solid var(--mw-bg, #0a0a1a);
+  opacity: 0;
+  /* React Flow positions handles via transform — never animate it here. */
+  transition: opacity 150ms ease;
+  cursor: crosshair;
+}
+
+.react-flow__node:hover .mw-node-handle,
+.react-flow__node.selected .mw-node-handle,
+.react-flow__node:focus-visible .mw-node-handle {
+  opacity: 0.9;
+}
+
+.react-flow__node .mw-node-handle:hover {
+  opacity: 1;
+}
+
+/* The in-flight thread: dashed, neutral — it only turns gold if the
+   relation is later ceremony-honored. */
+.react-flow.dark .react-flow__connectionline path {
+  stroke-dasharray: 8 4;
+  stroke-width: 1.75;
+}

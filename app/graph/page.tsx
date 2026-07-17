@@ -234,6 +234,31 @@ export default function GraphPage() {
     [router],
   );
 
+  const handleRelationCreate = useCallback(
+    async (sourceId: string, targetId: string) => {
+      try {
+        const res = await fetch("/api/edges", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from_id: sourceId,
+            to_id: targetId,
+            relationship_type: "speaks-with",
+            strength: 0.5,
+          }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        toast.success("Relation woven — speaks-with");
+      } catch {
+        toast.error("Could not save the relation — restoring the canvas");
+      } finally {
+        // Reload canonical data: confirms the new thread or reverts it.
+        await loadData();
+      }
+    },
+    [loadData],
+  );
+
   const handleAnimationsEnabledChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const enabled = event.target.checked;
@@ -304,6 +329,8 @@ export default function GraphPage() {
                 onNodeClick={(node) => setSelectedNode(node)}
                 onNodeDoubleClick={navigateToNode}
                 onNodePositionsChange={handleNodePositionsChange}
+                enableConnections
+                onRelationCreate={handleRelationCreate}
               />
             )}
           </div>

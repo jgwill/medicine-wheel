@@ -32,7 +32,15 @@ function wilsonColor(alignment: number): string {
   return '#dc143c';
 }
 
-function MedicineWheelNodeComponent({ data, selected }: NodeProps) {
+/** Cardinal points for connection handles on the node's circumference. */
+const HANDLE_POSITIONS: { id: string; position: Position }[] = [
+  { id: 'n', position: Position.Top },
+  { id: 'e', position: Position.Right },
+  { id: 's', position: Position.Bottom },
+  { id: 'w', position: Position.Left },
+];
+
+function MedicineWheelNodeComponent({ data, selected, isConnectable }: NodeProps) {
   const { node, showLabel, showOcap, showWilson, darkMode } =
     data as MedicineWheelNodeData;
 
@@ -59,19 +67,29 @@ function MedicineWheelNodeComponent({ data, selected }: NodeProps) {
       }}
       title={`${node.label} (${node.type}${node.direction ? ` · ${node.direction}` : ''})`}
     >
-      {/* Hidden handles centered on the node so edges route to its middle. */}
+      {/* Hidden center target: magnetic drop point for incoming threads
+          (connectionRadius snaps to it), and the routing anchor when
+          connections are disabled. */}
       <Handle
         type="target"
         position={Position.Left}
         style={{ opacity: 0, left: '50%', top: '50%', border: 'none' }}
-        isConnectable={false}
+        isConnectable={isConnectable}
       />
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{ opacity: 0, left: '50%', top: '50%', border: 'none' }}
-        isConnectable={false}
-      />
+      {/* Cardinal source handles on the circumference — revealed on
+          hover/selection (see .mw-node-handle CSS) so relations can be
+          woven by dragging outward in any direction. */}
+      {isConnectable &&
+        HANDLE_POSITIONS.map((h) => (
+          <Handle
+            key={h.id}
+            id={h.id}
+            type="source"
+            position={h.position}
+            className="mw-node-handle"
+            isConnectable={isConnectable}
+          />
+        ))}
 
       {/* Wilson alignment halo */}
       {ringColor && (

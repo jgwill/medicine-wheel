@@ -27,12 +27,16 @@ import {
   useNodesState,
   useEdgesState,
   useReactFlow,
+  addEdge,
+  ConnectionMode,
   type Node,
   type Edge,
   type NodeTypes,
   type EdgeTypes,
   type NodeMouseHandler,
   type OnNodeDrag,
+  type OnConnect,
+  type IsValidConnection,
 } from '@xyflow/react';
 
 import { NODE_TYPE_COLORS } from '@medicine-wheel/ontology-core';
@@ -89,6 +93,14 @@ export interface MedicineWheelFlowGraphProps {
   onNodeDoubleClick?: (node: MWGraphNode) => void;
   /** Fired when user-dragged node positions should be persisted. */
   onNodePositionsChange?: (positions: MWGraphNodePositions) => void;
+  /**
+   * Enable weaving relations by dragging between nodes. Default: false.
+   * The optimistic edge appears immediately; the consumer persists it via
+   * `onRelationCreate` (and reloads `data` to canonicalize or revert).
+   */
+  enableConnections?: boolean;
+  /** Fired when a connection gesture completes between two nodes. */
+  onRelationCreate?: (sourceId: string, targetId: string) => void;
 }
 
 const NODE_TYPES: NodeTypes = { medicineWheel: MedicineWheelNode };
@@ -258,6 +270,8 @@ function FlowGraphInner({
   onNodeClick,
   onNodeDoubleClick,
   onNodePositionsChange,
+  enableConnections = false,
+  onRelationCreate,
 }: MedicineWheelFlowGraphProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<MedicineWheelNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -457,6 +471,32 @@ function FlowGraphInner({
     [getNodes, onNodePositionsChange],
   );
 
+  const handleConnect = useCallback<OnConnect>(
+    (connection) => {
+      if (!connection.source || !connection.target) return;
+      if (connection.source === connection.target) return;
+
+      // Optimistic thread; the consumer persists and reloads canonical data.
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...connection,
+            type: 'medicineWheel',
+            style: { stroke: '#777', strokeWidth: 1.5, opacity: 0.6 },
+          },
+          eds,
+        ),
+      );
+      onRelationCreate?.(connection.source, connection.target);
+    },
+    [setEdges, onRelationCreate],
+  );
+
+  const isValidConnection = useCallback<IsValidConnection<Edge>>(
+    (connection) => connection.source !== connection.target,
+    [],
+  );
+
   const minimapNodeColor = useCallback((flowNode: Node) => {
     const n = (flowNode.data as MedicineWheelNodeData | undefined)?.node;
     return n?.color ?? (n ? NODE_TYPE_COLORS[n.type] : undefined) ?? '#888';
@@ -482,6 +522,11 @@ function FlowGraphInner({
         fitView
         deleteKeyCode={null}
         zoomOnDoubleClick={false}
+        nodesConnectable={enableConnections}
+        connectionMode={ConnectionMode.Loose}
+        connectionRadius={30}
+        onConnect={enableConnections ? handleConnect : undefined}
+        isValidConnection={isValidConnection}
         proOptions={{ hideAttribution: true }}
         colorMode={darkMode ? 'dark' : 'light'}
         minZoom={0.2}
