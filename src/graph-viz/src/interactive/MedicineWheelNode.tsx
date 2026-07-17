@@ -69,12 +69,19 @@ function MedicineWheelNodeComponent({ data, selected, isConnectable }: NodeProps
       title={`${node.label} (${node.type}${node.direction ? ` · ${node.direction}` : ''})`}
     >
       {/* Hidden center target: magnetic drop point for incoming threads
-          (connectionRadius snaps to it), and the routing anchor when
-          connections are disabled. */}
+          (connectionRadius resolves drops by distance, not DOM hits) and
+          the routing anchor. pointer-events off so grabbing the node's
+          center starts a drag, never a connection. */}
       <Handle
         type="target"
         position={Position.Left}
-        style={{ opacity: 0, left: '50%', top: '50%', border: 'none' }}
+        style={{
+          opacity: 0,
+          left: '50%',
+          top: '50%',
+          border: 'none',
+          pointerEvents: 'none',
+        }}
         isConnectable={isConnectable}
       />
       {/* Cardinal source handles on the circumference — revealed on
