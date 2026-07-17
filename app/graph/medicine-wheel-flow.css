@@ -1,0 +1,58 @@
+/**
+ * Medicine Wheel flow theme — React Flow v12 internals tuned to the
+ * midnight-indigo ground. Imported by app/graph/page.tsx AFTER
+ * `@xyflow/react/dist/style.css`.
+ *
+ * Palette rules (design-direction 2607):
+ * - Direction color = information. Nothing here claims a direction.
+ * - Ceremony gold #FFD700 is reserved for ceremony-honored elements,
+ *   so selection/interaction chrome uses neutral bone/slate tones.
+ */
+
+.react-flow.dark {
+  --xy-background-color: var(--mw-bg, #0a0a1a);
+  --xy-background-pattern-dots-color: rgba(255, 255, 255, 0.1);
+
+  --xy-edge-stroke: #55516a;
+  --xy-edge-stroke-selected: var(--mw-north, #f7f5f0);
+
+  --xy-connectionline-stroke: var(--mw-north, #f7f5f0);
+
+  --xy-controls-button-background-color: rgba(255, 255, 255, 0.06);
+  --xy-controls-button-background-color-hover: rgba(255, 255, 255, 0.14);
+  --xy-controls-button-color: #cbd5e1;
+  --xy-controls-button-color-hover: #ffffff;
+  --xy-controls-button-border-color: rgba(255, 255, 255, 0.1);
+  --xy-controls-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  --xy-minimap-background-color: #101020;
+
+  --xy-selection-background-color: rgba(247, 245, 240, 0.05);
+  --xy-selection-border: 1px dashed rgba(247, 245, 240, 0.45);
+
+  --xy-attribution-background-color: transparent;
+}
+
+/* Controls: quiet panel that reads as part of the instrument */
+.react-flow.dark .react-flow__controls {
+  border-radius: 10px;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+}
+
+.react-flow.dark .react-flow__controls-button {
+  width: 28px;
+  height: 28px;
+}
+
+.react-flow.dark .react-flow__controls-button:focus-visible {
+  outline: 2px solid var(--mw-ring, #cbd5e1);
+  outline-offset: -2px;
+}
+
+/* MiniMap: rounded, bordered, round node dots */
+.react-flow.dark .react-flow__minimap {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}

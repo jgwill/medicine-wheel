@@ -1,6 +1,7 @@
 "use client";
 
 import "@xyflow/react/dist/style.css";
+import "./medicine-wheel-flow.css";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import type { ChangeEvent } from "react";

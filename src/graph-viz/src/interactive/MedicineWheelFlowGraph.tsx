@@ -351,6 +351,7 @@ function FlowGraphInner({
         onNodeDragStop={handleNodeDragStop}
         fitView
         deleteKeyCode={null}
+        zoomOnDoubleClick={false}
         proOptions={{ hideAttribution: true }}
         colorMode={darkMode ? 'dark' : 'light'}
         minZoom={0.2}
@@ -362,14 +363,30 @@ function FlowGraphInner({
             showLabels={showDirectionLabels}
           />
         )}
-        <Background variant={BackgroundVariant.Dots} gap={24} size={1} />
+        {/* Star field (fine dots) + sparse constellation crosses. */}
+        <Background
+          id="mw-dots"
+          variant={BackgroundVariant.Dots}
+          gap={24}
+          size={1}
+        />
+        <Background
+          id="mw-cross"
+          variant={BackgroundVariant.Cross}
+          gap={120}
+          size={4}
+          color={darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}
+        />
         {showControls && <Controls showInteractive={false} />}
         {showMiniMap && (
           <MiniMap
             pannable
             zoomable
             nodeColor={minimapNodeColor}
-            maskColor={darkMode ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'}
+            nodeStrokeColor={minimapNodeColor}
+            nodeBorderRadius={999}
+            bgColor={darkMode ? '#101020' : '#f7f9fb'}
+            maskColor={darkMode ? 'rgba(10,10,26,0.7)' : 'rgba(255,255,255,0.6)'}
           />
         )}
       </ReactFlow>
