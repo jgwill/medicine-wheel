@@ -65,6 +65,35 @@
   }
 }
 
+/* Navigation — item color arrives via --nav-c (a token var, set inline) */
+@layer components {
+  .nav-item {
+    white-space: nowrap;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--color-muted-foreground);
+    transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
+  }
+  .nav-item:hover {
+    color: var(--color-foreground);
+    background: color-mix(in srgb, var(--nav-c, var(--mw-muted)) 12%, transparent);
+  }
+  .nav-item--active {
+    color: var(--color-foreground);
+    background: var(--color-secondary);
+    box-shadow: inset 0 -2px 0 var(--nav-c, var(--mw-ring));
+  }
+  .nav-scroll {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @keyframes pulse-center {
   0%, 100% { opacity: 0.6; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.08); }

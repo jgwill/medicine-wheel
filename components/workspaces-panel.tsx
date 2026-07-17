@@ -15,12 +15,12 @@ export type Workspace = {
 };
 
 export const WORKSPACES: Workspace[] = [
-  { id: "medicine-wheel", name: "Medicine Wheel",  direction: "east",  color: "#FFD700", status: "active", repo: "jgwill/medicine-wheel",         blurb: "Relational ontology + Four Directions web app" },
-  { id: "iaip",           name: "IAIP Platform",   direction: "south", color: "#DC143C", status: "active", repo: "jgwill/iaip",                   blurb: "Three Universes multi-agent orchestration" },
-  { id: "stc",            name: "STC Workspaces",  direction: "west",  color: "#8888cc", status: "active", repo: "jgwill/stcraft",                blurb: "Structural tension charts across repos" },
-  { id: "tushell",        name: "Tushell Magic Land", direction: "north", color: "#E8E8E8", status: "idle", repo: "jgwill/tushellplatform",        blurb: "Child-friendly knowledge platform" },
-  { id: "articles",       name: "Articles",        direction: "east",  color: "#c9a23a", status: "idle",   repo: "jgwill/medicine-wheel#articles", blurb: "Narrative-technical research" },
-  { id: "pde",            name: "PDE",             direction: "south", color: "#9a5cc6", status: "active", repo: "jgwill/medicine-wheel#pde",      blurb: "Four Directions prompt decomposition" },
+  { id: "medicine-wheel", name: "Medicine Wheel",  direction: "east",  color: "var(--mw-east)", status: "active", repo: "jgwill/medicine-wheel",         blurb: "Relational ontology + Four Directions web app" },
+  { id: "iaip",           name: "IAIP Platform",   direction: "south", color: "var(--mw-south)", status: "active", repo: "jgwill/iaip",                   blurb: "Three Universes multi-agent orchestration" },
+  { id: "stc",            name: "STC Workspaces",  direction: "west",  color: "var(--mw-west)", status: "active", repo: "jgwill/stcraft",                blurb: "Structural tension charts across repos" },
+  { id: "tushell",        name: "Tushell Magic Land", direction: "north", color: "var(--mw-north)", status: "idle", repo: "jgwill/tushellplatform",        blurb: "Child-friendly knowledge platform" },
+  { id: "articles",       name: "Articles",        direction: "east",  color: "var(--mw-node-ancestor)", status: "idle",   repo: "jgwill/medicine-wheel#articles", blurb: "Narrative-technical research" },
+  { id: "pde",            name: "PDE",             direction: "south", color: "var(--mw-node-spirit)", status: "active", repo: "jgwill/medicine-wheel#pde",      blurb: "Four Directions prompt decomposition" },
 ];
 
 const STATUS_DOT: Record<Workspace["status"], string> = {
@@ -65,7 +65,7 @@ export function WorkspacesPanel({
         )}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <div className="mw-h2" style={{ fontSize: "1.25rem" }}>Workspaces</div>
+          <div className="mw-h2">Workspaces</div>
           <button
             onClick={onClose}
             className="rounded-md p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -89,9 +89,9 @@ export function WorkspacesPanel({
                 )}
                 style={{
                   borderLeft: `3px solid ${ws.color}`,
-                  borderTopColor: selected ? ws.color + "60" : undefined,
-                  borderRightColor: selected ? ws.color + "60" : undefined,
-                  borderBottomColor: selected ? ws.color + "60" : undefined,
+                  borderTopColor: selected ? `color-mix(in srgb, ${ws.color} 40%, transparent)` : undefined,
+                  borderRightColor: selected ? `color-mix(in srgb, ${ws.color} 40%, transparent)` : undefined,
+                  borderBottomColor: selected ? `color-mix(in srgb, ${ws.color} 40%, transparent)` : undefined,
                 }}
               >
                 <div className="flex items-center gap-2">

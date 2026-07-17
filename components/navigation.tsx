@@ -7,16 +7,19 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { WorkspacesPanel, WORKSPACES, type Workspace } from "@/components/workspaces-panel";
 
+/* Colors are token vars: direction colors only where the page MEANS that
+ * direction (Ceremonies=south, Accountability=north, home=east); the rest
+ * take node-type category colors. */
 const NAV_ITEMS = [
-  { href: "/", label: "Medicine Wheel", color: "#FFD700" },
-  { href: "/graph", label: "Graph", color: "#d4b844" },
-  { href: "/nodes", label: "Nodes", color: "#4a9e5c" },
-  { href: "/relations", label: "Relations", color: "#5a9ec6" },
-  { href: "/ceremonies", label: "Ceremonies", color: "#DC143C" },
-  { href: "/narrative", label: "Narrative", color: "#9a5cc6" },
-  { href: "/narrative/beats", label: "Beats", color: "#c9a23a" },
-  { href: "/narrative/cycles", label: "Cycles", color: "#e8913a" },
-  { href: "/accountability", label: "Accountability", color: "#E8E8E8" },
+  { href: "/", label: "Wheel", color: "var(--mw-east)" },
+  { href: "/graph", label: "Graph", color: "var(--mw-primary)" },
+  { href: "/nodes", label: "Nodes", color: "var(--mw-node-land)" },
+  { href: "/relations", label: "Relations", color: "var(--mw-node-future)" },
+  { href: "/ceremonies", label: "Ceremonies", color: "var(--mw-south)" },
+  { href: "/narrative", label: "Narrative", color: "var(--mw-node-spirit)" },
+  { href: "/narrative/beats", label: "Beats", color: "var(--mw-node-ancestor)" },
+  { href: "/narrative/cycles", label: "Cycles", color: "var(--mw-node-human)" },
+  { href: "/accountability", label: "Accountability", color: "var(--mw-north)" },
 ];
 
 export function Navigation() {
@@ -31,31 +34,24 @@ export function Navigation() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4">
           <button
             onClick={() => setWsOpen(true)}
-            className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-secondary"
+            className="flex shrink-0 items-center gap-2 rounded-md px-2 py-1 hover:bg-secondary"
             aria-label="Open workspaces"
           >
-            <span className="h-2 w-2 rounded-full" style={{ background: activeWs.color }} />
-            <span
-              className="hidden sm:inline text-base"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: activeWs.color }} />
+            <span className="hidden sm:inline whitespace-nowrap text-sm font-semibold">
               {activeWs.name}
             </span>
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
           </button>
 
-          <div className="hidden md:flex items-center gap-1 overflow-hidden">
+          <div className="nav-scroll hidden md:flex items-center gap-1">
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={cn(
-                  "whitespace-nowrap px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                  pathname === item.href
-                    ? "bg-secondary text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                )}
-                style={pathname === item.href ? { borderBottom: `2px solid ${item.color}` } : {}}
+                className={cn("nav-item", pathname === item.href && "nav-item--active")}
+                style={{ "--nav-c": item.color } as React.CSSProperties}
+                aria-current={pathname === item.href ? "page" : undefined}
               >
                 {item.label}
               </Link>
@@ -74,18 +70,15 @@ export function Navigation() {
         </div>
 
         {mobileOpen && (
-          <div className="md:hidden border-t border-border bg-background px-4 pb-4">
+          <div className="md:hidden border-t border-border bg-background px-4 pb-4 pt-2">
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={cn(
-                  "block px-3 py-2 rounded-md text-sm font-medium",
-                  pathname === item.href
-                    ? "bg-secondary text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
+                className={cn("nav-item block", pathname === item.href && "nav-item--active")}
+                style={{ "--nav-c": item.color } as React.CSSProperties}
+                aria-current={pathname === item.href ? "page" : undefined}
               >
                 {item.label}
               </Link>
