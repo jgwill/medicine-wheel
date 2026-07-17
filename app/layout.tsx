@@ -29,6 +29,9 @@ export const metadata: Metadata = {
   },
   description:
     "Interactive visual layer for the Medicine Wheel — ceremonies, Four Directions, relational web, and narrative arcs",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

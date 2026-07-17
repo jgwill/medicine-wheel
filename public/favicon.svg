@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Medicine Wheel glyph: four-direction quadrants on midnight ground -->
+  <circle cx="16" cy="16" r="15.5" fill="#0A0A1A"/>
+  <g>
+    <path d="M16 16 L24.49 7.51 A12 12 0 0 1 24.49 24.49 Z" fill="#FFD700"/>
+    <path d="M16 16 L24.49 24.49 A12 12 0 0 1 7.51 24.49 Z" fill="#DC2626"/>
+    <path d="M16 16 L7.51 24.49 A12 12 0 0 1 7.51 7.51 Z" fill="#6B7A99"/>
+    <path d="M16 16 L7.51 7.51 A12 12 0 0 1 24.49 7.51 Z" fill="#F7F5F0"/>
+  </g>
+  <path d="M7.51 7.51 L24.49 24.49 M24.49 7.51 L7.51 24.49" stroke="#0A0A1A" stroke-width="1.5"/>
+  <circle cx="16" cy="16" r="12" fill="none" stroke="#0A0A1A" stroke-width="1"/>
+  <circle cx="16" cy="16" r="3.5" fill="#0A0A1A"/>
+  <circle cx="16" cy="16" r="3.5" fill="none" stroke="#FFD700" stroke-width="0.75"/>
+</svg>
