@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const chartId = searchParams.get("chart_id");
 
-    let mmots = readJsonl<any>(getMmotsFile());
+    let mmots = readJsonl<{ chart_id?: string; [key: string]: unknown }>(getMmotsFile());
 
     if (chartId) {
       mmots = mmots.filter((m) => m.chart_id === chartId);

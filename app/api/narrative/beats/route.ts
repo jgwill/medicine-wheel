@@ -4,8 +4,9 @@ import { getAllBeats, createBeat } from "@/lib/store";
 export async function GET() {
   try {
     return NextResponse.json(getAllBeats());
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -23,7 +24,8 @@ export async function POST(request: Request) {
       relations_honored: body.relations_honored ?? [],
     });
     return NextResponse.json(beat, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

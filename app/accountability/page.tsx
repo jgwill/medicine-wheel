@@ -9,12 +9,16 @@ interface Resource {
   content: Record<string, string>;
 }
 
+interface EdgeSummary {
+  ceremony_honored?: boolean;
+}
+
 export default function AccountabilityPage() {
   const [resources, setResources] = useState<Resource[]>([]);
-  const [nodes, setNodes] = useState<any[]>([]);
-  const [edges, setEdges] = useState<any[]>([]);
-  const [ceremonies, setCeremonies] = useState<any[]>([]);
-  const [beats, setBeats] = useState<any[]>([]);
+  const [nodes, setNodes] = useState<unknown[]>([]);
+  const [edges, setEdges] = useState<EdgeSummary[]>([]);
+  const [ceremonies, setCeremonies] = useState<unknown[]>([]);
+  const [beats, setBeats] = useState<unknown[]>([]);
   const [expandedRes, setExpandedRes] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +40,7 @@ export default function AccountabilityPage() {
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  const ceremoniedCount = edges.filter((e: any) => e.ceremony_honored).length;
+  const ceremoniedCount = edges.filter((e) => e.ceremony_honored).length;
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
