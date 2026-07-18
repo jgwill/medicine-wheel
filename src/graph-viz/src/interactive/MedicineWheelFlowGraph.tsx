@@ -772,28 +772,36 @@ function FlowGraphInner({
 
       // Radial snapping: constrain drags AND keyboard nudges in polar
       // space — the wheel guides the hand, not a Cartesian grid.
-      const next =
+      // Flow positions are top-LEFT corners; the wheel's geometry speaks in
+      // centers, so convert through the node's radius or the band sits half
+      // a node off the drawn rings (the reported top-left bias).
+      const nodesById =
         radialSnap === 'off'
+          ? null
+          : new Map(getNodes().map((n) => [n.id, n]));
+      const next =
+        radialSnap === 'off' || nodesById === null
           ? changes
-          : changes.map((c) =>
-              c.type === 'position' && c.position
-                ? {
-                    ...c,
-                    position: constrainToWheel(
-                      c.position,
-                      layout,
-                      directionById.get(c.id),
-                      radialSnap,
-                    ),
-                  }
-                : c,
-            );
+          : changes.map((c) => {
+              if (c.type !== 'position' || !c.position) return c;
+              const r = (nodesById.get(c.id)?.measured?.width ?? 26) / 2;
+              const center = constrainToWheel(
+                { x: c.position.x + r, y: c.position.y + r },
+                layout,
+                directionById.get(c.id),
+                radialSnap,
+              );
+              return {
+                ...c,
+                position: { x: center.x - r, y: center.y - r },
+              };
+            });
       onNodesChange(next);
       if (next.some((c) => c.type === 'position' && !c.dragging)) {
         schedulePersist();
       }
     },
-    [onNodesChange, schedulePersist, radialSnap, layout, directionById, beginGesture],
+    [onNodesChange, schedulePersist, radialSnap, layout, directionById, beginGesture, getNodes],
   );
 
   const handleNodeDragStop = useCallback<OnNodeDrag<Node<MedicineWheelNodeData>>>(
