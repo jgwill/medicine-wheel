@@ -18,7 +18,7 @@ import {
   Save,
   ShieldCheck,
 } from "lucide-react";
-import { type RelationalNode, type RelationalEdge, DIRECTION_COLORS } from "@/lib/types";
+import type { RelationalNode, RelationalEdge } from "@/lib/types";
 import {
   applyWheelLayout,
   buildGraphData,
@@ -620,7 +620,9 @@ export default function GraphPage() {
               <h3 className="text-sm font-semibold text-gray-400 mb-3">Directions</h3>
               {(["east", "south", "west", "north"] as const).map((dir) => (
                 <div key={dir} className="flex items-center gap-2 mb-2">
-                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: DIRECTION_COLORS[dir] }} />
+                  {/* Presentation tint from tokens.css — canonical West is
+                      near-invisible on the midnight ground. */}
+                  <span className={`mw-dot mw-dot--${dir}`} />
                   <span className="text-sm capitalize">{dir}</span>
                 </div>
               ))}
