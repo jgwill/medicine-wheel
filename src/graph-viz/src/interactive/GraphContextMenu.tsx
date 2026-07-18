@@ -30,6 +30,8 @@ export type GraphMenuState =
       flowX: number;
       flowY: number;
       creating?: boolean;
+      /** A connection drag landed here: the new node starts pre-related. */
+      pendingEdge?: { fromNodeId: string; fromLabel?: string };
     };
 
 const NODE_TYPE_OPTIONS: NodeType[] = [
@@ -190,10 +192,13 @@ export function DirectionBadge({ direction }: { direction: DirectionName }) {
  */
 export function CreateNodeInlineForm({
   direction,
+  threadFrom,
   onSubmit,
   onCancel,
 }: {
   direction?: DirectionName;
+  /** Label of the being a pending relation will be woven from. */
+  threadFrom?: string;
   onSubmit: (values: { name: string; type: NodeType }) => void;
   onCancel: () => void;
 }) {
@@ -232,6 +237,19 @@ export function CreateNodeInlineForm({
         <span>New node</span>
         {direction && <DirectionBadge direction={direction} />}
       </div>
+      {threadFrom && (
+        <div
+          style={{
+            fontSize: 10.5,
+            color: 'var(--mw-muted, #9ca3af)',
+            marginTop: -2,
+          }}
+        >
+          A thread from{' '}
+          <span style={{ color: 'var(--mw-fg, #e5e7eb)' }}>{threadFrom}</span>{' '}
+          will be woven to it
+        </div>
+      )}
       <input
         autoFocus
         value={name}

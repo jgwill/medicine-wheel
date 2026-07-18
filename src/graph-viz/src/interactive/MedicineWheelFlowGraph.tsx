@@ -39,6 +39,7 @@ import {
   type OnNodeDrag,
   type OnNodesChange,
   type OnConnect,
+  type OnConnectEnd,
   type IsValidConnection,
 } from '@xyflow/react';
 
@@ -120,12 +121,17 @@ export interface MedicineWheelFlowGraphProps {
   onRelationCreate?: (sourceId: string, targetId: string) => void;
   /** Fired from the node menu's "Open node". Falls back to onNodeDoubleClick. */
   onNodeOpen?: (node: MWGraphNode) => void;
-  /** Fired from the pane menu's "Create node here" inline form. */
+  /**
+   * Fired from the "Create node here" inline form — via the pane menu, or
+   * via a connection drag released on empty pane (then `connectFrom` names
+   * the being the new node should be related from).
+   */
   onNodeCreateRequest?: (request: {
     name: string;
     type: NodeType;
     direction?: DirectionName;
     position: { x: number; y: number };
+    connectFrom?: string;
   }) => void;
   /** Fired from the edge menu's "Honor ceremony". */
   onEdgeCeremonyRequest?: (link: MWGraphLink) => void;
@@ -268,7 +274,10 @@ function prefersReducedMotion(): boolean {
 
 const SHORTCUTS: { keys: string; does: string }[] = [
   { keys: 'Drag node', does: 'Move a being (position is remembered)' },
-  { keys: 'Drag from edge dots', does: 'Weave a relation to another being' },
+  {
+    keys: 'Drag from edge dots',
+    does: 'Weave a relation — drop on empty ground to create the being there',
+  },
   { keys: 'Right-click', does: 'Menu — node, relation, or canvas' },
   { keys: 'Shift + drag', does: 'Select several beings with a box' },
   { keys: 'Ctrl/⌘ + click', does: 'Add or remove from the selection' },
@@ -800,6 +809,37 @@ function FlowGraphInner({
     [],
   );
 
+  // A connection drag released on empty pane: open the create-node form
+  // there, seeded with the drop position and the pending thread — the new
+  // being arrives already related.
+  const handleConnectEnd = useCallback<OnConnectEnd>(
+    (event, connectionState) => {
+      if (!onNodeCreateRequest) return;
+      if (connectionState.isValid) return; // landed on a node — onConnect took it
+      if (connectionState.toNode) return; // refused drop (e.g. self) — not a create
+      const fromNode = connectionState.fromNode;
+      if (!fromNode) return;
+
+      const { clientX, clientY } =
+        'changedTouches' in event ? event.changedTouches[0] : event;
+      const flow = screenToFlowPosition({ x: clientX, y: clientY });
+      const fromData = (fromNode.data as MedicineWheelNodeData | undefined)?.node;
+
+      setMenu({
+        kind: 'pane',
+        ...clampToPane(clientX, clientY),
+        flowX: flow.x,
+        flowY: flow.y,
+        creating: true,
+        pendingEdge: {
+          fromNodeId: fromNode.id,
+          fromLabel: fromData?.label,
+        },
+      });
+    },
+    [onNodeCreateRequest, screenToFlowPosition, clampToPane],
+  );
+
   // ── Emphasis: dim everything outside the current attention ─────────────
   // Two sources, hover winning over the ambient direction highlight:
   // hovering a node keeps its relations lit; `highlightDirection` keeps a
@@ -956,6 +996,7 @@ function FlowGraphInner({
         connectionMode={ConnectionMode.Loose}
         connectionRadius={30}
         onConnect={enableConnections ? handleConnect : undefined}
+        onConnectEnd={enableConnections ? handleConnectEnd : undefined}
         isValidConnection={isValidConnection}
         proOptions={{ hideAttribution: true }}
         colorMode={darkMode ? 'dark' : 'light'}
@@ -1142,6 +1183,11 @@ function FlowGraphInner({
           {menu.creating ? (
             <CreateNodeInlineForm
               direction={directionForPoint(menu.flowX, menu.flowY, layout)}
+              threadFrom={
+                menu.pendingEdge
+                  ? menu.pendingEdge.fromLabel ?? menu.pendingEdge.fromNodeId
+                  : undefined
+              }
               onSubmit={({ name, type }) => {
                 setMenu(null);
                 onNodeCreateRequest?.({
@@ -1149,6 +1195,7 @@ function FlowGraphInner({
                   type,
                   direction: directionForPoint(menu.flowX, menu.flowY, layout),
                   position: { x: menu.flowX, y: menu.flowY },
+                  connectFrom: menu.pendingEdge?.fromNodeId,
                 });
               }}
               onCancel={() => setMenu(null)}

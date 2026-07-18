@@ -308,6 +308,7 @@ export default function GraphPage() {
       type: string;
       direction?: string;
       position: { x: number; y: number };
+      connectFrom?: string;
     }) => {
       try {
         const res = await fetch("/api/nodes", {
@@ -330,6 +331,25 @@ export default function GraphPage() {
           );
         }
         toast.success(`${request.name} placed in the ${request.direction ?? "center"}`);
+
+        // A connection drag opened this form: weave the pending thread.
+        if (request.connectFrom && node?.id) {
+          const edgeRes = await fetch("/api/edges", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from_id: request.connectFrom,
+              to_id: node.id,
+              relationship_type: "speaks-with",
+              strength: 0.5,
+            }),
+          });
+          if (edgeRes.ok) {
+            toast.success("Relation woven — speaks-with");
+          } else {
+            toast.error(`${request.name} placed, but the relation could not be woven`);
+          }
+        }
       } catch {
         toast.error("Could not create the node");
       } finally {
