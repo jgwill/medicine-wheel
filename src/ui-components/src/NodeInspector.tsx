@@ -33,12 +33,12 @@ export function NodeInspector({
   onNavigate,
   className = '',
 }: NodeInspectorProps) {
-  const color = node.direction ? dirVar(node.direction) : '#888';
-  const ink = node.direction ? dirInk(node.direction) : '#aaa';
+  const color = node.direction ? dirVar(node.direction) : 'var(--mw-border, #888)';
+  const ink = node.direction ? dirInk(node.direction) : 'var(--mw-muted, #aaa)';
   const icon = node.direction ? DIR_ICONS[node.direction] : '◯';
   const typeColor = NODE_TYPE_COLORS[node.type]
     ? `var(--mw-node-${node.type}, ${NODE_TYPE_COLORS[node.type]})`
-    : '#888';
+    : 'var(--mw-muted, #888)';
   const nodeMap = new Map(allNodes.map(n => [n.id, n]));
 
   // Find connected edges
@@ -98,7 +98,7 @@ export function NodeInspector({
           {connectedEdges.map((edge, i) => {
             const otherId = edge.from_id === node.id ? edge.to_id : edge.from_id;
             const otherNode = nodeMap.get(otherId);
-            const otherInk = otherNode?.direction ? dirInk(otherNode.direction) : '#aaa';
+            const otherInk = otherNode?.direction ? dirInk(otherNode.direction) : 'var(--mw-muted, #aaa)';
 
             return (
               <div

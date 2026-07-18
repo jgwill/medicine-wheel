@@ -8,12 +8,7 @@
 
 import React, { useMemo, useState, useCallback } from 'react';
 
-import {
-  DIRECTION_COLORS,
-  OJIBWE_NAMES,
-  NODE_TYPE_COLORS,
-  CEREMONY_ICONS,
-} from '@medicine-wheel/ontology-core';
+import { NODE_TYPE_COLORS } from '@medicine-wheel/ontology-core';
 
 import type { MedicineWheelGraphProps, MWGraphNode, MWGraphLink } from './types.js';
 import {

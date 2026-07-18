@@ -4,8 +4,9 @@ import { getAllCycles, createCycle } from "@/lib/store";
 export async function GET() {
   try {
     return NextResponse.json(getAllCycles());
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -17,7 +18,8 @@ export async function POST(request: Request) {
       current_direction: body.current_direction,
     });
     return NextResponse.json(cycle, { status: 201 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

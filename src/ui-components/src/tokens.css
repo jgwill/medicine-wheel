@@ -28,9 +28,16 @@
   --mw-border:      #2B2B4E;
   --mw-fg:          #F0EFF7;
   --mw-muted:       #A9A7C5;
-  --mw-primary:     oklch(0.785 0.115 85);
-  --mw-primary-fg:  #0A0A1A;
-  --mw-ring:        oklch(0.785 0.115 85);
+
+  /* Action accent — the midnight ground's own hue (≈278°), lifted in light
+     and chroma (#9099ff). Direction-neutral by construction: primary actions
+     belong to the sky the wheel sits on, never to a direction. Gold stays
+     information — East direction and ceremony honor only. */
+  --mw-accent:      oklch(0.72 0.15 278);
+  --mw-accent-fg:   #0A0A1A;
+  --mw-primary:     var(--mw-accent);
+  --mw-primary-fg:  var(--mw-accent-fg);
+  --mw-ring:        var(--mw-accent);
   --mw-destructive: oklch(0.396 0.141 25.723);
 
   /* STC panel accent */
@@ -268,7 +275,7 @@
   transition:    all var(--duration-default) ease;
   border:        none;
 }
-.mw-btn--primary   { background: var(--mw-primary); color: var(--mw-primary-fg); }
+.mw-btn--primary   { background: var(--mw-accent); color: var(--mw-accent-fg); }
 .mw-btn--primary:hover { filter: brightness(0.9); }
 .mw-btn--secondary { background: var(--mw-secondary); color: var(--mw-fg); }
 .mw-btn--secondary:hover { background: var(--mw-border); }

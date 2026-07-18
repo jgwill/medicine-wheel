@@ -18,7 +18,7 @@ import {
   Save,
   ShieldCheck,
 } from "lucide-react";
-import { type RelationalNode, type RelationalEdge, DIRECTION_COLORS } from "@/lib/types";
+import type { RelationalNode, RelationalEdge } from "@/lib/types";
 import {
   applyWheelLayout,
   buildGraphData,
@@ -290,6 +290,40 @@ export default function GraphPage() {
     [loadData],
   );
 
+  // Relations are keyed by their from:to pair, so a rewire is a release of
+  // the old pair followed by a weave of the new one — the relation's
+  // properties travel with it.
+  const handleRelationReconnect = useCallback(
+    async (link: MWGraphLink, newSourceId: string, newTargetId: string) => {
+      try {
+        const released = await fetch(
+          `/api/edges?from=${encodeURIComponent(link.source)}&to=${encodeURIComponent(link.target)}`,
+          { method: "DELETE" },
+        );
+        if (!released.ok) throw new Error(`HTTP ${released.status}`);
+
+        const woven = await fetch("/api/edges", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from_id: newSourceId,
+            to_id: newTargetId,
+            relationship_type: link.label ?? "speaks-with",
+            strength: link.strength ?? 0.5,
+            ceremony_honored: link.ceremonyHonored ?? false,
+          }),
+        });
+        if (!woven.ok) throw new Error(`HTTP ${woven.status}`);
+        toast.success("Relation rewired");
+      } catch {
+        toast.error("Could not rewire the relation — restoring the canvas");
+      } finally {
+        await loadData();
+      }
+    },
+    [loadData],
+  );
+
   const handleAnimationsEnabledChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const enabled = event.target.checked;
@@ -308,6 +342,7 @@ export default function GraphPage() {
       type: string;
       direction?: string;
       position: { x: number; y: number };
+      connectFrom?: string;
     }) => {
       try {
         const res = await fetch("/api/nodes", {
@@ -330,6 +365,25 @@ export default function GraphPage() {
           );
         }
         toast.success(`${request.name} placed in the ${request.direction ?? "center"}`);
+
+        // A connection drag opened this form: weave the pending thread.
+        if (request.connectFrom && node?.id) {
+          const edgeRes = await fetch("/api/edges", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from_id: request.connectFrom,
+              to_id: node.id,
+              relationship_type: "speaks-with",
+              strength: 0.5,
+            }),
+          });
+          if (edgeRes.ok) {
+            toast.success("Relation woven — speaks-with");
+          } else {
+            toast.error(`${request.name} placed, but the relation could not be woven`);
+          }
+        }
       } catch {
         toast.error("Could not create the node");
       } finally {
@@ -337,6 +391,38 @@ export default function GraphPage() {
       }
     },
     [loadData, saveLayoutStore],
+  );
+
+  const handleNodeRenameRequest = useCallback(
+    async (node: MWGraphNode, name: string) => {
+      try {
+        const res = await fetch(`/api/nodes/${encodeURIComponent(node.id)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        const body = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(
+            typeof body?.error === "string" ? body.error : `HTTP ${res.status}`,
+          );
+        }
+        // Keep the side panel speaking the new name right away.
+        setSelectedNode((prev) =>
+          prev && prev.id === node.id ? { ...prev, label: name } : prev,
+        );
+        toast.success(`Renamed to ${name}`);
+      } catch (error) {
+        toast.error(
+          error instanceof Error && error.message
+            ? error.message
+            : "Could not rename the node",
+        );
+      } finally {
+        await loadData();
+      }
+    },
+    [loadData],
   );
 
   const handleEdgeCeremonyRequest = useCallback(
@@ -421,7 +507,7 @@ export default function GraphPage() {
                   type="checkbox"
                   checked={animationsEnabled}
                   onChange={handleAnimationsEnabledChange}
-                  className="h-3 w-3 accent-yellow-400"
+                  className="h-3 w-3 accent-[var(--mw-accent)]"
                   aria-label="Animate graph edges"
                 />
                 <span>Animation</span>
@@ -448,7 +534,9 @@ export default function GraphPage() {
                 onNodePositionsChange={handleNodePositionsChange}
                 enableConnections
                 onRelationCreate={handleRelationCreate}
+                onRelationReconnect={handleRelationReconnect}
                 onNodeOpen={navigateToNode}
+                onNodeRenameRequest={handleNodeRenameRequest}
                 onNodeCreateRequest={handleNodeCreateRequest}
                 onEdgeCeremonyRequest={handleEdgeCeremonyRequest}
                 onEdgeDeleteRequest={handleEdgeDeleteRequest}
@@ -532,7 +620,9 @@ export default function GraphPage() {
               <h3 className="text-sm font-semibold text-gray-400 mb-3">Directions</h3>
               {(["east", "south", "west", "north"] as const).map((dir) => (
                 <div key={dir} className="flex items-center gap-2 mb-2">
-                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: DIRECTION_COLORS[dir] }} />
+                  {/* Presentation tint from tokens.css — canonical West is
+                      near-invisible on the midnight ground. */}
+                  <span className={`mw-dot mw-dot--${dir}`} />
                   <span className="text-sm capitalize">{dir}</span>
                 </div>
               ))}

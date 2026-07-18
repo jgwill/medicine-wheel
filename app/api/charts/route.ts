@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import * as fs from "fs";
 import * as path from "path";
 
+interface ChartRecord {
+  direction?: string;
+  created_at: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
+
 function getChartsFile(): string {
   const dataDir = process.env.MW_DATA_DIR ?? path.join(process.cwd(), ".mw", "store");
   return path.join(dataDir, "charts.jsonl");
@@ -27,14 +34,14 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const direction = searchParams.get("direction");
 
-    let charts = readJsonl<any>(getChartsFile());
+    let charts = readJsonl<ChartRecord>(getChartsFile());
 
     if (direction) {
       charts = charts.filter((c) => c.direction === direction);
     }
 
     charts.sort(
-      (a: any, b: any) =>
+      (a, b) =>
         Date.parse(b.updated_at ?? b.created_at) -
         Date.parse(a.updated_at ?? a.created_at)
     );

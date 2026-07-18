@@ -140,7 +140,7 @@ export function applyWheelLayout(
     if (nodes.length === 0) continue;
 
     // Effective angle range for this quadrant
-    let startDeg = quad.startAngle;
+    const startDeg = quad.startAngle;
     let endDeg = quad.endAngle;
     if (endDeg < startDeg) endDeg += 360; // handle wrap (east)
 

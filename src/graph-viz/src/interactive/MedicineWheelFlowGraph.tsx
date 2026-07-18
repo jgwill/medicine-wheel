@@ -28,6 +28,7 @@ import {
   useEdgesState,
   useReactFlow,
   addEdge,
+  reconnectEdge,
   ConnectionMode,
   SelectionMode,
   Panel,
@@ -39,6 +40,8 @@ import {
   type OnNodeDrag,
   type OnNodesChange,
   type OnConnect,
+  type OnConnectEnd,
+  type OnReconnect,
   type IsValidConnection,
 } from '@xyflow/react';
 
@@ -118,14 +121,36 @@ export interface MedicineWheelFlowGraphProps {
   enableConnections?: boolean;
   /** Fired when a connection gesture completes between two nodes. */
   onRelationCreate?: (sourceId: string, targetId: string) => void;
+  /**
+   * Fired when an existing relation is rewired to a new pair of beings
+   * (an edge end dragged onto another node). The consumer persists the
+   * rewire — relations are keyed by pair, so this means releasing the old
+   * pair and weaving the new one — then reloads `data` to canonicalize.
+   */
+  onRelationReconnect?: (
+    link: MWGraphLink,
+    newSourceId: string,
+    newTargetId: string,
+  ) => void;
   /** Fired from the node menu's "Open node". Falls back to onNodeDoubleClick. */
   onNodeOpen?: (node: MWGraphNode) => void;
-  /** Fired from the pane menu's "Create node here" inline form. */
+  /**
+   * Enables the selected being's inline rename (NodeToolbar). The consumer
+   * persists the new name and reloads `data` to canonicalize.
+   * Keep the identity stable (useCallback) — it rides on node data.
+   */
+  onNodeRenameRequest?: (node: MWGraphNode, name: string) => void;
+  /**
+   * Fired from the "Create node here" inline form — via the pane menu, or
+   * via a connection drag released on empty pane (then `connectFrom` names
+   * the being the new node should be related from).
+   */
   onNodeCreateRequest?: (request: {
     name: string;
     type: NodeType;
     direction?: DirectionName;
     position: { x: number; y: number };
+    connectFrom?: string;
   }) => void;
   /** Fired from the edge menu's "Honor ceremony". */
   onEdgeCeremonyRequest?: (link: MWGraphLink) => void;
@@ -156,6 +181,7 @@ function toFlowNode(
     showOcap: boolean;
     showWilson: boolean;
     darkMode: boolean;
+    onRename?: (node: MWGraphNode, name: string) => void;
   },
 ): Node<MedicineWheelNodeData> {
   return {
@@ -171,6 +197,7 @@ function toFlowNode(
       showOcap: opts.showOcap,
       showWilson: opts.showWilson,
       darkMode: opts.darkMode,
+      onRename: opts.onRename,
     },
   };
 }
@@ -251,6 +278,9 @@ function flowNodePositions(
 // echoed positions are compared with sub-pixel tolerance, not strictly.
 const POSITION_EPSILON = 0.01;
 
+// Undo keeps this many position snapshots; older moves fall away.
+const UNDO_LIMIT = 50;
+
 function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
@@ -265,13 +295,19 @@ function prefersReducedMotion(): boolean {
 
 const SHORTCUTS: { keys: string; does: string }[] = [
   { keys: 'Drag node', does: 'Move a being (position is remembered)' },
-  { keys: 'Drag from edge dots', does: 'Weave a relation to another being' },
+  {
+    keys: 'Drag from edge dots',
+    does: 'Weave a relation — drop on empty ground to create the being there',
+  },
+  { keys: 'Drag an edge end', does: 'Rewire the relation to another being' },
   { keys: 'Right-click', does: 'Menu — node, relation, or canvas' },
   { keys: 'Shift + drag', does: 'Select several beings with a box' },
   { keys: 'Ctrl/⌘ + click', does: 'Add or remove from the selection' },
   { keys: 'Tab / Shift+Tab', does: 'Walk the beings by keyboard' },
   { keys: 'Enter / Space', does: 'Select the focused being' },
   { keys: 'Arrow keys', does: 'Nudge the selected being' },
+  { keys: 'Ctrl/⌘ + Z', does: 'Undo a move' },
+  { keys: 'Ctrl/⌘ + Shift + Z', does: 'Redo a move' },
   { keys: 'Esc', does: 'Close menus and this panel' },
 ];
 
@@ -328,7 +364,9 @@ function FlowGraphInner({
   onNodePositionsChange,
   enableConnections = false,
   onRelationCreate,
+  onRelationReconnect,
   onNodeOpen,
+  onNodeRenameRequest,
   onNodeCreateRequest,
   onEdgeCeremonyRequest,
   onEdgeDeleteRequest,
@@ -487,6 +525,105 @@ function FlowGraphInner({
   const lastEmittedPositions = React.useRef<MWGraphNodePositions | null>(null);
   const lastLayoutConfig = React.useRef<unknown[] | null>(null);
 
+  // ── Undo/redo: position-snapshot stack ──────────────────────────────────
+  // Positions are the only canvas-local mutable state; each settled gesture
+  // (drag-end, nudge burst, return-to-the-wheel) pushes the pre-gesture
+  // snapshot. Undo restores in-canvas AND through the same persistence path
+  // drag-end uses, so the disposition store never silently diverges.
+  const pastRef = useRef<MWGraphNodePositions[]>([]);
+  const futureRef = useRef<MWGraphNodePositions[]>([]);
+  const pendingSnapshotRef = useRef<MWGraphNodePositions | null>(null);
+  // Bumped whenever the stacks change so the control buttons re-render.
+  const [, setHistoryVersion] = useState(0);
+
+  const pushHistory = useCallback((before: MWGraphNodePositions) => {
+    pastRef.current.push(before);
+    if (pastRef.current.length > UNDO_LIMIT) pastRef.current.shift();
+    futureRef.current = [];
+    setHistoryVersion((v) => v + 1);
+  }, []);
+
+  /** Capture the pre-gesture positions once per gesture (idempotent). */
+  const beginGesture = useCallback(() => {
+    if (pendingSnapshotRef.current === null) {
+      pendingSnapshotRef.current = flowNodePositions(getNodes());
+    }
+  }, [getNodes]);
+
+  /**
+   * The gesture settled: keep its snapshot if anything actually moved.
+   * `now` overrides the store read for callers that hold fresher positions
+   * than `getNodes()` (drag-stop can be a frame stale).
+   */
+  const commitGesture = useCallback(
+    (now?: MWGraphNodePositions) => {
+      const before = pendingSnapshotRef.current;
+      pendingSnapshotRef.current = null;
+      if (!before) return;
+      if (samePositions(before, now ?? flowNodePositions(getNodes()))) return;
+      pushHistory(before);
+    },
+    [getNodes, pushHistory],
+  );
+
+  /** Apply history positions in-canvas and through persistence. */
+  const applyHistoryPositions = useCallback(
+    (positions: MWGraphNodePositions) => {
+      setNodes((nds) =>
+        nds.map((n) =>
+          positions[n.id] ? { ...n, position: positions[n.id] } : n,
+        ),
+      );
+      lastEmittedPositions.current = positions;
+      onNodePositionsChange?.(positions);
+    },
+    [setNodes, onNodePositionsChange],
+  );
+
+  const undo = useCallback(() => {
+    const prev = pastRef.current.pop();
+    if (!prev) return;
+    pendingSnapshotRef.current = null;
+    const now = flowNodePositions(getNodes());
+    futureRef.current.push(now);
+    // Merge over current so beings born after the snapshot keep their seat.
+    applyHistoryPositions({ ...now, ...prev });
+    setHistoryVersion((v) => v + 1);
+  }, [getNodes, applyHistoryPositions]);
+
+  const redo = useCallback(() => {
+    const next = futureRef.current.pop();
+    if (!next) return;
+    pendingSnapshotRef.current = null;
+    const now = flowNodePositions(getNodes());
+    pastRef.current.push(now);
+    if (pastRef.current.length > UNDO_LIMIT) pastRef.current.shift();
+    applyHistoryPositions({ ...now, ...next });
+    setHistoryVersion((v) => v + 1);
+  }, [getNodes, applyHistoryPositions]);
+
+  // mod+z / mod+shift+z — ignored while typing in a field.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'z')
+        return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      )
+        return;
+      event.preventDefault();
+      if (event.shiftKey) redo();
+      else undo();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [undo, redo]);
+
   // Re-layout whenever data or display flags change. `applyWheelLayout`
   // mutates node.x/node.y in place, so spread each node defensively to avoid
   // mutating objects owned by the parent's React state.
@@ -499,6 +636,7 @@ function FlowGraphInner({
       showWilsonHalos,
       darkMode,
       animationsEnabled,
+      onNodeRenameRequest,
     ];
     const configUnchanged =
       lastLayoutConfig.current !== null &&
@@ -531,6 +669,7 @@ function FlowGraphInner({
           showOcap: showOcapIndicators,
           showWilson: showWilsonHalos,
           darkMode,
+          onRename: onNodeRenameRequest,
         }),
       ),
     );
@@ -543,6 +682,7 @@ function FlowGraphInner({
     showWilsonHalos,
     darkMode,
     animationsEnabled,
+    onNodeRenameRequest,
     nodePositions,
     setNodes,
     setEdges,
@@ -564,13 +704,16 @@ function FlowGraphInner({
       }
     }
 
+    // Undoable: the wheel gathering its relations is still a move.
+    pushHistory(flowNodePositions(getNodes()));
+
     animatePositions(target, 600);
     fitView({ padding: 0.15, duration: 600 });
 
     // Mark as our own emit so the persisted echo does not rebuild nodes.
     lastEmittedPositions.current = target;
     onNodePositionsChange?.(target);
-  }, [data, layout, animatePositions, fitView, onNodePositionsChange]);
+  }, [data, layout, animatePositions, fitView, onNodePositionsChange, pushHistory, getNodes]);
 
   const handleNodeClick = useCallback<NodeMouseHandler>(
     (_event, flowNode) => {
@@ -602,15 +745,17 @@ function FlowGraphInner({
   );
 
   const schedulePersist = useCallback(() => {
-    if (!onNodePositionsChange) return;
     if (persistTimer.current !== null) window.clearTimeout(persistTimer.current);
     persistTimer.current = window.setTimeout(() => {
       persistTimer.current = null;
+      // The nudge burst settled — one undo entry for the whole burst.
+      commitGesture();
+      if (!onNodePositionsChange) return;
       const positions = flowNodePositions(getNodes());
       lastEmittedPositions.current = positions;
       onNodePositionsChange(positions);
     }, 600);
-  }, [getNodes, onNodePositionsChange]);
+  }, [getNodes, onNodePositionsChange, commitGesture]);
 
   const directionById = useMemo(
     () => new Map(data.nodes.map((n) => [n.id, n.direction])),
@@ -621,43 +766,96 @@ function FlowGraphInner({
     OnNodesChange<Node<MedicineWheelNodeData>>
   >(
     (changes) => {
+      // First position change of a gesture: getNodes() still holds the
+      // pre-change state, so this is the undo snapshot moment.
+      if (changes.some((c) => c.type === 'position')) beginGesture();
+
       // Radial snapping: constrain drags AND keyboard nudges in polar
       // space — the wheel guides the hand, not a Cartesian grid.
-      const next =
+      // Flow positions are top-LEFT corners; the wheel's geometry speaks in
+      // centers, so convert through the node's radius or the band sits half
+      // a node off the drawn rings (the reported top-left bias).
+      const nodesById =
         radialSnap === 'off'
+          ? null
+          : new Map(getNodes().map((n) => [n.id, n]));
+      const next =
+        radialSnap === 'off' || nodesById === null
           ? changes
-          : changes.map((c) =>
-              c.type === 'position' && c.position
-                ? {
-                    ...c,
-                    position: constrainToWheel(
-                      c.position,
-                      layout,
-                      directionById.get(c.id),
-                      radialSnap,
-                    ),
-                  }
-                : c,
-            );
+          : changes.map((c) => {
+              if (c.type !== 'position' || !c.position) return c;
+              const r = (nodesById.get(c.id)?.measured?.width ?? 26) / 2;
+              const center = constrainToWheel(
+                { x: c.position.x + r, y: c.position.y + r },
+                layout,
+                directionById.get(c.id),
+                radialSnap,
+              );
+              return {
+                ...c,
+                position: { x: center.x - r, y: center.y - r },
+              };
+            });
       onNodesChange(next);
       if (next.some((c) => c.type === 'position' && !c.dragging)) {
         schedulePersist();
       }
     },
-    [onNodesChange, schedulePersist, radialSnap, layout, directionById],
+    [onNodesChange, schedulePersist, radialSnap, layout, directionById, beginGesture, getNodes],
   );
 
   const handleNodeDragStop = useCallback<OnNodeDrag<Node<MedicineWheelNodeData>>>(
     (_event, _flowNode, flowNodes) => {
-      if (!onNodePositionsChange) return;
       const draggedNodesById = new Map(flowNodes.map((node) => [node.id, node]));
       const currentNodes = getNodes().map((node) => draggedNodesById.get(node.id) ?? node);
 
-      const positions = flowNodePositions(currentNodes);
+      let positions = flowNodePositions(currentNodes);
+
+      // XYDrag hands back the RAW pointer positions for the dragged nodes,
+      // bypassing the onNodesChange interceptor — without re-constraining
+      // here, releasing the mouse would snap the being back off the wheel
+      // and persist that raw position.
+      if (radialSnap !== 'off') {
+        const constrained: MWGraphNodePositions = {};
+        for (const [id, pos] of Object.entries(positions)) {
+          if (!draggedNodesById.has(id)) {
+            constrained[id] = pos;
+            continue;
+          }
+          const r = (draggedNodesById.get(id)?.measured?.width ?? 26) / 2;
+          const center = constrainToWheel(
+            { x: pos.x + r, y: pos.y + r },
+            layout,
+            directionById.get(id),
+            radialSnap,
+          );
+          constrained[id] = { x: center.x - r, y: center.y - r };
+        }
+        positions = constrained;
+        // Settle the canvas on the constrained positions as well.
+        setNodes((nds) =>
+          nds.map((n) =>
+            draggedNodesById.has(n.id) && positions[n.id]
+              ? { ...n, position: positions[n.id] }
+              : n,
+          ),
+        );
+      }
+
+      commitGesture(positions);
+      if (!onNodePositionsChange) return;
       lastEmittedPositions.current = positions;
       onNodePositionsChange(positions);
     },
-    [getNodes, onNodePositionsChange],
+    [
+      getNodes,
+      setNodes,
+      onNodePositionsChange,
+      commitGesture,
+      radialSnap,
+      layout,
+      directionById,
+    ],
   );
 
   const handleConnect = useCallback<OnConnect>(
@@ -684,6 +882,78 @@ function FlowGraphInner({
   const isValidConnection = useCallback<IsValidConnection<Edge>>(
     (connection) => connection.source !== connection.target,
     [],
+  );
+
+  // Reconnect drags re-enter React Flow's connect machinery, so the user
+  // onConnectEnd fires for them too. This flag keeps a rewire dropped on
+  // empty pane a no-op (the thread stays) instead of opening create-node.
+  const reconnectingRef = useRef(false);
+
+  const handleReconnectStart = useCallback(() => {
+    reconnectingRef.current = true;
+  }, []);
+
+  const handleReconnectEnd = useCallback(() => {
+    // Cleared a tick later: the drag's own connect-end fires in the same
+    // tick and must still see the flag.
+    window.setTimeout(() => {
+      reconnectingRef.current = false;
+    }, 0);
+  }, []);
+
+  // An edge end dragged onto another node: rewire the relation. Moving a
+  // relation to a new relative is a ceremony-relevant act — it goes through
+  // the consumer's persistence, never a silent local mutation. Self-drops
+  // never reach here: isValidConnection refuses them during the drag.
+  const handleReconnect = useCallback<OnReconnect>(
+    (oldEdge, newConnection) => {
+      if (!newConnection.source || !newConnection.target) return;
+      if (newConnection.source === newConnection.target) return;
+      const link = (oldEdge.data as { link?: MWGraphLink } | undefined)?.link;
+      if (!link) return;
+      if (
+        link.source === newConnection.source &&
+        link.target === newConnection.target
+      )
+        return; // dropped back where it was
+
+      // Optimistic rewire; the consumer persists and reloads canonical data.
+      setEdges((eds) => reconnectEdge(oldEdge, newConnection, eds));
+      onRelationReconnect?.(link, newConnection.source, newConnection.target);
+    },
+    [setEdges, onRelationReconnect],
+  );
+
+  // A connection drag released on empty pane: open the create-node form
+  // there, seeded with the drop position and the pending thread — the new
+  // being arrives already related.
+  const handleConnectEnd = useCallback<OnConnectEnd>(
+    (event, connectionState) => {
+      if (!onNodeCreateRequest) return;
+      if (reconnectingRef.current) return; // rewire drag, not a weave
+      if (connectionState.isValid) return; // landed on a node — onConnect took it
+      if (connectionState.toNode) return; // refused drop (e.g. self) — not a create
+      const fromNode = connectionState.fromNode;
+      if (!fromNode) return;
+
+      const { clientX, clientY } =
+        'changedTouches' in event ? event.changedTouches[0] : event;
+      const flow = screenToFlowPosition({ x: clientX, y: clientY });
+      const fromData = (fromNode.data as MedicineWheelNodeData | undefined)?.node;
+
+      setMenu({
+        kind: 'pane',
+        ...clampToPane(clientX, clientY),
+        flowX: flow.x,
+        flowY: flow.y,
+        creating: true,
+        pendingEdge: {
+          fromNodeId: fromNode.id,
+          fromLabel: fromData?.label,
+        },
+      });
+    },
+    [onNodeCreateRequest, screenToFlowPosition, clampToPane],
   );
 
   // ── Emphasis: dim everything outside the current attention ─────────────
@@ -842,6 +1112,11 @@ function FlowGraphInner({
         connectionMode={ConnectionMode.Loose}
         connectionRadius={30}
         onConnect={enableConnections ? handleConnect : undefined}
+        onConnectEnd={enableConnections ? handleConnectEnd : undefined}
+        edgesReconnectable={enableConnections && Boolean(onRelationReconnect)}
+        onReconnect={enableConnections ? handleReconnect : undefined}
+        onReconnectStart={enableConnections ? handleReconnectStart : undefined}
+        onReconnectEnd={enableConnections ? handleReconnectEnd : undefined}
         isValidConnection={isValidConnection}
         proOptions={{ hideAttribution: true }}
         colorMode={darkMode ? 'dark' : 'light'}
@@ -876,6 +1151,22 @@ function FlowGraphInner({
               aria-label="Return to the wheel"
             >
               <WheelGlyph />
+            </ControlButton>
+            <ControlButton
+              onClick={undo}
+              disabled={pastRef.current.length === 0}
+              title="Undo move (Ctrl/⌘+Z)"
+              aria-label="Undo move"
+            >
+              <span style={{ fontSize: 14 }}>↶</span>
+            </ControlButton>
+            <ControlButton
+              onClick={redo}
+              disabled={futureRef.current.length === 0}
+              title="Redo move (Ctrl/⌘+Shift+Z)"
+              aria-label="Redo move"
+            >
+              <span style={{ fontSize: 14 }}>↷</span>
             </ControlButton>
             <ControlButton
               onClick={() => setShowShortcuts((s) => !s)}
@@ -1012,6 +1303,11 @@ function FlowGraphInner({
           {menu.creating ? (
             <CreateNodeInlineForm
               direction={directionForPoint(menu.flowX, menu.flowY, layout)}
+              threadFrom={
+                menu.pendingEdge
+                  ? menu.pendingEdge.fromLabel ?? menu.pendingEdge.fromNodeId
+                  : undefined
+              }
               onSubmit={({ name, type }) => {
                 setMenu(null);
                 onNodeCreateRequest?.({
@@ -1019,6 +1315,7 @@ function FlowGraphInner({
                   type,
                   direction: directionForPoint(menu.flowX, menu.flowY, layout),
                   position: { x: menu.flowX, y: menu.flowY },
+                  connectFrom: menu.pendingEdge?.fromNodeId,
                 });
               }}
               onCancel={() => setMenu(null)}

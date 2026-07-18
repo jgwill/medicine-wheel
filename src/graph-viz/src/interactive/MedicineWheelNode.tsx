@@ -7,8 +7,8 @@
  * can route edges to/from the node center.
  */
 
-import React, { memo } from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import React, { memo, useEffect, useRef, useState } from 'react';
+import { Handle, NodeToolbar, Position, type NodeProps } from '@xyflow/react';
 
 import {
   NODE_TYPE_COLORS,
@@ -25,6 +25,8 @@ export interface MedicineWheelNodeData extends Record<string, unknown> {
   showOcap: boolean;
   showWilson: boolean;
   darkMode: boolean;
+  /** Present when renaming is enabled: commit a new name for the being. */
+  onRename?: (node: MWGraphNode, name: string) => void;
 }
 
 function wilsonColor(alignment: number): string {
@@ -41,9 +43,29 @@ const HANDLE_POSITIONS: { id: string; position: Position }[] = [
   { id: 'w', position: Position.Left },
 ];
 
+/** Toolbar chrome — same card material as the context menus. */
+const toolbarCardStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4,
+  padding: 3,
+  borderRadius: 8,
+  background: 'var(--mw-card, #12122a)',
+  border: '1px solid var(--mw-border, rgba(255, 255, 255, 0.12))',
+  boxShadow: '0 6px 18px rgba(0, 0, 0, 0.45)',
+};
+
 function MedicineWheelNodeComponent({ data, selected, isConnectable }: NodeProps) {
-  const { node, showLabel, showOcap, showWilson, darkMode } =
+  const { node, showLabel, showOcap, showWilson, darkMode, onRename } =
     data as MedicineWheelNodeData;
+
+  const [editing, setEditing] = useState(false);
+  const renameCancelledRef = useRef(false);
+
+  // Deselecting the being closes an in-progress rename without committing.
+  useEffect(() => {
+    if (!selected) setEditing(false);
+  }, [selected]);
 
   const size = (node.size ?? 8) * 1.6;
   const diameter = size * 2;
@@ -68,6 +90,78 @@ function MedicineWheelNodeComponent({ data, selected, isConnectable }: NodeProps
       }}
       title={`${node.label} (${node.type}${node.direction ? ` · ${node.direction}` : ''})`}
     >
+      {/* Quick actions beside the chosen being. Renders in a portal, so
+          clicks here never bubble into node drag/select handlers. */}
+      {onRename && (
+        <NodeToolbar
+          isVisible={selected}
+          position={Position.Top}
+          offset={10}
+          className="nodrag nopan"
+        >
+          <div style={toolbarCardStyle}>
+            {editing ? (
+              <input
+                className="nodrag"
+                autoFocus
+                defaultValue={node.label}
+                aria-label={`Rename ${node.label}`}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.currentTarget.blur();
+                  } else if (event.key === 'Escape') {
+                    // Cancel only the rename — menus and panels stay.
+                    event.stopPropagation();
+                    renameCancelledRef.current = true;
+                    event.currentTarget.blur();
+                  }
+                }}
+                onBlur={(event) => {
+                  const cancelled = renameCancelledRef.current;
+                  renameCancelledRef.current = false;
+                  setEditing(false);
+                  const name = event.target.value.trim();
+                  if (cancelled || !name || name === node.label) return;
+                  onRename(node, name);
+                }}
+                style={{
+                  width: 150,
+                  padding: '4px 8px',
+                  borderRadius: 6,
+                  border:
+                    '1px solid var(--mw-border, rgba(255, 255, 255, 0.14))',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  color: 'var(--mw-fg, #e5e7eb)',
+                  font: 'inherit',
+                  fontSize: 12,
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                className="mw-context-menu-item"
+                onClick={() => setEditing(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  padding: '3px 9px',
+                  borderRadius: 6,
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--mw-fg, #e5e7eb)',
+                  font: 'inherit',
+                  fontSize: 11.5,
+                  cursor: 'pointer',
+                }}
+              >
+                <span aria-hidden="true">✎</span> Rename
+              </button>
+            )}
+          </div>
+        </NodeToolbar>
+      )}
+
       {/* Hidden center target: magnetic drop point for incoming threads
           (connectionRadius resolves drops by distance, not DOM hits) and
           the routing anchor. pointer-events off so grabbing the node's
