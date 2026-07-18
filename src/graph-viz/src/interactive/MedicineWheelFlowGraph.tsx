@@ -251,6 +251,9 @@ function flowNodePositions(
 // echoed positions are compared with sub-pixel tolerance, not strictly.
 const POSITION_EPSILON = 0.01;
 
+// Undo keeps this many position snapshots; older moves fall away.
+const UNDO_LIMIT = 50;
+
 function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
@@ -272,6 +275,8 @@ const SHORTCUTS: { keys: string; does: string }[] = [
   { keys: 'Tab / Shift+Tab', does: 'Walk the beings by keyboard' },
   { keys: 'Enter / Space', does: 'Select the focused being' },
   { keys: 'Arrow keys', does: 'Nudge the selected being' },
+  { keys: 'Ctrl/⌘ + Z', does: 'Undo a move' },
+  { keys: 'Ctrl/⌘ + Shift + Z', does: 'Redo a move' },
   { keys: 'Esc', does: 'Close menus and this panel' },
 ];
 
@@ -487,6 +492,105 @@ function FlowGraphInner({
   const lastEmittedPositions = React.useRef<MWGraphNodePositions | null>(null);
   const lastLayoutConfig = React.useRef<unknown[] | null>(null);
 
+  // ── Undo/redo: position-snapshot stack ──────────────────────────────────
+  // Positions are the only canvas-local mutable state; each settled gesture
+  // (drag-end, nudge burst, return-to-the-wheel) pushes the pre-gesture
+  // snapshot. Undo restores in-canvas AND through the same persistence path
+  // drag-end uses, so the disposition store never silently diverges.
+  const pastRef = useRef<MWGraphNodePositions[]>([]);
+  const futureRef = useRef<MWGraphNodePositions[]>([]);
+  const pendingSnapshotRef = useRef<MWGraphNodePositions | null>(null);
+  // Bumped whenever the stacks change so the control buttons re-render.
+  const [, setHistoryVersion] = useState(0);
+
+  const pushHistory = useCallback((before: MWGraphNodePositions) => {
+    pastRef.current.push(before);
+    if (pastRef.current.length > UNDO_LIMIT) pastRef.current.shift();
+    futureRef.current = [];
+    setHistoryVersion((v) => v + 1);
+  }, []);
+
+  /** Capture the pre-gesture positions once per gesture (idempotent). */
+  const beginGesture = useCallback(() => {
+    if (pendingSnapshotRef.current === null) {
+      pendingSnapshotRef.current = flowNodePositions(getNodes());
+    }
+  }, [getNodes]);
+
+  /**
+   * The gesture settled: keep its snapshot if anything actually moved.
+   * `now` overrides the store read for callers that hold fresher positions
+   * than `getNodes()` (drag-stop can be a frame stale).
+   */
+  const commitGesture = useCallback(
+    (now?: MWGraphNodePositions) => {
+      const before = pendingSnapshotRef.current;
+      pendingSnapshotRef.current = null;
+      if (!before) return;
+      if (samePositions(before, now ?? flowNodePositions(getNodes()))) return;
+      pushHistory(before);
+    },
+    [getNodes, pushHistory],
+  );
+
+  /** Apply history positions in-canvas and through persistence. */
+  const applyHistoryPositions = useCallback(
+    (positions: MWGraphNodePositions) => {
+      setNodes((nds) =>
+        nds.map((n) =>
+          positions[n.id] ? { ...n, position: positions[n.id] } : n,
+        ),
+      );
+      lastEmittedPositions.current = positions;
+      onNodePositionsChange?.(positions);
+    },
+    [setNodes, onNodePositionsChange],
+  );
+
+  const undo = useCallback(() => {
+    const prev = pastRef.current.pop();
+    if (!prev) return;
+    pendingSnapshotRef.current = null;
+    const now = flowNodePositions(getNodes());
+    futureRef.current.push(now);
+    // Merge over current so beings born after the snapshot keep their seat.
+    applyHistoryPositions({ ...now, ...prev });
+    setHistoryVersion((v) => v + 1);
+  }, [getNodes, applyHistoryPositions]);
+
+  const redo = useCallback(() => {
+    const next = futureRef.current.pop();
+    if (!next) return;
+    pendingSnapshotRef.current = null;
+    const now = flowNodePositions(getNodes());
+    pastRef.current.push(now);
+    if (pastRef.current.length > UNDO_LIMIT) pastRef.current.shift();
+    applyHistoryPositions({ ...now, ...next });
+    setHistoryVersion((v) => v + 1);
+  }, [getNodes, applyHistoryPositions]);
+
+  // mod+z / mod+shift+z — ignored while typing in a field.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'z')
+        return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      )
+        return;
+      event.preventDefault();
+      if (event.shiftKey) redo();
+      else undo();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [undo, redo]);
+
   // Re-layout whenever data or display flags change. `applyWheelLayout`
   // mutates node.x/node.y in place, so spread each node defensively to avoid
   // mutating objects owned by the parent's React state.
@@ -564,13 +668,16 @@ function FlowGraphInner({
       }
     }
 
+    // Undoable: the wheel gathering its relations is still a move.
+    pushHistory(flowNodePositions(getNodes()));
+
     animatePositions(target, 600);
     fitView({ padding: 0.15, duration: 600 });
 
     // Mark as our own emit so the persisted echo does not rebuild nodes.
     lastEmittedPositions.current = target;
     onNodePositionsChange?.(target);
-  }, [data, layout, animatePositions, fitView, onNodePositionsChange]);
+  }, [data, layout, animatePositions, fitView, onNodePositionsChange, pushHistory, getNodes]);
 
   const handleNodeClick = useCallback<NodeMouseHandler>(
     (_event, flowNode) => {
@@ -602,15 +709,17 @@ function FlowGraphInner({
   );
 
   const schedulePersist = useCallback(() => {
-    if (!onNodePositionsChange) return;
     if (persistTimer.current !== null) window.clearTimeout(persistTimer.current);
     persistTimer.current = window.setTimeout(() => {
       persistTimer.current = null;
+      // The nudge burst settled — one undo entry for the whole burst.
+      commitGesture();
+      if (!onNodePositionsChange) return;
       const positions = flowNodePositions(getNodes());
       lastEmittedPositions.current = positions;
       onNodePositionsChange(positions);
     }, 600);
-  }, [getNodes, onNodePositionsChange]);
+  }, [getNodes, onNodePositionsChange, commitGesture]);
 
   const directionById = useMemo(
     () => new Map(data.nodes.map((n) => [n.id, n.direction])),
@@ -621,6 +730,10 @@ function FlowGraphInner({
     OnNodesChange<Node<MedicineWheelNodeData>>
   >(
     (changes) => {
+      // First position change of a gesture: getNodes() still holds the
+      // pre-change state, so this is the undo snapshot moment.
+      if (changes.some((c) => c.type === 'position')) beginGesture();
+
       // Radial snapping: constrain drags AND keyboard nudges in polar
       // space — the wheel guides the hand, not a Cartesian grid.
       const next =
@@ -644,20 +757,21 @@ function FlowGraphInner({
         schedulePersist();
       }
     },
-    [onNodesChange, schedulePersist, radialSnap, layout, directionById],
+    [onNodesChange, schedulePersist, radialSnap, layout, directionById, beginGesture],
   );
 
   const handleNodeDragStop = useCallback<OnNodeDrag<Node<MedicineWheelNodeData>>>(
     (_event, _flowNode, flowNodes) => {
-      if (!onNodePositionsChange) return;
       const draggedNodesById = new Map(flowNodes.map((node) => [node.id, node]));
       const currentNodes = getNodes().map((node) => draggedNodesById.get(node.id) ?? node);
 
       const positions = flowNodePositions(currentNodes);
+      commitGesture(positions);
+      if (!onNodePositionsChange) return;
       lastEmittedPositions.current = positions;
       onNodePositionsChange(positions);
     },
-    [getNodes, onNodePositionsChange],
+    [getNodes, onNodePositionsChange, commitGesture],
   );
 
   const handleConnect = useCallback<OnConnect>(
@@ -876,6 +990,22 @@ function FlowGraphInner({
               aria-label="Return to the wheel"
             >
               <WheelGlyph />
+            </ControlButton>
+            <ControlButton
+              onClick={undo}
+              disabled={pastRef.current.length === 0}
+              title="Undo move (Ctrl/⌘+Z)"
+              aria-label="Undo move"
+            >
+              <span style={{ fontSize: 14 }}>↶</span>
+            </ControlButton>
+            <ControlButton
+              onClick={redo}
+              disabled={futureRef.current.length === 0}
+              title="Redo move (Ctrl/⌘+Shift+Z)"
+              aria-label="Redo move"
+            >
+              <span style={{ fontSize: 14 }}>↷</span>
             </ControlButton>
             <ControlButton
               onClick={() => setShowShortcuts((s) => !s)}

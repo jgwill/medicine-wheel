@@ -50,6 +50,12 @@
   outline-offset: -2px;
 }
 
+/* Undo/redo rest quietly until there is a move to take back */
+.react-flow.dark .react-flow__controls-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 /* MiniMap: rounded, bordered, round node dots */
 .react-flow.dark .react-flow__minimap {
   border-radius: 12px;
