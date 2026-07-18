@@ -393,6 +393,38 @@ export default function GraphPage() {
     [loadData, saveLayoutStore],
   );
 
+  const handleNodeRenameRequest = useCallback(
+    async (node: MWGraphNode, name: string) => {
+      try {
+        const res = await fetch(`/api/nodes/${encodeURIComponent(node.id)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name }),
+        });
+        const body = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(
+            typeof body?.error === "string" ? body.error : `HTTP ${res.status}`,
+          );
+        }
+        // Keep the side panel speaking the new name right away.
+        setSelectedNode((prev) =>
+          prev && prev.id === node.id ? { ...prev, label: name } : prev,
+        );
+        toast.success(`Renamed to ${name}`);
+      } catch (error) {
+        toast.error(
+          error instanceof Error && error.message
+            ? error.message
+            : "Could not rename the node",
+        );
+      } finally {
+        await loadData();
+      }
+    },
+    [loadData],
+  );
+
   const handleEdgeCeremonyRequest = useCallback(
     async (link: MWGraphLink) => {
       try {
@@ -504,6 +536,7 @@ export default function GraphPage() {
                 onRelationCreate={handleRelationCreate}
                 onRelationReconnect={handleRelationReconnect}
                 onNodeOpen={navigateToNode}
+                onNodeRenameRequest={handleNodeRenameRequest}
                 onNodeCreateRequest={handleNodeCreateRequest}
                 onEdgeCeremonyRequest={handleEdgeCeremonyRequest}
                 onEdgeDeleteRequest={handleEdgeDeleteRequest}

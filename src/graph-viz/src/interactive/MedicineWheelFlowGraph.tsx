@@ -135,6 +135,12 @@ export interface MedicineWheelFlowGraphProps {
   /** Fired from the node menu's "Open node". Falls back to onNodeDoubleClick. */
   onNodeOpen?: (node: MWGraphNode) => void;
   /**
+   * Enables the selected being's inline rename (NodeToolbar). The consumer
+   * persists the new name and reloads `data` to canonicalize.
+   * Keep the identity stable (useCallback) — it rides on node data.
+   */
+  onNodeRenameRequest?: (node: MWGraphNode, name: string) => void;
+  /**
    * Fired from the "Create node here" inline form — via the pane menu, or
    * via a connection drag released on empty pane (then `connectFrom` names
    * the being the new node should be related from).
@@ -175,6 +181,7 @@ function toFlowNode(
     showOcap: boolean;
     showWilson: boolean;
     darkMode: boolean;
+    onRename?: (node: MWGraphNode, name: string) => void;
   },
 ): Node<MedicineWheelNodeData> {
   return {
@@ -190,6 +197,7 @@ function toFlowNode(
       showOcap: opts.showOcap,
       showWilson: opts.showWilson,
       darkMode: opts.darkMode,
+      onRename: opts.onRename,
     },
   };
 }
@@ -358,6 +366,7 @@ function FlowGraphInner({
   onRelationCreate,
   onRelationReconnect,
   onNodeOpen,
+  onNodeRenameRequest,
   onNodeCreateRequest,
   onEdgeCeremonyRequest,
   onEdgeDeleteRequest,
@@ -627,6 +636,7 @@ function FlowGraphInner({
       showWilsonHalos,
       darkMode,
       animationsEnabled,
+      onNodeRenameRequest,
     ];
     const configUnchanged =
       lastLayoutConfig.current !== null &&
@@ -659,6 +669,7 @@ function FlowGraphInner({
           showOcap: showOcapIndicators,
           showWilson: showWilsonHalos,
           darkMode,
+          onRename: onNodeRenameRequest,
         }),
       ),
     );
@@ -671,6 +682,7 @@ function FlowGraphInner({
     showWilsonHalos,
     darkMode,
     animationsEnabled,
+    onNodeRenameRequest,
     nodePositions,
     setNodes,
     setEdges,
