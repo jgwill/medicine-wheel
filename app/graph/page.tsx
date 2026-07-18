@@ -507,7 +507,7 @@ export default function GraphPage() {
                   type="checkbox"
                   checked={animationsEnabled}
                   onChange={handleAnimationsEnabledChange}
-                  className="h-3 w-3 accent-yellow-400"
+                  className="h-3 w-3 accent-[var(--mw-accent)]"
                   aria-label="Animate graph edges"
                 />
                 <span>Animation</span>
