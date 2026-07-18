@@ -28,6 +28,7 @@ import {
   useEdgesState,
   useReactFlow,
   addEdge,
+  reconnectEdge,
   ConnectionMode,
   SelectionMode,
   Panel,
@@ -40,6 +41,7 @@ import {
   type OnNodesChange,
   type OnConnect,
   type OnConnectEnd,
+  type OnReconnect,
   type IsValidConnection,
 } from '@xyflow/react';
 
@@ -119,6 +121,17 @@ export interface MedicineWheelFlowGraphProps {
   enableConnections?: boolean;
   /** Fired when a connection gesture completes between two nodes. */
   onRelationCreate?: (sourceId: string, targetId: string) => void;
+  /**
+   * Fired when an existing relation is rewired to a new pair of beings
+   * (an edge end dragged onto another node). The consumer persists the
+   * rewire — relations are keyed by pair, so this means releasing the old
+   * pair and weaving the new one — then reloads `data` to canonicalize.
+   */
+  onRelationReconnect?: (
+    link: MWGraphLink,
+    newSourceId: string,
+    newTargetId: string,
+  ) => void;
   /** Fired from the node menu's "Open node". Falls back to onNodeDoubleClick. */
   onNodeOpen?: (node: MWGraphNode) => void;
   /**
@@ -278,6 +291,7 @@ const SHORTCUTS: { keys: string; does: string }[] = [
     keys: 'Drag from edge dots',
     does: 'Weave a relation — drop on empty ground to create the being there',
   },
+  { keys: 'Drag an edge end', does: 'Rewire the relation to another being' },
   { keys: 'Right-click', does: 'Menu — node, relation, or canvas' },
   { keys: 'Shift + drag', does: 'Select several beings with a box' },
   { keys: 'Ctrl/⌘ + click', does: 'Add or remove from the selection' },
@@ -342,6 +356,7 @@ function FlowGraphInner({
   onNodePositionsChange,
   enableConnections = false,
   onRelationCreate,
+  onRelationReconnect,
   onNodeOpen,
   onNodeCreateRequest,
   onEdgeCeremonyRequest,
@@ -809,12 +824,53 @@ function FlowGraphInner({
     [],
   );
 
+  // Reconnect drags re-enter React Flow's connect machinery, so the user
+  // onConnectEnd fires for them too. This flag keeps a rewire dropped on
+  // empty pane a no-op (the thread stays) instead of opening create-node.
+  const reconnectingRef = useRef(false);
+
+  const handleReconnectStart = useCallback(() => {
+    reconnectingRef.current = true;
+  }, []);
+
+  const handleReconnectEnd = useCallback(() => {
+    // Cleared a tick later: the drag's own connect-end fires in the same
+    // tick and must still see the flag.
+    window.setTimeout(() => {
+      reconnectingRef.current = false;
+    }, 0);
+  }, []);
+
+  // An edge end dragged onto another node: rewire the relation. Moving a
+  // relation to a new relative is a ceremony-relevant act — it goes through
+  // the consumer's persistence, never a silent local mutation. Self-drops
+  // never reach here: isValidConnection refuses them during the drag.
+  const handleReconnect = useCallback<OnReconnect>(
+    (oldEdge, newConnection) => {
+      if (!newConnection.source || !newConnection.target) return;
+      if (newConnection.source === newConnection.target) return;
+      const link = (oldEdge.data as { link?: MWGraphLink } | undefined)?.link;
+      if (!link) return;
+      if (
+        link.source === newConnection.source &&
+        link.target === newConnection.target
+      )
+        return; // dropped back where it was
+
+      // Optimistic rewire; the consumer persists and reloads canonical data.
+      setEdges((eds) => reconnectEdge(oldEdge, newConnection, eds));
+      onRelationReconnect?.(link, newConnection.source, newConnection.target);
+    },
+    [setEdges, onRelationReconnect],
+  );
+
   // A connection drag released on empty pane: open the create-node form
   // there, seeded with the drop position and the pending thread — the new
   // being arrives already related.
   const handleConnectEnd = useCallback<OnConnectEnd>(
     (event, connectionState) => {
       if (!onNodeCreateRequest) return;
+      if (reconnectingRef.current) return; // rewire drag, not a weave
       if (connectionState.isValid) return; // landed on a node — onConnect took it
       if (connectionState.toNode) return; // refused drop (e.g. self) — not a create
       const fromNode = connectionState.fromNode;
@@ -997,6 +1053,10 @@ function FlowGraphInner({
         connectionRadius={30}
         onConnect={enableConnections ? handleConnect : undefined}
         onConnectEnd={enableConnections ? handleConnectEnd : undefined}
+        edgesReconnectable={enableConnections && Boolean(onRelationReconnect)}
+        onReconnect={enableConnections ? handleReconnect : undefined}
+        onReconnectStart={enableConnections ? handleReconnectStart : undefined}
+        onReconnectEnd={enableConnections ? handleReconnectEnd : undefined}
         isValidConnection={isValidConnection}
         proOptions={{ hideAttribution: true }}
         colorMode={darkMode ? 'dark' : 'light'}

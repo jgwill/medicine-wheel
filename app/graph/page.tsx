@@ -290,6 +290,40 @@ export default function GraphPage() {
     [loadData],
   );
 
+  // Relations are keyed by their from:to pair, so a rewire is a release of
+  // the old pair followed by a weave of the new one — the relation's
+  // properties travel with it.
+  const handleRelationReconnect = useCallback(
+    async (link: MWGraphLink, newSourceId: string, newTargetId: string) => {
+      try {
+        const released = await fetch(
+          `/api/edges?from=${encodeURIComponent(link.source)}&to=${encodeURIComponent(link.target)}`,
+          { method: "DELETE" },
+        );
+        if (!released.ok) throw new Error(`HTTP ${released.status}`);
+
+        const woven = await fetch("/api/edges", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from_id: newSourceId,
+            to_id: newTargetId,
+            relationship_type: link.label ?? "speaks-with",
+            strength: link.strength ?? 0.5,
+            ceremony_honored: link.ceremonyHonored ?? false,
+          }),
+        });
+        if (!woven.ok) throw new Error(`HTTP ${woven.status}`);
+        toast.success("Relation rewired");
+      } catch {
+        toast.error("Could not rewire the relation — restoring the canvas");
+      } finally {
+        await loadData();
+      }
+    },
+    [loadData],
+  );
+
   const handleAnimationsEnabledChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const enabled = event.target.checked;
@@ -468,6 +502,7 @@ export default function GraphPage() {
                 onNodePositionsChange={handleNodePositionsChange}
                 enableConnections
                 onRelationCreate={handleRelationCreate}
+                onRelationReconnect={handleRelationReconnect}
                 onNodeOpen={navigateToNode}
                 onNodeCreateRequest={handleNodeCreateRequest}
                 onEdgeCeremonyRequest={handleEdgeCeremonyRequest}

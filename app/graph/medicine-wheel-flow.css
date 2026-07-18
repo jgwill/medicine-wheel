@@ -95,6 +95,31 @@
   stroke-width: 1.75;
 }
 
+/* Edge ends can be grabbed and rewired: hovering or selecting a relation
+   reveals soft rings at both ends marking the grab points. The circles are
+   the hit areas — only paint them, never resize them. */
+.react-flow__edgeupdater {
+  cursor: crosshair;
+  fill: transparent;
+  stroke: transparent;
+  transition: fill 150ms ease, stroke 150ms ease;
+}
+
+.react-flow.dark .react-flow__edge:hover .react-flow__edgeupdater,
+.react-flow.dark .react-flow__edge.selected .react-flow__edgeupdater {
+  fill: var(--mw-north, #f7f5f0);
+  fill-opacity: 0.12;
+  stroke: var(--mw-north, #f7f5f0);
+  stroke-opacity: 0.45;
+  stroke-width: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__edgeupdater {
+    transition: none;
+  }
+}
+
 /* ── Context menus ─────────────────────────────────────────────────── */
 
 .mw-context-menu-item:not(:disabled):hover {
