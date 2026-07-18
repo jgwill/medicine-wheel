@@ -809,13 +809,53 @@ function FlowGraphInner({
       const draggedNodesById = new Map(flowNodes.map((node) => [node.id, node]));
       const currentNodes = getNodes().map((node) => draggedNodesById.get(node.id) ?? node);
 
-      const positions = flowNodePositions(currentNodes);
+      let positions = flowNodePositions(currentNodes);
+
+      // XYDrag hands back the RAW pointer positions for the dragged nodes,
+      // bypassing the onNodesChange interceptor — without re-constraining
+      // here, releasing the mouse would snap the being back off the wheel
+      // and persist that raw position.
+      if (radialSnap !== 'off') {
+        const constrained: MWGraphNodePositions = {};
+        for (const [id, pos] of Object.entries(positions)) {
+          if (!draggedNodesById.has(id)) {
+            constrained[id] = pos;
+            continue;
+          }
+          const r = (draggedNodesById.get(id)?.measured?.width ?? 26) / 2;
+          const center = constrainToWheel(
+            { x: pos.x + r, y: pos.y + r },
+            layout,
+            directionById.get(id),
+            radialSnap,
+          );
+          constrained[id] = { x: center.x - r, y: center.y - r };
+        }
+        positions = constrained;
+        // Settle the canvas on the constrained positions as well.
+        setNodes((nds) =>
+          nds.map((n) =>
+            draggedNodesById.has(n.id) && positions[n.id]
+              ? { ...n, position: positions[n.id] }
+              : n,
+          ),
+        );
+      }
+
       commitGesture(positions);
       if (!onNodePositionsChange) return;
       lastEmittedPositions.current = positions;
       onNodePositionsChange(positions);
     },
-    [getNodes, onNodePositionsChange, commitGesture],
+    [
+      getNodes,
+      setNodes,
+      onNodePositionsChange,
+      commitGesture,
+      radialSnap,
+      layout,
+      directionById,
+    ],
   );
 
   const handleConnect = useCallback<OnConnect>(
