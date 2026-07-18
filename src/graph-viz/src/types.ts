@@ -10,7 +10,6 @@ import type {
   NodeType,
   CeremonyType,
   RelationalNode,
-  OcapFlags,
 } from '@medicine-wheel/ontology-core';
 
 // ── Graph Node ──────────────────────────────────────────────────────────────
