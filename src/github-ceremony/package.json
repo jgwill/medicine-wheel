@@ -1,0 +1,56 @@
+{
+  "name": "@medicine-wheel/github-ceremony",
+  "version": "0.5.1",
+  "description": "GitHub-ceremony processing — witness GitHub webhook events (issues, pull requests, merges, commits) through a ceremonial lens and record them as relational ceremony beads. Pure, framework-free functions that take a parsed payload and a @medicine-wheel/storage-provider",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./detect": {
+      "types": "./dist/detect.d.ts",
+      "import": "./dist/detect.js",
+      "default": "./dist/detect.js"
+    },
+    "./process": {
+      "types": "./dist/process.d.ts",
+      "import": "./dist/process.js",
+      "default": "./dist/process.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "github-ceremony",
+    "webhook",
+    "ceremony",
+    "relational-accountability",
+    "indigenous-research",
+    "four-directions"
+  ],
+  "author": "IAIP Collaborative - Shawinigan, QC",
+  "license": "MIT",
+  "dependencies": {
+    "@medicine-wheel/ontology-core": "^0.5.1",
+    "@medicine-wheel/storage-provider": "^0.5.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.7.0"
+  }
+}
