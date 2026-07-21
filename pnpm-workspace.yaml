@@ -14,6 +14,8 @@ packages:
   - src/relational-query
   - src/session-reader
   - src/storage-provider
+  - src/ceremonial-diary
+  - src/github-ceremony
   - src/transformation-tracker
   - src/ui-components
   - mcp
