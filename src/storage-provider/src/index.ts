@@ -28,6 +28,16 @@ export type {
   PlanPerspectiveRecord,
   PlanPerspectiveEpisode,
   PlanPerspectiveFilters,
+  CeremonialPhase,
+  DiaryEntryType,
+  DiaryEntryLocation,
+  DiaryEntryMetadata,
+  DiaryEntryRecord,
+  DiaryEntryFilters,
+  CeremonyEventKind,
+  CeremonyEventParticipant,
+  CeremonyEventRecord,
+  CeremonyEventFilters,
   ProviderType,
   NodePatch,
   EdgePatch,
@@ -46,6 +56,15 @@ export {
   unionPlanPerspectiveEpisodes,
   matchesPlanPerspectiveFilters,
 } from './plan-perspectives.js';
+
+// Ceremonial Diary filter/ordering semantics (shared across providers)
+export {
+  matchesDiaryEntryFilters,
+  filterAndOrderDiaryEntries,
+} from './diary-records.js';
+
+// Ceremony Event filter semantics (shared across providers)
+export { matchesCeremonyEventFilters } from './ceremony-events.js';
 
 // Factory
 export { createProvider, detectProvider } from './factory.js';

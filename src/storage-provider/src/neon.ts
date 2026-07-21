@@ -12,6 +12,10 @@ import type {
   InquiryWeaveFilters,
   PlanPerspectiveRecord,
   PlanPerspectiveFilters,
+  DiaryEntryRecord,
+  DiaryEntryFilters,
+  CeremonyEventRecord,
+  CeremonyEventFilters,
   NodePatch,
   EdgePatch,
 } from './interface.js';
@@ -24,6 +28,8 @@ import {
   mergePlanPerspectiveRecords,
   matchesPlanPerspectiveFilters,
 } from './plan-perspectives.js';
+import { filterAndOrderDiaryEntries } from './diary-records.js';
+import { matchesCeremonyEventFilters } from './ceremony-events.js';
 
 type QueryRow = Record<string, unknown>;
 type NeonQueryFunction = (strings: TemplateStringsArray, ...params: unknown[]) => Promise<QueryRow[]>;
@@ -39,6 +45,8 @@ export class NeonProvider implements StorageProvider {
     this.sql = neon(url);
     await this.ensureInquiryWeavesTable();
     await this.ensurePlanPerspectivesTable();
+    await this.ensureDiaryEntriesTable();
+    await this.ensureCeremonyEventsTable();
   }
 
   async disconnect(): Promise<void> {
@@ -438,6 +446,130 @@ export class NeonProvider implements StorageProvider {
     `;
     await this.db`CREATE INDEX IF NOT EXISTS idx_plan_perspectives_session_id ON plan_perspectives(session_id)`;
     await this.db`CREATE INDEX IF NOT EXISTS idx_plan_perspectives_episode_paths ON plan_perspectives USING GIN(episode_paths)`;
+  }
+
+  // ── Ceremonial Diary Operations ──
+
+  async registerDiaryEntry(record: DiaryEntryRecord): Promise<DiaryEntryRecord> {
+    await this.db`
+      INSERT INTO diary_entries (id, payload, participant, phase, entry_type, chronicle, timestamp, updated_at)
+      VALUES (
+        ${record.id},
+        ${JSON.stringify(record)},
+        ${record.participant},
+        ${record.phase},
+        ${record.entryType},
+        ${record.chronicle ?? null},
+        ${record.timestamp},
+        NOW()
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        payload = EXCLUDED.payload,
+        participant = EXCLUDED.participant,
+        phase = EXCLUDED.phase,
+        entry_type = EXCLUDED.entry_type,
+        chronicle = EXCLUDED.chronicle,
+        timestamp = EXCLUDED.timestamp,
+        updated_at = NOW()
+    `;
+    return record;
+  }
+
+  async getDiaryEntry(id: string): Promise<DiaryEntryRecord | null> {
+    const rows = await this.db`SELECT payload FROM diary_entries WHERE id = ${id}`;
+    if (rows.length === 0) return null;
+    return parseJsonValue<DiaryEntryRecord>(rows[0].payload, null as unknown as DiaryEntryRecord);
+  }
+
+  async listDiaryEntries(filters: DiaryEntryFilters = {}): Promise<DiaryEntryRecord[]> {
+    const rows = await this.db`SELECT payload FROM diary_entries`;
+    const records = rows
+      .map((row) => parseJsonValue<DiaryEntryRecord>(row.payload, null as unknown as DiaryEntryRecord))
+      .filter((record): record is DiaryEntryRecord => record !== null);
+    return filterAndOrderDiaryEntries(records, filters);
+  }
+
+  async deleteDiaryEntry(id: string): Promise<void> {
+    await this.db`DELETE FROM diary_entries WHERE id = ${id}`;
+  }
+
+  private async ensureDiaryEntriesTable(): Promise<void> {
+    await this.db`
+      CREATE TABLE IF NOT EXISTS diary_entries (
+        id TEXT PRIMARY KEY,
+        payload JSONB NOT NULL,
+        participant TEXT NOT NULL,
+        phase TEXT NOT NULL,
+        entry_type TEXT NOT NULL,
+        chronicle TEXT,
+        timestamp TIMESTAMPTZ NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_diary_entries_participant ON diary_entries(participant)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_diary_entries_phase ON diary_entries(phase)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_diary_entries_chronicle ON diary_entries(chronicle)`;
+  }
+
+  // ── Ceremony Event Operations ──
+
+  async registerCeremonyEvent(record: CeremonyEventRecord): Promise<CeremonyEventRecord> {
+    await this.db`
+      INSERT INTO ceremony_events (id, payload, source, kind, phase, direction, repository, timestamp, updated_at)
+      VALUES (
+        ${record.id},
+        ${JSON.stringify(record)},
+        ${record.source},
+        ${record.kind},
+        ${record.phase},
+        ${record.direction ?? null},
+        ${record.repository ?? null},
+        ${record.timestamp},
+        NOW()
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        payload = EXCLUDED.payload,
+        source = EXCLUDED.source,
+        kind = EXCLUDED.kind,
+        phase = EXCLUDED.phase,
+        direction = EXCLUDED.direction,
+        repository = EXCLUDED.repository,
+        timestamp = EXCLUDED.timestamp,
+        updated_at = NOW()
+    `;
+    return record;
+  }
+
+  async getCeremonyEvent(id: string): Promise<CeremonyEventRecord | null> {
+    const rows = await this.db`SELECT payload FROM ceremony_events WHERE id = ${id}`;
+    if (rows.length === 0) return null;
+    return parseJsonValue<CeremonyEventRecord>(rows[0].payload, null as unknown as CeremonyEventRecord);
+  }
+
+  async listCeremonyEvents(filters: CeremonyEventFilters = {}): Promise<CeremonyEventRecord[]> {
+    const rows = await this.db`SELECT payload FROM ceremony_events ORDER BY timestamp DESC`;
+    return rows
+      .map((row) => parseJsonValue<CeremonyEventRecord>(row.payload, null as unknown as CeremonyEventRecord))
+      .filter((record): record is CeremonyEventRecord => record !== null && matchesCeremonyEventFilters(record, filters));
+  }
+
+  private async ensureCeremonyEventsTable(): Promise<void> {
+    await this.db`
+      CREATE TABLE IF NOT EXISTS ceremony_events (
+        id TEXT PRIMARY KEY,
+        payload JSONB NOT NULL,
+        source TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        phase TEXT NOT NULL,
+        direction TEXT,
+        repository TEXT,
+        timestamp TIMESTAMPTZ NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_ceremony_events_kind ON ceremony_events(kind)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_ceremony_events_phase ON ceremony_events(phase)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_ceremony_events_repository ON ceremony_events(repository)`;
   }
 }
 

@@ -175,6 +175,121 @@ export interface PlanPerspectiveFilters {
   id?: string;
 }
 
+// ── Ceremonial Diary Records ──
+// The diary is a participant's voice across the Five-Phase ceremonial
+// methodology. These Ojibwe phase names carry meaning that has no Four-
+// Directions equivalent, so they live here as their own vocabulary while the
+// diary domain package owns creation, pattern detection, and markdown export.
+
+export type CeremonialPhase =
+  | 'miigwechiwendam' // Sacred Space Creation
+  | 'nindokendaan' // Two-Eyed Research Gathering
+  | 'ningwaab' // Knowledge Integration
+  | 'nindoodam' // Creative Expression
+  | 'migwech'; // Ceremonial Closing
+
+export type DiaryEntryType =
+  | 'intention'
+  | 'observation'
+  | 'hypothesis'
+  | 'data'
+  | 'synthesis'
+  | 'action'
+  | 'reflection'
+  | 'learning';
+
+export interface DiaryEntryLocation {
+  lat: number;
+  lon: number;
+  name?: string;
+}
+
+export interface DiaryEntryMetadata {
+  location?: DiaryEntryLocation;
+  activity?: 'walking' | 'sitting' | 'coding' | 'reflecting' | string;
+  weather?: string;
+  emotionalTone?: string;
+  /** Related stories, sessions, or other entry keys. */
+  relatedKeys?: string[];
+  tags?: string[];
+  [key: string]: unknown;
+}
+
+export interface DiaryEntryRecord extends Record<string, unknown> {
+  id: string;
+  /** ISO 8601 timestamp. */
+  timestamp: string;
+  /** Author identity — the participant whose voice this entry carries. */
+  participant: string;
+  /** Which agent facilitated this entry, when applicable. */
+  agent?: string;
+  phase: CeremonialPhase;
+  entryType: DiaryEntryType;
+  /** Main diary text; supports Markdown. */
+  content: string;
+  metadata: DiaryEntryMetadata;
+  /**
+   * Optional relation into the chronicle. Medicine-wheel node-id convention is
+   * `chronicle:<episode-folder-name>` (a chronicle_episode node under parent
+   * `chronicle:miadi-chronicle`). Entries without a chronicle reference remain
+   * fully valid — the diary can speak whether or not it writes into an episode.
+   */
+  chronicle?: string;
+}
+
+export interface DiaryEntryFilters {
+  participant?: string;
+  phase?: CeremonialPhase;
+  entryType?: DiaryEntryType;
+  dateRange?: {
+    start: string;
+    end: string;
+  };
+  tags?: string[];
+  limit?: number;
+}
+
+// ── Ceremony Event Records ──
+// GitHub happenings witnessed ceremonially: issues, pull requests, merges,
+// commits. The direction reuses the ontology-core Four Directions, bridging the
+// ceremonial phase into the wheel while preserving the original phase name.
+
+export type CeremonyEventKind = 'issue' | 'pr' | 'merge' | 'commit';
+
+export interface CeremonyEventParticipant {
+  name: string;
+  role: string;
+  perspective: 'indigenous' | 'western' | 'both';
+}
+
+export interface CeremonyEventRecord extends Record<string, unknown> {
+  id: string;
+  /** Origin of the event — currently 'github'. */
+  source: string;
+  kind: CeremonyEventKind;
+  phase: CeremonialPhase;
+  /** Four-Directions bridge derived from the ceremonial phase. */
+  direction?: DirectionName;
+  participants: CeremonyEventParticipant[];
+  relationshipImpacts: string[];
+  /** Spiral key preserved from Miadi semantics (non-Redis, deterministic). */
+  spiralKey: string;
+  /** ISO 8601 timestamp. */
+  timestamp: string;
+  repository?: string;
+  /** Issue/PR number or short commit sha. */
+  reference?: string | number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface CeremonyEventFilters {
+  source?: string;
+  kind?: CeremonyEventKind;
+  phase?: CeremonialPhase;
+  direction?: DirectionName;
+  repository?: string;
+}
+
 // ── Provider Interface ──
 
 export interface StorageProvider {
@@ -223,6 +338,17 @@ export interface StorageProvider {
   registerPlanPerspective(record: PlanPerspectiveRecord): Promise<PlanPerspectiveRecord>;
   getPlanPerspective(id: string): Promise<PlanPerspectiveRecord | null>;
   listPlanPerspectives(filters?: PlanPerspectiveFilters): Promise<PlanPerspectiveRecord[]>;
+
+  // Ceremonial Diary Operations
+  registerDiaryEntry(record: DiaryEntryRecord): Promise<DiaryEntryRecord>;
+  getDiaryEntry(id: string): Promise<DiaryEntryRecord | null>;
+  listDiaryEntries(filters?: DiaryEntryFilters): Promise<DiaryEntryRecord[]>;
+  deleteDiaryEntry(id: string): Promise<void>;
+
+  // Ceremony Event Operations (GitHub-derived ceremonies)
+  registerCeremonyEvent(record: CeremonyEventRecord): Promise<CeremonyEventRecord>;
+  getCeremonyEvent(id: string): Promise<CeremonyEventRecord | null>;
+  listCeremonyEvents(filters?: CeremonyEventFilters): Promise<CeremonyEventRecord[]>;
 }
 
 export type ProviderType = 'jsonl' | 'neon' | 'redis' | 'auto';
