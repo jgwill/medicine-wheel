@@ -2,12 +2,13 @@
 
 > A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's, and OCAP® data sovereignty principles.
 
-**Version:** 0.3.0 (lockstep packages) · MCP server 4.3.0
+**Version:** 0.5.1 (lockstep packages) · MCP server 4.5.0
 **Language:** TypeScript (ES2022, ESM)
 **License:** MIT
 
 ## Packages
 
+- [app](.): Medicine Wheel app (`@medicine-wheel/app`) — the Next.js visual layer plus two CLIs: `mwsrv` (starts the server against a `.mw/store`, local or Docker) and `mw` (talks to the running server — status, directions, node/edge/ceremony ops); installs and runs without `@medicine-wheel/mcp`
 - [ontology-core](src/ontology-core): Foundational ontology layer for the Medicine Wheel Developer Suite — unified types, RDF vocabulary, Zod schemas, constants, semantic query helpers grounded in Indigenous relational ontology
 - [ceremony-protocol](src/ceremony-protocol): Ceremony lifecycle protocol — manages ceremony state, phase transitions, governance enforcement, and ceremonial review workflows
 - [fire-keeper](src/fire-keeper): Fire Keeper coordination agent — tends the ceremony fire, ensures relational integrity through gating conditions, and maintains Wilson alignment as an active agent
@@ -25,16 +26,20 @@
 - [session-reader](src/session-reader): Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, session summaries, analytics extraction, and search across agent session data
 - [storage-provider](src/storage-provider): Abstract storage layer — a unified provider interface over JSONL and Neon/Postgres backends (with a future Redis path), selected at runtime
 - [data-store-postgres](src/data-store-postgres): PostgreSQL/Neon provider scaffold — shared pool management and provider-ready storage entrypoints for cloud-backed persistence
-- [mcp](mcp): Medicine Wheel MCP Server (`@medicine-wheel/mcp`, independent 4.x line) — 64 tools across the ceremony lifecycle, relational CRUD, structural tension, narrative, Four-Directions guidance, and validators; stdio + StreamableHTTP transports
+- [ceremonial-diary](src/ceremonial-diary): Ceremonial Diary — a participant's voice across the Five-Phase ceremonial methodology; intention/observation/reflection entries with pattern detection, statistics, Markdown export, and optional projection into the chronicle wheel; persists via `@medicine-wheel/storage-provider`
+- [github-ceremony](src/github-ceremony): GitHub-ceremony processing — witness GitHub webhook events (issues, PRs, merges, commits) through a ceremonial lens and record them as relational ceremony beads; pure, framework-free functions over a `@medicine-wheel/storage-provider`
+- [perception-layer](src/perception-layer): Eyes & ears of agent-supported Indigenous film production — witness a belt-device recording / transcript as typed `PerceptualEvent`s and seed a production knowledge graph in ontology-core
+- [narrative-cluster](src/narrative-cluster): Narrative Cluster Processor — turn witnessed perceptual events / rushes into thematic clusters, narrative beats, and a Film Edit Brief (EDL markers); deterministic; consumes perception-layer output
+- [mcp](mcp): Medicine Wheel MCP Server (`@medicine-wheel/mcp`, independent 4.x line) — 70 tools across the ceremony lifecycle, relational CRUD, structural tension, narrative, Four-Directions guidance, inquiry-weaves, plan-perspectives, and validators; stdio + StreamableHTTP transports
 
 ## MCP Server & HTTP API
 
-The `@medicine-wheel/mcp` package exposes 64 tools over two transports:
+The `@medicine-wheel/mcp` package exposes 70 tools over two transports:
 
 - **stdio** — `npx @medicine-wheel/mcp` (default; local JSONL store under `.mw/store/`)
 - **StreamableHTTP** — `POST /api/mcp` on the running app, JSON-RPC 2.0 with `tools/list` and `tools/call`
 
-Tool families: ceremony lifecycle (open/close, fire-keeper status, relational check-back), relational CRUD (nodes, edges, relational web), structural tension (charts, action steps, MMOT), narrative (beats, cycles, arcs), Four-Directions guidance, and validators (Wilson paradigm, OCAP® compliance, Two-Eyed Seeing bridge, accountability).
+Tool families: ceremony lifecycle (open/close, fire-keeper status, relational check-back), relational CRUD (nodes, edges, relational web), structural tension (charts, action steps, MMOT), narrative (beats, cycles, arcs), Four-Directions guidance, inquiry-weaves, plan-perspectives, and validators (Wilson paradigm, OCAP® compliance, Two-Eyed Seeing bridge, accountability).
 
 **Server-mediated store (opt-in):** set `MW_API_URL` so the MCP tools read and write the same relational state the server holds through its REST API instead of a local file. The default `MW_DATA_DIR` JSONL path is unchanged.
 
@@ -64,6 +69,8 @@ The Next.js app surfaces that relational state as REST endpoints (also consumed 
 - [ui-components](rispecs/ui-components.spec.md): React components
 - [data-store](rispecs/data-store.spec.md): Redis data access, Node/Edge/Ceremony CRUD, session linking
 - [session-reader](rispecs/session-reader.spec.md): Session event parsing, summaries, analytics
+- [perception-layer](rispecs/perception-layer.spec.md): Belt-device witnessing, typed perceptual events, production knowledge graph
+- [narrative-cluster](rispecs/narrative-cluster.spec.md): Thematic clustering, narrative beats, Film Edit Brief (EDL markers)
 
 ## Documentation
 

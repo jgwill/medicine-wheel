@@ -2,7 +2,7 @@
 
 > A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's (Respect, Reciprocity, Responsibility), and OCAP® data sovereignty principles.
 
-**Version:** 0.3.0 (lockstep packages) · MCP server 4.3.0
+**Version:** 0.5.1 (lockstep packages) · MCP server 4.5.0
 **Language:** TypeScript (ES2022, ESM, strict mode)
 **Runtime:** Node.js
 **Validation:** Zod ^3.23.0
@@ -32,9 +32,13 @@
 17. [Package 15: session-reader](#package-15-session-reader)
 18. [Package 16: storage-provider](#package-16-storage-provider)
 19. [Package 17: data-store-postgres](#package-17-data-store-postgres)
-20. [MCP Server (@medicine-wheel/mcp)](#mcp-server-medicine-wheelmcp)
-21. [End-to-End Usage](#end-to-end-usage)
-22. [Specifications](#specifications)
+20. [Package 18: ceremonial-diary](#package-18-ceremonial-diary)
+21. [Package 19: github-ceremony](#package-19-github-ceremony)
+22. [Package 20: perception-layer](#package-20-perception-layer)
+23. [Package 21: narrative-cluster](#package-21-narrative-cluster)
+24. [MCP Server (@medicine-wheel/mcp)](#mcp-server-medicine-wheelmcp)
+25. [End-to-End Usage](#end-to-end-usage)
+26. [Specifications](#specifications)
 
 ---
 
@@ -58,7 +62,7 @@ medicine-wheel-ontology-core          ← Foundation (everyone depends on this)
     └── medicine-wheel-session-reader       ← Session event data reader
 ```
 
-All packages compile to ES2022 with source maps and declaration files. No circular dependencies. All packages use `medicine-wheel-ontology-core` types as their shared vocabulary. 15 packages total organized in conceptual layers: Foundation → Ceremony → Relational Epistemology → Visualization/Query → UI → Infrastructure.
+All packages compile to ES2022 with source maps and declaration files. No circular dependencies. All packages use `@medicine-wheel/ontology-core` types as their shared vocabulary. 21 packages total organized in conceptual layers: Foundation → Ceremony → Relational Epistemology → Visualization/Query → UI → Infrastructure.
 
 ---
 
@@ -416,7 +420,7 @@ const access = getAccessLevel('ceremony/smudging.md', config.governance!);
 npm install medicine-wheel-fire-keeper
 ```
 
-**Version:** 0.1.0
+**Version:** 0.5.1
 
 The Fire Keeper is the ceremony coordination agent. It does not write code or produce artifacts directly — it receives, evaluates, routes, and gates the work of sub-agents through relational integrity checks.
 
@@ -562,7 +566,7 @@ const result = keeper.evaluateImportance(
 npm install medicine-wheel-community-review
 ```
 
-**Version:** 0.1.0
+**Version:** 0.5.1
 
 Wilson describes research validation through *community review* — Elders, knowledge keepers, and community members validate whether research honors relational accountability. This package implements that vision.
 
@@ -724,7 +728,7 @@ circle = closeCircle(circle, outcome);
 npm install medicine-wheel-consent-lifecycle
 ```
 
-**Version:** 0.1.0
+**Version:** 0.5.1
 
 Transforms consent from a boolean checkbox into a living relational obligation with lifecycle tracking, renewal, renegotiation, and community-level consent protocols. Wilson's relational accountability means consent is not an event — it's a *relationship*.
 
@@ -1102,7 +1106,7 @@ import {
 npm install medicine-wheel-importance-unit
 ```
 
-**Version:** 0.1.0
+**Version:** 0.5.1
 
 The ImportanceUnit is the relational unit of knowledge in Wilson's epistemology — a relationally-accountable piece of meaning that carries epistemic weight, source dimensions, accountability links, and circle depth tracking. Not all knowledge is equal: dream-state and embodied knowledge may carry more epistemic authority than rational analysis.
 
@@ -1254,7 +1258,7 @@ const analysis = detectDeepening(linked);
 npm install medicine-wheel-relational-index
 ```
 
-**Version:** 0.1.0
+**Version:** 0.5.1
 
 Four-source epistemic dimensional indexing. Wilson's epistemology recognises multiple sources of knowing — Land, Dream, Code, and Vision each teach differently. This package enables querying, traversal, and cross-dimensional mapping across those epistemic sources.
 
@@ -1405,7 +1409,7 @@ const health = indexHealth(index);
 npm install medicine-wheel-transformation-tracker
 ```
 
-**Version:** 0.1.0
+**Version:** 0.5.1
 
 Research transformation tracking — Wilson's validity criterion: "If research doesn't change you, you haven't done it right." Tracks the transformative impact of research on researchers, communities, and relational networks.
 
@@ -1920,7 +1924,7 @@ const obs = formatDirectionObservation({ east: 40, south: 30, west: 20, north: 1
 npm install medicine-wheel-prompt-decomposition
 ```
 
-**Version:** 0.1.0
+**Version:** 0.5.1
 
 ### MedicineWheelDecomposer
 
@@ -2029,7 +2033,7 @@ const md = decompositionToMarkdown(decomposition);
 npm install medicine-wheel-ui-components
 ```
 
-**Version:** 0.1.0
+**Version:** 0.5.1
 
 ### DirectionCard
 
@@ -2113,7 +2117,7 @@ import type { WilsonMeterProps } from 'medicine-wheel-ui-components';
 npm install medicine-wheel-data-store
 ```
 
-**Version:** 0.1.0
+**Version:** 0.5.1
 
 ### Overview
 
@@ -2128,7 +2132,7 @@ Shared Redis data-access layer for the Medicine Wheel Developer Suite. Provides 
 
 ### Dependencies
 
--   `medicine-wheel-ontology-core` ^0.1.0
+-   `@medicine-wheel/ontology-core` ^0.5.1
 -   `redis` ^4.6.0
 
 ---
@@ -2139,7 +2143,7 @@ Shared Redis data-access layer for the Medicine Wheel Developer Suite. Provides 
 npm install medicine-wheel-session-reader
 ```
 
-**Version:** 0.1.0
+**Version:** 0.5.1
 
 ### Overview
 
@@ -2162,7 +2166,7 @@ Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, s
 npm install @medicine-wheel/storage-provider
 ```
 
-**Version:** 0.3.0
+**Version:** 0.5.1
 
 ### Overview
 
@@ -2191,7 +2195,7 @@ const store = await createProvider();
 npm install @medicine-wheel/data-store-postgres
 ```
 
-**Version:** 0.3.0
+**Version:** 0.5.1
 
 ### Overview
 
@@ -2208,28 +2212,130 @@ PostgreSQL/Neon provider scaffold for the Medicine Wheel Developer Suite — sha
 
 ---
 
+## Package 18: ceremonial-diary
+
+```bash
+npm install @medicine-wheel/ceremonial-diary
+```
+
+**Version:** 0.5.1
+
+### Overview
+
+Ceremonial Diary — a participant's voice across the Five-Phase ceremonial methodology. Intention, observation, and reflection entries carry pattern detection, statistics, Markdown export, and an optional projection into the chronicle wheel. Persists through `@medicine-wheel/storage-provider` (JSONL and Neon as first-class equals). Came home from Miadi (jgwill/Miadi#506).
+
+### Exports
+
+-   `createDiaryEntry`, `createIntentionEntry`, `createReflectionEntry`, `createWalkingEntry` — record entries across the phases
+-   `queryDiaryEntries`, `getLastDiaryEntry`, `getEntriesByPhase`, `getEntriesByDateRange` — read the diary
+-   `computeDiaryStatistics`, `computeDiaryPatterns`, `createJourneySummary` — statistics and pattern detection
+-   `exportToMarkdown`, `exportByPhase`, `entryToMarkdown` — Markdown export
+-   `projectEntryToWheel` — optional projection into the chronicle wheel
+-   types & constants — `DiaryEntry`, `Participant`, `CEREMONIAL_PHASES`, `DIARY_ENTRY_TYPES`, `PHASE_TO_DIRECTION`
+
+### Dependencies
+
+-   `@medicine-wheel/ontology-core`, `@medicine-wheel/storage-provider`
+
+---
+
+## Package 19: github-ceremony
+
+```bash
+npm install @medicine-wheel/github-ceremony
+```
+
+**Version:** 0.5.1
+
+### Overview
+
+GitHub-ceremony processing — witness GitHub webhook events (issues, pull requests, merges, commits) through a ceremonial lens and record them as relational ceremony beads. Pure, framework-free functions that take a parsed payload and a `@medicine-wheel/storage-provider`. Came home from Miadi (jgwill/Miadi#506).
+
+### Exports
+
+-   `isCeremonialEvent`, `extractCeremonialPhase`, `extractParticipants`, `extractRelationshipImpacts` — detect and read ceremonial meaning from a payload
+-   `buildIssueCeremony`, `buildPRCeremony`, `buildMergeCeremony`, `buildCommitCeremonies` — turn events into ceremony beads
+-   `generateSpiralKey`, `phaseToDirection`, `PHASE_TO_DIRECTION` — spiral placement helpers
+-   types — `GitHubWebhookEvent`, `GitHubIssue`, `GitHubPullRequest`, `GitHubLabel`
+
+### Dependencies
+
+-   `@medicine-wheel/ontology-core`, `@medicine-wheel/storage-provider`
+
+---
+
+## Package 20: perception-layer
+
+```bash
+npm install @medicine-wheel/perception-layer
+```
+
+**Version:** 0.5.1
+
+### Overview
+
+Eyes & ears of agent-supported Indigenous film production — witness a belt-device recording / transcript as typed `PerceptualEvent`s and seed a production knowledge graph in ontology-core. Relationship, not extraction.
+
+### Exports
+
+-   `registerParticipant`, `segmentTranscript`, `ingestTranscript`, `buildProductionGraph` — witness a recording and seed the graph
+-   `OBSERVERS`, `classify`, `relationalWitnessingObserver`, `directorIntentObserver`, `shotCompositionObserver`, `ambientSoundObserver` — pluggable perceptual observers
+-   types — `PerceptualEvent`, `PerceptualSense`, `PerceptualEventType`, `AgentParticipant`, `IngestOptions`, `BuildGraphOptions`, `ProductionGraphSeed`, `PerceptualObserver`, `Classification`
+
+### Dependencies
+
+-   `@medicine-wheel/ontology-core`
+
+---
+
+## Package 21: narrative-cluster
+
+```bash
+npm install @medicine-wheel/narrative-cluster
+```
+
+**Version:** 0.5.1
+
+### Overview
+
+Narrative Cluster Processor — turn witnessed perceptual events / rushes into thematic clusters, narrative beats, and a Film Edit Brief (EDL markers). Deterministic; consumes perception-layer output.
+
+### Exports
+
+-   `clusterEvents`, `clustersToBeats` — group perceptual events into thematic clusters and narrative beats
+-   `generateEditBrief` — produce a Film Edit Brief with EDL markers
+-   types — `ClusterKind`, `ClusterableEvent`, `NarrativeCluster`, `EditMarker`, `EditBrief`, `EditBriefOptions`
+
+### Dependencies
+
+-   `@medicine-wheel/ontology-core`
+
+---
+
 ## MCP Server (@medicine-wheel/mcp)
 
 ```bash
 npx @medicine-wheel/mcp        # stdio transport
 ```
 
-**Version:** 4.3.0 (independent of the 0.x lockstep line)
+**Version:** 4.5.0 (independent of the 0.x lockstep line)
 
 ### Overview
 
-The Model Context Protocol server exposes **64 tools** that let an agent conduct Indigenous-paradigm research through the Medicine Wheel — over two transports:
+The Model Context Protocol server exposes **70 tools** that let an agent conduct Indigenous-paradigm research through the Medicine Wheel — over two transports:
 
 -   **stdio** — default; persists to a local JSONL store under `.mw/store/`
 -   **StreamableHTTP** — `POST /api/mcp` on the running app, JSON-RPC 2.0 (`tools/list`, `tools/call`), dispatched against the same tool registry as stdio
 
-### Tool families (64 total)
+### Tool families (70 total)
 
 -   **Four Directions** (13): East (3) vision/spirit/new-relation · South (3) growth/mentorship/embodied-data · West (3) reflection/emotional/strawberry-teaching · North (4) wisdom/elder-council/spirit-feeding/story-archiving
 -   **Validators** (4): `wilson_paradigm_checker`, `ocap_compliance_checker`, `two_eyed_seeing_bridge`, `accountability_validator`
 -   **Discovery** (11) & **Integrations** (10): node/edge/ceremony/beat/cycle search, relational web, cross-system bridges
 -   **Structural Tension** (12): charts, action steps, telescoping, MMOT (creator moment of truth)
 -   **Ceremony Lifecycle** (4): `mw_ceremony_open`/`close`, `mw_fire_keeper_status`, `mw_relational_check_back`
+-   **Inquiry Weaves** (3): relate artefacts and episodes, author episode-to-episode lineage edges, enumerate the chronicle catalog
+-   **Plan Perspectives** (3): read and register plan/insight perspectives across the relational web
 -   **Coordination** (3), **Epistemic** (2), **Governance/Transformation** (3), **Reasoning Observability** (2)
 
 ### Server-mediated store (opt-in)
@@ -2418,5 +2524,7 @@ RISE framework specifications live in `rispecs/`:
 | `ui-components.spec.md` | React components |
 | `data-store.spec.md` | Redis data access, Node/Edge/Ceremony CRUD, session linking |
 | `session-reader.spec.md` | Session event parsing, summaries, analytics |
+| `perception-layer.spec.md` | Belt-device witnessing, typed perceptual events, production knowledge graph |
+| `narrative-cluster.spec.md` | Thematic clustering, narrative beats, Film Edit Brief (EDL markers) |
 
 Each spec is written in RISE format (Reverse-engineer → Intent-extract → Specify → Export) and is codebase-agnostic — another LLM can re-implement the full system from these specs alone.
