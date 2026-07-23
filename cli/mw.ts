@@ -15,7 +15,7 @@ import * as fs from 'fs';
 import { viewSkills, installSkill } from './skills';
 
 // ── Config ────────────────────────────────────────────────────────
-const MW_API_URL = process.env.MW_API_URL ?? 'http://localhost:3940';
+const MW_API_URL = process.env.MW_API_URL ?? 'http://localhost:8040';
 const MW_FORMAT = process.env.MW_FORMAT ?? 'pretty';
 
 function resolvePackageRoot(): string {
@@ -243,7 +243,7 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
     mw help                                This help
 
   ENVIRONMENT
-    MW_API_URL   API base URL (default: http://localhost:3940)
+    MW_API_URL   API base URL (default: http://localhost:8040)
     MW_MCP_PATH  Optional MCP server path (auto-detected when locally available)
     MW_FORMAT    Output format: pretty (default), json, quiet
 `);
