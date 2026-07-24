@@ -18,13 +18,32 @@
 import { getJsonlStore } from './jsonl-store.js';
 import { HttpStore } from './http-store.js';
 
-function createStore() {
-  const apiUrl = process.env.MW_API_URL;
-  if (apiUrl) {
-    console.error(`🌐 Medicine Wheel MCP: using HTTP store at ${apiUrl}`);
-    return new HttpStore(apiUrl);
+export function createStore(): HttpStore | ReturnType<typeof getJsonlStore> {
+  const apiUrl = process.env.MW_API_URL?.trim();
+  if (!apiUrl) {
+    return getJsonlStore();
   }
-  return getJsonlStore();
+
+  // A typo'd MW_API_URL is worse than an absent one: every write leaves for an
+  // address that cannot answer while the tools keep reporting success. Refuse
+  // the ambiguity at startup, where a human is still watching.
+  let parsed: URL;
+  try {
+    parsed = new URL(apiUrl);
+  } catch {
+    throw new Error(
+      `MW_API_URL is not a valid absolute URL: ${JSON.stringify(apiUrl)} — ` +
+      `expected something like http://127.0.0.1:8040 (unset it to use the local JSONL store)`
+    );
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(
+      `MW_API_URL must be http: or https:, got ${parsed.protocol} in ${JSON.stringify(apiUrl)}`
+    );
+  }
+
+  console.error(`🌐 Medicine Wheel MCP: using HTTP store at ${apiUrl}`);
+  return new HttpStore(apiUrl);
 }
 
 export const store = createStore();

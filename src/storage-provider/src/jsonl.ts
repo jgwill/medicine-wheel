@@ -27,6 +27,7 @@ import {
   mergePlanPerspectiveRecords,
   matchesPlanPerspectiveFilters,
 } from './plan-perspectives.js';
+import { filterInquiryWeaves } from './inquiry-weaves.js';
 import { filterAndOrderDiaryEntries } from './diary-records.js';
 import { matchesCeremonyEventFilters } from './ceremony-events.js';
 
@@ -313,7 +314,7 @@ export class JsonlProvider implements StorageProvider {
   }
 
   async listInquiryWeaves(filters: InquiryWeaveFilters = {}): Promise<WeaveRecord[]> {
-    return this.readInquiryWeaves().filter((record) => matchesInquiryWeaveFilters(record, filters));
+    return filterInquiryWeaves(this.readInquiryWeaves(), filters);
   }
 
   async registerPlanPerspective(record: PlanPerspectiveRecord): Promise<PlanPerspectiveRecord> {
@@ -548,21 +549,6 @@ function sortByNewest<T extends Record<K, string>, K extends keyof T>(field: K) 
   return (left: T, right: T): number => Date.parse(right[field]) - Date.parse(left[field]);
 }
 
-function matchesInquiryWeaveFilters(record: WeaveRecord, filters: InquiryWeaveFilters): boolean {
-  if (filters.episode_path !== undefined && record.episode?.path !== filters.episode_path) {
-    return false;
-  }
-  if (filters.episode_number !== undefined && record.episode?.number !== filters.episode_number) {
-    return false;
-  }
-  if (filters.issue !== undefined && record.issue !== filters.issue) {
-    return false;
-  }
-  if (filters.artefact !== undefined && record.artefact?.id !== filters.artefact) {
-    return false;
-  }
-  return true;
-}
 
 function isProcessAlive(pid: number): boolean {
   try {
@@ -575,6 +561,13 @@ function isProcessAlive(pid: number): boolean {
 }
 
 function isLockStale(lockPath: string): boolean {
+  let mtimeMs: number;
+  try {
+    mtimeMs = fs.statSync(lockPath).mtimeMs;
+  } catch {
+    return false; // Lock already gone — nothing to reap.
+  }
+
   try {
     const content = fs.readFileSync(lockPath, 'utf-8').trim();
     const parsed = JSON.parse(content) as { pid?: unknown; created_at?: unknown };
@@ -592,7 +585,11 @@ function isLockStale(lockPath: string): boolean {
     const lockAgeMs = isNaN(createdAt) ? Infinity : Date.now() - createdAt;
     return lockAgeMs > 30_000;
   } catch {
-    return false;
+    // A lock file we cannot read names no owner: a writer that died between
+    // creating the file and stamping it, or a foreign lock format. Judging it
+    // permanently held would leave the entity unwritable forever, so fall back
+    // to its age — the same grace period a stamped lock gets.
+    return Date.now() - mtimeMs > 30_000;
   }
 }
 

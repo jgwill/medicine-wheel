@@ -286,8 +286,19 @@ function writeJsonl<T>(filePath: string, records: T[]): void {
   fs.renameSync(tmpPath, filePath);
 }
 
-function getMtime(filePath: string): number {
-  try { return fs.statSync(filePath).mtimeMs; } catch { return 0; }
+/**
+ * Cache-invalidation stamp for a store file.
+ *
+ * mtime alone misses a rewrite that lands inside the same millisecond as our
+ * own — and the Web UI writes these very files. On mounts with coarse
+ * timestamp granularity it misses far more than that, and the MCP server then
+ * serves what it read once, forever. Size is the cheap second witness.
+ */
+function getFileStamp(filePath: string): string {
+  try {
+    const stat = fs.statSync(filePath);
+    return `${stat.mtimeMs}:${stat.size}`;
+  } catch { return ''; }
 }
 
 // ── JsonlCollection<T> ──
@@ -295,7 +306,7 @@ function getMtime(filePath: string): number {
 class JsonlCollection<T extends { id?: string }> {
   private items: Map<string, T> = new Map();
   private filePath: string;
-  private lastMtime: number = 0;
+  private lastStamp: string = '';
   private loaded: boolean = false;
 
   constructor(filePath: string) {
@@ -303,15 +314,15 @@ class JsonlCollection<T extends { id?: string }> {
   }
 
   private sync(): void {
-    const currentMtime = getMtime(this.filePath);
-    if (!this.loaded || currentMtime !== this.lastMtime) {
+    const currentStamp = getFileStamp(this.filePath);
+    if (!this.loaded || currentStamp !== this.lastStamp) {
       const records = readJsonl<T>(this.filePath);
       this.items = new Map();
       for (const record of records) {
         const id = (record as any).id as string | undefined;
         if (id) this.items.set(id, record);
       }
-      this.lastMtime = currentMtime;
+      this.lastStamp = currentStamp;
       this.loaded = true;
     }
   }
@@ -333,7 +344,7 @@ class JsonlCollection<T extends { id?: string }> {
       }
       writeJsonl(this.filePath, Array.from(merged.values()));
       this.items = merged;
-      this.lastMtime = getMtime(this.filePath);
+      this.lastStamp = getFileStamp(this.filePath);
     });
   }
 
@@ -371,7 +382,7 @@ class JsonlCollection<T extends { id?: string }> {
 class EdgeCollection {
   private items: Map<string, StoredEdge> = new Map();
   private filePath: string;
-  private lastMtime: number = 0;
+  private lastStamp: string = '';
   private loaded: boolean = false;
 
   constructor(filePath: string) {
@@ -383,12 +394,12 @@ class EdgeCollection {
   }
 
   private sync(): void {
-    const currentMtime = getMtime(this.filePath);
-    if (!this.loaded || currentMtime !== this.lastMtime) {
+    const currentStamp = getFileStamp(this.filePath);
+    if (!this.loaded || currentStamp !== this.lastStamp) {
       const records = readJsonl<StoredEdge>(this.filePath);
       this.items = new Map();
       for (const r of records) this.items.set(this.edgeKey(r), r);
-      this.lastMtime = currentMtime;
+      this.lastStamp = currentStamp;
       this.loaded = true;
     }
   }
@@ -401,7 +412,7 @@ class EdgeCollection {
       for (const [key, edge] of this.items) merged.set(key, edge);
       writeJsonl(this.filePath, Array.from(merged.values()));
       this.items = merged;
-      this.lastMtime = getMtime(this.filePath);
+      this.lastStamp = getFileStamp(this.filePath);
     });
   }
 

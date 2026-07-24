@@ -212,6 +212,22 @@ describe("deleteEdge", () => {
   });
 });
 
+describe("write lock recovery", () => {
+  it("reclaims an aged lock file whose payload cannot be read", async () => {
+    // A writer killed between creating the lock and stamping it leaves a file
+    // that names no owner. Judging it permanently held makes the entity
+    // unwritable forever.
+    const lockPath = path.join(tempDir, "nodes.jsonl.lock");
+    const tenMinutesAgo = new Date(Date.now() - 600_000);
+    fs.writeFileSync(lockPath, "", "utf-8");
+    fs.utimesSync(lockPath, tenMinutesAgo, tenMinutesAgo);
+
+    await provider.createNode(node());
+
+    expect(await provider.getNode("elder-1")).not.toBeNull();
+  });
+});
+
 describe("edge identity", () => {
   it("exposes a stable composite id on read", async () => {
     await provider.createEdge(edge());

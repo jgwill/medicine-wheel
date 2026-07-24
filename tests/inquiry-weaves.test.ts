@@ -2,7 +2,11 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { JsonlProvider, type WeaveRecord } from "../src/storage-provider/src/index";
+import {
+  JsonlProvider,
+  filterInquiryWeaves,
+  type WeaveRecord,
+} from "../src/storage-provider/src/index";
 
 vi.mock("@medicine-wheel/storage-provider", async () => {
   return await import("../src/storage-provider/src/index");
@@ -90,6 +94,22 @@ describe("Inquiry Weave storage provider", () => {
     await expect(provider.listInquiryWeaves({ artefact: target.artefact.id })).resolves.toEqual([
       target,
     ]);
+  });
+});
+
+describe("Inquiry Weave filtering", () => {
+  it("drops rows that did not survive the read instead of throwing on them", () => {
+    const record = weaveRecord({ id: "inquiry-weave:episode-a:artefact-a" });
+
+    // A Postgres payload that fails to parse reaches the filter as null.
+    expect(filterInquiryWeaves([record, null, undefined])).toEqual([record]);
+  });
+
+  it("still applies filters to the rows that remain", () => {
+    const target = weaveRecord({ id: "inquiry-weave:a", issue: "owner/repo#1" });
+    const other = weaveRecord({ id: "inquiry-weave:b", issue: "owner/repo#2" });
+
+    expect(filterInquiryWeaves([null, target, other], { issue: "owner/repo#1" })).toEqual([target]);
   });
 });
 

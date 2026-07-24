@@ -57,6 +57,12 @@ export {
   matchesPlanPerspectiveFilters,
 } from './plan-perspectives.js';
 
+// Inquiry Weave filter semantics (shared across providers)
+export {
+  matchesInquiryWeaveFilters,
+  filterInquiryWeaves,
+} from './inquiry-weaves.js';
+
 // Ceremonial Diary filter/ordering semantics (shared across providers)
 export {
   matchesDiaryEntryFilters,

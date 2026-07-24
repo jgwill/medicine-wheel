@@ -28,6 +28,7 @@ import {
   mergePlanPerspectiveRecords,
   matchesPlanPerspectiveFilters,
 } from './plan-perspectives.js';
+import { filterInquiryWeaves } from './inquiry-weaves.js';
 import { filterAndOrderDiaryEntries } from './diary-records.js';
 import { matchesCeremonyEventFilters } from './ceremony-events.js';
 
@@ -340,13 +341,12 @@ export class NeonProvider implements StorageProvider {
   }
 
   async listInquiryWeaves(filters: InquiryWeaveFilters = {}): Promise<WeaveRecord[]> {
-    const records = await this.getAllInquiryWeaves();
-    return records.filter((record) => matchesInquiryWeaveFilters(record, filters));
+    return filterInquiryWeaves(await this.getAllInquiryWeaves(), filters);
   }
 
-  private async getAllInquiryWeaves(): Promise<WeaveRecord[]> {
+  private async getAllInquiryWeaves(): Promise<(WeaveRecord | null)[]> {
     const rows = await this.db`SELECT payload FROM inquiry_weaves ORDER BY updated_at DESC`;
-    return rows.map((row) => parseJsonValue<WeaveRecord>(row.payload, null as unknown as WeaveRecord));
+    return rows.map((row) => parseJsonValue<WeaveRecord | null>(row.payload, null));
   }
 
   private async ensureInquiryWeavesTable(): Promise<void> {
@@ -595,18 +595,3 @@ function parseJsonValue<T>(value: unknown, fallback: T): T {
   return value as T;
 }
 
-function matchesInquiryWeaveFilters(record: WeaveRecord, filters: InquiryWeaveFilters): boolean {
-  if (filters.episode_path !== undefined && record.episode?.path !== filters.episode_path) {
-    return false;
-  }
-  if (filters.episode_number !== undefined && record.episode?.number !== filters.episode_number) {
-    return false;
-  }
-  if (filters.issue !== undefined && record.issue !== filters.issue) {
-    return false;
-  }
-  if (filters.artefact !== undefined && record.artefact?.id !== filters.artefact) {
-    return false;
-  }
-  return true;
-}

@@ -23,6 +23,7 @@ import type {
 } from '@/lib/types';
 
 import { actForDirection } from '@medicine-wheel/narrative-engine';
+import { extractBeats } from './beat-response';
 import { extractCycles, normalizeMedicineWheelCycle } from './cycle-response';
 import { getJsonlStore } from './jsonl-store';
 
@@ -124,14 +125,22 @@ export function createCeremony(data: Omit<CeremonyLog, 'id' | 'timestamp'> & { i
 // ── Narrative Beats ──
 
 export function getAllBeats(): NarrativeBeat[] {
-  return store.getAllBeats() as unknown as NarrativeBeat[];
+  // Beats written before ceremonies/learnings/relations_honored existed reach
+  // readers as bare records; normalizing here keeps one legacy line from
+  // taking down every arc that reads the collection.
+  return extractBeats(store.getAllBeats());
 }
 
 export function getBeatsByDirection(direction: string): NarrativeBeat[] {
-  return store.getBeatsByDirection(direction) as unknown as NarrativeBeat[];
+  return extractBeats(store.getBeatsByDirection(direction));
 }
 
-export function createBeat(data: Omit<NarrativeBeat, 'id' | 'timestamp'> & { id?: string; timestamp?: string }): NarrativeBeat {
+// `act` is optional because it is derived from `direction`, not supplied.
+// Requiring it invited callers to pass a constant, which is how a west beat
+// came to be recorded in act 1.
+export function createBeat(
+  data: Omit<NarrativeBeat, 'id' | 'timestamp' | 'act'> & { id?: string; timestamp?: string; act?: number },
+): NarrativeBeat {
   const id = data.id || crypto.randomUUID();
   const beat: NarrativeBeat = {
     id,
@@ -200,16 +209,31 @@ export function createCycle(data: { research_question: string; current_direction
 }
 
 /**
- * Amend a cycle that already exists, merging the patch over the stored record.
+ * Write a cycle under an id the caller already holds.
  *
- * Returns null when the id names no cycle — an amendment to a cycle that was
- * never opened should fail loudly rather than quietly create one.
+ * When the id names a stored cycle this amends it, merging the patch over the
+ * existing record. When it names none, the cycle is created under that id
+ * rather than rejected: a client that minted its own id and is now telling us
+ * about it is opening a cycle, not amending a missing one. Rejecting it left
+ * MCP's create_research_cycle reporting a cycle_id for a cycle that was never
+ * stored — the same divergence in a louder costume.
  */
-export function upsertCycle(patch: { id: string } & Partial<MedicineWheelCycle>): MedicineWheelCycle | null {
+export function upsertCycle(patch: { id: string } & Partial<MedicineWheelCycle>): MedicineWheelCycle {
   const existing = store.getCycle(patch.id) as any;
-  if (!existing) return null;
 
-  const merged = { ...existing, ...patch, id: patch.id };
+  const base = existing ?? {
+    id: patch.id,
+    research_question: '',
+    start_date: new Date().toISOString(),
+    current_direction: 'east',
+    beats: [],
+    ceremonies_conducted: 0,
+    relations_mapped: 0,
+    wilson_alignment: 0,
+    ocap_compliant: false,
+  };
+
+  const merged = { ...base, ...patch, id: patch.id };
   store.createCycle(merged);
   return normalizeMedicineWheelCycle(merged) ?? merged;
 }

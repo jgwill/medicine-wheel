@@ -191,25 +191,141 @@ interface PlanPerspectiveFilters {
 
 // ── Helpers ──
 
-async function httpGet<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`HTTP GET ${url} failed: ${res.status} ${res.statusText}`);
+/** Carries the HTTP status so callers can tell "endpoint absent" from "server broke". */
+export class HttpStoreError extends Error {
+  readonly status?: number;
+  readonly url: string;
+
+  constructor(message: string, url: string, status?: number) {
+    super(message);
+    this.name = 'HttpStoreError';
+    this.url = url;
+    this.status = status;
   }
-  return res.json() as Promise<T>;
+}
+
+/** A write that did not land. Kept so a failure survives past the console. */
+export interface WriteFailure {
+  operation: string;
+  url: string;
+  message: string;
+  at: string;
+}
+
+const DEFAULT_TIMEOUT_MS = 15_000;
+const MAX_TRACKED_FAILURES = 50;
+
+function requestTimeoutMs(): number {
+  const parsed = Number(process.env.MW_HTTP_TIMEOUT_MS);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_TIMEOUT_MS;
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function snippet(text: string): string {
+  const flat = text.replace(/\s+/g, ' ').trim();
+  return flat.length > 200 ? `${flat.slice(0, 200)}…` : flat;
+}
+
+function describeShape(value: unknown): string {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'an array';
+  return `a ${typeof value}`;
+}
+
+/**
+ * Every request carries a deadline. Without one, a server that accepts the
+ * connection and then never answers parks the MCP server's single thread of
+ * conversation forever — the tool call never returns and never errors.
+ */
+async function httpFetch(url: string, init?: RequestInit): Promise<Response> {
+  const method = init?.method ?? 'GET';
+  const timeoutMs = requestTimeoutMs();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new HttpStoreError(`HTTP ${method} ${url} timed out after ${timeoutMs}ms`, url);
+    }
+    throw new HttpStoreError(`HTTP ${method} ${url} failed: ${errorMessage(error)}`, url);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * A reverse proxy or a misrouted path answers 200 with an HTML page. Left to
+ * res.json(), that surfaces as "Unexpected token <" — which names neither the
+ * endpoint that lied nor what it actually said.
+ */
+async function readJson(res: Response, url: string, method: string): Promise<unknown> {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    const contentType = res.headers.get('content-type') ?? 'no content-type';
+    throw new HttpStoreError(
+      `HTTP ${method} ${url} returned non-JSON (${contentType}): ${snippet(text)}`,
+      url,
+      res.status
+    );
+  }
+}
+
+/**
+ * The server has drifted between `[...]` and `{ nodes: [...] }` for the same
+ * collection. Accept either. A payload that is neither is a real failure and
+ * must not reach the caller disguised as an empty collection.
+ */
+function readCollection<T>(payload: unknown, key: string, url: string): T[] {
+  if (Array.isArray(payload)) return payload as T[];
+  if (payload !== null && typeof payload === 'object') {
+    const inner = (payload as Record<string, unknown>)[key];
+    if (Array.isArray(inner)) return inner as T[];
+  }
+  throw new HttpStoreError(
+    `HTTP GET ${url} returned ${describeShape(payload)} — expected an array or { ${key}: [...] }`,
+    url
+  );
+}
+
+/** True only when the endpoint itself is absent — never for a server that broke. */
+function isEndpointMissing(error: unknown): boolean {
+  return error instanceof HttpStoreError && error.status === 404;
+}
+
+async function httpGet<T>(url: string): Promise<T> {
+  const res = await httpFetch(url);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new HttpStoreError(
+      `HTTP GET ${url} failed: ${res.status} ${res.statusText} — ${snippet(text)}`,
+      url,
+      res.status
+    );
+  }
+  return (await readJson(res, url, 'GET')) as T;
 }
 
 async function httpPost<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(url, {
+  const res = await httpFetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`HTTP POST ${url} failed: ${res.status} ${res.statusText} — ${text}`);
+    throw new HttpStoreError(
+      `HTTP POST ${url} failed: ${res.status} ${res.statusText} — ${snippet(text)}`,
+      url,
+      res.status
+    );
   }
-  return res.json() as Promise<T>;
+  return (await readJson(res, url, 'POST')) as T;
 }
 
 // ── HttpStore ──
@@ -217,19 +333,65 @@ async function httpPost<T>(url: string, body: unknown): Promise<T> {
 export class HttpStore {
   readonly name = 'http';
   private readonly baseUrl: string;
+  private readonly failures: WriteFailure[] = [];
+  private readonly inFlight = new Set<Promise<void>>();
 
   constructor(baseUrl: string) {
     // Strip trailing slash for consistent URL construction
     this.baseUrl = baseUrl.replace(/\/+$/, '');
   }
 
+  // === Write accountability ===
+
+  /**
+   * Writes keep their statement-call shape — `store.createNode(node)` still
+   * compiles and still returns immediately — but the promise now comes back,
+   * so a caller that awaits learns the truth instead of being told "created"
+   * over a request that 404'd. The internal catch is what keeps a rejection
+   * nobody awaited from taking the server down as an unhandled rejection.
+   */
+  private track(operation: string, url: string, request: Promise<unknown>): Promise<void> {
+    const settled = request.then(
+      () => undefined,
+      (error: unknown) => {
+        const message = errorMessage(error);
+        console.error(`[http-store] ${operation} failed: ${message}`);
+        this.failures.push({ operation, url, message, at: new Date().toISOString() });
+        if (this.failures.length > MAX_TRACKED_FAILURES) this.failures.shift();
+        throw error;
+      }
+    );
+
+    // Attaching a handler to `settled` is what marks it handled for the
+    // call sites that ignore the returned promise.
+    const quiet = settled.catch(() => undefined);
+    this.inFlight.add(quiet);
+    void quiet.then(() => { this.inFlight.delete(quiet); });
+    return settled;
+  }
+
+  /** Writes that did not land, oldest first. Non-destructive. */
+  getWriteFailures(): WriteFailure[] {
+    return [...this.failures];
+  }
+
+  /** Drain the record — for a caller that has reported the failures onward. */
+  takeWriteFailures(): WriteFailure[] {
+    return this.failures.splice(0, this.failures.length);
+  }
+
+  /** Wait for every in-flight write to land or fail. Never rejects. */
+  async settleWrites(): Promise<void> {
+    while (this.inFlight.size > 0) {
+      await Promise.all([...this.inFlight]);
+    }
+  }
+
   // === Nodes ===
 
-  createNode(node: StoredNode): void {
-    // Fire-and-forget; callers don't await in JsonlStore either
-    httpPost(`${this.baseUrl}/api/nodes`, node).catch(err =>
-      console.error(`[http-store] createNode failed: ${err}`)
-    );
+  createNode(node: StoredNode): Promise<void> {
+    const url = `${this.baseUrl}/api/nodes`;
+    return this.track('createNode', url, httpPost(url, node));
   }
 
   async getNode(id: string): Promise<StoredNode | undefined> {
@@ -238,23 +400,19 @@ export class HttpStore {
   }
 
   async getAllNodes(limit?: number): Promise<StoredNode[]> {
-    const data = await httpGet<{ nodes: StoredNode[] }>(`${this.baseUrl}/api/nodes`);
-    const nodes = data.nodes ?? [];
+    const url = `${this.baseUrl}/api/nodes`;
+    const nodes = readCollection<StoredNode>(await httpGet(url), 'nodes', url);
     return limit !== undefined ? nodes.slice(0, limit) : nodes;
   }
 
   async getNodesByType(type: string): Promise<StoredNode[]> {
-    const data = await httpGet<{ nodes: StoredNode[] }>(
-      `${this.baseUrl}/api/nodes?type=${encodeURIComponent(type)}`
-    );
-    return data.nodes ?? [];
+    const url = `${this.baseUrl}/api/nodes?type=${encodeURIComponent(type)}`;
+    return readCollection<StoredNode>(await httpGet(url), 'nodes', url);
   }
 
   async getNodesByDirection(direction: string): Promise<StoredNode[]> {
-    const data = await httpGet<{ nodes: StoredNode[] }>(
-      `${this.baseUrl}/api/nodes?direction=${encodeURIComponent(direction)}`
-    );
-    return data.nodes ?? [];
+    const url = `${this.baseUrl}/api/nodes?direction=${encodeURIComponent(direction)}`;
+    return readCollection<StoredNode>(await httpGet(url), 'nodes', url);
   }
 
   async searchNodes(
@@ -275,14 +433,14 @@ export class HttpStore {
 
   // === Edges ===
 
-  createEdge(edge: StoredEdge): void {
-    httpPost(`${this.baseUrl}/api/edges`, edge).catch(err =>
-      console.error(`[http-store] createEdge failed: ${err}`)
-    );
+  createEdge(edge: StoredEdge): Promise<void> {
+    const url = `${this.baseUrl}/api/edges`;
+    return this.track('createEdge', url, httpPost(url, edge));
   }
 
   async getAllEdges(): Promise<StoredEdge[]> {
-    return httpGet<StoredEdge[]>(`${this.baseUrl}/api/edges`);
+    const url = `${this.baseUrl}/api/edges`;
+    return readCollection<StoredEdge>(await httpGet(url), 'edges', url);
   }
 
   async getEdgesForNode(nodeId: string): Promise<StoredEdge[]> {
@@ -300,27 +458,20 @@ export class HttpStore {
     return Array.from(ids);
   }
 
-  updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): void {
+  updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): Promise<void> {
     // No dedicated server endpoint — fetch, update, and re-post
-    (async () => {
-      try {
-        const edges = await httpGet<StoredEdge[]>(`${this.baseUrl}/api/edges`);
-        for (const edge of edges) {
-          if (
-            (edge.from_id === fromId && edge.to_id === toId) ||
-            (edge.from_id === toId && edge.to_id === fromId)
-          ) {
-            await httpPost(`${this.baseUrl}/api/edges`, {
-              ...edge,
-              ceremony_honored: true,
-              ceremony_id: ceremonyId,
-            });
-          }
+    const url = `${this.baseUrl}/api/edges`;
+    return this.track('updateEdgeCeremony', url, (async () => {
+      const edges = await this.getAllEdges();
+      for (const edge of edges) {
+        if (
+          (edge.from_id === fromId && edge.to_id === toId) ||
+          (edge.from_id === toId && edge.to_id === fromId)
+        ) {
+          await httpPost(url, { ...edge, ceremony_honored: true, ceremony_id: ceremonyId });
         }
-      } catch (err) {
-        console.error(`[http-store] updateEdgeCeremony failed: ${err}`);
       }
-    })();
+    })());
   }
 
   async getRelationalWeb(
@@ -328,7 +479,7 @@ export class HttpStore {
     depth = 2
   ): Promise<{ nodes: StoredNode[]; edges: StoredEdge[] }> {
     const allNodes = await this.getAllNodes();
-    const allEdges = await httpGet<StoredEdge[]>(`${this.baseUrl}/api/edges`);
+    const allEdges = await this.getAllEdges();
 
     const nodeMap = new Map(allNodes.map(n => [n.id, n]));
     const visited = new Set<string>();
@@ -357,10 +508,9 @@ export class HttpStore {
 
   // === Ceremonies ===
 
-  logCeremony(ceremony: StoredCeremony): void {
-    httpPost(`${this.baseUrl}/api/ceremonies`, ceremony).catch(err =>
-      console.error(`[http-store] logCeremony failed: ${err}`)
-    );
+  logCeremony(ceremony: StoredCeremony): Promise<void> {
+    const url = `${this.baseUrl}/api/ceremonies`;
+    return this.track('logCeremony', url, httpPost(url, ceremony));
   }
 
   async getCeremony(id: string): Promise<StoredCeremony | undefined> {
@@ -369,35 +519,28 @@ export class HttpStore {
   }
 
   async getAllCeremonies(limit?: number): Promise<StoredCeremony[]> {
-    const data = await httpGet<{ ceremonies: StoredCeremony[] }>(
-      `${this.baseUrl}/api/ceremonies`
-    );
-    const sorted = (data.ceremonies ?? []).sort(
+    const url = `${this.baseUrl}/api/ceremonies`;
+    const sorted = readCollection<StoredCeremony>(await httpGet(url), 'ceremonies', url).sort(
       (a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)
     );
     return limit !== undefined ? sorted.slice(0, limit) : sorted;
   }
 
   async getCeremoniesByDirection(direction: string): Promise<StoredCeremony[]> {
-    const data = await httpGet<{ ceremonies: StoredCeremony[] }>(
-      `${this.baseUrl}/api/ceremonies?direction=${encodeURIComponent(direction)}`
-    );
-    return data.ceremonies ?? [];
+    const url = `${this.baseUrl}/api/ceremonies?direction=${encodeURIComponent(direction)}`;
+    return readCollection<StoredCeremony>(await httpGet(url), 'ceremonies', url);
   }
 
   async getCeremoniesByType(type: string): Promise<StoredCeremony[]> {
-    const data = await httpGet<{ ceremonies: StoredCeremony[] }>(
-      `${this.baseUrl}/api/ceremonies?type=${encodeURIComponent(type)}`
-    );
-    return data.ceremonies ?? [];
+    const url = `${this.baseUrl}/api/ceremonies?type=${encodeURIComponent(type)}`;
+    return readCollection<StoredCeremony>(await httpGet(url), 'ceremonies', url);
   }
 
   // === Beats ===
 
-  createBeat(beat: StoredBeat): void {
-    httpPost(`${this.baseUrl}/api/narrative/beats`, beat).catch(err =>
-      console.error(`[http-store] createBeat failed: ${err}`)
-    );
+  createBeat(beat: StoredBeat): Promise<void> {
+    const url = `${this.baseUrl}/api/narrative/beats`;
+    return this.track('createBeat', url, httpPost(url, beat));
   }
 
   async getBeat(id: string): Promise<StoredBeat | undefined> {
@@ -406,7 +549,8 @@ export class HttpStore {
   }
 
   async getAllBeats(limit?: number): Promise<StoredBeat[]> {
-    const beats = await httpGet<StoredBeat[]>(`${this.baseUrl}/api/narrative/beats`);
+    const url = `${this.baseUrl}/api/narrative/beats`;
+    const beats = readCollection<StoredBeat>(await httpGet(url), 'beats', url);
     return limit !== undefined ? beats.slice(0, limit) : beats;
   }
 
@@ -417,91 +561,86 @@ export class HttpStore {
 
   // === Cycles ===
 
-  createCycle(cycle: StoredCycle): void {
-    httpPost(`${this.baseUrl}/api/narrative/cycles`, cycle).catch(err =>
-      console.error(`[http-store] createCycle failed: ${err}`)
-    );
+  createCycle(cycle: StoredCycle): Promise<void> {
+    const url = `${this.baseUrl}/api/narrative/cycles`;
+    return this.track('createCycle', url, httpPost(url, cycle));
+  }
+
+  private async listCycles(): Promise<StoredCycle[]> {
+    const url = `${this.baseUrl}/api/narrative/cycles`;
+    return readCollection<StoredCycle>(await httpGet(url), 'cycles', url);
   }
 
   async getCycle(id: string): Promise<StoredCycle | undefined> {
-    const all = await httpGet<StoredCycle[]>(`${this.baseUrl}/api/narrative/cycles`);
+    const all = await this.listCycles();
     return all.find(c => c.id === id);
   }
 
   async getAllCycles(): Promise<{ active: StoredCycle[]; archived: StoredCycle[] }> {
-    const all = await httpGet<StoredCycle[]>(`${this.baseUrl}/api/narrative/cycles`);
+    const all = await this.listCycles();
     return {
       active: all.filter(c => !c.archived),
       archived: all.filter(c => c.archived),
     };
   }
 
-  archiveCycle(id: string): void {
+  archiveCycle(id: string): Promise<void> {
     // No dedicated archive endpoint — fetch, mark archived, and re-post
-    (async () => {
-      try {
-        const all = await httpGet<StoredCycle[]>(`${this.baseUrl}/api/narrative/cycles`);
-        const cycle = all.find(c => c.id === id);
-        if (cycle) {
-          await httpPost(`${this.baseUrl}/api/narrative/cycles`, {
-            ...cycle,
-            archived: true,
-          });
-        }
-      } catch (err) {
-        console.error(`[http-store] archiveCycle failed: ${err}`);
-      }
-    })();
+    const url = `${this.baseUrl}/api/narrative/cycles`;
+    return this.track('archiveCycle', url, (async () => {
+      const all = await this.listCycles();
+      const cycle = all.find(c => c.id === id);
+      // An archive that found nothing to archive is a failed archive. Reported
+      // as success it tells the circle a cycle was closed that is still open.
+      if (!cycle) throw new HttpStoreError(`archiveCycle: cycle ${id} not found`, url, 404);
+      await httpPost(url, { ...cycle, archived: true });
+    })());
   }
 
   // === Charts ===
-  // No server endpoint exists yet — these use a fallback pattern
-  // that logs a warning and returns empty results.
+  // A deployment may predate /api/charts. That absence (404) is a fact worth
+  // degrading over; a 500, a timeout or an HTML page is not, and returning []
+  // for those tells the caller "no charts exist" when the truth is unknown.
 
-  saveChart(chart: StoredChart): void {
-    httpPost(`${this.baseUrl}/api/charts`, chart).catch(err =>
-      console.error(`[http-store] saveChart: /api/charts not available — ${err}`)
-    );
+  saveChart(chart: StoredChart): Promise<void> {
+    const url = `${this.baseUrl}/api/charts`;
+    return this.track('saveChart', url, httpPost(url, chart));
   }
 
   async getChart(id: string): Promise<StoredChart | undefined> {
-    try {
-      const all = await this.getAllCharts();
-      return all.find(c => c.id === id);
-    } catch {
-      console.error(`[http-store] getChart: /api/charts not available`);
-      return undefined;
-    }
+    const all = await this.getAllCharts();
+    return all.find(c => c.id === id);
   }
 
   async getAllCharts(direction?: string): Promise<StoredChart[]> {
+    const url = `${this.baseUrl}/api/charts`;
+    let charts: StoredChart[];
     try {
-      const charts = await httpGet<StoredChart[]>(`${this.baseUrl}/api/charts`);
-      let result = Array.isArray(charts) ? charts : [];
-      if (direction) result = result.filter(c => c.direction === direction);
-      return result.sort(
-        (a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at)
-      );
-    } catch {
-      console.error(`[http-store] getAllCharts: /api/charts not available`);
+      charts = readCollection<StoredChart>(await httpGet(url), 'charts', url);
+    } catch (error) {
+      if (!isEndpointMissing(error)) throw error;
+      console.error(`[http-store] getAllCharts: ${url} not available`);
       return [];
     }
+    const result = direction ? charts.filter(c => c.direction === direction) : [...charts];
+    return result.sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
   }
 
   // === MMOT ===
 
-  saveMmot(mmot: StoredMmot): void {
-    httpPost(`${this.baseUrl}/api/mmots`, mmot).catch(err =>
-      console.error(`[http-store] saveMmot: /api/mmots not available — ${err}`)
-    );
+  saveMmot(mmot: StoredMmot): Promise<void> {
+    const url = `${this.baseUrl}/api/mmots`;
+    return this.track('saveMmot', url, httpPost(url, mmot));
   }
 
   async getMmotsByChart(chartId: string): Promise<StoredMmot[]> {
+    const url = `${this.baseUrl}/api/mmots`;
     try {
-      const all = await httpGet<StoredMmot[]>(`${this.baseUrl}/api/mmots`);
-      return (Array.isArray(all) ? all : []).filter(m => m.chart_id === chartId);
-    } catch {
-      console.error(`[http-store] getMmotsByChart: /api/mmots not available`);
+      const all = readCollection<StoredMmot>(await httpGet(url), 'mmots', url);
+      return all.filter(m => m.chart_id === chartId);
+    } catch (error) {
+      if (!isEndpointMissing(error)) throw error;
+      console.error(`[http-store] getMmotsByChart: ${url} not available`);
       return [];
     }
   }
@@ -527,10 +666,8 @@ export class HttpStore {
     if (filters.artefact !== undefined) params.set('artefact', filters.artefact);
 
     const query = params.size > 0 ? `?${params.toString()}` : '';
-    const data = await httpGet<{ inquiry_weaves: StoredInquiryWeave[] }>(
-      `${this.baseUrl}/api/inquiry-weaves${query}`
-    );
-    return data.inquiry_weaves ?? [];
+    const url = `${this.baseUrl}/api/inquiry-weaves${query}`;
+    return readCollection<StoredInquiryWeave>(await httpGet(url), 'inquiry_weaves', url);
   }
 
   // === Plan Perspectives ===
@@ -544,12 +681,18 @@ export class HttpStore {
   }
 
   async getPlanPerspective(id: string): Promise<StoredPlanPerspective | undefined> {
-    const res = await fetch(`${this.baseUrl}/api/plan-perspectives/${encodeURIComponent(id)}`);
+    const url = `${this.baseUrl}/api/plan-perspectives/${encodeURIComponent(id)}`;
+    const res = await httpFetch(url);
     if (res.status === 404) return undefined;
     if (!res.ok) {
-      throw new Error(`HTTP GET /api/plan-perspectives/${id} failed: ${res.status} ${res.statusText}`);
+      const text = await res.text().catch(() => '');
+      throw new HttpStoreError(
+        `HTTP GET ${url} failed: ${res.status} ${res.statusText} — ${snippet(text)}`,
+        url,
+        res.status
+      );
     }
-    const data = (await res.json()) as { record?: StoredPlanPerspective | null };
+    const data = (await readJson(res, url, 'GET')) as { record?: StoredPlanPerspective | null };
     return data.record ?? undefined;
   }
 
@@ -560,10 +703,8 @@ export class HttpStore {
     if (filters.id !== undefined) params.set('id', filters.id);
 
     const query = params.size > 0 ? `?${params.toString()}` : '';
-    const data = await httpGet<{ plan_perspectives: StoredPlanPerspective[] }>(
-      `${this.baseUrl}/api/plan-perspectives${query}`
-    );
-    return data.plan_perspectives ?? [];
+    const url = `${this.baseUrl}/api/plan-perspectives${query}`;
+    return readCollection<StoredPlanPerspective>(await httpGet(url), 'plan_perspectives', url);
   }
 }
 

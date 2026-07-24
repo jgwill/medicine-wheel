@@ -118,28 +118,81 @@ interface StoredMmot {
 // Inside the lock, flush performs read-modify-write so concurrent
 // writers merge rather than clobber each other.
 
+function isProcessAlive(pid: number): boolean {
+  try {
+    // Signal 0 checks process existence without sending a real signal.
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Read the owner token stamped in a lock file, or null when unreadable. */
+function readLockOwner(lockPath: string): string | null {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(lockPath, 'utf-8').trim()) as { token?: unknown };
+    return typeof parsed.token === 'string' ? parsed.token : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A lock is stale only when its owner is provably gone.
+ *
+ * Age alone is not evidence: a slow but living writer holding the lock past
+ * the grace period would have it reaped from under it, and two processes
+ * would then rewrite the same file from divergent snapshots — the second
+ * rename silently discards the first one's records.
+ */
+function isLockStale(lockPath: string): boolean {
+  let mtimeMs: number;
+  try {
+    mtimeMs = fs.statSync(lockPath).mtimeMs;
+  } catch {
+    return false; // Lock already gone — nothing to reap.
+  }
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(lockPath, 'utf-8').trim()) as { pid?: unknown };
+    if (typeof parsed.pid === 'number' && isProcessAlive(parsed.pid)) return false;
+  } catch {
+    // Locks written by older builds (and by the mcp/ copy of this store) carry
+    // no payload, so they name no owner — fall through to the age check.
+  }
+
+  return Date.now() - mtimeMs > 30_000;
+}
+
 function withWriteLock<T>(filePath: string, fn: () => T): T {
   const lockPath = filePath + '.lock';
+  const ownerToken = `${process.pid}:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+  const payload = JSON.stringify({
+    token: ownerToken,
+    pid: process.pid,
+    created_at: new Date().toISOString(),
+  });
   let locked = false;
-
-  // Stale lock recovery: if a previous process crashed while holding the lock,
-  // the .lock file persists forever. Remove it if older than 30 seconds.
-  try {
-    const stat = fs.statSync(lockPath);
-    if (Date.now() - stat.mtimeMs > 30_000) {
-      console.error(`[jsonl-store] Removing stale lock: ${lockPath} (age: ${Math.round((Date.now() - stat.mtimeMs) / 1000)}s)`);
-      fs.unlinkSync(lockPath);
-    }
-  } catch { /* lock file doesn't exist — normal */ }
 
   for (let attempt = 0; attempt < 20; attempt++) {
     try {
       const fd = fs.openSync(lockPath, 'wx'); // O_EXCL — fails if exists
-      fs.closeSync(fd);
+      try {
+        fs.writeFileSync(fd, payload, 'utf-8');
+      } finally {
+        fs.closeSync(fd);
+      }
       locked = true;
       break;
     } catch {
-      // Lock held by another process; spin-wait with linear back-off
+      // Lock held elsewhere. Reap it only once its owner is provably gone,
+      // otherwise spin-wait with linear back-off.
+      if (isLockStale(lockPath)) {
+        console.error(`[jsonl-store] Removing stale lock: ${lockPath}`);
+        try { fs.unlinkSync(lockPath); } catch { /* another writer got there first */ }
+        continue;
+      }
       const delayMs = Math.min(25 * (attempt + 1), 250);
       const deadline = Date.now() + delayMs;
       while (Date.now() < deadline) { /* spin */ }
@@ -153,20 +206,25 @@ function withWriteLock<T>(filePath: string, fn: () => T): T {
   try {
     return fn();
   } finally {
-    try { fs.unlinkSync(lockPath); } catch { /* best effort */ }
+    // Release only the lock we still hold: if a reaper judged us dead and
+    // handed the lock on, unlinking would release someone else's write.
+    try {
+      if (readLockOwner(lockPath) === ownerToken) fs.unlinkSync(lockPath);
+    } catch { /* best effort */ }
   }
 }
 
 // ── JSONL File Helpers ──
 
 /**
- * Read all records from a JSONL file.
- * Returns [] if the file does not exist (normal for first run).
+ * Read all records from a JSONL file, keeping the raw text of any line that
+ * would not parse so a caller about to rewrite the file can set it aside.
+ * Returns no records if the file does not exist (normal for first run).
  * Throws on permission errors or other real FS failures so the caller
  * knows not to proceed with a potentially-stale empty state.
  */
-function readJsonl<T>(filePath: string): T[] {
-  if (!fs.existsSync(filePath)) return [];
+function readJsonlWithMalformed<T>(filePath: string): { records: T[]; malformed: string[] } {
+  if (!fs.existsSync(filePath)) return { records: [], malformed: [] };
 
   let content: string;
   try {
@@ -177,6 +235,7 @@ function readJsonl<T>(filePath: string): T[] {
   }
 
   const records: T[] = [];
+  const malformed: string[] = [];
   for (const line of content.split('\n')) {
     const trimmed = line.trim();
     if (!trimmed) continue;
@@ -186,9 +245,37 @@ function readJsonl<T>(filePath: string): T[] {
       // Skip individual malformed lines — log so they don't disappear silently
       const message = error instanceof Error ? error.message : String(error);
       console.warn(`[jsonl-store] Skipping malformed line in ${filePath}: ${message}`);
+      malformed.push(trimmed);
     }
   }
-  return records;
+  return { records, malformed };
+}
+
+function readJsonl<T>(filePath: string): T[] {
+  return readJsonlWithMalformed<T>(filePath).records;
+}
+
+/**
+ * Set unparseable lines aside before a rewrite erases them.
+ *
+ * flush() rebuilds the whole file from the records it could parse, so a line
+ * readJsonl skipped — a half-written record from a killed writer, a truncated
+ * tail — is gone for good the moment anything else is saved. Appending the raw
+ * text to a sidecar keeps it recoverable by hand. Nothing reads the sidecar
+ * back; it exists so the loss is not silent.
+ */
+function quarantineMalformedLines(filePath: string, malformed: string[]): void {
+  if (malformed.length === 0) return;
+
+  const quarantinePath = `${filePath}.quarantine`;
+  try {
+    fs.appendFileSync(quarantinePath, malformed.join('\n') + '\n', 'utf-8');
+    console.error(`[jsonl-store] Quarantined ${malformed.length} unparseable line(s) from ${filePath} to ${quarantinePath}`);
+  } catch (error) {
+    // Best effort — a failed sidecar must not block the write itself.
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`[jsonl-store] Failed to quarantine malformed lines from ${filePath}: ${message}`);
+  }
 }
 
 /**
@@ -253,7 +340,8 @@ class JsonlCollection<T extends { id?: string }> {
   private flush(): void {
     withWriteLock(this.filePath, () => {
       // Read disk state inside the lock so we don't clobber concurrent writes
-      const diskRecords = readJsonl<T>(this.filePath);
+      const { records: diskRecords, malformed } = readJsonlWithMalformed<T>(this.filePath);
+      quarantineMalformedLines(this.filePath, malformed);
       const merged = new Map<string, T>();
       for (const r of diskRecords) {
         const id = (r as any).id as string | undefined;
@@ -330,8 +418,11 @@ class EdgeCollection {
   }
 
   private edgeKey(edge: StoredEdge): string {
-    // Use explicit id if present, otherwise derive from endpoints
-    return (edge as any).id || `${edge.from_id}:${edge.to_id}`;
+    // JSON-array encoding of the endpoints, matching @medicine-wheel/storage-provider.
+    // A plain `from:to` join collides whenever an id carries the delimiter — the
+    // store already holds ids like `memory:1775381859564:e2e` — and the collision
+    // silently overwrites one relation with an unrelated one.
+    return JSON.stringify([edge.from_id, edge.to_id]);
   }
 
   private sync(): void {
@@ -350,7 +441,8 @@ class EdgeCollection {
   private flush(): void {
     withWriteLock(this.filePath, () => {
       // Read-modify-write inside lock to merge concurrent changes
-      const diskRecords = readJsonl<StoredEdge>(this.filePath);
+      const { records: diskRecords, malformed } = readJsonlWithMalformed<StoredEdge>(this.filePath);
+      quarantineMalformedLines(this.filePath, malformed);
       const merged = new Map<string, StoredEdge>();
       for (const r of diskRecords) {
         merged.set(this.edgeKey(r), r);
