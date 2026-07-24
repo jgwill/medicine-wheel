@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       prose: body.prose,
       ceremonies: body.ceremonies ?? [],
       learnings: body.learnings ?? [],
-      act: body.act ?? 1,
+      act: body.act,
       relations_honored: body.relations_honored ?? [],
       cycle_id: body.cycle_id,
       parent_beat_id: body.parent_beat_id,

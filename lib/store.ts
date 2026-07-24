@@ -22,6 +22,7 @@ import type {
   MedicineWheelCycle,
 } from '@/lib/types';
 
+import { actForDirection } from '@medicine-wheel/narrative-engine';
 import { extractCycles, normalizeMedicineWheelCycle } from './cycle-response';
 import { getJsonlStore } from './jsonl-store';
 
@@ -141,7 +142,10 @@ export function createBeat(data: Omit<NarrativeBeat, 'id' | 'timestamp'> & { id?
     ceremonies: data.ceremonies ?? [],
     learnings: data.learnings ?? [],
     timestamp: data.timestamp || new Date().toISOString(),
-    act: data.act ?? 1,
+    // Derive the act from the direction rather than defaulting to 1. A west
+    // beat posted without an act was being recorded as an opening moment,
+    // which places it wrongly on the wheel for every reader downstream.
+    act: data.act ?? actForDirection(data.direction),
     relations_honored: data.relations_honored ?? [],
   };
   if (data.cycle_id !== undefined) beat.cycle_id = data.cycle_id;
