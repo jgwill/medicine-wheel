@@ -7,6 +7,12 @@
 
 import type { Tool } from "../types.js";
 import { store } from "../store.js";
+import {
+  createBeat as authorBeat,
+  telescopeBeat,
+  beatsInCycle,
+  type BeatDraft,
+} from "@medicine-wheel/narrative-engine";
 
 export const integrationTools: Tool[] = [
   {
@@ -302,32 +308,90 @@ export const integrationTools: Tool[] = [
           items: { type: "string" },
           description: "Node IDs of relations honored",
         },
+        prose: {
+          type: "string",
+          description: "Narrative prose for this beat — how the moment reads, not just what it recorded",
+        },
+        cycle_id: {
+          type: "string",
+          description: "Research cycle this beat belongs to. Without it the beat is an orphan no arc will read.",
+        },
+        parent_beat_id: {
+          type: "string",
+          description: "Parent beat, when this one was telescoped out of a coarser moment",
+        },
+        origin_producer: {
+          type: "string",
+          description: "What put this beat on the wheel — e.g. hand, narrative-cluster, github-ceremony, session-reader",
+        },
+        origin_source_ref: {
+          type: "string",
+          description: "Identifier of the thing the beat was derived from (cluster id, event id, commit sha)",
+        },
       },
       required: ["direction", "title", "description", "learnings"],
     },
     handler: async (args) => {
       try {
-        const actMap: Record<string, number> = { east: 1, south: 2, west: 3, north: 4 };
-
-        const beat = {
-          id: `beat:${args.direction}:${Date.now()}`,
+        const draft: BeatDraft = {
           direction: args.direction,
           title: args.title,
           description: args.description,
+          prose: args.prose,
           ceremonies: args.ceremony_ids || [],
           learnings: args.learnings,
-          timestamp: new Date().toISOString(),
-          act: actMap[args.direction] || 1,
           relations_honored: args.relations_honored || [],
+          cycle_id: args.cycle_id,
+          parent_beat_id: args.parent_beat_id,
+          origin: args.origin_producer
+            ? { producer: args.origin_producer, source_ref: args.origin_source_ref }
+            : { producer: "mcp" },
         };
 
+        const beat = authorBeat(draft, {
+          idFactory: () => `beat:${args.direction}:${Date.now()}`,
+        });
+
         store.createBeat(beat);
+
+        // Bind the cycle side of the relation. A beat that names its cycle
+        // while the cycle does not list it back is how arcs silently lose beats.
+        let cycleBound = false;
+        if (beat.cycle_id) {
+          const cycle = await store.getCycle(beat.cycle_id);
+          if (cycle) {
+            const listed = cycle.beats ?? [];
+            if (!listed.includes(beat.id)) {
+              store.createCycle({ ...cycle, beats: [...listed, beat.id] });
+            }
+            cycleBound = true;
+          }
+        }
+
+        // Record the parent side of a telescoped beat, likewise.
+        if (beat.parent_beat_id) {
+          const parent = await store.getBeat(beat.parent_beat_id);
+          if (parent) {
+            const children = parent.sub_beats ?? [];
+            if (!children.includes(beat.id)) {
+              store.createBeat({ ...parent, sub_beats: [...children, beat.id] });
+            }
+          }
+        }
 
         return {
           beat_id: beat.id,
           direction: args.direction,
           act: beat.act,
+          cycle_id: beat.cycle_id ?? null,
+          cycle_bound: cycleBound,
           message: `Narrative beat created for ${args.direction.toUpperCase()} direction`,
+          ...(beat.cycle_id && !cycleBound
+            ? { warning: `Cycle ${beat.cycle_id} not found — the beat names a cycle that does not exist` }
+            : {}),
+          ...(!beat.cycle_id
+            ? { warning: "No cycle_id given — this beat is an orphan and will not appear in any narrative arc" }
+            : {}),
           beat: beat,
         };
       } catch (error) {
@@ -417,13 +481,23 @@ export const integrationTools: Tool[] = [
           };
         }
 
-        const allBeats = (await store.getAllBeats(200));
-        const eastBeats = allBeats.filter(b => b.direction === 'east');
-        const southBeats = allBeats.filter(b => b.direction === 'south');
-        const westBeats = allBeats.filter(b => b.direction === 'west');
-        const northBeats = allBeats.filter(b => b.direction === 'north');
+        const storedBeats = (await store.getAllBeats(500));
 
-        const totalCeremonies = new Set(allBeats.flatMap(b => b.ceremonies)).size;
+        // Read membership from both sides. Beats recorded before cycles were
+        // bound carry no cycle_id and are reachable only through the cycle's
+        // own list; reading one side alone silently drops half the arc.
+        const cycleBeats = beatsInCycle(
+          { ...cycle, beats: cycle.beats ?? [] } as any,
+          storedBeats as any,
+        ) as unknown as typeof storedBeats;
+
+        const eastBeats = cycleBeats.filter(b => b.direction === 'east');
+        const southBeats = cycleBeats.filter(b => b.direction === 'south');
+        const westBeats = cycleBeats.filter(b => b.direction === 'west');
+        const northBeats = cycleBeats.filter(b => b.direction === 'north');
+
+        const totalCeremonies = new Set(cycleBeats.flatMap(b => b.ceremonies)).size;
+        const orphanCount = storedBeats.length - cycleBeats.length;
 
         const journeySummary = `Research cycle "${cycle.research_question}" — ` +
           `${eastBeats.length} East beats, ${southBeats.length} South beats, ` +
@@ -438,10 +512,17 @@ export const integrationTools: Tool[] = [
           south_beats: southBeats.length,
           west_beats: westBeats.length,
           north_beats: northBeats.length,
+          total_beats: cycleBeats.length,
           total_ceremonies: totalCeremonies,
           wilson_alignment: cycle.wilson_alignment,
           ocap_compliant: cycle.ocap_compliant,
           journey_summary: journeySummary,
+          beats_outside_this_cycle: orphanCount,
+          ...(cycleBeats.length === 0 && orphanCount > 0
+            ? {
+                note: `This cycle holds no beats, though ${orphanCount} beats exist elsewhere in the store. Pass cycle_id when creating beats so they join an arc.`,
+              }
+            : {}),
           full_arc: {
             cycle,
             east_beats: eastBeats,
@@ -660,6 +741,108 @@ export const integrationTools: Tool[] = [
         return {
           status: "error",
           message: `Failed to update relational node: ${errorMsg}`,
+          error: errorMsg,
+        };
+      }
+    },
+  },
+  {
+    name: "create_sub_beats",
+    description:
+      "Telescope a narrative beat into sub-beats. A moment that read as one turns out to hold several; the finer grain is recorded without losing the coarser one. The parent remains as the lens through which the children are read. Sub-beats inherit the parent's cycle and, unless told otherwise, its direction. Note: this WRITES. To READ a beat's relational web instead, use telescope_narrative_beat.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        parent_beat_id: {
+          type: "string",
+          description: "The beat being telescoped",
+        },
+        sub_beats: {
+          type: "array",
+          description: "The finer-grained beats this moment holds",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              description: { type: "string" },
+              prose: { type: "string" },
+              direction: {
+                type: "string",
+                enum: ["east", "south", "west", "north"],
+                description: "Defaults to the parent's direction",
+              },
+              learnings: { type: "array", items: { type: "string" } },
+              ceremonies: { type: "array", items: { type: "string" } },
+              relations_honored: { type: "array", items: { type: "string" } },
+            },
+            required: ["title", "description"],
+          },
+        },
+      },
+      required: ["parent_beat_id", "sub_beats"],
+    },
+    handler: async (args) => {
+      try {
+        const parent = await store.getBeat(args.parent_beat_id);
+        if (!parent) {
+          return {
+            status: "not_found",
+            message: `Narrative beat ${args.parent_beat_id} not found`,
+          };
+        }
+
+        if (!Array.isArray(args.sub_beats) || args.sub_beats.length === 0) {
+          return {
+            status: "error",
+            message: "Supply at least one sub-beat — telescoping into nothing loses the moment rather than refining it",
+          };
+        }
+
+        const drafts: BeatDraft[] = args.sub_beats.map((s: any) => ({
+          direction: s.direction ?? parent.direction,
+          title: s.title,
+          description: s.description,
+          prose: s.prose,
+          learnings: s.learnings ?? [],
+          ceremonies: s.ceremonies ?? [],
+          relations_honored: s.relations_honored ?? [],
+          origin: { producer: "mcp", source_ref: parent.id, method: "telescope" },
+        }));
+
+        const { parent: updatedParent, subBeats } = telescopeBeat(parent as any, drafts);
+
+        for (const sub of subBeats) {
+          store.createBeat(sub as any);
+        }
+        store.createBeat(updatedParent as any);
+
+        // Sub-beats join the parent's cycle on the cycle's side too.
+        if (updatedParent.cycle_id) {
+          const cycle = await store.getCycle(updatedParent.cycle_id);
+          if (cycle) {
+            const listed = cycle.beats ?? [];
+            const additions = subBeats.map(b => b.id).filter(id => !listed.includes(id));
+            if (additions.length > 0) {
+              store.createCycle({ ...cycle, beats: [...listed, ...additions] });
+            }
+          }
+        }
+
+        return {
+          parent_beat_id: updatedParent.id,
+          sub_beat_ids: subBeats.map(b => b.id),
+          count: subBeats.length,
+          cycle_id: updatedParent.cycle_id ?? null,
+          parent: updatedParent,
+          sub_beats: subBeats,
+          teaching:
+            "Telescoping does not replace the moment — it reveals what the moment was already holding.",
+        };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return {
+          status: "error",
+          message: `Failed to telescope narrative beat: ${errorMsg}`,
           error: errorMsg,
         };
       }

@@ -29,6 +29,31 @@ export type {
   NarrativeTransformation,
 } from './types.js';
 
+// Beat authoring — drafts in, validated beats out
+export type {
+  BeatDraft,
+  BeatDraftViolation,
+  BeatDraftValidation,
+  CreateBeatOptions,
+  TelescopeResult,
+} from './beats.js';
+
+export {
+  ACT_FOR_DIRECTION,
+  actForDirection,
+  validateBeatDraft,
+  createBeat,
+  createBeats,
+  telescopeBeat,
+  beatDepth,
+  beatLineage,
+  rootBeats,
+  childBeats,
+  attachBeatToCycle,
+  beatsInCycle,
+  orphanBeats,
+} from './beats.js';
+
 // Sequencer
 export {
   sequenceBeats,

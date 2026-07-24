@@ -189,6 +189,12 @@ export const CeremonyLogSchema = z.object({
 
 // ── Narrative Schemas ───────────────────────────────────────────────────────
 
+export const BeatOriginSchema = z.object({
+  producer: z.string(),
+  source_ref: z.string().optional(),
+  method: z.string().optional(),
+});
+
 export const NarrativeBeatSchema = z.object({
   id: z.string(),
   direction: DirectionNameSchema,
@@ -200,6 +206,10 @@ export const NarrativeBeatSchema = z.object({
   timestamp: z.string(),
   act: z.number().int().min(1).max(4),
   relations_honored: z.array(z.string()),
+  cycle_id: z.string().optional(),
+  parent_beat_id: z.string().optional(),
+  sub_beats: z.array(z.string()).optional(),
+  origin: BeatOriginSchema.optional(),
 });
 
 // ── Cycle Schemas ───────────────────────────────────────────────────────────

@@ -219,6 +219,24 @@ export interface NarrativeBeat {
   timestamp: string;
   act: number;
   relations_honored: string[];
+  /** The research cycle this beat belongs to. Absent on beats recorded before cycles were bound. */
+  cycle_id?: string;
+  /** Set when this beat was telescoped out of a coarser one. */
+  parent_beat_id?: string;
+  /** IDs of beats this one was telescoped into. */
+  sub_beats?: string[];
+  /** How this beat entered the wheel — authored by hand, derived by a processor, or witnessed from an event stream. */
+  origin?: BeatOrigin;
+}
+
+/** Provenance of a beat: who or what put it on the wheel. */
+export interface BeatOrigin {
+  /** Producer identity — e.g. 'hand', 'narrative-cluster', 'github-ceremony', 'session-reader'. */
+  producer: string;
+  /** Identifier of the thing the beat was derived from (cluster id, event id, commit sha…). */
+  source_ref?: string;
+  /** Free-text note on how the derivation was made. */
+  method?: string;
 }
 
 // ── Cycle Types ─────────────────────────────────────────────────────────────

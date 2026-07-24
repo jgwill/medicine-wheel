@@ -144,7 +144,30 @@ export function createBeat(data: Omit<NarrativeBeat, 'id' | 'timestamp'> & { id?
     act: data.act ?? 1,
     relations_honored: data.relations_honored ?? [],
   };
+  if (data.cycle_id !== undefined) beat.cycle_id = data.cycle_id;
+  if (data.parent_beat_id !== undefined) beat.parent_beat_id = data.parent_beat_id;
+  if (data.sub_beats !== undefined) beat.sub_beats = data.sub_beats;
+  if (data.origin !== undefined) beat.origin = data.origin;
+
   store.createBeat(beat as any);
+
+  // Bind the cycle side of the relation. A beat naming a cycle that does not
+  // list it back is invisible to every arc reader that starts from the cycle.
+  if (beat.cycle_id) {
+    const cycle = store.getCycle(beat.cycle_id) as any;
+    if (cycle && !(cycle.beats ?? []).includes(beat.id)) {
+      store.createCycle({ ...cycle, beats: [...(cycle.beats ?? []), beat.id] });
+    }
+  }
+
+  // Likewise the parent side of a telescoped beat.
+  if (beat.parent_beat_id) {
+    const parent = store.getBeat(beat.parent_beat_id) as any;
+    if (parent && !(parent.sub_beats ?? []).includes(beat.id)) {
+      store.createBeat({ ...parent, sub_beats: [...(parent.sub_beats ?? []), beat.id] });
+    }
+  }
+
   return beat;
 }
 
@@ -170,6 +193,21 @@ export function createCycle(data: { research_question: string; current_direction
   };
   store.createCycle(cycle as any);
   return normalizeMedicineWheelCycle(cycle) ?? cycle;
+}
+
+/**
+ * Amend a cycle that already exists, merging the patch over the stored record.
+ *
+ * Returns null when the id names no cycle — an amendment to a cycle that was
+ * never opened should fail loudly rather than quietly create one.
+ */
+export function upsertCycle(patch: { id: string } & Partial<MedicineWheelCycle>): MedicineWheelCycle | null {
+  const existing = store.getCycle(patch.id) as any;
+  if (!existing) return null;
+
+  const merged = { ...existing, ...patch, id: patch.id };
+  store.createCycle(merged);
+  return normalizeMedicineWheelCycle(merged) ?? merged;
 }
 
 // ── Seed Data ──

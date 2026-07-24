@@ -63,6 +63,10 @@ interface StoredBeat {
   timestamp: string;
   act: number;
   relations_honored: string[];
+  cycle_id?: string;
+  parent_beat_id?: string;
+  sub_beats?: string[];
+  origin?: { producer: string; source_ref?: string; method?: string };
 }
 
 interface StoredCycle {
