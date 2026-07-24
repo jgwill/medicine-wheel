@@ -7,10 +7,10 @@ set -e
 # Environment variables:
 #   MW_DATA_DIR          — path to JSONL store directory (default: /data/store)
 #   MW_STORAGE_PROVIDER  — storage backend (default: jsonl)
-#   PORT                 — HTTP port (default: 3940)
+#   PORT                 — HTTP port (default: 8040)
 
 STORE_DIR="${MW_DATA_DIR:-/data/store}"
-PORT="${PORT:-3940}"
+PORT="${PORT:-8040}"
 
 mkdir -p "$STORE_DIR"
 

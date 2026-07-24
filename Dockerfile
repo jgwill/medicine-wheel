@@ -6,7 +6,7 @@
 #   mwsrv --docker -D /path/to/project
 #
 # Manual usage:
-#   docker run --rm -p 3940:3940 \
+#   docker run --rm -p 8040:8040 \
 #     -v /path/to/project/.mw/store:/data/store \
 #     -e MW_DATA_DIR=/data/store \
 #     jgwill/medicine-wheel:app
@@ -41,7 +41,7 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV PORT=3940
+ENV PORT=8040
 ENV MW_STORAGE_PROVIDER=jsonl
 ENV MW_DATA_DIR=/data/store
 
@@ -63,6 +63,6 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Volume for persistent data
 VOLUME ["/data/store"]
 
-EXPOSE 3940
+EXPOSE 8040
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

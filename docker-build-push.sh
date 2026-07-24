@@ -12,4 +12,4 @@ docker push "${IMAGE}"
 
 echo "✅ Done: ${IMAGE}"
 echo "Run with:"
-echo "  docker run --rm -p 3940:3940 -v /abs/path/to/project/.mw/store:/data/store ${IMAGE}"
+echo "  docker run --rm -p 8040:8040 -v /abs/path/to/project/.mw/store:/data/store ${IMAGE}"

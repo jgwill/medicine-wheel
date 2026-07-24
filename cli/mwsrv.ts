@@ -10,7 +10,7 @@
  *   mwsrv --docker -D /path/to/project
  *
  * Options:
- *   --port, -p <port>        Port to listen on (default: 3940)
+ *   --port, -p <port>        Port to listen on (default: 8040)
  *   --directory, -D <dir>    Host directory containing (or for) .mw/store (default: cwd)
  *   --docker                 Run in Docker container
  *   --pull                   Pull Docker image before starting
@@ -32,8 +32,8 @@ const C = {
   south: '\x1b[31m',
   reset: '\x1b[0m',
 };
-const DEFAULT_PORT = 3940;
-const CONTAINER_PORT = 3940;
+const DEFAULT_PORT = 8040;
+const CONTAINER_PORT = 8040;
 
 // ── Arg parsing ───────────────────────────────────────────────────
 interface ParsedArgs {

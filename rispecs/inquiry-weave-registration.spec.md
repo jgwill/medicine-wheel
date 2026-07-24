@@ -26,7 +26,7 @@ The Miadi chronicle deployment already has an MCP configuration for this route:
       "command": "npx",
       "args": ["-y", "${MWCV}"],
       "env": {
-        "MW_API_URL": "http://192.168.2.30:3940"
+        "MW_API_URL": "http://192.168.2.30:8040"
       }
     }
   }
