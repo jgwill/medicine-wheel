@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/github-ceremony",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "GitHub-ceremony processing — witness GitHub webhook events (issues, pull requests, merges, commits) through a ceremonial lens and record them as relational ceremony beads. Pure, framework-free functions that take a parsed payload and a @medicine-wheel/storage-provider",
   "type": "module",
   "main": "dist/index.js",
@@ -46,8 +46,8 @@
   "author": "IAIP Collaborative - Shawinigan, QC",
   "license": "MIT",
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.5.1",
-    "@medicine-wheel/storage-provider": "^0.5.1"
+    "@medicine-wheel/ontology-core": "^0.5.2",
+    "@medicine-wheel/storage-provider": "^0.5.2"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

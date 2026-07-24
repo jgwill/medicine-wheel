@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/ceremonial-diary",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Ceremonial Diary — a participant's voice across the Five-Phase ceremonial methodology. Intention, observation, and reflection entries with pattern detection, statistics, markdown export, and optional projection into the chronicle wheel. Persists through @medicine-wheel/storage-provider (jsonl and neon as first-class equals)",
   "type": "module",
   "main": "dist/index.js",
@@ -52,8 +52,8 @@
   "author": "IAIP Collaborative - Shawinigan, QC",
   "license": "MIT",
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.5.1",
-    "@medicine-wheel/storage-provider": "^0.5.1"
+    "@medicine-wheel/ontology-core": "^0.5.2",
+    "@medicine-wheel/storage-provider": "^0.5.2"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
