@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/relational-query",
-  "version": "0.5.2",
-  "description": "Query builder for relational webs with Indigenous protocol awareness \u2014 traversal, accountability, OCAP\u00ae compliance",
+  "version": "0.5.3",
+  "description": "Query builder for relational webs with Indigenous protocol awareness — traversal, accountability, OCAP® compliance",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -38,7 +38,7 @@
     "directory": "src/relational-query"
   },
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.5.2"
+    "@medicine-wheel/ontology-core": "^0.5.3"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

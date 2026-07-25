@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/community-review",
-  "version": "0.5.2",
-  "description": "Community-based ceremonial review protocol for Medicine Wheel \u2014 implements Wilson's validation through Elder review circles, consensus, and relational accountability",
+  "version": "0.5.3",
+  "description": "Community-based ceremonial review protocol for Medicine Wheel — implements Wilson's validation through Elder review circles, consensus, and relational accountability",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -23,8 +23,8 @@
     "README.md"
   ],
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.5.2",
-    "@medicine-wheel/ceremony-protocol": "^0.5.2",
+    "@medicine-wheel/ontology-core": "^0.5.3",
+    "@medicine-wheel/ceremony-protocol": "^0.5.3",
     "zod": "^3.23.0"
   },
   "devDependencies": {

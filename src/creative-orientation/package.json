@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/creative-orientation",
-  "version": "0.5.2",
-  "description": "Which orientation a situation calls for \u2014 advancing toward a state that has never existed, or restoring one that did. Routes to structural tension or to gap analysis.",
+  "version": "0.5.3",
+  "description": "Which orientation a situation calls for — advancing toward a state that has never existed, or restoring one that did. Routes to structural tension or to gap analysis.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

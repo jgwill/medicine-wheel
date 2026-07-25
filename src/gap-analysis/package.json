@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/gap-analysis",
-  "version": "0.5.2",
-  "description": "Problem-solving done properly \u2014 baseline, observation, difference, elimination steps \u2014 with the orientation question asked at its door rather than assumed.",
+  "version": "0.5.3",
+  "description": "Problem-solving done properly — baseline, observation, difference, elimination steps — with the orientation question asked at its door rather than assumed.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -37,7 +37,7 @@
     "directory": "src/gap-analysis"
   },
   "dependencies": {
-    "@medicine-wheel/creative-orientation": "^0.5.2"
+    "@medicine-wheel/creative-orientation": "^0.5.3"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

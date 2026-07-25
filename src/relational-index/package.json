@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/relational-index",
-  "version": "0.5.2",
-  "description": "Four-source epistemic dimensional indexing for the Medicine Wheel Developer Suite \u2014 Land, Dream, Code, Vision traversal with cross-dimensional mapping and spiral depth metrics",
+  "version": "0.5.3",
+  "description": "Four-source epistemic dimensional indexing for the Medicine Wheel Developer Suite — Land, Dream, Code, Vision traversal with cross-dimensional mapping and spiral depth metrics",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -51,7 +51,7 @@
     "directory": "src/relational-index"
   },
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.5.2"
+    "@medicine-wheel/ontology-core": "^0.5.3"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

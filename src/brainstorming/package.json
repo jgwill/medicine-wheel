@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/brainstorming",
-  "version": "0.5.2",
-  "description": "Idea into committed design through approval gates a human holds, with every emitted outcome statement routed through creative orientation \u2014 including its own questions.",
+  "version": "0.5.3",
+  "description": "Idea into committed design through approval gates a human holds, with every emitted outcome statement routed through creative orientation — including its own questions.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -37,7 +37,7 @@
     "directory": "src/brainstorming"
   },
   "dependencies": {
-    "@medicine-wheel/creative-orientation": "^0.5.2"
+    "@medicine-wheel/creative-orientation": "^0.5.3"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

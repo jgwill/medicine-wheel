@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/graph-viz",
-  "version": "0.5.2",
-  "description": "Medicine Wheel graph visualization \u2014 circular layout with four-direction node positioning, ceremony-aware edges, and OCAP\u00ae indicators",
+  "version": "0.5.3",
+  "description": "Medicine Wheel graph visualization — circular layout with four-direction node positioning, ceremony-aware edges, and OCAP® indicators",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -47,7 +47,7 @@
     "directory": "src/graph-viz"
   },
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.5.2"
+    "@medicine-wheel/ontology-core": "^0.5.3"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
