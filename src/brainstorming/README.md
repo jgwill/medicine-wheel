@@ -2,6 +2,12 @@
 
 Idea into committed design, through approval gates a human holds.
 
+> [!WARNING]
+> **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
+> under active development. APIs change between patch versions and all packages
+> move in lockstep — pin exact versions. See
+> [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
+
 ## Why it exists
 
 Convergence has a shape: read the ground, ask one question at a time, offer two

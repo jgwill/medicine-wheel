@@ -2,6 +2,12 @@
 
 Research transformation tracking for the Medicine Wheel Developer Suite.
 
+> [!WARNING]
+> **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
+> under active development. APIs change between patch versions and all packages
+> move in lockstep — pin exact versions. See
+> [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
+
 > Wilson's validity criterion: "If research doesn't change you, you haven't done it right."
 
 ## Purpose

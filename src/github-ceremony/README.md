@@ -4,6 +4,12 @@ Witness GitHub webhook events through a ceremonial lens and record them as
 relational ceremony beads. This domain came home from Miadi (`jgwill/Miadi#506`)
 as a reusable, framework-free package.
 
+> [!WARNING]
+> **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
+> under active development. APIs change between patch versions and all packages
+> move in lockstep — pin exact versions. See
+> [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
+
 - **`build*`** functions are pure — a parsed payload in, a `CeremonyEventRecord`
   out. No storage, no Next.js, no network.
 - **`process*`** functions additionally persist through

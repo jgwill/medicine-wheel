@@ -2,6 +2,12 @@
 
 Turn witnessed production events into cinematic clusters, narrative beats, and a Film Edit Brief.
 
+> [!WARNING]
+> **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
+> under active development. APIs change between patch versions and all packages
+> move in lockstep — pin exact versions. See
+> [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
+
 This package receives the output of `@medicine-wheel/perception-layer` and gives it an edit-facing structure: grouped rushes, Medicine Wheel-aligned beats, EDL-style markers, and narrative annotations. It is intentionally deterministic so a real transcript can become a testable vertical slice.
 
 ## Why it exists

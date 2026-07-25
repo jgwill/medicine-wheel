@@ -2,6 +2,12 @@
 
 Shared Redis data-access layer for the Medicine Wheel Developer Suite — connection management, Node/Edge/Ceremony CRUD, session-ceremony linking, and discovery helpers.
 
+> [!WARNING]
+> **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
+> under active development. APIs change between patch versions and all packages
+> move in lockstep — pin exact versions. See
+> [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
+
 ## Overview
 
 This package provides a **unified Redis persistence layer** consumed by `mcp-medicine-wheel` and other Medicine Wheel services. It wraps the `redis` client with domain-aware helpers that honour the relational ontology defined in `@medicine-wheel/ontology-core`.

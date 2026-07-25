@@ -2,6 +2,12 @@
 
 > A first experimental TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's (Respect, Reciprocity, Responsibility), and OCAP® data sovereignty principles.
 
+> [!WARNING]
+> **Experimental alpha.** APIs change between patch versions, packages appear and
+> their boundaries move, and storage shapes are still settling. Published in the
+> open so the work can be examined and improved — pin exact versions, and read
+> [ALPHA.md](./ALPHA.md) before depending on any of it.
+
 ## NEWS
 
 * Full postgres (neon) data provider !

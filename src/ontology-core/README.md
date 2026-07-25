@@ -2,6 +2,12 @@
 
 Foundational ontology layer for the Medicine Wheel Developer Suite — unified types, RDF vocabulary, Zod schemas, constants, and semantic query helpers grounded in Indigenous relational ontology.
 
+> [!WARNING]
+> **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
+> under active development. APIs change between patch versions and all packages
+> move in lockstep — pin exact versions. See
+> [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
+
 ## Overview
 
 This package is the **single source of truth** for the Medicine Wheel data model, consumed by both `mcp-medicine-wheel` (server) and `mcp-medicine-wheel-ui` (client).

@@ -2,6 +2,12 @@
 
 The ImportanceUnit is the relational unit of knowledge in Wilson's epistemology — a relationally-accountable piece of meaning that carries epistemic weight, source dimensions, accountability links, and circle depth tracking.
 
+> [!WARNING]
+> **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
+> under active development. APIs change between patch versions and all packages
+> move in lockstep — pin exact versions. See
+> [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
+
 ## Overview
 
 In Wilson's framework, not all knowledge is equal. Dream-state and embodied knowledge may carry more epistemic authority than rational analysis. ImportanceUnits make this explicit.

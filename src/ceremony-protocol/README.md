@@ -2,6 +2,12 @@
 
 Ceremony lifecycle protocol for **Medicine Wheel** — manages ceremony state, phase transitions, governance enforcement, and ceremonial review workflows.
 
+> [!WARNING]
+> **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
+> under active development. APIs change between patch versions and all packages
+> move in lockstep — pin exact versions. See
+> [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
+
 ## Overview
 
 This package provides a protocol for managing the lifecycle of ceremonies within the Medicine Wheel framework. It handles:

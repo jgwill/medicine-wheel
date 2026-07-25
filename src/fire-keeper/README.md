@@ -2,6 +2,12 @@
 
 > The Fire Keeper — ceremony coordination agent for Medicine Wheel
 
+> [!WARNING]
+> **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
+> under active development. APIs change between patch versions and all packages
+> move in lockstep — pin exact versions. See
+> [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
+
 The Fire Keeper tends the ceremony fire, ensures relational integrity through gating conditions, and maintains Wilson alignment as an active agent — not a passive metric.
 
 ## Purpose

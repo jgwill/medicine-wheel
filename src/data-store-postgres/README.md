@@ -2,6 +2,12 @@
 
 Minimal PostgreSQL/Neon scaffold for the Medicine Wheel workspace.
 
+> [!WARNING]
+> **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
+> under active development. APIs change between patch versions and all packages
+> move in lockstep — pin exact versions. See
+> [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
+
 What it gives the local agent:
 - a workspace package placeholder for a Postgres backend
 - a shared `pg` Pool helper keyed by effective connection options

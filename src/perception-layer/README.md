@@ -2,6 +2,12 @@
 
 Witness film-production source material as typed relational events.
 
+> [!WARNING]
+> **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
+> under active development. APIs change between patch versions and all packages
+> move in lockstep — pin exact versions. See
+> [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
+
 This package is the **eyes and ears** layer for agent-supported Indigenous film production. It turns transcript or device-stream material into `PerceptualEvent`s, records who witnessed the material, and seeds an additive production graph in `@medicine-wheel/ontology-core`.
 
 ## Why it exists

@@ -2,6 +2,12 @@
 
 Ontology-enriched prompt decomposition engine for the Medicine Wheel Developer Suite.
 
+> [!WARNING]
+> **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
+> under active development. APIs change between patch versions and all packages
+> move in lockstep — pin exact versions. See
+> [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
+
 ## Overview
 
 Extracts structured intents from natural language prompts and classifies them across the Four Directions (East/vision, South/analysis, West/validation, North/action). Detects implicit intents from hedging language, maps dependencies between tasks, and generates ceremony guidance when directional balance is poor.

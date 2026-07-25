@@ -20,7 +20,8 @@
     "Dockerfile",
     "docker-entrypoint.sh",
     "docker-build-push.sh",
-    "README.md"
+    "README.md",
+    "ALPHA.md"
   ],
   "workspaces": [
     "src/brainstorming",
