@@ -1,0 +1,40 @@
+{
+  "name": "@medicine-wheel/gap-analysis",
+  "version": "0.5.2",
+  "description": "Problem-solving done properly \u2014 baseline, observation, difference, elimination steps \u2014 with the orientation question asked at its door rather than assumed.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "gap-analysis",
+    "problem-solving",
+    "root-cause",
+    "incident"
+  ],
+  "author": "jgwill",
+  "license": "MIT",
+  "dependencies": {
+    "@medicine-wheel/creative-orientation": "^0.5.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/app",
   "version": "0.5.2",
-  "description": "Medicine Wheel — Interactive visual layer for Indigenous relational research with Four Directions, ceremonies, and narrative arcs",
+  "description": "Medicine Wheel \u2014 Interactive visual layer for Indigenous relational research with Four Directions, ceremonies, and narrative arcs",
   "bin": {
     "mw": "dist/cli/mw.js",
     "mwsrv": "dist/cli/mwsrv.js"
@@ -23,6 +23,9 @@
     "README.md"
   ],
   "workspaces": [
+    "src/brainstorming",
+    "src/creative-orientation",
+    "src/gap-analysis",
     "src/ceremony-protocol",
     "src/community-review",
     "src/consent-lifecycle",

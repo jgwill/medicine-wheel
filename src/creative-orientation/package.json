@@ -1,0 +1,38 @@
+{
+  "name": "@medicine-wheel/creative-orientation",
+  "version": "0.5.2",
+  "description": "Which orientation a situation calls for \u2014 advancing toward a state that has never existed, or restoring one that did. Routes to structural tension or to gap analysis.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "creative-orientation",
+    "structural-tension",
+    "robert-fritz",
+    "advancing",
+    "oscillating"
+  ],
+  "author": "jgwill",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
