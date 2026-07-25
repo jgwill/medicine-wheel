@@ -32,6 +32,7 @@ BUMP="${1:-patch}"
 DRY_RUN="${DRY_RUN:-0}"
 SKIP_DOCKER="${SKIP_DOCKER:-0}"
 SKIP_MCP="${SKIP_MCP:-0}"
+SKIP_BUMP="${SKIP_BUMP:-0}"
 MCP_MAJOR="${MCP_MAJOR:-4}"
 
 IMAGE="jgwill/medicine-wheel"
@@ -64,7 +65,13 @@ if [ "$SKIP_DOCKER" != "1" ] && [ "$DRY_RUN" != "1" ]; then
 fi
 
 # ── [2-4] Bump + sync + reinstall (skipped in dry-run) ─────────────────────
-if [ "$DRY_RUN" != "1" ]; then
+# SKIP_BUMP=1 publishes the version already declared in the manifests rather
+# than choosing a new one. That is the merge-triggered path: the bump was made
+# in a branch, reviewed in the PR diff across every workspace package, and
+# merged. Nothing decides a version at merge time — it was decided in review.
+if [ "$SKIP_BUMP" = "1" ]; then
+  step "Bump skipped (SKIP_BUMP=1) — publishing the declared version"
+elif [ "$DRY_RUN" != "1" ]; then
   step "Bump lockstep package versions ($BUMP)"
   node scripts/bump-versions.mjs "$BUMP"
 
@@ -163,10 +170,16 @@ else
     echo "  (no release changes staged — nothing to commit)"
   else
     git commit -m "chore: release v$VERSION"
-    git tag -a "v$VERSION" -m "release v$VERSION" 2>/dev/null || echo "  (tag v$VERSION already exists)"
-    echo "  ✅ committed + tagged v$VERSION"
-    echo "  ↪ push manually: git push && git push --tags"
+    echo "  ✅ committed v$VERSION"
   fi
+
+  # Tag outside the commit branch on purpose. When the bump was made in a PR
+  # and merged, there is nothing left to stage here — and the release would
+  # have gone to npm with no tag, so nothing would build the image.
+  git tag -a "v$VERSION" -m "release v$VERSION" 2>/dev/null \
+    && echo "  ✅ tagged v$VERSION" \
+    || echo "  (tag v$VERSION already exists)"
+  echo "  ↪ push: git push --follow-tags"
 
   # Safety net: a release must leave a clean tree of tracked files.
   LEFTOVER="$(git status --porcelain --untracked-files=no)"

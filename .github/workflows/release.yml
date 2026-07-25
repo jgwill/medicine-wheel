@@ -1,26 +1,34 @@
-# Release — bump, test, publish, tag.
+# Release — publish what the merge declared.
 #
-# Triggered by hand from the Actions tab, never by a merge. release.sh bumps
-# versions and commits; if a merge to main triggered it, CI would push a
-# version-bump commit back to main and re-trigger itself.
+# The version is decided in a branch and reviewed in the PR diff, where it is
+# visible across all 23 workspace package.json files. Merging to main is the
+# moment it becomes real: CI publishes the version already declared, and
+# decides nothing itself.
 #
-# This job deliberately does NOT build the Docker image. It pushes a tag, and
-# docker-image.yml reacts to that tag. Splitting them means the image is built
-# whether the release came from here or from someone running ./release.sh
-# locally — which is how 0.5.1 shipped to npm without ever getting an image.
+# That ordering is what removes the loop. An earlier design had CI bump the
+# version on main, which pushes a commit to main, which re-triggers CI. Here
+# CI never commits to main — it publishes and tags. Tag pushes do not match a
+# branch filter, so the tag it creates cannot re-trigger this workflow; it
+# triggers docker-image.yml, which is the intent.
+#
+# Cutting a release:
+#   1. in a branch:  npm run version:patch     (or version:minor / version:major)
+#   2. commit the bump — the PR diff shows every package moving together
+#   3. merge to main  → this workflow publishes, tags, and the image follows
+#
+# workflow_dispatch remains for release candidates from a branch, where the
+# version is set by hand and nothing is merged.
 name: Release
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'          # the declared version — the only trigger that matters
   workflow_dispatch:
     inputs:
-      bump:
-        description: 'Version bump'
-        type: choice
-        options: [patch, minor, major]
-        default: patch
-        required: true
       dry_run:
-        description: 'Validate only — no publish, no commit, no tag'
+        description: 'Validate only — no publish, no tag'
         type: boolean
         default: false
 
@@ -29,10 +37,37 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  guard:
+    # A push to main touching package.json is not always a release — a
+    # dependency change touches it too. Publishing is gated on the declared
+    # version being absent from npm, which is the only honest signal.
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: check
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if npm view "@medicine-wheel/app@$VERSION" version >/dev/null 2>&1; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "@medicine-wheel/app@$VERSION is already on npm — nothing to release." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+            echo "@medicine-wheel/app@$VERSION is not on npm — releasing." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   release:
+    needs: guard
+    if: ${{ needs.guard.outputs.should_release == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     permissions:
-      contents: write        # release.sh commits and tags; we push both
+      contents: write        # to push the tag
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,8 +82,8 @@ jobs:
       - name: Install
         run: npm ci --legacy-peer-deps
 
-      # The gate. Publishing a broken suite is worse than not publishing:
-      # 23 packages go out at once and npm versions cannot be reused.
+      # The gate. 23 packages go out at once and an npm version cannot be
+      # reused, so a broken publish is not something you undo.
       - name: Typecheck
         run: npx tsc --noEmit -p tsconfig.json
 
@@ -60,27 +95,25 @@ jobs:
           git config user.name  "medicine-wheel release"
           git config user.email "release@jgwill.com"
 
-      - name: Release
+      - name: Publish the declared version
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+          SKIP_BUMP: '1'            # the version was decided in the PR
           SKIP_DOCKER: '1'          # docker-image.yml owns the image, on tag
-        run: ./release.sh "${{ inputs.bump }}"
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+        run: ./release.sh
 
-      - name: Push commit and tag
+      - name: Push tag
         if: ${{ !inputs.dry_run }}
-        run: git push --follow-tags origin HEAD:main
+        run: git push --tags origin
 
       - name: Summary
         if: always()
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           {
-            echo "### Release ${{ inputs.dry_run && '(dry run)' || '' }}"
+            echo "### Released ${{ inputs.dry_run && '(dry run)' || '' }}"
             echo ""
-            echo "- version: \`$VERSION\`"
-            echo "- bump: \`${{ inputs.bump }}\`"
-            if [ "${{ inputs.dry_run }}" != "true" ]; then
-              echo "- tag \`v$VERSION\` pushed — docker-image.yml builds the image next"
-            fi
+            echo "- \`@medicine-wheel/*@$VERSION\` — 23 packages, lockstep"
+            echo "- tag \`v$VERSION\` pushed; docker-image.yml builds the image next"
           } >> "$GITHUB_STEP_SUMMARY"
