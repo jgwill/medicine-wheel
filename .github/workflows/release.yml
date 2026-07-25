@@ -1,0 +1,86 @@
+# Release — bump, test, publish, tag.
+#
+# Triggered by hand from the Actions tab, never by a merge. release.sh bumps
+# versions and commits; if a merge to main triggered it, CI would push a
+# version-bump commit back to main and re-trigger itself.
+#
+# This job deliberately does NOT build the Docker image. It pushes a tag, and
+# docker-image.yml reacts to that tag. Splitting them means the image is built
+# whether the release came from here or from someone running ./release.sh
+# locally — which is how 0.5.1 shipped to npm without ever getting an image.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump'
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+        required: true
+      dry_run:
+        description: 'Validate only — no publish, no commit, no tag'
+        type: boolean
+        default: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # release.sh commits and tags; we push both
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Install
+        run: npm ci --legacy-peer-deps
+
+      # The gate. Publishing a broken suite is worse than not publishing:
+      # 23 packages go out at once and npm versions cannot be reused.
+      - name: Typecheck
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Test
+        run: npx vitest run
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "medicine-wheel release"
+          git config user.email "release@jgwill.com"
+
+      - name: Release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+          SKIP_DOCKER: '1'          # docker-image.yml owns the image, on tag
+        run: ./release.sh "${{ inputs.bump }}"
+
+      - name: Push commit and tag
+        if: ${{ !inputs.dry_run }}
+        run: git push --follow-tags origin HEAD:main
+
+      - name: Summary
+        if: always()
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          {
+            echo "### Release ${{ inputs.dry_run && '(dry run)' || '' }}"
+            echo ""
+            echo "- version: \`$VERSION\`"
+            echo "- bump: \`${{ inputs.bump }}\`"
+            if [ "${{ inputs.dry_run }}" != "true" ]; then
+              echo "- tag \`v$VERSION\` pushed — docker-image.yml builds the image next"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
