@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/relational-index",
   "version": "0.5.2",
-  "description": "Four-source epistemic dimensional indexing for the Medicine Wheel Developer Suite — Land, Dream, Code, Vision traversal with cross-dimensional mapping and spiral depth metrics",
+  "description": "Four-source epistemic dimensional indexing for the Medicine Wheel Developer Suite \u2014 Land, Dream, Code, Vision traversal with cross-dimensional mapping and spiral depth metrics",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -45,6 +45,11 @@
   ],
   "author": "IAIP Collaborative - Shawinigan, QC",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/relational-index"
+  },
   "dependencies": {
     "@medicine-wheel/ontology-core": "^0.5.2"
   },

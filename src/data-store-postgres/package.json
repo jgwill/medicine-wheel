@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/data-store-postgres",
   "version": "0.5.2",
-  "description": "PostgreSQL/Neon provider scaffold for the Medicine Wheel Developer Suite — shared pool management and provider-ready storage entrypoints",
+  "description": "PostgreSQL/Neon provider scaffold for the Medicine Wheel Developer Suite \u2014 shared pool management and provider-ready storage entrypoints",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -40,6 +40,11 @@
   ],
   "author": "IAIP Collaborative - Shawinigan, QC",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/data-store-postgres"
+  },
   "dependencies": {
     "@medicine-wheel/ontology-core": "^0.5.2",
     "pg": "^8.20.0"

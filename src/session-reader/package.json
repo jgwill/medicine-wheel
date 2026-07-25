@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/session-reader",
   "version": "0.5.2",
-  "description": "Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, session summaries, analytics extraction, and search across agent session data",
+  "description": "Session event reader for the Medicine Wheel Developer Suite \u2014 JSONL parsing, session summaries, analytics extraction, and search across agent session data",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -46,6 +46,11 @@
   ],
   "author": "IAIP Collaborative - Shawinigan, QC",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/session-reader"
+  },
   "devDependencies": {
     "@types/node": "^20.10.0",
     "typescript": "^5.3.0"

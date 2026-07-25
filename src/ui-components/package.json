@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/ui-components",
   "version": "0.5.2",
-  "description": "React UI components for the Medicine Wheel Developer Suite — direction cards, beat timelines, node inspectors",
+  "description": "React UI components for the Medicine Wheel Developer Suite \u2014 direction cards, beat timelines, node inspectors",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -36,6 +36,11 @@
   ],
   "author": "jgwill",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/ui-components"
+  },
   "dependencies": {
     "@medicine-wheel/ontology-core": "^0.5.2"
   },

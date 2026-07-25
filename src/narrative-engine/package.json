@@ -32,6 +32,11 @@
   ],
   "author": "jgwill",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/narrative-engine"
+  },
   "dependencies": {
     "@medicine-wheel/ontology-core": "^0.5.2"
   },

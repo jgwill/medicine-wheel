@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/fire-keeper",
   "version": "0.5.2",
-  "description": "Fire Keeper coordination agent for Medicine Wheel — tends the ceremony fire, ensures relational integrity through gating conditions, and maintains Wilson alignment as an active agent",
+  "description": "Fire Keeper coordination agent for Medicine Wheel \u2014 tends the ceremony fire, ensures relational integrity through gating conditions, and maintains Wilson alignment as an active agent",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -38,5 +38,10 @@
     "wilson",
     "relational-accountability"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/fire-keeper"
+  }
 }

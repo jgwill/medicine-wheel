@@ -1,34 +1,36 @@
-# Release — publish what the merge declared.
+# Release — one run, one human click, npm and the image together.
 #
-# The version is decided in a branch and reviewed in the PR diff, where it is
-# visible across all 23 workspace package.json files. Merging to main is the
-# moment it becomes real: CI publishes the version already declared, and
-# decides nothing itself.
+# Rebuilt after three independent research passes found two defects in the
+# previous two-workflow design:
 #
-# That ordering is what removes the loop. An earlier design had CI bump the
-# version on main, which pushes a commit to main, which re-triggers CI. Here
-# CI never commits to main — it publishes and tags. Tag pushes do not match a
-# branch filter, so the tag it creates cannot re-trigger this workflow; it
-# triggers docker-image.yml, which is the intent.
+#   1. A tag pushed with GITHUB_TOKEN does NOT start another workflow run.
+#      GitHub excludes GITHUB_TOKEN-triggered events from starting workflows
+#      (except workflow_dispatch / repository_dispatch). So the tag-triggered
+#      image build could never fire — the workflow written to stop the image
+#      drifting from npm reproduced that drift by construction.
+#
+#   2. `tsc --noEmit` ran before anything was built. Every workspace package
+#      points `types` into a gitignored `dist/`, so on a fresh checkout those
+#      declarations do not exist. The gate either failed every run or checked
+#      nothing.
+#
+# The correction to both: an artifact that must stay in lockstep is produced by
+# the run that produced its counterpart. There is no second trigger to miss.
 #
 # Cutting a release:
-#   1. in a branch:  npm run version:patch     (or version:minor / version:major)
-#   2. commit the bump — the PR diff shows every package moving together
-#   3. merge to main  → this workflow publishes, tags, and the image follows
-#
-# workflow_dispatch remains for release candidates from a branch, where the
-# version is set by hand and nothing is merged.
+#   1. in a branch:  npm run version:patch   (or minor / major)
+#   2. commit the bump — the PR diff shows all 25 packages moving together
+#   3. merge to main → this runs, pauses for one approval, then publishes
 name: Release
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'package.json'          # the declared version — the only trigger that matters
+    paths: ['package.json']
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Validate only — no publish, no tag'
+        description: 'Validate only — build and pack, publish nothing'
         type: boolean
         default: false
 
@@ -37,37 +39,21 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  guard:
-    # A push to main touching package.json is not always a release — a
-    # dependency change touches it too. Publishing is gated on the declared
-    # version being absent from npm, which is the only honest signal.
-    runs-on: ubuntu-latest
-    outputs:
-      should_release: ${{ steps.check.outputs.should_release }}
-      version: ${{ steps.check.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - id: check
-        run: |
-          VERSION="$(node -p "require('./package.json').version")"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          if npm view "@medicine-wheel/app@$VERSION" version >/dev/null 2>&1; then
-            echo "should_release=false" >> "$GITHUB_OUTPUT"
-            echo "@medicine-wheel/app@$VERSION is already on npm — nothing to release." >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "should_release=true" >> "$GITHUB_OUTPUT"
-            echo "@medicine-wheel/app@$VERSION is not on npm — releasing." >> "$GITHUB_STEP_SUMMARY"
-          fi
-
   release:
-    needs: guard
-    if: ${{ needs.guard.outputs.should_release == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+
+    # The one human gate, at the only irreversible moment. All three research
+    # passes converged on this independently: 23 npm versions can never be
+    # reused, so a person approves once and everything else is automated.
+    #
+    # Requires a `release` environment with a required reviewer. Until that
+    # exists the job runs unattended — configure it before the first release.
+    environment: release
+
     permissions:
-      contents: write        # to push the tag
+      contents: write        # push the tag release.sh creates
+      id-token: write        # npm provenance
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -79,29 +65,57 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - name: Install
+      - name: Install from the committed lockfile
         run: npm ci --legacy-peer-deps
 
-      # The gate. 23 packages go out at once and an npm version cannot be
-      # reused, so a broken publish is not something you undo.
+      # FIRST. Every package's `types` points into a gitignored dist/, so
+      # nothing can typecheck until this has run. This was defect 2.
+      - name: Build workspace packages
+        run: npm run build:packages && npm run build:cli
+
       - name: Typecheck
         run: npx tsc --noEmit -p tsconfig.json
 
       - name: Test
         run: npx vitest run
 
+      # Catches an empty or wrong `files` glob before it becomes a permanent
+      # version. Cheap, and the failure it prevents is unfixable after the fact.
+      - name: Pack check
+        run: npm publish --dry-run --access public --ignore-scripts
+
+      # Built before anything is published, so a broken Dockerfile fails while
+      # everything is still reversible. Pushed after, so the image never
+      # advertises a version npm does not have.
+      - name: Build image
+        run: docker build -t jgwill/medicine-wheel:app -t "jgwill/medicine-wheel:$(node -p "require('./package.json').version")" .
+
       - name: Configure git identity
         run: |
           git config user.name  "medicine-wheel release"
           git config user.email "release@jgwill.com"
 
-      - name: Publish the declared version
+      - name: Publish to npm
+        if: ${{ !inputs.dry_run }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          SKIP_BUMP: '1'            # the version was decided in the PR
-          SKIP_DOCKER: '1'          # docker-image.yml owns the image, on tag
-          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+          SKIP_BUMP: '1'          # the version was decided in the PR
+          SKIP_DOCKER: '1'        # the image is this workflow's own concern
+          NPM_CONFIG_PROVENANCE: 'true'
         run: ./release.sh
+
+      - uses: docker/login-action@v3
+        if: ${{ !inputs.dry_run }}
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME || 'jgwill' }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push image
+        if: ${{ !inputs.dry_run }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          docker push "jgwill/medicine-wheel:$VERSION"
+          docker push jgwill/medicine-wheel:app
 
       - name: Push tag
         if: ${{ !inputs.dry_run }}
@@ -112,8 +126,12 @@ jobs:
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           {
-            echo "### Released ${{ inputs.dry_run && '(dry run)' || '' }}"
+            echo "### Release ${{ inputs.dry_run && '(dry run)' || '' }} — v$VERSION"
             echo ""
-            echo "- \`@medicine-wheel/*@$VERSION\` — 23 packages, lockstep"
-            echo "- tag \`v$VERSION\` pushed; docker-image.yml builds the image next"
+            echo "| artifact | tag |"
+            echo "|---|---|"
+            echo "| npm | \`@medicine-wheel/*@$VERSION\` — lockstep |"
+            echo "| npm | \`@medicine-wheel/mcp\` — own major line |"
+            echo "| image | \`jgwill/medicine-wheel:$VERSION\` and \`:app\` |"
+            echo "| git | \`v$VERSION\` |"
           } >> "$GITHUB_STEP_SUMMARY"

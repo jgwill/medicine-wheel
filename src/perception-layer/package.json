@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/perception-layer",
   "version": "0.5.2",
-  "description": "Eyes & ears of agent-supported film production — witness a belt-device recording as typed perceptual events and seed a production knowledge graph",
+  "description": "Eyes & ears of agent-supported film production \u2014 witness a belt-device recording as typed perceptual events and seed a production knowledge graph",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -32,6 +32,11 @@
   ],
   "author": "jgwill",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/perception-layer"
+  },
   "dependencies": {
     "@medicine-wheel/ontology-core": "^0.5.2"
   },

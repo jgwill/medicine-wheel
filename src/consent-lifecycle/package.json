@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/consent-lifecycle",
   "version": "0.5.2",
-  "description": "Ongoing relational consent lifecycle for the Medicine Wheel Developer Suite — consent as a living relational obligation, not a boolean checkbox",
+  "description": "Ongoing relational consent lifecycle for the Medicine Wheel Developer Suite \u2014 consent as a living relational obligation, not a boolean checkbox",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -47,6 +47,11 @@
   ],
   "author": "IAIP Collaborative - Shawinigan, QC",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/consent-lifecycle"
+  },
   "dependencies": {
     "@medicine-wheel/ontology-core": "^0.5.2",
     "@medicine-wheel/ceremony-protocol": "^0.5.2",

@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/importance-unit",
   "version": "0.5.2",
-  "description": "ImportanceUnit — the relational unit of knowledge for the Medicine Wheel Developer Suite. Carries epistemic weight, source dimensions (Land/Dream/Code/Vision), circle depth tracking, and accountability links grounded in Wilson's relational epistemology",
+  "description": "ImportanceUnit \u2014 the relational unit of knowledge for the Medicine Wheel Developer Suite. Carries epistemic weight, source dimensions (Land/Dream/Code/Vision), circle depth tracking, and accountability links grounded in Wilson's relational epistemology",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -74,6 +74,11 @@
   ],
   "author": "IAIP Collaborative - Shawinigan, QC",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/importance-unit"
+  },
   "dependencies": {
     "@medicine-wheel/ontology-core": "^0.5.2",
     "zod": "^3.23.0"

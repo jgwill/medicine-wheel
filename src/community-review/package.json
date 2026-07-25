@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/community-review",
   "version": "0.5.2",
-  "description": "Community-based ceremonial review protocol for Medicine Wheel — implements Wilson's validation through Elder review circles, consensus, and relational accountability",
+  "description": "Community-based ceremonial review protocol for Medicine Wheel \u2014 implements Wilson's validation through Elder review circles, consensus, and relational accountability",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -40,5 +40,10 @@
     "ocap",
     "talking-circle"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/community-review"
+  }
 }

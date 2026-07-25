@@ -20,5 +20,10 @@
   },
   "devDependencies": {
     "typescript": "^5.7.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/storage-provider"
   }
 }
