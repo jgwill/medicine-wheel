@@ -33,6 +33,10 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(beat, { status: 201 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    // An invalid draft is the caller's error, not the server's. Reporting it
+    // as a 500 would read as "we broke" when the truth is "this beat does not
+    // satisfy the wheel's laws and was not stored".
+    const invalid = /^Invalid beat draft/.test(error?.message ?? '');
+    return NextResponse.json({ error: error.message }, { status: invalid ? 400 : 500 });
   }
 }

@@ -13,6 +13,8 @@ import { spawnSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import { viewSkills, installSkill } from './skills';
+import { registerEpisodeBeats, describeArc } from './beats-register';
+import { cmdOrient } from './orientation';
 
 // ── Config ────────────────────────────────────────────────────────
 const MW_API_URL = process.env.MW_API_URL ?? 'http://localhost:8040';
@@ -512,10 +514,50 @@ async function cmdNode(
 }
 
 // ── Beat ──────────────────────────────────────────────────────────
-async function cmdBeat(positional: string[]): Promise<void> {
+async function cmdBeat(positional: string[], flags: Record<string, string | boolean> = {}): Promise<void> {
   const sub = positional[0] ?? 'list';
 
   switch (sub) {
+    case 'register': {
+      const dir = positional[1];
+      if (!dir) {
+        console.error('Usage: mw beat register <episode-dir> [--dry-run]');
+        console.error('  Registers an episode\'s authored beats through the authoring door.');
+        process.exit(2);
+      }
+      try {
+        const out = await registerEpisodeBeats(dir, {
+          apiUrl: MW_API_URL,
+          dryRun: flags['dry-run'] === true,
+        });
+
+        if (out.rejected.length > 0) {
+          console.error(`${C.south}${out.rejected.length} beat(s) rejected — nothing was written${C.reset}`);
+          for (const r of out.rejected) {
+            console.error(`  ${r.id}`);
+            for (const v of r.violations) console.error(`    ${v}`);
+          }
+          process.exit(1);
+        }
+
+        if (flags['dry-run'] === true) {
+          console.log(`${C.green}dry run — all beats are legal, nothing written${C.reset}`);
+          break;
+        }
+
+        if (out.cycleCreated) console.log(`${C.dim}cycle created:${C.reset} ${out.cycleId}`);
+        console.log(`${C.green}registered ${out.registered.length}${C.reset}${out.skipped.length ? `  ${C.dim}(${out.skipped.length} already present)${C.reset}` : ''}`);
+
+        const all = (await api('GET', '/api/narrative/beats')) as any[];
+        const scoped = out.cycleId ? all.filter(b => b.cycle_id === out.cycleId) : all;
+        console.log('');
+        for (const line of describeArc(scoped)) console.log(line);
+      } catch (err) {
+        console.error(`${C.south}${(err as Error).message}${C.reset}`);
+        process.exit(1);
+      }
+      break;
+    }
     case 'create':
       mcpCall('create_narrative_beat', {
         direction: positional[1] ?? '',
@@ -693,7 +735,7 @@ async function main(): Promise<void> {
     case 'directions': case 'dirs': await cmdDirections(); break;
     case 'cycle': case 'cy':        await cmdCycle(rest); break;
     case 'node': case 'n':          await cmdNode(rest, flags); break;
-    case 'beat': case 'b':          await cmdBeat(rest); break;
+    case 'beat': case 'b':          await cmdBeat(rest, flags); break;
     case 'edge': case 'e':                cmdEdge(rest, flags); break;
     case 'web': case 'w':                 cmdWeb(rest); break;
     case 'chart': case 'stc':             cmdChart(rest); break;
@@ -703,6 +745,9 @@ async function main(): Promise<void> {
     case 'skill': case 'sk':            cmdSkill(rest); break;
     case 'arc':
       mcpCall('get_narrative_arc', { cycle_id: rest[0] ?? '' });
+      break;
+    case 'orient': case 'orientation':
+      cmdOrient(rest, flags);
       break;
     default:
       console.error(`${C.south}Unknown command: ${cmd}${C.reset}`);
