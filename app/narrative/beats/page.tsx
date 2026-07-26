@@ -25,23 +25,32 @@ export default function BeatsPage() {
   async function addBeat(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
+    // The act is never sent: it is derived from the direction by the engine.
+    // Offering it as a form field is how a west beat came to be stored in act 1.
     const body = {
       direction: form.get("direction") as string,
       title: form.get("title") as string,
       description: form.get("description") as string,
       prose: form.get("prose") as string || undefined,
-      act: parseInt(form.get("act") as string) || 1,
       learnings: (form.get("learnings") as string).split(",").map((s) => s.trim()).filter(Boolean),
       ceremonies: [],
       relations_honored: [],
     };
     const res = await fetch("/api/narrative/beats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     if (res.ok) {
-      toast.success("Beat added");
+      const created = await res.json();
+      if (Array.isArray(created?.warnings) && created.warnings.length) {
+        toast.warning(`Beat added — ${created.warnings.join(" · ")}`);
+      } else {
+        toast.success("Beat added");
+      }
       setShowForm(false);
       const data = await fetch("/api/narrative/beats").then((r) => r.json());
       setBeats(Array.isArray(data) ? data : []);
-    } else { toast.error("Could not save the beat — check the form and try again"); }
+    } else {
+      const err = await res.json().catch(() => null);
+      toast.error(err?.error ?? "Could not save the beat — check the form and try again");
+    }
   }
 
   // Direction summary
@@ -87,9 +96,7 @@ export default function BeatsPage() {
           </select>
           <textarea name="description" placeholder="Description" rows={2} required className="px-3 py-2 rounded-md border bg-background text-sm sm:col-span-2" />
           <textarea name="prose" placeholder="Prose (optional)" rows={2} className="px-3 py-2 rounded-md border bg-background text-sm" />
-          <select name="act" className="px-3 py-2 rounded-md border bg-background text-sm">
-            <option value="1">Act 1 (East)</option><option value="2">Act 2 (South)</option><option value="3">Act 3 (West)</option><option value="4">Act 4 (North)</option>
-          </select>
+          <p className="px-3 py-2 text-xs text-muted-foreground self-center">Act is derived from the direction — east 1, south 2, west 3, north 4.</p>
           <input name="learnings" placeholder="Learnings (comma-separated)" className="px-3 py-2 rounded-md border bg-background text-sm sm:col-span-2" />
           <button type="submit" className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm hover:opacity-90">Add beat</button>
         </form>

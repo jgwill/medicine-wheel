@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     // Pass the caller's id and timestamp through when supplied. A client that
     // authored a beat holds its id and will look it up again — minting a fresh
     // one here hands back a beat the caller can never find.
-    const beat = createBeat({
+    const { beat, warnings } = createBeat({
       id: body.id,
       timestamp: body.timestamp,
       direction: body.direction,
@@ -31,7 +31,10 @@ export async function POST(request: Request) {
       sub_beats: body.sub_beats,
       origin: body.origin,
     });
-    return NextResponse.json(beat, { status: 201 });
+    // Warnings ride on the created beat rather than replacing it, so clients
+    // that read the beat back by id keep working while advisory findings stop
+    // being computed-and-discarded.
+    return NextResponse.json(warnings.length ? { ...beat, warnings } : beat, { status: 201 });
   } catch (error: any) {
     // An invalid draft is the caller's error, not the server's. Reporting it
     // as a 500 would read as "we broke" when the truth is "this beat does not

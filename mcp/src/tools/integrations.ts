@@ -9,6 +9,7 @@ import type { Tool } from "../types.js";
 import { store } from "../store.js";
 import {
   createBeat as authorBeat,
+  validateBeatDraft,
   telescopeBeat,
   beatsInCycle,
   type BeatDraft,
@@ -352,6 +353,12 @@ export const integrationTools: Tool[] = [
           idFactory: () => `beat:${args.direction}:${Date.now()}`,
         });
 
+        // The door's advisory findings were computed and dropped here; a
+        // caller who never sees "no relations honored" cannot act on it.
+        const advisories = validateBeatDraft(draft)
+          .violations.filter((v) => v.severity === "warning")
+          .map((v) => `${v.field}: ${v.message}`);
+
         store.createBeat(beat);
 
         // Bind the cycle side of the relation. A beat that names its cycle
@@ -392,6 +399,7 @@ export const integrationTools: Tool[] = [
           ...(!beat.cycle_id
             ? { warning: "No cycle_id given — this beat is an orphan and will not appear in any narrative arc" }
             : {}),
+          ...(advisories.length ? { advisories } : {}),
           beat: beat,
         };
       } catch (error) {
@@ -811,10 +819,15 @@ export const integrationTools: Tool[] = [
 
         const { parent: updatedParent, subBeats } = telescopeBeat(parent as any, drafts);
 
+        // Parent first. Over an HTTP store the parent update re-enters the
+        // validating route, and a legacy parent can be rejected there — if the
+        // children were already written, that failure would leave orphan
+        // sub-beats behind a parent that never learned their names. Failing on
+        // the first write leaves the store untouched.
+        await store.createBeat(updatedParent as any);
         for (const sub of subBeats) {
-          store.createBeat(sub as any);
+          await store.createBeat(sub as any);
         }
-        store.createBeat(updatedParent as any);
 
         // Sub-beats join the parent's cycle on the cycle's side too.
         if (updatedParent.cycle_id) {
