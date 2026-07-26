@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/data-store-postgres",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "PostgreSQL/Neon provider scaffold for the Medicine Wheel Developer Suite — shared pool management and provider-ready storage entrypoints",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -46,7 +46,7 @@
     "directory": "src/data-store-postgres"
   },
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.5.3",
+    "@medicine-wheel/ontology-core": "^0.5.4",
     "pg": "^8.20.0"
   },
   "devDependencies": {
