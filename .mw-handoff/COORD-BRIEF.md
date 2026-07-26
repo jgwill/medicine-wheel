@@ -170,3 +170,37 @@ Guillaume needs to know that more than he needs more code.
 Everything above is one agent's account of its own work. Confirm the state
 yourself before you build on it. If something here is wrong, that discovery is
 more valuable than anything else you could do today.
+
+---
+
+## 8. CORRECTION from Guillaume — the scope is right, the execution is not
+
+The outgoing agent questioned whether `creative-orientation`, `gap-analysis`
+and `brainstorming` belonged under `@medicine-wheel/*`. **They do.** That was a
+misreading, corrected by Guillaume directly.
+
+The design intent: the naming is a **deliberate teaching trap**. Agents arrive
+biased toward problem-solving framing. One reaches for "creative problem
+solving", finds these packages, installs them — and is educated that this is
+*not* creative problem solving, and redirected to the right orientation. The
+trap is the point.
+
+**What is wrong is that the trap catches nothing.** Verified:
+
+- `@medicine-wheel/creative-orientation` keywords: `medicine-wheel,
+  creative-orientation, structural-tension, robert-fritz, advancing, oscillating`
+- `@medicine-wheel/gap-analysis` keywords: `medicine-wheel, gap-analysis,
+  problem-solving, root-cause, incident`
+
+Neither carries `creative-problem-solving`. Nothing is named or keyworded such
+that an agent searching for the wrong thing lands on the right correction. The
+packages are correct and undiscoverable by the exact audience they were built
+to catch.
+
+Guillaume's words: *"this is not something I like the way it's done."*
+
+**Your task on this:** design the discovery surface so the trap works — npm
+keywords, package description, README opening, MCP tool description, `mw`
+help text, whatever an agent actually reads first. The redirect must be the
+first thing encountered, not a paragraph in. Steer this deliberately; it is a
+teaching mechanism aimed at agents, not documentation aimed at humans.
