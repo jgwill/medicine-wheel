@@ -1,26 +1,40 @@
-# Release — one run, one human click, npm and the image together.
+# Release — prove everything first, then one human click, then publish.
 #
-# Rebuilt after three independent research passes found two defects in the
-# previous two-workflow design:
+# Two jobs, and the split is the whole point:
 #
-#   1. A tag pushed with GITHUB_TOKEN does NOT start another workflow run.
-#      GitHub excludes GITHUB_TOKEN-triggered events from starting workflows
-#      (except workflow_dispatch / repository_dispatch). So the tag-triggered
-#      image build could never fire — the workflow written to stop the image
-#      drifting from npm reproduced that drift by construction.
+#   verify   no environment, no secrets, nothing irreversible. Cold-builds the
+#            workspace graph, typechecks, tests, packs all 26 packages, and
+#            builds the image without pushing it.
+#   release  environment: release (one required reviewer), needs: verify. The
+#            human is asked to approve AFTER the evidence exists, not before.
 #
+# Correcting the previous single-job version, where:
+#   * `environment: release` paused the job before step 1 — the reviewer
+#     approved a build that had proven nothing, and publish then ran unattended;
+#   * `docker/login-action` ran AFTER `npm publish`, so a bad DOCKERHUB_TOKEN
+#     failed with npm already irreversibly published;
+#   * the tag push was the last mutating step, so any Docker failure left npm
+#     published with no `v*` tag on origin;
+#   * the pack check dry-ran only the root package — the 24 `files:["dist"]`
+#     packages, the actual empty-glob hazard, never packed;
+#   * the `Summary` step printed a success table naming npm/Docker/tag
+#     artifacts even on a run where nothing ran.
+#
+# And correcting the two defects the two-workflow design had before that:
+#   1. A tag pushed with GITHUB_TOKEN does NOT start another workflow run, so a
+#      tag-triggered image build could never fire. Both artifacts are produced
+#      by the run that produced their counterpart; there is no second trigger.
 #   2. `tsc --noEmit` ran before anything was built. Every workspace package
 #      points `types` into a gitignored `dist/`, so on a fresh checkout those
-#      declarations do not exist. The gate either failed every run or checked
-#      nothing.
-#
-# The correction to both: an artifact that must stay in lockstep is produced by
-# the run that produced its counterpart. There is no second trigger to miss.
+#      declarations do not exist.
 #
 # Cutting a release:
 #   1. in a branch:  npm run version:patch   (or minor / major)
-#   2. commit the bump — the PR diff shows all 25 packages moving together
-#   3. merge to main → this runs, pauses for one approval, then publishes
+#   2. commit the bump — the PR diff shows all 26 packages moving together
+#   3. merge to main → verify runs, then one approval, then publish
+#
+# `workflow_dispatch` with dry_run=true runs verify only. It burns no approval
+# and publishes nothing.
 name: Release
 
 on:
@@ -30,7 +44,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Validate only — build and pack, publish nothing'
+        description: 'Validate only — build, test, pack and build the image; publish nothing'
         type: boolean
         default: false
 
@@ -39,15 +53,182 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  # ─────────────────────────────────────────────────────────────────────────
+  # verify — everything reversible. No environment, so no approval is spent
+  # on a run that might not deserve one.
+  # ─────────────────────────────────────────────────────────────────────────
+  verify:
     runs-on: ubuntu-latest
 
-    # The one human gate, at the only irreversible moment. All three research
-    # passes converged on this independently: 23 npm versions can never be
-    # reused, so a person approves once and everything else is automated.
+    permissions:
+      contents: read
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      already_published: ${{ steps.version.outputs.already_published }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: Install from the committed lockfile
+        run: npm ci --legacy-peer-deps
+
+      # Read before building — the release job's gate depends on this answer,
+      # and asking npm costs nothing.
+      - name: Read the declared version
+        id: version
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if npm view "@medicine-wheel/app@$VERSION" version >/dev/null 2>&1; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::@medicine-wheel/app@$VERSION is already on npm — this run will verify only."
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # FIRST. Every package's `types` points into a gitignored dist/, so
+      # nothing can typecheck until this has run.
+      #
+      # This is also the step that catches a mis-ordered `workspaces` array:
+      # `npm run build --workspaces` executes in declaration order, NOT in
+      # dependency order, so a package listed before something it imports fails
+      # TS2307 here. A dev machine never sees it — a stale dist/ hides it.
+      - name: Build workspace packages
+        id: build
+        run: npm run build:packages && npm run build:cli
+
+      - name: Typecheck
+        id: typecheck
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Test
+        id: test
+        run: npx vitest run
+
+      # Catches an empty or wrong `files` glob before it becomes a permanent
+      # version — the hazard the old root-only `npm publish --dry-run` never
+      # looked at, because the 25 `files:["dist"]` packages were never packed.
+      # `clean:packages` first, so this is ALSO a from-zero rebuild of the whole
+      # graph: the cold build, inside CI, on every run.
+      #
+      # `npm pack` is local. It cannot fail because a version already exists,
+      # so it runs unconditionally.
+      - name: Pack check — cold rebuild, then pack every package
+        id: pack
+        run: |
+          npm run clean:packages
+          npm run build:packages
+          npm run build:cli
+          rm -rf /tmp/mwpack && mkdir -p /tmp/mwpack
+          npm pack --workspaces --pack-destination /tmp/mwpack
+          npm pack --pack-destination /tmp/mwpack --ignore-scripts
+          node -e '
+            const fs = require("fs");
+            const expected = require("./package.json").workspaces.length + 1;
+            const files = fs.readdirSync("/tmp/mwpack").sort();
+            let bad = 0;
+            for (const f of files) {
+              const size = fs.statSync("/tmp/mwpack/" + f).size;
+              console.log(String(size).padStart(9), f);
+              if (size < 1024) {
+                console.log("::error::" + f + " packed to " + size + " bytes — its `files` glob resolved to nothing.");
+                bad++;
+              }
+            }
+            if (files.length !== expected) {
+              console.log("::error::expected " + expected + " tarballs (workspaces + root), got " + files.length);
+              bad++;
+            }
+            console.log("packed " + files.length + " tarballs");
+            if (bad) process.exit(1);
+          '
+
+      # Registry-side validation: name, scope, access, and that this version is
+      # actually free. `npm publish --dry-run` contacts npm and fails on an
+      # already-published version, so it is skipped when the version is already
+      # out — the pack check above has already covered the local hazard.
+      - name: Registry dry-run
+        id: publish_dry
+        if: steps.version.outputs.already_published != 'true'
+        run: |
+          node scripts/publish-workspaces.mjs --dry-run
+          npm publish --workspace mcp --access public --dry-run
+          npm publish --access public --dry-run --ignore-scripts
+
+      # No push, no credentials. .dockerignore excludes every dist/ and
+      # node_modules/, so this proves the image cold-builds from source rather
+      # than smuggling a prebuilt dist out of the build context.
+      - name: Build image (no push)
+        id: image
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          docker build -t jgwill/medicine-wheel:app -t "jgwill/medicine-wheel:$VERSION" .
+
+      - name: Summary
+        if: always()
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          {
+            echo "### Verify — v${VERSION:-unknown} — job: ${{ job.status }}"
+            echo ""
+            echo "| check | outcome |"
+            echo "|---|---|"
+            echo "| build packages + cli | ${{ steps.build.outcome || 'did not run' }} |"
+            echo "| typecheck | ${{ steps.typecheck.outcome || 'did not run' }} |"
+            echo "| tests | ${{ steps.test.outcome || 'did not run' }} |"
+            echo "| pack check (cold rebuild) | ${{ steps.pack.outcome || 'did not run' }} |"
+            echo "| registry dry-run | ${{ steps.publish_dry.outcome || 'did not run' }} |"
+            echo "| image build (no push) | ${{ steps.image.outcome || 'did not run' }} |"
+            echo ""
+            if [ "${{ inputs.dry_run }}" = "true" ]; then
+              echo "Dry run — nothing will be published. The \`release\` job does not run."
+            elif [ "${{ steps.version.outputs.already_published }}" = "true" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+              echo "\`@medicine-wheel/app@$VERSION\` is **already on npm**. The \`release\` job is skipped so this run cannot overwrite \`jgwill/medicine-wheel:$VERSION\`. Bump the version to release."
+            else
+              echo "Next: the \`release\` job waits for one approval, then publishes."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # release — everything irreversible, behind one approval, in an order where
+  # the reversible steps fail first.
+  #
+  # Skipped entirely when:
+  #   * this is a dry run, or
+  #   * the declared version is already on npm and the run was not dispatched
+  #     by hand. The trigger is `paths: ['package.json']`, so a dependency bump
+  #     merged to main starts this workflow; without this gate its unconditional
+  #     `docker push` would overwrite jgwill/medicine-wheel:<version> with an
+  #     image from a different commit while npm still serves the original.
+  # ─────────────────────────────────────────────────────────────────────────
+  release:
+    needs: verify
+    # `needs.verify.result == 'success'` is stated rather than relied on. It is
+    # implied, but if it ever were not, an empty `already_published` output from
+    # a failed verify would read as "not published" and let this job through.
+    if: >-
+      ${{ needs.verify.result == 'success'
+          && !inputs.dry_run
+          && (github.event_name == 'workflow_dispatch'
+              || needs.verify.outputs.already_published != 'true') }}
+
+    runs-on: ubuntu-latest
+
+    # The one human gate, now placed after verify has proven build, typecheck,
+    # tests, pack and image. 25 npm versions can never be reused, so a person
+    # approves once — with evidence — and everything after is automated.
     #
     # Requires a `release` environment with a required reviewer. Until that
-    # exists the job runs unattended — configure it before the first release.
+    # exists this job runs unattended — configure it before the first release.
     environment: release
 
     permissions:
@@ -68,35 +249,52 @@ jobs:
       - name: Install from the committed lockfile
         run: npm ci --legacy-peer-deps
 
-      # FIRST. Every package's `types` points into a gitignored dist/, so
-      # nothing can typecheck until this has run. This was defect 2.
+      # Re-asked here rather than trusted from verify: an approval can sit for
+      # hours, and another run may have published in the meantime.
+      - name: Guard — refuse to republish
+        id: guard
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if npm view "@medicine-wheel/app@$VERSION" version >/dev/null 2>&1; then
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "::warning::@medicine-wheel/app@$VERSION is already on npm. Continuing because this run was dispatched by hand — npm will skip the published packages, but jgwill/medicine-wheel:$VERSION WILL be overwritten."
+            else
+              echo "::error::@medicine-wheel/app@$VERSION is already published. Bump the version (npm run version:patch) before merging — this run would publish nothing and only overwrite the Docker tag."
+              exit 1
+            fi
+          fi
+
       - name: Build workspace packages
+        id: build
         run: npm run build:packages && npm run build:cli
 
-      - name: Typecheck
-        run: npx tsc --noEmit -p tsconfig.json
+      # BEFORE npm publish. Login costs nothing and is fully reversible; a bad
+      # DOCKERHUB_TOKEN must fail here, not after 26 permanent npm versions.
+      - name: Log in to Docker Hub
+        id: docker_login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME || 'jgwill' }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Test
-        run: npx vitest run
-
-      # Catches an empty or wrong `files` glob before it becomes a permanent
-      # version. Cheap, and the failure it prevents is unfixable after the fact.
-      - name: Pack check
-        run: npm publish --dry-run --access public --ignore-scripts
-
-      # Built before anything is published, so a broken Dockerfile fails while
-      # everything is still reversible. Pushed after, so the image never
+      # Also before npm publish, for the same reason: a broken Dockerfile fails
+      # while everything is still reversible. Pushed after, so the image never
       # advertises a version npm does not have.
       - name: Build image
-        run: docker build -t jgwill/medicine-wheel:app -t "jgwill/medicine-wheel:$(node -p "require('./package.json').version")" .
+        id: image_build
+        run: |
+          VERSION="${{ steps.guard.outputs.version }}"
+          docker build -t jgwill/medicine-wheel:app -t "jgwill/medicine-wheel:$VERSION" .
 
       - name: Configure git identity
         run: |
           git config user.name  "medicine-wheel release"
           git config user.email "release@jgwill.com"
 
+      # ── from here on, nothing is reversible ──────────────────────────────
       - name: Publish to npm
-        if: ${{ !inputs.dry_run }}
+        id: npm_publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           SKIP_BUMP: '1'          # the version was decided in the PR
@@ -104,34 +302,65 @@ jobs:
           NPM_CONFIG_PROVENANCE: 'true'
         run: ./release.sh
 
-      - uses: docker/login-action@v3
-        if: ${{ !inputs.dry_run }}
-        with:
-          username: ${{ vars.DOCKERHUB_USERNAME || 'jgwill' }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # Immediately after publish. release.sh created the tag locally; if this
+      # does not reach origin, npm is published against an untagged commit and
+      # nobody can find what shipped.
+      - name: Push tag
+        id: push_tag
+        run: |
+          VERSION="${{ steps.guard.outputs.version }}"
+          if ! git push origin "refs/tags/v$VERSION"; then
+            echo "::error::npm IS PUBLISHED at v$VERSION but the tag did not reach origin. Push it by hand: git push origin v$VERSION"
+            exit 1
+          fi
 
       - name: Push image
-        if: ${{ !inputs.dry_run }}
+        id: image_push
         run: |
-          VERSION="$(node -p "require('./package.json').version")"
+          VERSION="${{ steps.guard.outputs.version }}"
           docker push "jgwill/medicine-wheel:$VERSION"
           docker push jgwill/medicine-wheel:app
 
-      - name: Push tag
-        if: ${{ !inputs.dry_run }}
-        run: git push --tags origin
-
+      # Reports what happened, not what was intended. A step that did not run
+      # says so.
       - name: Summary
         if: always()
         run: |
-          VERSION="$(node -p "require('./package.json').version")"
+          VERSION="${{ steps.guard.outputs.version }}"
           {
-            echo "### Release ${{ inputs.dry_run && '(dry run)' || '' }} — v$VERSION"
+            echo "### Release — v${VERSION:-unknown} — job: ${{ job.status }}"
             echo ""
-            echo "| artifact | tag |"
+            echo "| step | outcome |"
             echo "|---|---|"
-            echo "| npm | \`@medicine-wheel/*@$VERSION\` — lockstep |"
-            echo "| npm | \`@medicine-wheel/mcp\` — own major line |"
-            echo "| image | \`jgwill/medicine-wheel:$VERSION\` and \`:app\` |"
-            echo "| git | \`v$VERSION\` |"
+            echo "| guard (version not on npm) | ${{ steps.guard.outcome || 'did not run' }} |"
+            echo "| build packages + cli | ${{ steps.build.outcome || 'did not run' }} |"
+            echo "| docker login | ${{ steps.docker_login.outcome || 'did not run' }} |"
+            echo "| image build | ${{ steps.image_build.outcome || 'did not run' }} |"
+            echo "| **npm publish** | ${{ steps.npm_publish.outcome || 'did not run' }} |"
+            echo "| **git tag push** | ${{ steps.push_tag.outcome || 'did not run' }} |"
+            echo "| **image push** | ${{ steps.image_push.outcome || 'did not run' }} |"
+            echo ""
+            echo "| artifact | state |"
+            echo "|---|---|"
+            if [ "${{ steps.npm_publish.outcome }}" = "success" ]; then
+              echo "| npm | \`@medicine-wheel/*@$VERSION\` published (mcp on its own major line) |"
+            else
+              echo "| npm | **nothing published** |"
+            fi
+            if [ "${{ steps.push_tag.outcome }}" = "success" ]; then
+              echo "| git | \`v$VERSION\` pushed to origin |"
+            else
+              echo "| git | **no tag on origin** |"
+            fi
+            if [ "${{ steps.image_push.outcome }}" = "success" ]; then
+              echo "| image | \`jgwill/medicine-wheel:$VERSION\` and \`:app\` pushed |"
+            elif [ "${{ steps.image_build.outcome }}" = "success" ]; then
+              echo "| image | built, **not pushed** |"
+            else
+              echo "| image | **not built** |"
+            fi
+            if [ "${{ steps.npm_publish.outcome }}" = "success" ] && [ "${{ steps.image_push.outcome }}" != "success" ]; then
+              echo ""
+              echo "> ⚠ npm and the image have DRIFTED. Publish the image by hand before anyone pulls \`:app\`."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
