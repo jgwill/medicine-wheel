@@ -1,7 +1,7 @@
 {
-  "name": "@medicine-wheel/creative-orientation",
+  "name": "@medicine-wheel/creative-problem-solving",
   "version": "0.5.3",
-  "description": "The orientation question, asked before the work: is there a prior state you are restoring? Yes — this is a fire, route to gap analysis. No — you are creating, route to structural tension. Creative problem solving lands here first, then goes one way or the other.",
+  "description": "Creative problem solving, routed at the door: name the prior state you are restoring. Named one — this is a fire, and gap analysis is the right instrument. Named none — you are creating, and structural tension is. Re-exports @medicine-wheel/creative-orientation.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -24,13 +24,12 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
-    "creative-orientation",
     "creative-problem-solving",
     "problem-solving",
-    "structural-tension",
-    "advancing",
-    "oscillating",
+    "creative-thinking",
+    "ideation",
     "orientation",
+    "structural-tension",
     "gap-analysis",
     "robert-fritz",
     "medicine-wheel"
@@ -40,7 +39,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jgwill/medicine-wheel.git",
-    "directory": "src/creative-orientation"
+    "directory": "src/creative-problem-solving"
+  },
+  "dependencies": {
+    "@medicine-wheel/creative-orientation": "^0.5.3"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

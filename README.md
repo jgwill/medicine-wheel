@@ -31,7 +31,16 @@ medicine-wheel-ontology-core          ← Foundation (types, schemas, RDF vocabu
     ├── medicine-wheel-ui-components        ← React components
     ├── medicine-wheel-data-store           ← Shared Redis data access
     └── medicine-wheel-session-reader       ← Session event data reader
+
+@medicine-wheel/creative-orientation      ← The question asked before the work
+    ├── @medicine-wheel/creative-problem-solving ← Signpost — re-exports the above
+    ├── @medicine-wheel/gap-analysis        ← The fire path
+    └── @medicine-wheel/brainstorming       ← Idea → design, through human gates
 ```
+
+> **Is there a prior state you are restoring?** Named one — this is a fire, and
+> gap analysis is the right instrument. Named none — you are creating, and
+> structural tension is. `mw orient "<outcome>"` asks it from the command line.
 
 ## Methodology: RISE Framework
 
@@ -134,6 +143,30 @@ Session event reader — JSONL parsing, session summaries, analytics extraction,
 
 - **Version:** 0.2.0
 - **Dependencies:** None (Node.js built-ins only)
+
+### [@medicine-wheel/creative-orientation](src/creative-orientation)
+The orientation question, asked before the work: *is there a prior state you are restoring?* Yes — this is a fire, route to gap analysis. No — you are creating, route to structural tension. Reads the claim the caller supplies; advises where phrasing and situation disagree, and never refuses.
+
+- **Version:** 0.5.3
+- **Dependencies:** None (Node.js built-ins only)
+
+### [@medicine-wheel/creative-problem-solving](src/creative-problem-solving)
+Signpost package — re-exports `@medicine-wheel/creative-orientation` and adds `THE_QUESTION`. Holds no logic of its own. It exists because "creative problem solving" is the name people look for, and a signpost carrying the traveller's name is how they find the door.
+
+- **Version:** 0.5.3
+- **Dependencies:** `@medicine-wheel/creative-orientation`
+
+### [@medicine-wheel/gap-analysis](src/gap-analysis)
+Problem-solving built properly for when something worked and stopped — evidenced baseline, observation, difference, verifiable elimination steps. Root cause, incidents, regressions, troubleshooting. The baseline requirement is what separates a fire from a creating act.
+
+- **Version:** 0.5.3
+- **Dependencies:** `@medicine-wheel/creative-orientation`
+
+### [@medicine-wheel/brainstorming](src/brainstorming)
+Idea into committed design through approval gates a human holds — `explore → clarify → approaches → design → spec → review → plan`. Every outcome it emits, including its own multiple-choice questions, passes the orientation question before it is spoken.
+
+- **Version:** 0.5.3
+- **Dependencies:** `@medicine-wheel/creative-orientation`
 
 ## Specifications
 

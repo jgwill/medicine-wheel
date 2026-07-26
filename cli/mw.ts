@@ -189,6 +189,20 @@ function cmdHelp(): void {
   console.log(`
 ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
 
+  ORIENTATION
+    mw orient "<outcome>"                  Which orientation does this call for?
+      [--restores "<prior state>"]         A prior state you are returning to
+      [--evidence "<when it existed>"]     When that state was actually true
+
+    Ask before problem-solving, debugging, fixing, troubleshooting, root-cause
+    or creative-problem-solving work. It reads the claim you supply:
+
+      --restores named  → a fire; gap analysis is the right instrument
+      --restores absent → you are creating; structural tension is
+
+    Urgency is not evidence — under pressure every situation feels like a fire.
+    It reports and offers a restatement; it never refuses.
+
   CEREMONY LIFECYCLE
     mw ceremony open <intention>           Open ceremony (starts in East)
     mw ceremony close <id> [summary]       Close ceremony
@@ -212,6 +226,8 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
 
   NARRATIVE
     mw beat create <dir> <title> <desc>    Create narrative beat
+    mw beat register <episode-dir>         Register authored beats via the door
+    mw beat register <episode-dir> --dry-run   Check legality, write nothing
     mw beat list [--direction east]        List beats
     mw arc <cycle_id>                      Get narrative arc
 

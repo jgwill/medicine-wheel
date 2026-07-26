@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/gap-analysis",
   "version": "0.5.3",
-  "description": "Problem-solving done properly — baseline, observation, difference, elimination steps — with the orientation question asked at its door rather than assumed.",
+  "description": "Problem-solving built properly for when something worked and stopped: evidenced baseline, observation, difference, verifiable elimination steps. Root cause, incidents, regressions, troubleshooting. The baseline requirement is what separates a fire from a creating act.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -15,7 +15,8 @@
   "sideEffects": false,
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "ALPHA.md"
   ],
   "scripts": {
     "build": "tsc",
@@ -23,11 +24,18 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
-    "medicine-wheel",
     "gap-analysis",
     "problem-solving",
     "root-cause",
-    "incident"
+    "incident-response",
+    "postmortem",
+    "regression",
+    "troubleshooting",
+    "debugging",
+    "fix",
+    "baseline",
+    "creative-orientation",
+    "medicine-wheel"
   ],
   "author": "jgwill",
   "license": "MIT",

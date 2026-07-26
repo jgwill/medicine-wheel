@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/brainstorming",
   "version": "0.5.3",
-  "description": "Idea into committed design through approval gates a human holds, with every emitted outcome statement routed through creative orientation — including its own questions.",
+  "description": "Idea into committed design through approval gates a human holds. Every outcome it emits — including its own multiple-choice questions — passes the orientation question before it is spoken. Brainstorming, ideation, requirements gathering, design review.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -15,7 +15,8 @@
   "sideEffects": false,
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "ALPHA.md"
   ],
   "scripts": {
     "build": "tsc",
@@ -23,11 +24,16 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
-    "medicine-wheel",
     "brainstorming",
+    "ideation",
+    "creative-problem-solving",
+    "requirements",
     "design",
     "approval-gates",
-    "creative-orientation"
+    "human-in-the-loop",
+    "creative-orientation",
+    "spec",
+    "medicine-wheel"
   ],
   "author": "jgwill",
   "license": "MIT",
