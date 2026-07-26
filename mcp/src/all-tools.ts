@@ -6,6 +6,7 @@
  */
 import type { Tool } from "./types.js";
 
+import { orientationTools } from "./tools/orientation.js";
 import { eastTools } from "./tools/east.js";
 import { southTools } from "./tools/south.js";
 import { westTools } from "./tools/west.js";
@@ -22,7 +23,10 @@ import { reasoningObservabilityTools } from "./tools/reasoning-observability.js"
 import { inquiryWeaveTools } from "./tools/inquiry-weaves.js";
 import { planPerspectiveTools } from "./tools/plan-perspectives.js";
 
+// Orientation first: list order is scan order, and the routing question
+// belongs before the instruments it routes to.
 export const allTools: Tool[] = [
+  ...orientationTools,
   ...eastTools,
   ...southTools,
   ...westTools,
