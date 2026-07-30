@@ -47,6 +47,10 @@ interface Direction {
 }
 ```
 
+**Two direction vocabularies live in this package, at two altitudes.** `DIRECTIONS[]` (the type above) carries the ceremonial layer — Ojibwe names, seasons, medicines, `lifeStage`, `ages`, `teachings`, `practices`. `DIRECTION_INFO` (see *RSIS Constants*) carries a `focus` and `guidance` per direction used to orient a working session, not to name a teaching. They are not interchangeable: `DIRECTIONS.west.lifeStage` is `'Truth & Planning'` while `DIRECTION_INFO.west.focus` is `'Implementation, creation, manifestation'`.
+
+Consumers naming a teaching, a medicine, or a life stage read `DIRECTIONS` / `DIRECTION_MAP`. Consumers orienting a development session read `DIRECTION_INFO` — the layer that `/workspace/JGWILL.md` § *Operating Model: Circular Development Session* renders as prose, under the heading *Which Wheel Governs Which Artefact*. Whether `integration` belongs to west or north — `DIRECTION_INFO.north.focus` versus `narrative-engine/src/cadence.ts` — is open in `jgwill/medicine-wheel#113` and is deliberately not settled here.
+
 ### Node Types
 
 ```typescript
