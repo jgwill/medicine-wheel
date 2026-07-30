@@ -2,7 +2,7 @@
 
 > A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's (Respect, Reciprocity, Responsibility), and OCAP® data sovereignty principles.
 
-**Version:** 0.5.1 (lockstep packages) · MCP server 4.5.0
+**Version:** 0.5.5 (lockstep packages) · MCP server 4.5.5
 **Language:** TypeScript (ES2022, ESM, strict mode)
 **Runtime:** Node.js
 **Validation:** Zod ^3.23.0
@@ -36,9 +36,14 @@
 21. [Package 19: github-ceremony](#package-19-github-ceremony)
 22. [Package 20: perception-layer](#package-20-perception-layer)
 23. [Package 21: narrative-cluster](#package-21-narrative-cluster)
-24. [MCP Server (@medicine-wheel/mcp)](#mcp-server-medicine-wheelmcp)
-25. [End-to-End Usage](#end-to-end-usage)
-26. [Specifications](#specifications)
+24. [Package 22: creative-orientation](#package-22-creative-orientation)
+25. [Package 23: gap-analysis](#package-23-gap-analysis)
+26. [Package 24: creative-problem-solving](#package-24-creative-problem-solving)
+27. [Package 25: brainstorming](#package-25-brainstorming)
+28. [Package 26: infra](#package-26-infra)
+29. [MCP Server (@medicine-wheel/mcp)](#mcp-server-medicine-wheelmcp)
+30. [End-to-End Usage](#end-to-end-usage)
+31. [Specifications](#specifications)
 
 ---
 
@@ -62,7 +67,7 @@ medicine-wheel-ontology-core          ← Foundation (everyone depends on this)
     └── medicine-wheel-session-reader       ← Session event data reader
 ```
 
-All packages compile to ES2022 with source maps and declaration files. No circular dependencies. All packages use `@medicine-wheel/ontology-core` types as their shared vocabulary. 21 packages total organized in conceptual layers: Foundation → Ceremony → Relational Epistemology → Visualization/Query → UI → Infrastructure.
+All packages compile to ES2022 with source maps and declaration files. No circular dependencies. Most packages use `@medicine-wheel/ontology-core` types as their shared vocabulary; the orientation family (`creative-orientation` and the three packages built on it) is the deliberate exception — it sits below the ontology so that the question asked before the work carries no dependency on the instruments it routes to. 26 packages total organized in conceptual layers: Orientation → Foundation → Ceremony → Relational Epistemology → Visualization/Query → UI → Infrastructure.
 
 ---
 
@@ -420,7 +425,7 @@ const access = getAccessLevel('ceremony/smudging.md', config.governance!);
 npm install medicine-wheel-fire-keeper
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 The Fire Keeper is the ceremony coordination agent. It does not write code or produce artifacts directly — it receives, evaluates, routes, and gates the work of sub-agents through relational integrity checks.
 
@@ -566,7 +571,7 @@ const result = keeper.evaluateImportance(
 npm install medicine-wheel-community-review
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 Wilson describes research validation through *community review* — Elders, knowledge keepers, and community members validate whether research honors relational accountability. This package implements that vision.
 
@@ -728,7 +733,7 @@ circle = closeCircle(circle, outcome);
 npm install medicine-wheel-consent-lifecycle
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 Transforms consent from a boolean checkbox into a living relational obligation with lifecycle tracking, renewal, renegotiation, and community-level consent protocols. Wilson's relational accountability means consent is not an event — it's a *relationship*.
 
@@ -1106,7 +1111,7 @@ import {
 npm install medicine-wheel-importance-unit
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 The ImportanceUnit is the relational unit of knowledge in Wilson's epistemology — a relationally-accountable piece of meaning that carries epistemic weight, source dimensions, accountability links, and circle depth tracking. Not all knowledge is equal: dream-state and embodied knowledge may carry more epistemic authority than rational analysis.
 
@@ -1258,7 +1263,7 @@ const analysis = detectDeepening(linked);
 npm install medicine-wheel-relational-index
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 Four-source epistemic dimensional indexing. Wilson's epistemology recognises multiple sources of knowing — Land, Dream, Code, and Vision each teach differently. This package enables querying, traversal, and cross-dimensional mapping across those epistemic sources.
 
@@ -1409,7 +1414,7 @@ const health = indexHealth(index);
 npm install medicine-wheel-transformation-tracker
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 Research transformation tracking — Wilson's validity criterion: "If research doesn't change you, you haven't done it right." Tracks the transformative impact of research on researchers, communities, and relational networks.
 
@@ -1924,7 +1929,7 @@ const obs = formatDirectionObservation({ east: 40, south: 30, west: 20, north: 1
 npm install medicine-wheel-prompt-decomposition
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 ### MedicineWheelDecomposer
 
@@ -2033,7 +2038,7 @@ const md = decompositionToMarkdown(decomposition);
 npm install medicine-wheel-ui-components
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 ### DirectionCard
 
@@ -2117,7 +2122,7 @@ import type { WilsonMeterProps } from 'medicine-wheel-ui-components';
 npm install medicine-wheel-data-store
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 ### Overview
 
@@ -2132,7 +2137,7 @@ Shared Redis data-access layer for the Medicine Wheel Developer Suite. Provides 
 
 ### Dependencies
 
--   `@medicine-wheel/ontology-core` ^0.5.1
+-   `@medicine-wheel/ontology-core` ^0.5.5
 -   `redis` ^4.6.0
 
 ---
@@ -2143,7 +2148,7 @@ Shared Redis data-access layer for the Medicine Wheel Developer Suite. Provides 
 npm install medicine-wheel-session-reader
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 ### Overview
 
@@ -2166,7 +2171,7 @@ Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, s
 npm install @medicine-wheel/storage-provider
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 ### Overview
 
@@ -2195,7 +2200,7 @@ const store = await createProvider();
 npm install @medicine-wheel/data-store-postgres
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 ### Overview
 
@@ -2218,7 +2223,7 @@ PostgreSQL/Neon provider scaffold for the Medicine Wheel Developer Suite — sha
 npm install @medicine-wheel/ceremonial-diary
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 ### Overview
 
@@ -2245,7 +2250,7 @@ Ceremonial Diary — a participant's voice across the Five-Phase ceremonial meth
 npm install @medicine-wheel/github-ceremony
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 ### Overview
 
@@ -2270,7 +2275,7 @@ GitHub-ceremony processing — witness GitHub webhook events (issues, pull reque
 npm install @medicine-wheel/perception-layer
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 ### Overview
 
@@ -2294,7 +2299,7 @@ Eyes & ears of agent-supported Indigenous film production — witness a belt-dev
 npm install @medicine-wheel/narrative-cluster
 ```
 
-**Version:** 0.5.1
+**Version:** 0.5.5
 
 ### Overview
 
@@ -2312,31 +2317,168 @@ Narrative Cluster Processor — turn witnessed perceptual events / rushes into t
 
 ---
 
+## Package 22: creative-orientation
+
+```bash
+npm install @medicine-wheel/creative-orientation
+```
+
+**Version:** 0.5.5
+
+### Overview
+
+The orientation question, asked before the work: **is there a prior state you are restoring?**
+
+Two situations look identical under pressure and are not. Something worked and stopped is a fire — there is a baseline to return to, and elimination is the right shape. Something has never existed and is wanted is a creating act — there is no baseline, and elimination framing aims the work at a list of known failures instead of at the outcome. This package holds the question and the routing signals; it holds none of the instruments.
+
+Urgency is not evidence. Under pressure every situation feels like a fire.
+
+### Exports
+
+-   `readOrientation`, `reorient`, `routeFor` — read a `SituationClaim` and return an `OrientationReading` with a `Route`
+-   `worthSaying` — the check applied to an outcome before it is spoken
+-   `ADVANCING_MARKERS`, `ELIMINATION_MARKERS` — the phrasing signals read (they inform, never decide)
+-   types — `Orientation`, `OrientationReading`, `OrientationSignal`, `Route`, `SituationClaim`
+
+### Dependencies
+
+None. This package sits below the instruments it routes to.
+
+---
+
+## Package 23: gap-analysis
+
+```bash
+npm install @medicine-wheel/gap-analysis
+```
+
+**Version:** 0.5.5
+
+### Overview
+
+Problem-solving built properly for the case where it genuinely applies: something worked and stopped. Root cause, incidents, regressions, troubleshooting.
+
+The structure requires an evidenced baseline, an observation of the present, the difference between them, and elimination steps that can be verified. The baseline requirement is not bureaucracy — it is exactly what separates a fire from a creating act, and it is why this instrument cannot be quietly used for work that has no prior state.
+
+### Exports
+
+-   `openGapAnalysis`, `addStep`, `markDone`, `isClosed` — the analysis lifecycle
+-   `doorAdvice` — what to say at the door when the situation does not fit this instrument
+-   types — `Baseline`, `Observation`, `GapAnalysis`, `EliminationStep`, `OpenGapOptions`
+
+### Dependencies
+
+-   `@medicine-wheel/creative-orientation`
+
+---
+
+## Package 24: creative-problem-solving
+
+```bash
+npm install @medicine-wheel/creative-problem-solving
+```
+
+**Version:** 0.5.5
+
+### Overview
+
+A signpost, not a door. It holds no logic of its own and never will — it carries one question and then sends the caller one of two ways.
+
+Name a prior state that genuinely existed, and this is a fire: `gap-analysis` is the right instrument, and that work is correct work with nothing to apologise for and nothing to rename. Name none, and you are creating: structural tension is the instrument.
+
+### Exports
+
+-   `THE_QUESTION` — the routing question itself
+-   re-exports the full surface of `@medicine-wheel/creative-orientation`
+
+### Dependencies
+
+-   `@medicine-wheel/creative-orientation`
+
+---
+
+## Package 25: brainstorming
+
+```bash
+npm install @medicine-wheel/brainstorming
+```
+
+**Version:** 0.5.5
+
+### Overview
+
+Idea into committed design through approval gates a human holds. Brainstorming, ideation, requirements gathering, design review.
+
+Every outcome it emits — including its own multiple-choice questions — passes the orientation check before it is spoken. The gates are the point: a phase does not advance because the tool is confident, it advances because a human said so.
+
+### Exports
+
+-   `openSession`, `advance`, `ask`, `answer`, `isComplete`, `suspendedOn` — the gated session lifecycle
+-   `checkEmission` — the orientation check every emitted outcome passes
+-   `PHASE_ORDER`, `GATED_PHASES` — phase sequence and which phases require a human hand
+-   types — `Session`, `Phase`, `Gate`, `EmitCheck`, `OpenOptions`, `checkOptions`
+
+### Dependencies
+
+-   `@medicine-wheel/creative-orientation`
+
+---
+
+## Package 26: infra
+
+```bash
+npm install @medicine-wheel/infra
+```
+
+**Version:** 0.5.5
+
+### Overview
+
+Typed infrastructure facets — a home for the machine specifics (`port`, `unit`, `linger`) that otherwise leak into `metadata: Record<string, unknown>`.
+
+Hosts, tenants, services, and port bindings are modelled as facets **keyed by relational node id** rather than as new node kinds: the closed `NodeType` union from ontology-core is reused, never widened. Port-conflict detection runs over declared ∪ observed state, so a binding that was never written down still collides with one that was.
+
+### Exports
+
+-   `detectPortConflicts` — conflict detection across declared and observed bindings
+-   `FACET_NODE_TYPES`, `DEFAULT_PORT_PROTO` — the reused node types and protocol default
+-   Zod schemas — `HostFacetSchema`, `TenantFacetSchema`, `ServiceFacetSchema`, `PortBindingSchema`, `PortConflictSchema`, `MetisHoldSchema`, `LingerStateSchema`, `ReachabilitySchema`, `PortProtoSchema`, `ServiceScopeSchema`, `PortNumberSchema`
+-   types — `HostFacet`, `TenantFacet`, `ServiceFacet`, `PortBinding`, `PortConflict`, `FacetKind`, `NodeId`, `MetisHold`, `LingerState`, `Reachability`, `PortProto`, `ServiceScope`, plus `Validated*` variants
+
+### Dependencies
+
+-   `@medicine-wheel/ontology-core`
+-   `zod`
+
+---
+
 ## MCP Server (@medicine-wheel/mcp)
 
 ```bash
 npx @medicine-wheel/mcp        # stdio transport
 ```
 
-**Version:** 4.5.0 (independent of the 0.x lockstep line)
+**Version:** 4.5.5 (independent of the 0.x lockstep line)
 
 ### Overview
 
-The Model Context Protocol server exposes **70 tools** that let an agent conduct Indigenous-paradigm research through the Medicine Wheel — over two transports:
+The Model Context Protocol server exposes **74 tools** that let an agent conduct Indigenous-paradigm research through the Medicine Wheel — over two transports:
 
 -   **stdio** — default; persists to a local JSONL store under `.mw/store/`
 -   **StreamableHTTP** — `POST /api/mcp` on the running app, JSON-RPC 2.0 (`tools/list`, `tools/call`), dispatched against the same tool registry as stdio
 
-### Tool families (70 total)
+### Tool families (74 total)
 
+-   **Orientation** (3): `orient_before_solving`, `open_gap_analysis`, `check_emitted_outcome` — the question asked before an instrument is chosen. Registered first because list order is scan order, and the routing question belongs ahead of the tools it routes to
 -   **Four Directions** (13): East (3) vision/spirit/new-relation · South (3) growth/mentorship/embodied-data · West (3) reflection/emotional/strawberry-teaching · North (4) wisdom/elder-council/spirit-feeding/story-archiving
 -   **Validators** (4): `wilson_paradigm_checker`, `ocap_compliance_checker`, `two_eyed_seeing_bridge`, `accountability_validator`
--   **Discovery** (11) & **Integrations** (10): node/edge/ceremony/beat/cycle search, relational web, cross-system bridges
+-   **Discovery** (11) & **Integrations** (11): node/edge/ceremony/beat/cycle search, relational web, cross-system bridges
 -   **Structural Tension** (12): charts, action steps, telescoping, MMOT (creator moment of truth)
--   **Ceremony Lifecycle** (4): `mw_ceremony_open`/`close`, `mw_fire_keeper_status`, `mw_relational_check_back`
+-   **Ceremony Lifecycle** (4): `mw_ceremony_open`, `mw_ceremony_close`, `mw_get_direction`, `mw_store_memory`
 -   **Inquiry Weaves** (3): relate artefacts and episodes, author episode-to-episode lineage edges, enumerate the chronicle catalog
 -   **Plan Perspectives** (3): read and register plan/insight perspectives across the relational web
--   **Coordination** (3), **Epistemic** (2), **Governance/Transformation** (3), **Reasoning Observability** (2)
+-   **Coordination** (3): `mw_fire_keeper_status`, `mw_relational_check_back`, `mw_enforce_gate`
+-   **Epistemic** (2), **Governance/Transformation** (3), **Reasoning Observability** (2)
 
 ### Server-mediated store (opt-in)
 
