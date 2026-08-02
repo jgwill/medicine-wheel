@@ -9,6 +9,8 @@
  * Default behavior (MW_DATA_DIR / local JSONL) is preserved.
  */
 
+import { rankNodes } from './node-search.js';
+
 // ── Types (mirrored from jsonl-store.ts) ──
 
 interface StoredNode {
@@ -419,15 +421,15 @@ export class HttpStore {
     query: string,
     opts: { type?: string; direction?: string; limit?: number } = {}
   ): Promise<StoredNode[]> {
-    // Server has no search endpoint yet — fetch all and filter client-side
-    const all = await this.getAllNodes();
-    const q = query.toLowerCase();
-    let results = all.filter(n =>
-      (n.name && n.name.toLowerCase().includes(q)) ||
-      (n.description && n.description.toLowerCase().includes(q))
-    );
-    if (opts.type) results = results.filter(n => n.type === opts.type);
-    if (opts.direction) results = results.filter(n => n.direction === opts.direction);
+    // Server has no search endpoint yet — fetch all and rank client-side.
+    // Filters apply BEFORE ranking so `limit` spends its slots on nodes the
+    // caller can actually receive, rather than trimming a ranked list down to
+    // rows a type filter then discards.
+    let candidates = await this.getAllNodes();
+    if (opts.type) candidates = candidates.filter(n => n.type === opts.type);
+    if (opts.direction) candidates = candidates.filter(n => n.direction === opts.direction);
+
+    const results = rankNodes(candidates, query);
     return opts.limit !== undefined ? results.slice(0, opts.limit) : results;
   }
 

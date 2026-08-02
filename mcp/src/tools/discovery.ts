@@ -308,13 +308,21 @@ export const discoveryTools: Tool[] = [
   },
   {
     name: "search_nodes",
-    description: "Search relational nodes by name or description. Supports filtering by type and direction.",
+    description:
+      "Search relational nodes across name, description and metadata values. " +
+      "A multi-word query is split into terms; nodes matching every term are returned first, " +
+      "ranked by where the terms were found (name beats description beats metadata). " +
+      "If no node matches every term, nodes matching some terms are returned instead. " +
+      "Supports filtering by type and direction.",
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "Search query (matches name and description)",
+          description:
+            "Search query. Words may be given in any order and may live in different fields — " +
+            "'veritas stc surface service' finds a node named 'veritas-stc-surface' whose " +
+            "metadata kind is 'service'. Matching is case-insensitive.",
         },
         type: {
           type: "string",
