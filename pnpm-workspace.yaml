@@ -17,6 +17,7 @@ packages:
   - src/github-ceremony
   - src/graph-viz
   - src/importance-unit
+  - src/infra
   - src/narrative-cluster
   - src/narrative-engine
   - src/ontology-core

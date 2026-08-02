@@ -21,7 +21,7 @@
 import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
-import { viewSkills, installSkill } from './skills';
+import { viewSkills, installSkill, explainSkillRunUnavailable } from './skills';
 
 const DOCKER_IMAGE = 'jgwill/medicine-wheel:app';
 
@@ -34,6 +34,15 @@ const C = {
 };
 const DEFAULT_PORT = 8040;
 const CONTAINER_PORT = 8040;
+
+// ── Exit codes ────────────────────────────────────────────────────
+// A command that did not do what it was asked must never exit 0.
+//   0  the command did what it said
+//   1  the command ran and failed
+//   2  usage error — unknown command / sub-command, or a missing argument
+//   3  the sub-command is recognised but has no implementation yet
+const EXIT_USAGE = 2;
+const EXIT_UNIMPLEMENTED = 3;
 
 // ── Arg parsing ───────────────────────────────────────────────────
 interface ParsedArgs {
@@ -220,12 +229,19 @@ function cmdSkill(positional: string[]): void {
       break;
     case 'install': {
       const name = positional[1]; // undefined means install all
-      installSkill('srv', name, C);
+      // installSkill returns -1 when `name` matched no skill for this target.
+      if (installSkill('srv', name, C) < 0) process.exitCode = EXIT_USAGE;
       break;
     }
+    case 'run':
+      // Recognised, deliberately unimplemented. See explainSkillRunUnavailable.
+      explainSkillRunUnavailable('mwsrv', C);
+      process.exitCode = EXIT_UNIMPLEMENTED;
+      break;
     default:
-      console.error(`Unknown skill sub-command: ${sub}`);
-      console.error("Available: view, install");
+      console.error(`${C.south}Unknown skill sub-command: ${sub}${C.reset}`);
+      console.error('  Available: view, list, install');
+      process.exitCode = EXIT_USAGE;
   }
 }
 
@@ -252,6 +268,8 @@ OPTIONS
 SKILLS
   mwsrv skill view                List available server skills
   mwsrv skill install [name]      Install a skill (or all)
+  mwsrv skill run <name>          NOT AVAILABLE — skills are definitions, not
+                                  programs. Exits ${EXIT_UNIMPLEMENTED}.
 
 EXAMPLES
   # Start locally (uses current directory's .mw/store)
@@ -284,6 +302,16 @@ async function main(): Promise<void> {
 
   if (positional[0] === 'skill' || positional[0] === 'sk') {
     cmdSkill(positional.slice(1));
+    return;
+  }
+
+  // Anything else positional is a typo, not a server invocation. Starting the
+  // server anyway reported success for a command that was never understood.
+  if (positional.length > 0) {
+    console.error(`${C.south}Unknown command: ${positional[0]}${C.reset}`);
+    console.error("  The only sub-command is 'skill'. Run 'mwsrv --help' for usage.");
+    console.error("  To start the server, run 'mwsrv' with no positional arguments.");
+    process.exitCode = EXIT_USAGE;
     return;
   }
 

@@ -1,21 +1,27 @@
 {
-  "name": "@medicine-wheel/data-store-postgres",
+  "name": "@medicine-wheel/infra",
   "version": "0.5.7",
-  "description": "PostgreSQL/Neon provider scaffold for the Medicine Wheel Developer Suite — shared pool management and provider-ready storage entrypoints",
+  "description": "Typed infrastructure facets for the Medicine Wheel Developer Suite — hosts, tenants, services, and port bindings as facets keyed by relational node id, with port-conflict detection over declared ∪ observed state",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
       "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./connection": {
-      "import": "./dist/connection.js",
-      "types": "./dist/connection.d.ts",
-      "require": "./dist/connection.js",
-      "default": "./dist/connection.js"
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js",
+      "require": "./dist/types.js",
+      "default": "./dist/types.js"
+    },
+    "./schemas": {
+      "types": "./dist/schemas.d.ts",
+      "import": "./dist/schemas.js",
+      "require": "./dist/schemas.js",
+      "default": "./dist/schemas.js"
     }
   },
   "sideEffects": false,
@@ -32,26 +38,26 @@
   },
   "keywords": [
     "medicine-wheel",
-    "postgres",
-    "neon",
-    "data-store",
-    "provider",
-    "relational-memory"
+    "infrastructure",
+    "systemd",
+    "relational-ontology",
+    "port-conflict",
+    "topology-as-data",
+    "metis"
   ],
   "author": "IAIP Collaborative - Shawinigan, QC",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jgwill/medicine-wheel.git",
-    "directory": "src/data-store-postgres"
+    "directory": "src/infra"
   },
   "dependencies": {
     "@medicine-wheel/ontology-core": "^0.5.7",
-    "pg": "^8.20.0"
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "@types/pg": "^8.20.0",
     "typescript": "^5.3.0"
   }
 }

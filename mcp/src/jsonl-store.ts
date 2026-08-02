@@ -15,6 +15,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { rankNodes } from './node-search.js';
 
 // ── Types ──
 
@@ -504,10 +505,19 @@ export class JsonlStore {
   getNodesByType(type: string): StoredNode[] { return this.nodes.filter(n => n.type === type); }
   getNodesByDirection(direction: string): StoredNode[] { return this.nodes.filter(n => n.direction === direction); }
 
+  /**
+   * Term-based, ranked node search — the same contract the HTTP store serves,
+   * so `search_nodes` answers identically whichever backend is mounted.
+   * Filters run before ranking so `limit` is spent on receivable rows.
+   *
+   * @see mcp/src/node-search.ts — the matching and ranking contract
+   */
   searchNodes(query: string, opts: { type?: string; direction?: string; limit?: number } = {}): StoredNode[] {
-    let results = this.nodes.search(query, ['name', 'description'] as any);
-    if (opts.type)      results = results.filter(n => n.type === opts.type);
-    if (opts.direction) results = results.filter(n => n.direction === opts.direction);
+    let candidates = this.nodes.getAll();
+    if (opts.type)      candidates = candidates.filter(n => n.type === opts.type);
+    if (opts.direction) candidates = candidates.filter(n => n.direction === opts.direction);
+
+    const results = rankNodes(candidates, query);
     return opts.limit !== undefined ? results.slice(0, opts.limit) : results;
   }
 
