@@ -1542,3 +1542,104 @@ fails on day one, and it is invisible to anyone who alphabetizes.
 five action steps carrying the corrections above.
 
 - Triage key: `stc:triage:jgwill-medicine-wheel:stcissue:116`
+
+## Issue #118 - PR #117 follow-up: make infrastructure workflows runnable on Termux/runit
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-08-02T10:20:02Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/118
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+### Triage (2026-08-02, @stcissue / 🌿 Mino-Bimaadizi-Daa, day 10)
+
+**Verdict: hotfix + enhancement.** Branch `feat/infra-0.1.0-116`, PR #117 OPEN and
+`MERGEABLE`. Filed by the `ep117-ilex-miafork-dev` lane running on William's Pixel 2 /
+Termux device — the only body in this system that can test runit, which is why the
+Termux half was routed back to it rather than duplicated on gaia.
+
+**Desired outcome, in William's words rather than the issue's framing** (2026-08-02):
+*"registering a service like http://localhost:3123/stc/chart_1785633806340 with its
+related purpose"* — from the Android device, into the chronicle wheel. That is a larger
+and more useful goal than "make the workflows runnable", and it reorders the work.
+
+**Half of it already works, and needed no new code.** Proven during this triage:
+
+```
+node:knowledge:1785666157041:jjmclc   veritas-stc-surface   (knowledge / west)
+metadata.kind = "service", url = http://localhost:3123/stc/chart_1785633806340,
+ports = [{port:3123, proto:"tcp", bind:"127.0.0.1"}]
+```
+
+It persists and appears in `GET /api/nodes?type=knowledge`. The pattern is the one this
+repo already blesses: `src/ontology-core/src/types.ts:499` states that new kinds *"are
+NOT new NodeTypes — they ride on existing `knowledge` nodes carrying a `metadata.kind`
+discriminator"*, and `ServiceFacet.nodeId` is already annotated `→ RelationalNode
+(type: 'knowledge')`. Infrastructure has a place in the wheel today.
+
+**The half that does not work is discovery, and it is not in this issue:**
+
+```
+search_nodes("veritas")                      -> 2 results
+search_nodes("veritas stc surface service")  -> 0 results   (node exists, filter correct)
+```
+
+Terms are ANDed. Registering infrastructure you cannot find again is not registration.
+This is the defect that actually blocks the stated goal.
+
+**Two of the issue's own premises did not survive measurement.** Both filed in good
+faith; neither weakens the issue.
+
+- *"`infra-monitor` assumes systemd/loginctl."* It is not a program. `cli/skills.ts:335`
+  defines it as a skill RECORD — name, title, description, body — and the systemd claim
+  is prose inside `body`. There is no executable code, so it is unrunnable on **every**
+  platform, not only Termux. Repo-wide, the only source file mentioning `systemctl` or
+  `loginctl` is `tests/infra-port-conflicts.test.ts`. There is no systemd coupling to
+  port; there is an adapter to write against nothing.
+- *"unknown CLI subcommands return non-zero"* — confirmed, and worse than filed.
+  `cli/mw.ts:711` and `cli/mwsrv.ts:226` print to stderr and fall through with no exit
+  code set. Measured: `mw skill run foo` exits **0**. Five `.mw/skills/*/SKILL.md` files
+  instruct agents to run `skill run`, a command that does not exist and silently
+  succeeds — the same failure class as a rendered success over zero bytes.
+
+**Also measured:** `@medicine-wheel/infra` is types plus one pure function
+(`detectPortConflicts`) — zero I/O, zero persistence.
+
+**Execute: delegate.** Two lanes were already idle on this work and were NOT duplicated —
+`w1T:pA` authored PR #117, `w1T:p9` authored this issue from the device. Dispatched on
+gaia: the CLI exit-code/`skill run` honesty, and the `search_nodes` multi-word defect.
+Dispatched to the device lane (`w2Y`, brief at
+`/home/mia/workspace/.mino/briefs/2026-08-02-mw-118-termux-infra.md`): the
+service-manager adapter with systemd + runit implementations, observed-state collection,
+an on-device smoke test that survives Vitest dying with *Illegal instruction* on Android,
+and an end-to-end registration read back from the phone.
+
+**Triage key:** `stc:triage:jgwill-medicine-wheel:stcissue:118`
+
+**Held for a human:** the drafted comment on jgwill/medicine-wheel#118 below is not sent.
+Merging PR #117 is authorised by William on green only.
+
+#### Draft comment — ready to send verbatim, NOT sent
+
+> **Two premises corrected, and the goal is closer than this issue assumes**
+>
+> `infra-monitor` is not a program that assumes systemd — `cli/skills.ts:335` defines it
+> as a skill record whose systemd claim is prose in its `body`. There is no executable
+> code, so it is unrunnable on every platform, not just Termux; repo-wide only
+> `tests/infra-port-conflicts.test.ts` references `systemctl`/`loginctl`. So there is no
+> coupling to port, only an adapter to write.
+> The exit-code bullet is confirmed and sharper: `cli/mw.ts:711` and `cli/mwsrv.ts:226`
+> fall through with no exit code — `mw skill run foo` exits 0 — while five
+> `.mw/skills/*/SKILL.md` files instruct agents to run that exact command.
+> Separately: registering a service in the wheel already works today with no new code
+> (`node:knowledge:1785666157041:jjmclc`, per the `metadata.kind` precedent at
+> `ontology-core/src/types.ts:499`). What does not work is finding it —
+> `search_nodes("veritas stc surface service")` returns 0 while `"veritas"` returns 2.
+> Discovery belongs in this issue's "done when".
+>
+> **Strongest argument against:** splitting discovery into this issue widens a scope that
+> was deliberately about deployment runnability, and a wider issue is a slower one.
