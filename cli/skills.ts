@@ -143,6 +143,96 @@ mw skill run ceremony-guide "Community data review"
 \`\`\`
 `,
   },
+  {
+    name: 'infrastructure-audit',
+    title: 'Infrastructure Audit',
+    description: 'Audit hosts, services, and port bindings across the Medicine Wheel estate',
+    target: 'cli',
+    complement: 'infra-monitor',
+    body: `# Skill: Infrastructure Audit
+
+## Purpose
+Analyze infrastructure facets (hosts, tenants, services) and surface relationships, conflicts, and métis.
+
+## Input
+- Target host (optional — audit all if omitted)
+- Facet type filter (host / tenant / service, optional)
+- Conflict scope (declared / observed / union)
+
+## Output
+- Graph: hosts → tenants → services with port bindings
+- Port conflicts (distinct services colliding on same host|proto|port)
+- Métis surface (invisible work, exceptions, heldBy accountability)
+- Reachability status (lan / tailnet / cloudflare / ngrok)
+
+## Usage
+\`\`\`
+mw skill run infrastructure-audit --host eury
+mw skill run infrastructure-audit --type service --conflicts
+\`\`\`
+`,
+  },
+  {
+    name: 'service-provisioning',
+    title: 'Service Provisioning',
+    description: 'Propose and gate service deployment through ceremony-aware preconditions',
+    target: 'cli',
+    complement: 'infra-monitor',
+    body: `# Skill: Service Provisioning
+
+## Purpose
+Propose a new service and check preconditions (port availability, consent, linger-state alignment) via ceremony gates.
+
+## Input
+- Service name and unit (e.g., assembly-mux.service)
+- Port binding claims (host, port, proto)
+- Owner (tenant nodeId)
+- Optional: working directory, execStop, métis exceptions
+
+## Output
+- Precondition checks: port conflicts, tenant consent, linger alignment
+- Fire Keeper gate assessment (hold / proceed)
+- Community review recommendation
+- Deployment ceremony phase to enter
+- Diff against observed state
+
+## Usage
+\`\`\`
+mw skill run service-provisioning \
+  --unit zulip.service \
+  --port 3000:tcp@eury \
+  --owner "node:human:ava"
+\`\`\`
+`,
+  },
+  {
+    name: 'drift-reconciliation',
+    title: 'Drift Reconciliation',
+    description: 'Compare declared vs observed infrastructure state and propose healing steps',
+    target: 'cli',
+    complement: 'infra-monitor',
+    body: `# Skill: Drift Reconciliation
+
+## Purpose
+Detect infrastructure drift (declared state vs systemd observed reality) and recommend ceremony-gated remediation.
+
+## Input
+- Drift scope: specific host, all hosts, or facet type
+- Healing mode: audit-only / propose-fix / execute-with-gates
+
+## Output
+- Drift report: satisfied / diverged / unobserved facets per host
+- Healing candidates: services to restart, ports to release, linger to reconcile
+- Ceremony phase recommendation (emergency / standard)
+- Accountability notes (who holds métis on each remediation)
+
+## Usage
+\`\`\`
+mw skill run drift-reconciliation --host gaia --propose
+mw skill run drift-reconciliation --type service --audit-only
+\`\`\`
+`,
+  },
 
   // ── Server skills (mwsrv) ─────────────────────────────────────
   {
@@ -238,6 +328,66 @@ Inspect and manage active sessions on the Medicine Wheel server.
 ## Usage
 \`\`\`
 mwsrv skill run session-manager
+\`\`\`
+`,
+  },
+  {
+    name: 'infra-monitor',
+    title: 'Infrastructure Monitor',
+    description: 'Live monitoring and drift detection for infrastructure facets via MCP',
+    target: 'srv',
+    complement: 'infrastructure-audit',
+    body: `# Skill: Infrastructure Monitor
+
+## Purpose
+Monitor live infrastructure state (observed via systemd) and track drift against declared facets.
+
+## Capabilities
+- Poll systemd for active units, ports, linger-state across tenants
+- Maintain observed state cache (RelationalNode facets)
+- Detect port collisions in declared ∪ observed bindings
+- Track métis holders and accountability chains
+- Stream drift events to active CLI sessions
+- Gate reconciliation requests through ceremony protocol
+
+## Integration
+- **Backend:** @medicine-wheel/infra (HostFacet, TenantFacet, ServiceFacet, detectPortConflicts)
+- **MCP tools:** infrastructure-audit, service-preconditions, drift-reconciliation, métis-surface
+- **Data store:** Postgres/JSONL via @medicine-wheel/storage-provider
+
+## Usage
+\`\`\`
+mwsrv skill run infra-monitor --poll-interval 30s
+mwsrv skill run infra-monitor --host gaia --linger-report
+\`\`\`
+`,
+  },
+  {
+    name: 'precondition-guard',
+    title: 'Precondition Guard',
+    description: 'Evaluate infrastructure preconditions (linger, consent, port, reachability)',
+    target: 'srv',
+    complement: 'service-provisioning',
+    body: `# Skill: Precondition Guard
+
+## Purpose
+Enforce precondition gates before service provisioning or relational state changes. (Roadmap: @medicine-wheel/infra@0.2.0)
+
+## Precondition Types
+- **Port availability** — detectPortConflicts over declared + observed
+- **Tenant linger** — required for user.slice services; consent record must authorize root step
+- **Consent accountability** — ConsentRecord.id must be present and active
+- **Reachability** — host must be reachable via declared transport (lan, tailnet, cloudflare, ngrok)
+
+## Output
+- Unsatisfied precondition report
+- Fire Keeper hold / proceed recommendation
+- Next ceremony gate to enter (if held)
+- Accountability chain (who can unlock the hold)
+
+## Usage
+\`\`\`
+mwsrv skill run precondition-guard --facet-id "node:knowledge:zulip:..." --intent provision
 \`\`\`
 `,
   },
