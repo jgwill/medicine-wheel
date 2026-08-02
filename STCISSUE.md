@@ -1114,3 +1114,431 @@ Issue being tracked via @stcissue bot.
 ### Current Reality
 Issue being tracked via @stcissue bot.
 
+
+## Issue #95 - Termux: published mwsrv dev runtime fails to compile typed API routes
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-10T18:57:38Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/95
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #96 - Graph: silent Backspace deletion and drag-persist rebuild — resolved
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-17T15:01:38Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/96
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #97 - Graph: the wheel made visible — rings, quadrants, return-to-the-wheel, radial snapping
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-17T15:01:57Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/97
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #98 - Graph: manipulation on canvas — weaving, context menus, focus flow, accessibility
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-17T15:02:16Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/98
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #99 - Data flow: node and relation lifecycle with relational refusal (storage → API → pages)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-17T15:02:34Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/99
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #100 - Design system: direction tokens, Fraunces display, living wheel home, navigation
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-17T15:02:54Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/100
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #101 - UI mission 2607 — deferred enhancements for the next cycle
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-17T15:03:14Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/101
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #96 - Graph: silent Backspace deletion and drag-persist rebuild — resolved
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-17T15:18:13Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/96
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #97 - Graph: the wheel made visible — rings, quadrants, return-to-the-wheel, radial snapping
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-17T15:18:15Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/97
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #98 - Graph: manipulation on canvas — weaving, context menus, focus flow, accessibility
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-17T15:18:16Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/98
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #99 - Data flow: node and relation lifecycle with relational refusal (storage → API → pages)
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-17T15:18:18Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/99
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #100 - Design system: direction tokens, Fraunces display, living wheel home, navigation
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-17T15:18:20Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/100
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #103 - NEW package: @medicine-wheel/structural-tension — extract STC charting from the MCP-only tool into a reusable package
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-21T02:23:56Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/103
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #104 - UPGRADE: @medicine-wheel/transformation-tracker — archive persistence for seven-generations assessments via storage-provider
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-21T02:24:29Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/104
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #105 - UPGRADE: @medicine-wheel/community-review — PR-lifecycle consensus binding (open→voices→consensus→merge-permit), SCM-agnostic
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-21T02:25:03Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/105
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #106 - Acknowledgment & provenance — what the wheel received from Miadi (Guillaume) in 0.5.1
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-21T03:14:35Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/106
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #106 - Acknowledgment & provenance — what the wheel received from Miadi (Guillaume) in 0.5.1
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-21T03:14:36Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/106
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #106 - Acknowledgment & provenance — what the wheel received from Miadi (Guillaume) in 0.5.1
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-21T03:15:23Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/106
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #107 - build: zod missing from root dependencies — Next.js production build fails
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-22T21:51:40Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/107
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #110 - Resolve the telescope_narrative_beat name collision with coaia-narrative
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-24T19:13:50Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/110
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #111 - Serve a cycle's arc: GET /api/narrative/cycles/{id}/arc + membership filters on /api/narrative/beats
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-24T19:14:14Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/111
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #111 - Serve a cycle's arc: GET /api/narrative/cycles/{id}/arc + membership filters on /api/narrative/beats
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-24T19:15:14Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/111
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #109 - Narrative beats: route the remaining minting sites through the authoring door
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-24T19:16:46Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/109
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #112 - list_narrative_beats promises a timestamp ordering the store never performs
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-24T19:17:27Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/112
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #109 - Narrative beats: route the remaining minting sites through the authoring door
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-24T19:18:12Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/109
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Issue #113 - Two modules disagree about which direction holds integration
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-25T14:28:35Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/113
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+## Triage (2026-07-25T14:31Z) — jgwill/medicine-wheel#113
+
+- **Mention**: `stc_1784989716000_stcissue` · read on **gaia** at `ee8dcc9`
+- **Classification**: **question** — and the load-bearing part is *whose*. Not a hotfix: nothing
+  crashes and neither assignment is demonstrably wrong without a source. Not an enhancement: no
+  capability is being asked for. Not an observation needing more seeing — the seeing is already
+  precise. It is a question **no one inside this repository has the standing to answer**, which the
+  issue says plainly: *"An engineer picking a side would be making a cultural assertion in a commit
+  message."* A triage that resolved it would be committing exactly that assertion.
+
+### Both claims verified independently
+
+| where | says |
+| :--- | :--- |
+| `src/ontology-core/src/constants.ts:186` | `west` focus — *"Implementation, creation, manifestation"* |
+| `src/ontology-core/src/constants.ts:187` | `north` focus — *"Reflection, **integration**, wisdom"* |
+| `src/narrative-engine/src/cadence.ts:19,26` | `integrating: 'west'` / `west: 'integrating'` |
+| `src/narrative-engine/src/cadence.ts:20,27` | `closing: 'north'` / `north: 'closing'` |
+| `src/narrative-engine/src/cadence.ts:5` | doc comment states it as settled: *"East → opening, South → deepening, West → integrating, North → closing"* |
+
+Confirmed also: `constants.ts` carries Ojibwe names (`Epangishmok` west, `Kiiwedinong` north),
+seasons (Fall, Winter) and order indices (west 3, north 4) **in the same file** as `DIRECTION_INFO`
+— which is the issue's point about cultural density made concrete.
+
+### One observation offered, not a resolution
+
+The two may not be describing the same thing. `cadence.ts` names a **position in a ceremony's arc** —
+and its north is `closing`, not "not-integration"; the axis is arc-position. `constants.ts` names a
+**direction's teaching** — integration as bringing learning back to the community. Those are
+plausibly two senses of one overloaded English word rather than two claims about one wheel.
+
+The issue already anticipates this in Action Step 2: *"a legitimate answer is that both are right in
+different framings, in which case the two vocabularies need different names."* **This triage supports
+that reading with the code and stops there.** Whether it is correct is not mine to say.
+
+### Next move — a note for the next commit
+
+Not another GitHub comment: the issue holds the analysis and its action steps are sound. What can
+happen **without waiting** for a knowledge holder is to stop the unsourced confidence from
+propagating into consumers.
+
+**Commit message, verbatim:**
+
+> `ontology-core, narrative-engine: mark the direction-of-integration as unsourced`
+>
+> `DIRECTION_INFO.north.focus` names integration; `cadence.ts` maps `integrating` to
+> `west`. Both are exported from published packages, so a consumer reading one and a
+> consumer calling `validateCadence` are told different things about the same wheel.
+>
+> This commit decides nothing. It adds a provenance-pending note beside each
+> constant, pointing at jgwill/medicine-wheel#113, so the next contributor inherits
+> the open question instead of a confident string. The two may also be different
+> senses of one overloaded word — arc-position versus direction-teaching — which
+> would call for two vocabularies, not a correction.
+>
+> No test asserting the two agree: such a test would presume an answer.
+
+### The move that is not mine, and not the repo's
+
+Bringing this to a **knowledge holder** is a relation to arrange, not a task to dispatch — William's.
+A legitimate outcome is *both, differently named*. Until then the strings stay as they are, marked.
+
+### Kin
+
+- `miadisabelle/forgewright#13` — Ojibwe direction names diverging between spec prose and code. Same
+  shape: the code is confident and the confidence is unsourced.
+- `rispecs/wampum-narrative-engine-relation.spec.md` — argues against mapping a Haudenosaunee form
+  onto these directions, an argument that assumes the directions are internally coherent. This issue
+  is upstream of that assumption.
+
+- Triage key: `stc:triage:jgwill-medicine-wheel:stcissue:113`
+
+
+## Issue #116 - Exportation: build @medicine-wheel/infra@0.1.0 — the smallest advancing first step
+
+- **Repository**: jgwill/medicine-wheel
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-07-28T23:50:41Z
+- **GitHub Link**: https://github.com/jgwill/medicine-wheel/issues/116
+
+### Current Reality
+Issue being tracked via @stcissue bot.
+
+
+### Triage — 2026-07-28 · @stcissue (Mino-Bimaadizi-Daa)
+
+**Authorship disclosed:** this issue was written by `miadisabelle` at 23:50:37Z and routed to
+this seat 5 seconds later. It was tested rather than restated.
+
+**Verdict: enhancement.** Not an observation — it is a well-formed desired capability with a
+spec set behind it (`/opt/eury/rispecs/foundations/02-specifications.md` S1–S8). The smallest
+first step is buildable as written, with three corrections to its stated current reality.
+
+**Verified against `main` @ `d7ce7fd`:**
+
+| claim | result |
+|---|---|
+| "20 packages at `0.5.0`" | **stale** — 25 `@medicine-wheel/*` at `0.5.4`, released in `3021b27` dated **2026-07-26** (an earlier draft of this triage said "today" — corrected by the build lane) |
+| grep `systemd\|.service\|linger\|PartOf\|tenant` returns nothing | **holds** — zero hits in the suite's own source |
+| …`\|port` returns nothing | **falsifiable** — `src/data-store/src/connection.ts:16-17` (`port?: number`, `REDIS_PORT` 6381). A Redis client option, not an infra concept; the conclusion survives, the sentence needs one word dropped |
+| `ConsentState` doubled, 7 vs 4 | **confirmed, and understated** — `consent-lifecycle/src/types.ts:15` (7) vs `ontology-core/src/types.ts:93` (4), and **both packages export a symbol named `ConsentStateSchema`** (`consent-lifecycle/src/schemas.ts:12`, `ontology-core/src/schemas.ts:41`, re-exported `ontology-core/src/index.ts:128`) |
+| `KINSHIP_EDGE_TYPES` | **confirmed** — `src/ontology-core/src/kinship.ts:40` |
+| `eury-model.ts` holds the leak / the inverted `DIRECTION_INFO` | **unverifiable here** — no such file anywhere under `/opt/eury`; that path holds only `foundations/` and `rispecs/`. It is an app file in `jgwill/eury`, correctly scoped there by Action Step 4 |
+
+**The constraint the issue does not name.** Root `package.json` carries a `"//workspaces"` comment:
+the array is **topological, not alphabetical** — *"a package listed before a package it imports
+builds first and fails TS2307 on any tree without a stale dist/."* Since `infra` imports
+`ontology-core`, its entry must be placed **after** it. This is the most likely way Action Step 1
+fails on day one, and it is invisible to anyone who alphabetizes.
+
+**Chart:** `chart_1785282789813` — master, linked to `jgwill/medicine-wheel#116`, due 2026-08-05,
+five action steps carrying the corrections above.
+
+- Triage key: `stc:triage:jgwill-medicine-wheel:stcissue:116`
