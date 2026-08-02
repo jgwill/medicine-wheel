@@ -55,6 +55,15 @@ Analyze an engineering task using the Four Directions framework.
 - Ceremony recommendation if balance is poor
 
 ## Usage
+
+> **Not available yet.** \`mw skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mw skill install direction-inquiry\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mw skill run direction-inquiry "Refactor auth module"
 \`\`\`
@@ -84,6 +93,15 @@ Evaluate a proposed action against permission tiers and relational gates.
 - Suggested next move
 
 ## Usage
+
+> **Not available yet.** \`mw skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mw skill install fire-keeper-check\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mw skill run fire-keeper-check "Deploy to production"
 \`\`\`
@@ -111,6 +129,15 @@ Create a proposal-grade wave bundle matching current .pde practice.
 - artifacts/ checklist
 
 ## Usage
+
+> **Not available yet.** \`mw skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mw skill install wave-spec-generator\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mw skill run wave-spec-generator "Add caching layer"
 \`\`\`
@@ -138,6 +165,15 @@ Provide step-by-step guidance through the ceremony lifecycle.
 - Completion criteria
 
 ## Usage
+
+> **Not available yet.** \`mw skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mw skill install ceremony-guide\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mw skill run ceremony-guide "Community data review"
 \`\`\`
@@ -166,6 +202,15 @@ Analyze infrastructure facets (hosts, tenants, services) and surface relationshi
 - Reachability status (lan / tailnet / cloudflare / ngrok)
 
 ## Usage
+
+> **Not available yet.** \`mw skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mw skill install infrastructure-audit\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mw skill run infrastructure-audit --host eury
 mw skill run infrastructure-audit --type service --conflicts
@@ -197,6 +242,15 @@ Propose a new service and check preconditions (port availability, consent, linge
 - Diff against observed state
 
 ## Usage
+
+> **Not available yet.** \`mw skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mw skill install service-provisioning\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mw skill run service-provisioning \
   --unit zulip.service \
@@ -227,6 +281,15 @@ Detect infrastructure drift (declared state vs systemd observed reality) and rec
 - Accountability notes (who holds métis on each remediation)
 
 ## Usage
+
+> **Not available yet.** \`mw skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mw skill install drift-reconciliation\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mw skill run drift-reconciliation --host gaia --propose
 mw skill run drift-reconciliation --type service --audit-only
@@ -253,6 +316,15 @@ Configure the Docker environment for running the Medicine Wheel server.
 - Port availability
 
 ## Usage
+
+> **Not available yet.** \`mwsrv skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mwsrv skill install docker-setup\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mwsrv skill run docker-setup
 \`\`\`
@@ -280,6 +352,15 @@ Configure the storage backend for the Medicine Wheel server.
 - Migration status
 
 ## Usage
+
+> **Not available yet.** \`mwsrv skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mwsrv skill install storage-config\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mwsrv skill run storage-config
 \`\`\`
@@ -303,6 +384,15 @@ Check the health and connectivity of Medicine Wheel API endpoints.
 - Storage layer connectivity
 
 ## Usage
+
+> **Not available yet.** \`mwsrv skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mwsrv skill install api-health\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mwsrv skill run api-health
 \`\`\`
@@ -326,6 +416,15 @@ Inspect and manage active sessions on the Medicine Wheel server.
 - Cleanup stale session data
 
 ## Usage
+
+> **Not available yet.** \`mwsrv skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mwsrv skill install session-manager\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mwsrv skill run session-manager
 \`\`\`
@@ -352,10 +451,19 @@ Monitor live infrastructure state (observed via systemd) and track drift against
 
 ## Integration
 - **Backend:** @medicine-wheel/infra (HostFacet, TenantFacet, ServiceFacet, detectPortConflicts)
-- **MCP tools:** infrastructure-audit, service-preconditions, drift-reconciliation, métis-surface
+- **MCP tools (planned, none registered yet):** infrastructure-audit, service-preconditions, drift-reconciliation, métis-surface
 - **Data store:** Postgres/JSONL via @medicine-wheel/storage-provider
 
 ## Usage
+
+> **Not available yet.** \`mwsrv skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mwsrv skill install infra-monitor\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mwsrv skill run infra-monitor --poll-interval 30s
 mwsrv skill run infra-monitor --host gaia --linger-report
@@ -386,6 +494,15 @@ Enforce precondition gates before service provisioning or relational state chang
 - Accountability chain (who can unlock the hold)
 
 ## Usage
+
+> **Not available yet.** \`mwsrv skill run\` has no implementation.
+> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+>
+> **What works today:** \`mwsrv skill install precondition-guard\` writes this
+> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
+> file to an agent.
+
+Planned invocation (does not run yet):
 \`\`\`
 mwsrv skill run precondition-guard --facet-id "node:knowledge:zulip:..." --intent provision
 \`\`\`
@@ -424,6 +541,35 @@ export function getComplement(skill: SkillDefinition): SkillDefinition | undefin
 }
 
 /**
+ * Print why `skill run` does nothing and what to reach for instead.
+ *
+ * A `SkillDefinition` is a name/title/description/body record — a document, not
+ * a program. Nothing in this repository executes one, so `skill run` has never
+ * had an implementation. Both CLIs call this and then exit non-zero rather than
+ * printing an error and returning 0, which is what they used to do.
+ *
+ * @param binary  Which CLI is speaking ('mw' | 'mwsrv') — shapes the examples.
+ * @param colors  ANSI colour map.
+ */
+export function explainSkillRunUnavailable(
+  binary: 'mw' | 'mwsrv',
+  colors: { bold: string; dim: string; green: string; south: string; reset: string },
+): void {
+  const C = colors;
+  console.error(`${C.south}${binary} skill run is not implemented.${C.reset}`);
+  console.error('');
+  console.error('  Skills here are definitions, not programs: each one is a SKILL.md');
+  console.error('  describing inputs, outputs and steps. There is no runtime that');
+  console.error('  executes them, so nothing would have run.');
+  console.error('');
+  console.error(`  ${C.bold}What works today${C.reset}`);
+  console.error(`    ${binary} skill view              list the skills this CLI knows`);
+  console.error(`    ${binary} skill install <name>    write <name>/SKILL.md into .mw/skills/`);
+  console.error('');
+  console.error('  Then follow the installed SKILL.md yourself, or hand it to an agent.');
+}
+
+/**
  * Print skill catalog for the given target.
  *
  * @param target  Which binary's skills to show ('cli' | 'srv')
@@ -455,7 +601,10 @@ export function viewSkills(
 /**
  * Install a skill (or all skills) for the given target.
  *
- * @returns number of newly installed skills
+ * @returns number of newly installed skills, or **-1** when `name` matched no
+ *          skill for this target — callers must treat -1 as a failure and exit
+ *          non-zero. Returning 0 for both "nothing to do" and "you named a
+ *          skill that does not exist" is what let a bad name report success.
  */
 export function installSkill(
   target: SkillTarget,
@@ -480,16 +629,32 @@ export function installSkill(
     } else {
       console.error(`${C.south}Unknown skill: ${name}${C.reset}`);
     }
-    return 0;
+    return -1;
   }
 
   let installed = 0;
+  let stale = 0;
   for (const skill of toInstall) {
     const skillDir = path.join(dir, skill.name);
     const skillFile = path.join(skillDir, 'SKILL.md');
 
     if (fs.existsSync(skillFile)) {
-      console.log(`  ${C.dim}⊘ ${skill.name} (already installed)${C.reset}`);
+      // An existing file is never overwritten. Say so honestly when the copy
+      // on disk no longer matches the catalog, otherwise "already installed"
+      // reads as "up to date" while the reader follows outdated instructions.
+      let onDisk = '';
+      try { onDisk = fs.readFileSync(skillFile, 'utf8'); } catch { /* unreadable → treat as drifted */ }
+      if (onDisk === skill.body) {
+        console.log(`  ${C.dim}⊘ ${skill.name} (already installed)${C.reset}`);
+      } else {
+        stale++;
+        console.log(
+          `  ${C.dim}⊘ ${skill.name} (already installed — copy on disk differs from the catalog)${C.reset}`,
+        );
+        console.log(
+          `    ${C.dim}to update: rm ${skillFile} && ${target === 'cli' ? 'mw' : 'mwsrv'} skill install ${skill.name}${C.reset}`,
+        );
+      }
       continue;
     }
 
@@ -512,6 +677,9 @@ export function installSkill(
     console.log(`\n  ${C.bold}${installed} skill(s) installed to ${dir}${C.reset}\n`);
   } else {
     console.log(`\n  ${C.dim}All skills already installed.${C.reset}\n`);
+  }
+  if (stale > 0) {
+    console.log(`  ${C.south}${stale} installed copy/copies differ from the catalog and were left untouched.${C.reset}\n`);
   }
 
   return installed;

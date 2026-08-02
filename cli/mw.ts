@@ -12,7 +12,7 @@
 import { spawnSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
-import { viewSkills, installSkill } from './skills';
+import { viewSkills, installSkill, explainSkillRunUnavailable } from './skills';
 import { registerEpisodeBeats, describeArc } from './beats-register';
 import { cmdOrient } from './orientation';
 
@@ -73,6 +73,27 @@ const C = {
   bold:  '\x1b[1m',
   reset: '\x1b[0m',
 };
+
+// ── Exit codes ────────────────────────────────────────────────────
+// A command that did not do what it was asked must never exit 0.
+//   0  the command did what it said
+//   1  the command ran and failed
+//   2  usage error — unknown command / sub-command, or a missing argument
+//   3  the sub-command is recognised but has no implementation yet
+const EXIT_USAGE = 2;
+const EXIT_UNIMPLEMENTED = 3;
+
+/**
+ * Report an unknown sub-command and mark the process as failed.
+ *
+ * Uses `process.exitCode` rather than `process.exit()` so buffered stderr is
+ * flushed before the process leaves.
+ */
+function unknownSub(group: string, sub: string, available: string[]): void {
+  console.error(`${C.south}Unknown ${group} sub-command: ${sub}${C.reset}`);
+  console.error(`  Available: ${available.join(', ')}`);
+  process.exitCode = EXIT_USAGE;
+}
 
 // ── Arg parsing ───────────────────────────────────────────────────
 interface ParsedArgs {
@@ -251,6 +272,8 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
   SKILLS
     mw skill view                          List available CLI skills
     mw skill install [name]                Install a skill (or all)
+    mw skill run <name>                    NOT AVAILABLE — skills are definitions,
+                                           not programs. Exits ${EXIT_UNIMPLEMENTED}.
 
   MEMORY
     mw memory store <key> <value> [dir]   Store relational memory
@@ -364,7 +387,7 @@ async function cmdCeremony(
       break;
     }
     default:
-      console.error(`Unknown ceremony sub-command: ${sub}`);
+      unknownSub('ceremony', sub, ['open', 'close', 'get', 'list']);
   }
 }
 
@@ -467,7 +490,7 @@ async function cmdCycle(positional: string[]): Promise<void> {
       mcpCall('get_narrative_arc', { cycle_id: positional[1] ?? '' });
       break;
     default:
-      console.error(`Unknown cycle sub-command: ${sub}`);
+      unknownSub('cycle', sub, ['create', 'list', 'advance', 'get', 'arc']);
   }
 }
 
@@ -525,7 +548,7 @@ async function cmdNode(
       mcpCall('search_nodes', { query: positional.slice(1).join(' ') });
       break;
     default:
-      console.error(`Unknown node sub-command: ${sub}`);
+      unknownSub('node', sub, ['create', 'list', 'get', 'search']);
   }
 }
 
@@ -592,7 +615,7 @@ async function cmdBeat(positional: string[], flags: Record<string, string | bool
       break;
     }
     default:
-      console.error(`Unknown beat sub-command: ${sub}`);
+      unknownSub('beat', sub, ['register', 'create', 'list']);
   }
 }
 
@@ -617,7 +640,7 @@ function cmdEdge(
       break;
     }
     default:
-      console.error(`Unknown edge sub-command: ${sub}`);
+      unknownSub('edge', sub, ['create', 'list']);
   }
 }
 
@@ -647,7 +670,7 @@ function cmdChart(positional: string[]): void {
       mcpCall('get_chart_progress', { chart_id: positional[1] ?? '' });
       break;
     default:
-      console.error(`Unknown chart sub-command: ${sub}`);
+      unknownSub('chart', sub, ['create', 'list', 'progress']);
   }
 }
 
@@ -690,7 +713,7 @@ function cmdValidate(positional: string[]): void {
       });
       break;
     default:
-      console.error(`Unknown validate sub-command: ${sub}`);
+      unknownSub('validate', sub, ['wilson', 'ocap', 'accountability', 'bridge']);
   }
 }
 
@@ -705,12 +728,17 @@ function cmdSkill(positional: string[]): void {
       break;
     case 'install': {
       const name = positional[1]; // undefined means install all
-      installSkill('cli', name, C);
+      // installSkill returns -1 when `name` matched no skill for this target.
+      if (installSkill('cli', name, C) < 0) process.exitCode = EXIT_USAGE;
       break;
     }
+    case 'run':
+      // Recognised, deliberately unimplemented. See explainSkillRunUnavailable.
+      explainSkillRunUnavailable('mw', C);
+      process.exitCode = EXIT_UNIMPLEMENTED;
+      break;
     default:
-      console.error(`Unknown skill sub-command: ${sub}`);
-      console.error("Available: view, install");
+      unknownSub('skill', sub, ['view', 'list', 'install']);
   }
 }
 
@@ -729,7 +757,7 @@ function cmdMemory(positional: string[]): void {
       break;
     }
     default:
-      console.error(`Unknown memory sub-command: ${sub}`);
+      unknownSub('memory', sub, ['store']);
   }
 }
 
@@ -768,7 +796,7 @@ async function main(): Promise<void> {
     default:
       console.error(`${C.south}Unknown command: ${cmd}${C.reset}`);
       console.error("Run 'mw help' for usage.");
-      process.exit(1);
+      process.exitCode = EXIT_USAGE;
   }
 }
 
