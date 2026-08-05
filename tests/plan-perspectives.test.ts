@@ -190,10 +190,11 @@ describe("Plan Perspective REST routes", () => {
     );
     expect(empty).toMatchObject({ count: 0, plan_perspectives: [] });
 
-    const unfiltered = await collectionRoute.GET(
-      new Request("http://localhost/api/plan-perspectives"),
+    const unfiltered = await getJson(
+      collectionRoute.GET,
+      "http://localhost/api/plan-perspectives",
     );
-    expect(unfiltered.status).toBe(400);
+    expect(unfiltered).toMatchObject({ count: 1, plan_perspectives: [{ id: initial.id }] });
 
     const byIdResponse = await itemRoute.GET(
       new Request("http://localhost/api/plan-perspectives/id"),
