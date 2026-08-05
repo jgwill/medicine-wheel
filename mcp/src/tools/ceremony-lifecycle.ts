@@ -6,6 +6,7 @@
  * and storing relational memories. Research is ceremony (Wilson, 2008).
  */
 
+import { INFRA_ENTITY_BINDING, INFRA_ENTITY_KINDS } from "@medicine-wheel/ontology-core";
 import type { Tool } from "../types.js";
 import { store } from "../store.js";
 
@@ -94,7 +95,7 @@ export const ceremonyLifecycleTools: Tool[] = [
 
         const ceremonyId = `ceremony:${Date.now()}:${Math.random().toString(36).slice(2, 7)}`;
 
-        store.logCeremony({
+        await store.logCeremony({
           id: ceremonyId,
           type: "opening",
           direction,
@@ -162,7 +163,7 @@ export const ceremonyLifecycleTools: Tool[] = [
 
         const intentions = summary ? [summary, ...learnings] : [...learnings];
 
-        store.logCeremony({
+        await store.logCeremony({
           id: closingId,
           type: "closing",
           direction: opening.direction,
@@ -192,7 +193,7 @@ export const ceremonyLifecycleTools: Tool[] = [
   {
     name: "mw_get_direction",
     description:
-      "Get directional metadata for a medicine wheel direction. Returns the sacred medicine, season, teaching, life stage, and color associated with the direction. Can look up direction from an existing ceremony or accept a direction directly. Fire Keeper agents use this to orient ceremony lifecycle work.",
+      "Get directional metadata for a medicine wheel direction. Returns the sacred medicine, season, teaching, life stage, and color associated with the direction. Can look up direction from an existing ceremony, from a registered infrastructure node, or accept a direction directly. Fire Keeper agents use this to orient ceremony lifecycle work.",
     inputSchema: {
       type: "object",
       properties: {
@@ -200,18 +201,28 @@ export const ceremonyLifecycleTools: Tool[] = [
           type: "string",
           description: "Look up the direction from an existing ceremony (optional)",
         },
+        node_id: {
+          type: "string",
+          description:
+            "Look up the direction from a registered node (optional). For infrastructure this " +
+            "routes the question where it belongs: a running SERVICE is West — the thing that " +
+            "executes; a TENANT is South — an account whose readiness is a precondition; a HOST " +
+            "carries no direction of its own, because the land is the ground the wheel stands on, " +
+            "not a quadrant inside it.",
+        },
         direction: {
           type: "string",
           enum: ["east", "south", "west", "north"],
-          description: "Medicine wheel direction to query (default: east, overridden by ceremony_id if provided)",
+          description: "Medicine wheel direction to query (default: east, overridden by ceremony_id or node_id if provided)",
         },
       },
     },
     handler: async (args) => {
       try {
-        const { ceremony_id, direction: directionArg } = args;
+        const { ceremony_id, node_id, direction: directionArg } = args;
 
         let direction = directionArg || "east";
+        let routedFrom: Record<string, unknown> | undefined;
 
         if (ceremony_id) {
           const ceremony = (await store.getCeremony(ceremony_id));
@@ -222,6 +233,50 @@ export const ceremonyLifecycleTools: Tool[] = [
             };
           }
           direction = ceremony.direction;
+        } else if (node_id) {
+          const node = (await store.getNode(node_id)) as
+            | { id: string; name: string; direction?: string; metadata?: Record<string, unknown> }
+            | undefined;
+          if (!node) {
+            return { status: "error", message: `Node ${node_id} not found` };
+          }
+          const kind = node.metadata?.kind as string | undefined;
+          // `kind in INFRA_ENTITY_BINDING` matched inherited Object.prototype
+          // keys, so a node whose kind was 'toString' or 'constructor' was
+          // reported as a host. Ask the registry of kinds, not the object.
+          const binding =
+            kind && (INFRA_ENTITY_KINDS as readonly string[]).includes(kind)
+              ? INFRA_ENTITY_BINDING[kind as keyof typeof INFRA_ENTITY_BINDING]
+              : undefined;
+
+          if (binding && binding.direction === undefined) {
+            // A host answered with a quadrant would be a wrong answer dressed as
+            // a complete one. Say what it is instead.
+            return {
+              status: "ok",
+              node_id,
+              node_name: node.name,
+              kind,
+              direction: null,
+              message:
+                `${node.name} is a host. A host carries no direction of its own — it is the ground ` +
+                `the tenants and services stand on. Ask about a tenant (South) or a service (West).`,
+              teaching: "Not every being belongs in a quadrant. Some are what the quadrants rest on.",
+            };
+          }
+
+          const resolved = binding?.direction ?? node.direction;
+          if (!resolved) {
+            return {
+              status: "ok",
+              node_id,
+              node_name: node.name,
+              direction: null,
+              message: `Node ${node.name} declares no direction and carries no infrastructure kind.`,
+            };
+          }
+          direction = resolved;
+          routedFrom = { node_id, node_name: node.name, kind };
         }
 
         const meta = DIRECTION_MAP[direction];
@@ -234,6 +289,7 @@ export const ceremonyLifecycleTools: Tool[] = [
 
         return {
           direction,
+          ...(routedFrom ? { routed_from: routedFrom } : {}),
           medicine: meta.medicine,
           season: meta.season,
           teaching: meta.teaching,
@@ -284,7 +340,7 @@ export const ceremonyLifecycleTools: Tool[] = [
         const memoryId = `memory:${Date.now()}:${Math.random().toString(36).slice(2, 7)}`;
         const now = new Date().toISOString();
 
-        store.createNode({
+        await store.createNode({
           id: memoryId,
           type: "knowledge",
           name: key,

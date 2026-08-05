@@ -103,6 +103,37 @@ export const KINSHIP_EDGE_TYPES = {
     symmetry: 'symmetric',
     description: 'Two hubs hold a kinship relation with one another.',
   },
+
+  // ── Infrastructure edges (§S2) ────────────────────────────────────────────
+  // A host, a tenant and a service are already beings here — `land`, `human`,
+  // `knowledge`. What had no governed vocabulary was how they hold each other:
+  // containment, ordering, and a claim on a scarce slot. Registered here rather
+  // than forked into `@medicine-wheel/infra`, so a dependency between two
+  // services reads with the same grammar as a dependency between two people.
+  'part-of': {
+    name: 'part-of',
+    symmetry: 'asymmetric',
+    inverse: 'has-part',
+    description:
+      'One being is contained by another and does not stand alone — a service within a tenant, a tenant upon a host.',
+    defaultObligations: ['land'],
+  },
+  'ordered-after': {
+    name: 'ordered-after',
+    symmetry: 'asymmetric',
+    inverse: 'ordered-before',
+    description:
+      'One being must come into readiness after another. Sequence, not hierarchy: the later does not answer to the earlier, it waits for it.',
+    defaultObligations: ['future'],
+  },
+  'binds-port': {
+    name: 'binds-port',
+    symmetry: 'asymmetric',
+    inverse: 'port-bound-by',
+    description:
+      'A service claims a scarce slot on a host. Scarcity is the relation: two beings cannot both hold it, so the claim carries an obligation to the land it is made on.',
+    defaultObligations: ['land', 'human'],
+  },
 } as const satisfies Record<string, KinshipEdgeType>;
 
 /** Union of governed kinship-edge names — the value stored on a Relation. */

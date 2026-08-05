@@ -532,6 +532,39 @@ export interface ProductionRelation extends Relation {
   timecode?: string;
 }
 
+// ── Infrastructure Entity Kinds (hosts, tenants, services) ───────────────────
+// The same additive move as ProductionEntityKind above, and for the same reason:
+// a machine, a unix account and a systemd unit are already beings this ontology
+// can hold — `land`, `human`, `knowledge`. They are NOT new NodeTypes. They ride
+// existing nodes carrying a `metadata.kind: InfraEntityKind` discriminator, and
+// their machine specifics live in the typed facets of `@medicine-wheel/infra`,
+// keyed by node id. The NodeType union stays closed at six.
+
+/** Discriminator for infrastructure entities riding on existing nodes. */
+export type InfraEntityKind = 'host' | 'tenant' | 'service';
+
+/**
+ * Which closed `NodeType` each infrastructure kind rides, and which direction it
+ * serves.
+ *
+ * The directions are not decoration. A service is **west** — the thing that
+ * executes. A tenant is **south** — an account is a being whose readiness is a
+ * precondition. A host carries no direction of its own: it is the ground the
+ * others stand on, and giving the land a direction would put the wheel inside
+ * one of its own quadrants.
+ */
+export const INFRA_ENTITY_BINDING = {
+  host: { nodeType: 'land', direction: undefined },
+  tenant: { nodeType: 'human', direction: 'south' },
+  service: { nodeType: 'knowledge', direction: 'west' },
+} as const satisfies Record<
+  InfraEntityKind,
+  { nodeType: NodeType; direction: DirectionName | undefined }
+>;
+
+/** `'host' | 'tenant' | 'service'` — the registered infrastructure kinds. */
+export const INFRA_ENTITY_KINDS: readonly InfraEntityKind[] = ['host', 'tenant', 'service'];
+
 // ── MCP Tool/Resource/Prompt types ──────────────────────────────────────────
 
 export interface MWTool {

@@ -17,7 +17,13 @@ export const MetisHoldSchema = z.object({
   exceptions: z.array(z.string()).optional(),
   invisibleWork: z.array(z.string()).optional(),
   notes: z.array(z.string()).optional(),
-  heldBy: z.string().optional(),
+  /**
+   * `.min(1)` is load-bearing. An empty string passes every other check while
+   * anonymising the carrier — which is precisely the erasure this field exists
+   * to refuse. Absent means nobody was named; empty means somebody was named
+   * nothing, and only one of those is honest.
+   */
+  heldBy: z.string().min(1).optional(),
 });
 
 // ── Enumerations ────────────────────────────────────────────────────────────
@@ -85,6 +91,78 @@ export const ServiceFacetSchema = z.object({
   metis: MetisHoldSchema.optional(),
 });
 
+// ── Preconditions (S4) ──────────────────────────────────────────────────────
+
+export const PreconditionKindSchema = z.enum([
+  'linger',
+  'port-free',
+  'unit-present',
+  'working-directory',
+]);
+
+/**
+ * `observed` is `.optional()` and NOT `.default()`. An unread fact must stay
+ * distinguishable from a read one — a default would quietly turn "nobody looked"
+ * into a value, which is the exact confusion `preconditionGuard` returns
+ * `unknown` to prevent.
+ */
+export const MachineFactSchema = z.object({
+  kind: PreconditionKindSchema,
+  facetNodeId: z.string().min(1),
+  expected: z.string(),
+  observed: z.string().optional(),
+  observedAt: z.string().optional(),
+});
+
+/**
+ * `state` is a bare string, not an enum. `infra` records what the consent
+ * lifecycle said; it does not get to decide which states exist, and an enum here
+ * would let this package reject a state the lifecycle legitimately issued.
+ */
+export const ConsentReferenceSchema = z.object({
+  consentId: z.string().min(1),
+  state: z.string().optional(),
+  readAt: z.string().optional(),
+});
+
+export const PreconditionSchema = z.object({
+  id: z.string().min(1),
+  gates: z.string().min(1),
+  description: z.string().optional(),
+  fact: MachineFactSchema.optional(),
+  consent: ConsentReferenceSchema.optional(),
+  metis: MetisHoldSchema.optional(),
+});
+
+export const PreconditionVerdictSchema = z.enum([
+  'satisfied',
+  'unsatisfied',
+  'unauthorized',
+  'unknown',
+]);
+
+// ── Observed state & drift (S6) ─────────────────────────────────────────────
+
+export const DriftStateSchema = z.enum(['converged', 'drifted', 'unrealized', 'undeclared']);
+
+/**
+ * `observedBy` and `observedAt` are required. An observation without a reader
+ * and a time is a rumour, and this schema is the boundary that refuses one.
+ */
+export const ObservedStateSchema = z.object({
+  observedBy: z.string().min(1),
+  /**
+   * `.datetime()`, not `.min(1)`. An unparseable stamp made `observationAgeMs`
+   * vanish from the result — the same output as "no `now` was given" — so a
+   * caller whose entire reason to read that field is *refuse a stale reading*
+   * could not tell a garbage timestamp from a deliberate clock-free call, and
+   * would proceed.
+   */
+  observedAt: z.string().datetime(),
+  services: z.array(ServiceFacetSchema),
+  tenants: z.array(TenantFacetSchema).optional(),
+});
+
 // ── Inferred types ──────────────────────────────────────────────────────────
 //
 // Named `Validated*` to match the convention consent-lifecycle established, and
@@ -96,3 +174,7 @@ export type ValidatedPortConflict = z.infer<typeof PortConflictSchema>;
 export type ValidatedHostFacet = z.infer<typeof HostFacetSchema>;
 export type ValidatedTenantFacet = z.infer<typeof TenantFacetSchema>;
 export type ValidatedServiceFacet = z.infer<typeof ServiceFacetSchema>;
+export type ValidatedMachineFact = z.infer<typeof MachineFactSchema>;
+export type ValidatedConsentReference = z.infer<typeof ConsentReferenceSchema>;
+export type ValidatedPrecondition = z.infer<typeof PreconditionSchema>;
+export type ValidatedObservedState = z.infer<typeof ObservedStateSchema>;

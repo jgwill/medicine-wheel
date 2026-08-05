@@ -8,6 +8,12 @@
 import type { Tool } from "../types.js";
 import { store } from "../store.js";
 import {
+  HostFacetSchema,
+  TenantFacetSchema,
+  ServiceFacetSchema,
+} from "@medicine-wheel/infra";
+import { INFRA_ENTITY_BINDING, isKinshipEdgeName } from "@medicine-wheel/ontology-core";
+import {
   createBeat as authorBeat,
   validateBeatDraft,
   telescopeBeat,
@@ -18,7 +24,11 @@ import {
 export const integrationTools: Tool[] = [
   {
     name: "create_relational_node",
-    description: "Create a relational node in the medicine wheel memory graph (human, land, spirit, ancestor, future, knowledge). Persistent across sessions.",
+    description:
+      "Create a relational node in the medicine wheel memory graph (human, land, spirit, ancestor, " +
+      "future, knowledge). Persistent across sessions. Optionally validates and attaches a typed " +
+      "infrastructure facet — see `facet_kind`; for hosts, tenants and services prefer the " +
+      "register_* tools, which resolve identities, merge on re-registration and emit the edges.",
     inputSchema: {
       type: "object",
       properties: {
@@ -44,25 +54,76 @@ export const integrationTools: Tool[] = [
           type: "object",
           description: "Additional metadata (optional)",
         },
+        facet: {
+          type: "object",
+          description:
+            "A typed infrastructure facet to validate and attach, instead of an unchecked metadata " +
+            "blob. Requires `facet_kind`. Prefer register_host / register_tenant / register_service, " +
+            "which resolve identities and emit the relational edges; this is the escape hatch for a " +
+            "caller that already holds a complete facet.",
+        },
+        facet_kind: {
+          type: "string",
+          enum: ["host", "tenant", "service"],
+          description: "Which schema validates `facet`. Sets metadata.kind on the node.",
+        },
       },
       required: ["name", "type", "description"],
     },
     handler: async (args) => {
       try {
-        const { name, type, description, direction, metadata = {} } = args;
+        const { name, type, description, direction, metadata = {}, facet, facet_kind } = args;
+
+        const id = `node:${type}:${Date.now()}:${Math.random().toString(36).substring(7)}`;
+        let nodeMetadata: Record<string, unknown> = { ...metadata };
+
+        if (facet || facet_kind) {
+          if (!facet || !facet_kind) {
+            return {
+              status: "error",
+              message:
+                "`facet` and `facet_kind` travel together — a facet with no declared kind cannot be " +
+                "validated, and a kind with no facet has nothing to validate.",
+            };
+          }
+          const expected = INFRA_ENTITY_BINDING[facet_kind as "host" | "tenant" | "service"];
+          if (expected.nodeType !== type) {
+            return {
+              status: "error",
+              message:
+                `A ${facet_kind} facet rides a '${expected.nodeType}' node, not '${type}'. The NodeType ` +
+                `union is closed at six and infrastructure reuses it rather than widening it.`,
+            };
+          }
+          const schema =
+            facet_kind === "host" ? HostFacetSchema
+            : facet_kind === "tenant" ? TenantFacetSchema
+            : ServiceFacetSchema;
+          const parsed = schema.safeParse({ ...facet, nodeId: id });
+          if (!parsed.success) {
+            return {
+              status: "error",
+              message: `${facet_kind} facet failed validation — nothing was written`,
+              issues: parsed.error.issues.map(i => ({ field: i.path.join("."), problem: i.message })),
+            };
+          }
+          nodeMetadata = { ...nodeMetadata, kind: facet_kind, facet: parsed.data };
+        }
 
         const node = {
-          id: `node:${type}:${Date.now()}:${Math.random().toString(36).substring(7)}`,
+          id,
           type,
           name,
           description,
           direction,
-          metadata,
+          metadata: nodeMetadata,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
 
-        store.createNode(node);
+        // Awaited: HttpStore returns the promise precisely so a caller can learn
+        // the truth rather than being told "created" over a request that 404'd.
+        await store.createNode(node);
 
         return {
           status: "created",
@@ -127,7 +188,7 @@ export const integrationTools: Tool[] = [
           created_at: new Date().toISOString(),
         };
 
-        store.createEdge(edge);
+        await store.createEdge(edge);
 
         return {
           status: "created",
@@ -147,7 +208,13 @@ export const integrationTools: Tool[] = [
   },
   {
     name: "get_relational_web",
-    description: "Get the full relational web around a node (all connected relations up to specified depth). Visualizes the network of accountability.",
+    description:
+      "Get the full relational web around a node (all connected relations up to specified depth). " +
+      "Visualizes the network of accountability. Filter by `edge_types` to walk one vocabulary — " +
+      "the infrastructure edges that tools actually emit are `part-of` and `binds-port`, so a " +
+      "service's containment and its port claims can be traversed without the ceremony edges, or " +
+      "alongside them. (`ordered-after` is registered in KINSHIP_EDGE_TYPES but no tool emits one " +
+      "yet, so filtering on it always returns an empty web.)",
     inputSchema: {
       type: "object",
       properties: {
@@ -161,22 +228,78 @@ export const integrationTools: Tool[] = [
           minimum: 1,
           maximum: 5,
         },
+        edge_types: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Keep only edges whose relationship_type is in this list — e.g. ['part-of','binds-port'] " +
+            "for the infrastructure topology around a host. Unregistered names are reported back " +
+            "rather than silently matching nothing.",
+        },
       },
       required: ["node_id"],
     },
     handler: async (args) => {
       try {
-        const { node_id, depth = 2 } = args;
+        const { node_id, depth = 2, edge_types } = args;
+
+        // Without this, a missing node_id returns an empty web with status ok —
+        // and "this host has no tenants and no services" is indistinguishable
+        // from "you never named a host". A rendered success over zero bytes.
+        if (typeof node_id !== "string" || node_id.trim().length === 0) {
+          return {
+            status: "error",
+            message:
+              "node_id is required. An empty centre returns an empty web, which reads as " +
+              "'this node has no relations' rather than as 'no node was named'.",
+          };
+        }
 
         const web = (await store.getRelationalWeb(node_id, depth));
+
+        let edges = web.edges;
+        let nodes = web.nodes;
+        let unregistered: string[] = [];
+        // `[]` is not a filter. Echoing it back beside an unfiltered web read as
+        // "I filtered to nothing and this is what survived."
+        const filtering = Array.isArray(edge_types) && edge_types.length > 0;
+
+        if (filtering) {
+          // Name what is not in the governed registry. A filter that silently
+          // matches nothing is indistinguishable from a node with no relations,
+          // and the caller cannot tell which they are looking at.
+          unregistered = edge_types.filter((t: string) => !isKinshipEdgeName(t));
+
+          const wanted = new Set<string>(edge_types);
+          edges = web.edges.filter((e: { relationship_type: string }) =>
+            wanted.has(e.relationship_type));
+
+          // Keep the centre plus whatever the surviving edges still touch, so
+          // the returned web is connected rather than a node list with holes.
+          const reachable = new Set<string>([node_id]);
+          for (const e of edges as { from_id: string; to_id: string }[]) {
+            reachable.add(e.from_id);
+            reachable.add(e.to_id);
+          }
+          nodes = web.nodes.filter((n: { id: string }) => reachable.has(n.id));
+        }
 
         return {
           center_node_id: node_id,
           depth,
-          nodes_count: web.nodes.length,
-          edges_count: web.edges.length,
-          nodes: web.nodes,
-          edges: web.edges,
+          ...(filtering ? { edge_types } : {}),
+          ...(unregistered.length > 0
+            ? {
+                unregistered_edge_types: unregistered,
+                warning:
+                  `${unregistered.join(", ")} — not in KINSHIP_EDGE_TYPES. Free-string edges still ` +
+                  `match if they exist in the graph, but nothing governs their meaning.`,
+              }
+            : {}),
+          nodes_count: nodes.length,
+          edges_count: edges.length,
+          nodes,
+          edges,
           teaching: "Reality is relational; everything interconnected",
         };
       } catch (error) {
@@ -247,7 +370,7 @@ export const integrationTools: Tool[] = [
           research_context: args.research_context,
         };
 
-        store.logCeremony(ceremonyLog);
+        await store.logCeremony(ceremonyLog);
 
         // Update relationship edges as ceremony-honored
         if (args.relations_honored) {
@@ -359,7 +482,7 @@ export const integrationTools: Tool[] = [
           .violations.filter((v) => v.severity === "warning")
           .map((v) => `${v.field}: ${v.message}`);
 
-        store.createBeat(beat);
+        await store.createBeat(beat);
 
         // Bind the cycle side of the relation. A beat that names its cycle
         // while the cycle does not list it back is how arcs silently lose beats.
@@ -446,7 +569,7 @@ export const integrationTools: Tool[] = [
           archived: false,
         };
 
-        store.createCycle(cycle);
+        await store.createCycle(cycle);
 
         return {
           cycle_id: cycle.id,
@@ -670,7 +793,7 @@ export const integrationTools: Tool[] = [
           current_direction: new_direction,
         };
 
-        store.createCycle(updated);
+        await store.createCycle(updated);
 
         return {
           status: "updated",
@@ -736,7 +859,7 @@ export const integrationTools: Tool[] = [
           updated_at: new Date().toISOString(),
         };
 
-        store.createNode(updated);
+        await store.createNode(updated);
 
         return {
           status: "updated",

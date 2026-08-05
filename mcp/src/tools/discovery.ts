@@ -313,7 +313,7 @@ export const discoveryTools: Tool[] = [
       "A multi-word query is split into terms; nodes matching every term are returned first, " +
       "ranked by where the terms were found (name beats description beats metadata). " +
       "If no node matches every term, nodes matching some terms are returned instead. " +
-      "Supports filtering by type and direction.",
+      "Supports filtering by type, direction, and the `metadata.kind` discriminator.",
     inputSchema: {
       type: "object",
       properties: {
@@ -334,6 +334,15 @@ export const discoveryTools: Tool[] = [
           enum: ["east", "south", "west", "north"],
           description: "Filter by direction (optional)",
         },
+        kind: {
+          type: "string",
+          description:
+            "Filter by the metadata.kind discriminator — 'service', 'host', 'tenant', 'shot', " +
+            "'scene'. A first-class filter, not a search term: asking for every service by typing " +
+            "the word depends on that word surviving into some text field, and asking for " +
+            "kind='service' does not. It does NOT replace the query — a filter with an empty " +
+            "query returns zero results, not every node of that kind.",
+        },
         limit: {
           type: "number",
           description: "Maximum results (default: 20)",
@@ -345,14 +354,14 @@ export const discoveryTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const { query, type, direction, limit = 20 } = args;
+        const { query, type, direction, kind, limit = 20 } = args;
 
-        const nodes = (await store.searchNodes(query, { type, direction, limit }));
+        const nodes = (await store.searchNodes(query, { type, direction, kind, limit }));
 
         return {
           query,
           count: nodes.length,
-          filters: { type, direction, limit },
+          filters: { type, direction, kind, limit },
           nodes: nodes,
           teaching: "Searching is asking. The relations you find are those ready to be known.",
         };

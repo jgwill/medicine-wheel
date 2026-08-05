@@ -22,6 +22,7 @@ import { governanceTransformationTools } from "./tools/governance-transformation
 import { reasoningObservabilityTools } from "./tools/reasoning-observability.js";
 import { inquiryWeaveTools } from "./tools/inquiry-weaves.js";
 import { planPerspectiveTools } from "./tools/plan-perspectives.js";
+import { infrastructureTools } from "./tools/infrastructure.js";
 
 // Orientation first: list order is scan order, and the routing question
 // belongs before the instruments it routes to.
@@ -42,4 +43,5 @@ export const allTools: Tool[] = [
   ...reasoningObservabilityTools,
   ...inquiryWeaveTools,
   ...planPerspectiveTools,
+  ...infrastructureTools,
 ];
