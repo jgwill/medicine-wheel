@@ -70,10 +70,11 @@ describe("Plan Perspective MCP tools", () => {
       count: 0,
       plan_perspectives: [],
     });
-    await expect(list.handler({})).resolves.toMatchObject({
-      success: false,
-      status: "error",
-    });
+    const unfiltered = await list.handler({});
+    expect(unfiltered.count).toBe(2);
+    expect(unfiltered.plan_perspectives.map((entry: { id: string }) => entry.id).sort()).toEqual(
+      [otherSession.id, record.id].sort(),
+    );
 
     const fetched = await get.handler({ id: otherSession.id });
     expect(fetched.record.id).toBe(otherSession.id);

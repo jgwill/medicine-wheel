@@ -72,7 +72,7 @@ export const epistemicTools: Tool[] = [
         });
 
         // Map to flat knowledge node for existing UI compatibility
-        store.createNode({
+        await store.createNode({
           id: unit.id,
           type: "knowledge",
           name: summary.slice(0, 50) + (summary.length > 50 ? "..." : ""),
@@ -149,7 +149,7 @@ export const epistemicTools: Tool[] = [
         const analysis = detectDeepening(deepened);
 
         // Update store
-        store.createNode({
+        await store.createNode({
           ...node,
           metadata: {
             ...node.metadata,

@@ -419,7 +419,7 @@ export class HttpStore {
 
   async searchNodes(
     query: string,
-    opts: { type?: string; direction?: string; limit?: number } = {}
+    opts: { type?: string; direction?: string; kind?: string; limit?: number } = {}
   ): Promise<StoredNode[]> {
     // Server has no search endpoint yet — fetch all and rank client-side.
     // Filters apply BEFORE ranking so `limit` spends its slots on nodes the
@@ -428,6 +428,8 @@ export class HttpStore {
     let candidates = await this.getAllNodes();
     if (opts.type) candidates = candidates.filter(n => n.type === opts.type);
     if (opts.direction) candidates = candidates.filter(n => n.direction === opts.direction);
+    // `kind` is a filter, not a search term — see the JSONL store for why.
+    if (opts.kind) candidates = candidates.filter(n => n.metadata?.kind === opts.kind);
 
     const results = rankNodes(candidates, query);
     return opts.limit !== undefined ? results.slice(0, opts.limit) : results;

@@ -14,7 +14,7 @@ does not have to change to make that true.
 ## Install
 
 ```bash
-npm install @medicine-wheel/infra
+npm install @medicine-wheel/infra@^0.5.8
 ```
 
 Depends only on `@medicine-wheel/ontology-core` and `zod`.
@@ -110,26 +110,103 @@ if (!parsed.success) { /* the emitter misread systemd — do not reconcile on th
 Port numbers are integers in 1–65535. A misparsed `0` is rejected here rather
 than silently never colliding with anything downstream.
 
-## Scope of `0.1.0`
+## `Precondition` — where the machine fact and the human do not merge
 
-Ships S1, S3, S5 only — facets, `detectPortConflicts`, `MetisHold`, schemas.
-Deliberately **not** here:
+```ts
+import { preconditionGuard, readyService, lingerFact } from '@medicine-wheel/infra';
 
-- **`0.2.0`** (S4) — `Precondition`, `preconditionGuard`, `readyService`. Where
-  the machine fact `linger` and the human, withdrawable `ConsentRecord` that
-  authorized the root step reference each other by id without either collapsing
-  into the other.
-- **`0.3.0`** (S6) — level-triggered `reconcile()` + `ObservedState` and the four
-  drift states, which keep `satisfied` from becoming a stale snapshot.
-- **`ontology-core@0.6.0`** (S2) — `part-of` / `ordered-after` / `binds-port` in
-  the governed `KINSHIP_EDGE_TYPES` registry. Until then a dependency edge is an
-  ordinary `Relation`; `infra` does not fork the vocabulary.
+const p = {
+  id: 'pre:gmusic-linger',
+  gates: 'node:knowledge:assembly-mux',
+  fact: lingerFact('node:human:gmusic', 'enabled', '2026-08-05T12:00:00Z'),
+  consent: { consentId: 'consent:root-step:gmusic', state: 'withdrawn', readAt: '2026-08-05T12:00:00Z' },
+};
 
-Each step makes the next honest. None is a backlog item for this one.
+preconditionGuard(p).verdict; // 'unauthorized' — NOT 'satisfied', NOT 'unsatisfied'
+```
+
+`linger` is a machine fact: a checkbox with no authority and no ability to
+withdraw. The human authorization to run the root step that set it is a
+`ConsentRecord` in `@medicine-wheel/consent-lifecycle`. A `Precondition`
+references both **by id**, and `infra` never imports that package — a package
+that can construct a consent record can fabricate one.
+
+Four verdicts, and the distinctions are the whole point:
+
+| verdict | means |
+|---|---|
+| `satisfied` | every declared half was read and holds |
+| `unsatisfied` | a machine fact was read and does not match |
+| `unauthorized` | the machine half holds and consent does not authorize |
+| `unknown` | a declared half has **not been read**, which is not the same as false |
+
+`unauthorized` is separate from `unsatisfied` on purpose. Collapse them and a
+withdrawn consent looks like a technical failure an operator can fix by
+restarting something. `unknown` is separate from both because a guard that
+reports "blocked" when nobody has looked yet is a guard operators learn to
+ignore.
+
+`readyService` reports `declared: 0` out loud rather than letting an
+unconfigured service look checked, and carries every `MetisHold` from the
+blocking preconditions forward — the reason a gate is stuck is exactly where
+"you have to restart it twice" lives.
+
+## `reconcile` — level-triggered, so `satisfied` cannot age
+
+```ts
+const result = reconcile(declaredServices, {
+  observedBy: 'node:land:gaia',
+  observedAt: '2026-08-05T12:00:00Z',
+  services: readLiveFromSystemd(),
+}, { now: '2026-08-05T12:05:00Z' });
+
+result.summary;            // { converged: 4, drifted: 1, unrealized: 0, undeclared: 2 }
+result.observationAgeMs;   // 300000 — refuse to act on a reading that is too old
+```
+
+The outage this answers (jgwill/gaia#74) was not caused by a missing fact. It was
+caused by a fact that *had been* true. So `reconcile` remembers no transitions:
+it compares the current declared level against the current observed level, every
+time. There is no "converged a minute ago" to go stale.
+
+| drift state | means |
+|---|---|
+| `converged` | both sides agree on every compared field |
+| `drifted` | both exist, they disagree — the differences are named |
+| `unrealized` | declared, not observed — written down, not running |
+| `undeclared` | **observed, not declared** — running and nobody wrote it down |
+
+`undeclared` carries the most information: it finds the service somebody started
+by hand at 2am, which is the service holding the port the next tenant is about to
+be given. The §S3 port traversal is folded in here, because this is the one place
+declared and observed are both in hand.
+
+**Métis is never a difference.** Two sides holding different tacit notes is not
+drift — it is two people knowing different things. A reconciler that reported it
+would be asking an operator to delete what they know to make a table go green.
+
+## Scope
+
+Every specification ships: S1 facets, S3 `detectPortConflicts`, S4
+`Precondition`, S5 `MetisHold`, S6 `reconcile`. S2 — the governed `part-of`,
+`ordered-after` and `binds-port` edges — landed in
+`ontology-core`'s `KINSHIP_EDGE_TYPES`, which is where edge vocabulary belongs.
+`infra` never forked it.
+
+S4 and S6 first ship in **0.5.8**. `0.5.7` and earlier contain S1, S3 and S5
+only — a package that installs `^0.5.7` may resolve a dist with no
+`preconditionGuard` and no `reconcile`.
+
+The package stays types plus pure functions: zero I/O, zero persistence, zero
+clock. `reconcile` takes `now` as an argument for exactly that reason.
+Persistence belongs to `@medicine-wheel/mcp`, which is where these are reachable
+from — `register_host`, `register_tenant`, `register_service`,
+`detect_port_conflicts`, `hold_metis`, `list_infra_topology`,
+`reconcile_infra_state`, and `mw_enforce_gate` for the precondition gate.
 
 ## Grounding
 
-- Specification: `/opt/eury/rispecs/foundations/02-specifications.md` §S1, §S3, §S5
+- Specification: `/opt/eury/rispecs/foundations/02-specifications.md` §S1–§S6
 - Argument: `/opt/eury/foundations/relational-infrastructure/synthesis.md`
 - The collision this exists to catch: `jgwill/gaia#75`
 - The outage that motivated observed state: `jgwill/gaia#74`

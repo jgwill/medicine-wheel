@@ -31,6 +31,12 @@ interface StoredNode {
 }
 
 interface StoredEdge {
+  /**
+   * Stable identity for the edge. `edgeKey` falls back to `from_id:to_id` when
+   * absent — which silently collapses two distinct relations between the same
+   * pair. A service binding both :80 and :443 on one host needs two, so an edge
+   * whose identity is finer than its endpoints must carry an `id`.
+   */
   id?: string;
   from_id: string;
   to_id: string;
@@ -39,6 +45,8 @@ interface StoredEdge {
   ceremony_honored: boolean;
   ceremony_id?: string;
   obligations: string[];
+  /** Annotation carried by the relation itself — e.g. which port a `binds-port` claims. */
+  metadata?: Record<string, unknown>;
   created_at: string;
 }
 
@@ -512,10 +520,14 @@ export class JsonlStore {
    *
    * @see mcp/src/node-search.ts — the matching and ranking contract
    */
-  searchNodes(query: string, opts: { type?: string; direction?: string; limit?: number } = {}): StoredNode[] {
+  searchNodes(query: string, opts: { type?: string; direction?: string; kind?: string; limit?: number } = {}): StoredNode[] {
     let candidates = this.nodes.getAll();
     if (opts.type)      candidates = candidates.filter(n => n.type === opts.type);
     if (opts.direction) candidates = candidates.filter(n => n.direction === opts.direction);
+    // `kind` is a filter, not a search term. Asking for every service by typing
+    // the word "service" depends on that word surviving into some text field;
+    // asking for `kind: 'service'` does not.
+    if (opts.kind)      candidates = candidates.filter(n => n.metadata?.kind === opts.kind);
 
     const results = rankNodes(candidates, query);
     return opts.limit !== undefined ? results.slice(0, opts.limit) : results;

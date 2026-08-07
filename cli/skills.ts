@@ -184,36 +184,62 @@ mw skill run ceremony-guide "Community data review"
     title: 'Infrastructure Audit',
     description: 'Audit hosts, services, and port bindings across the Medicine Wheel estate',
     target: 'cli',
-    complement: 'infra-monitor',
+    complement: 'infra-topology',
     body: `# Skill: Infrastructure Audit
 
 ## Purpose
-Analyze infrastructure facets (hosts, tenants, services) and surface relationships, conflicts, and métis.
+Read the registered topology — hosts, the tenants upon them, the services those
+tenants own, the ports those services claim — and surface conflicts and métis.
 
-## Input
-- Target host (optional — audit all if omitted)
-- Facet type filter (host / tenant / service, optional)
-- Conflict scope (declared / observed / union)
+## What runs today
 
-## Output
-- Graph: hosts → tenants → services with port bindings
-- Port conflicts (distinct services colliding on same host|proto|port)
-- Métis surface (invisible work, exceptions, heldBy accountability)
-- Reachability status (lan / tailnet / cloudflare / ngrok)
+These MCP tools are registered and executable. This is not a roadmap.
+
+\`\`\`
+list_infra_topology { perspective: "host" }              # machines, nested
+list_infra_topology { perspective: "port", host: "eury" }# the slot map for one machine
+list_infra_topology { perspective: "metis" }             # only what people hold, with carriers
+detect_port_conflicts {}                                 # declared state against itself
+\`\`\`
+
+Five perspectives, because one shape cannot answer every question:
+\`host\` nests tenants and services under machines · \`tenant\` reads accounts and
+their linger · \`service\` reads units, scopes and stop commands · \`port\` reads the
+slot map with \`contested\` marked · \`metis\` reads only what people hold.
+
+## What the audit reads
+
+- **Graph** — hosts → tenants → services, walkable as \`part-of\` and \`binds-port\`
+  edges. \`node_id\` is required and must be a registered node (take one from
+  \`list_infra_topology\`); without a centre the call returns an error rather than
+  an empty web that would read as "this host has nothing on it":
+
+  \`\`\`
+  get_relational_web { node_id: "node:land:host:eury", edge_types: ["part-of","binds-port"] }
+  \`\`\`
+- **Port conflicts** — distinct services colliding on the same host|proto|port.
+  One service seen twice is not a conflict; ports are scarce per host, not globally
+- **Métis surface** — exceptions, invisible work, and \`heldBy\` naming a person
+- **Reachability** — lan / tailnet / cloudflare / ngrok, per \`HostFacet\`
+
+## What is NOT here
+
+Reachability is recorded, not probed. Nothing in this repo pings a host. A
+\`reachableVia\` of \`tailnet\` is a claim somebody wrote down, and an audit that
+presented it as a live check would be the exact class of lie \`reconcile\` exists
+to catch.
 
 ## Usage
 
-> **Not available yet.** \`mw skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mw skill run\` has no implementation and exits 3. A skill is a document, not
+> a program. **The capability above is real and reachable through MCP** — this
+> file tells you which calls to make.
 >
-> **What works today:** \`mw skill install infrastructure-audit\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mw skill install infrastructure-audit\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`
 mw skill run infrastructure-audit --host eury
-mw skill run infrastructure-audit --type service --conflicts
 \`\`\`
 `,
   },
@@ -222,40 +248,77 @@ mw skill run infrastructure-audit --type service --conflicts
     title: 'Service Provisioning',
     description: 'Propose and gate service deployment through ceremony-aware preconditions',
     target: 'cli',
-    complement: 'infra-monitor',
+    complement: 'infra-topology',
     body: `# Skill: Service Provisioning
 
 ## Purpose
-Propose a new service and check preconditions (port availability, consent, linger-state alignment) via ceremony gates.
+Register a service into the wheel and gate it on preconditions before it runs.
 
-## Input
-- Service name and unit (e.g., assembly-mux.service)
-- Port binding claims (host, port, proto)
-- Owner (tenant nodeId)
-- Optional: working directory, execStop, métis exceptions
+## What runs today
 
-## Output
-- Precondition checks: port conflicts, tenant consent, linger alignment
-- Fire Keeper gate assessment (hold / proceed)
-- Community review recommendation
-- Deployment ceremony phase to enter
-- Diff against observed state
+\`\`\`
+register_host    { hostname: "eury", reachable_via: ["tailnet"] }
+register_tenant  { account: "ava", on_host: "eury", linger: "enabled" }
+register_service {
+  unit: "zulip.service", owned_by: "ava", scope: "system",
+  ports: [{ port: 3000, proto: "tcp", host: "eury" }],
+  working_directory: "/opt/zulip",
+  exec_stop: "docker compose stop"
+}
+\`\`\`
+
+Registration is **idempotent by identity**, not by node id: a host is its
+hostname, a tenant is its account on its host, a service is its unit under its
+owner. Re-running a provisioning step updates in place and returns \`updated\`.
+Without that, a re-run fills the wheel with duplicate services and every one of
+them then appears to collide with itself.
+
+\`register_service\` returns \`port_conflicts\` involving the new service. It still
+registers on a collision — the wheel records what is true, not what is tidy — and
+says plainly not to provision against it.
+
+## The gate
+
+\`\`\`
+mw_enforce_gate {
+  service_node_id: "node:knowledge:...",
+  preconditions: [{
+    id: "pre:ava-linger",
+    gates: "node:knowledge:...",
+    fact:    { kind: "linger", facetNodeId: "node:human:ava",
+               expected: "enabled", observed: "enabled", observedAt: "..." },
+    consent: { consentId: "consent:root-step:ava", state: "active", readAt: "..." }
+  }]
+}
+\`\`\`
+
+Four verdicts, and the distinctions are the point:
+
+| verdict | means |
+|---|---|
+| \`satisfied\` | every declared half was read and holds |
+| \`unsatisfied\` | a machine fact was read and does not match |
+| \`unauthorized\` | the machine is ready and a human has not said yes, or withdrew |
+| \`unknown\` | a declared half has **not been read** — not the same as false |
+
+**\`linger\` is not consent.** It is a checkbox with no authority and no ability to
+withdraw. The authorization to run the root step that set it is a
+\`ConsentRecord\` in \`consent-lifecycle\`, referenced by id. An \`unauthorized\` gate
+cannot be cleared by restarting anything, and a report that collapsed it into
+\`unsatisfied\` would invite exactly that.
+
+A service with **zero** declared preconditions returns \`ready: true\` with a
+warning saying nothing was verified. Vacuous truth, named out loud.
 
 ## Usage
 
-> **Not available yet.** \`mw skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mw skill run\` has no implementation and exits 3. The calls above are real.
 >
-> **What works today:** \`mw skill install service-provisioning\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mw skill install service-provisioning\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`
-mw skill run service-provisioning \
-  --unit zulip.service \
-  --port 3000:tcp@eury \
-  --owner "node:human:ava"
+mw skill run service-provisioning --unit zulip.service --port 3000:tcp@eury
 \`\`\`
 `,
   },
@@ -264,35 +327,72 @@ mw skill run service-provisioning \
     title: 'Drift Reconciliation',
     description: 'Compare declared vs observed infrastructure state and propose healing steps',
     target: 'cli',
-    complement: 'infra-monitor',
+    complement: 'infra-topology',
     body: `# Skill: Drift Reconciliation
 
 ## Purpose
-Detect infrastructure drift (declared state vs systemd observed reality) and recommend ceremony-gated remediation.
+Compare what the wheel declares against what is actually running on a host, and
+say the distance out loud.
 
-## Input
-- Drift scope: specific host, all hosts, or facet type
-- Healing mode: audit-only / propose-fix / execute-with-gates
+## What runs today
 
-## Output
-- Drift report: satisfied / diverged / unobserved facets per host
-- Healing candidates: services to restart, ports to release, linger to reconcile
-- Ceremony phase recommendation (emergency / standard)
-- Accountability notes (who holds métis on each remediation)
+\`\`\`
+reconcile_infra_state {
+  observed_by: "gaia",
+  observed_at: "2026-08-05T12:00:00Z",
+  services: [ /* ServiceFacet shapes read live from the machine */ ]
+}
+\`\`\`
+
+**Level-triggered.** It compares the current declared level against the current
+observed level, every time, and remembers no transitions. There is no "converged
+a minute ago" state to go stale. The outage this answers (jgwill/gaia#74) was not
+caused by a missing fact — it was caused by a fact that HAD been true.
+
+\`observed_by\` and \`observed_at\` are required. An observation with no reader and
+no time is a rumour, and reconciling against a rumour is the snapshot problem
+wearing a different hat. \`observationAgeMs\` comes back so a caller can refuse a
+reading that is too old.
+
+## The four drift states
+
+| state | means |
+|---|---|
+| \`converged\` | both sides agree on every compared field |
+| \`drifted\` | both exist and disagree — the differing fields are named |
+| \`unrealized\` | declared, not observed — written down, not running |
+| \`undeclared\` | **observed, not declared** — running and nobody wrote it down |
+
+\`undeclared\` carries the most information. It finds the service somebody started
+by hand at 2am — which is the service holding the port the next tenant is about
+to be given. Read that row first.
+
+Port conflicts over declared ∪ observed are folded into the same answer, because
+this is the one call where both sides are in hand at once.
+
+## Métis is never drift
+
+Two sides holding different tacit notes is not a discrepancy — it is two people
+knowing different things. Métis is carried through untouched and never appears in
+\`differences\`. A reconciler that reported it would be asking an operator to
+delete what they know to make a table go green.
+
+## Reading the machine
+
+Collecting the observed side is **not** in this repo. There is no systemd or
+runit adapter here; \`reconcile_infra_state\` takes the reading as an argument. The
+service-manager adapter is owned by the device lane (jgwill/medicine-wheel#118),
+which is the only body in this system that can test runit.
 
 ## Usage
 
-> **Not available yet.** \`mw skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mw skill run\` has no implementation and exits 3.
 >
-> **What works today:** \`mw skill install drift-reconciliation\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mw skill install drift-reconciliation\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`
 mw skill run drift-reconciliation --host gaia --propose
-mw skill run drift-reconciliation --type service --audit-only
 \`\`\`
 `,
   },
@@ -431,76 +531,148 @@ mwsrv skill run session-manager
 `,
   },
   {
-    name: 'infra-monitor',
-    title: 'Infrastructure Monitor',
-    description: 'Live monitoring and drift detection for infrastructure facets via MCP',
+    name: 'infra-topology',
+    title: 'Infrastructure Topology',
+    description: 'The registered topology — hosts, tenants, services, ports — and its drift, via MCP',
     target: 'srv',
     complement: 'infrastructure-audit',
-    body: `# Skill: Infrastructure Monitor
+    body: `# Skill: Infrastructure Topology
 
 ## Purpose
-Monitor live infrastructure state (observed via systemd) and track drift against declared facets.
+Hold the shape of the estate: which machines exist, who lives on them, what runs
+under those accounts, which slots are claimed, and how far the record has drifted
+from what is running.
 
-## Capabilities
-- Poll systemd for active units, ports, linger-state across tenants
-- Maintain observed state cache (RelationalNode facets)
-- Detect port collisions in declared ∪ observed bindings
-- Track métis holders and accountability chains
-- Stream drift events to active CLI sessions
-- Gate reconciliation requests through ceremony protocol
+> Renamed from \`infra-monitor\`. That record described polling systemd, which
+> nothing in this repository does — it named a capability that did not exist and
+> apologised for it. Topology is what is actually held here.
 
-## Integration
-- **Backend:** @medicine-wheel/infra (HostFacet, TenantFacet, ServiceFacet, detectPortConflicts)
-- **MCP tools (planned, none registered yet):** infrastructure-audit, service-preconditions, drift-reconciliation, métis-surface
-- **Data store:** Postgres/JSONL via @medicine-wheel/storage-provider
+## What runs today
+
+\`\`\`
+list_infra_topology   { perspective: "host" | "tenant" | "service" | "port" | "metis" }
+detect_port_conflicts { observed: [...] }    # union live readings with the record
+reconcile_infra_state { observed_by, observed_at, services }
+hold_metis            { node_id, held_by, exceptions: [...] }
+mw_enforce_gate       { service_node_id, preconditions: [...] }
+mw_get_direction      { node_id }            # service → West, tenant → South
+\`\`\`
+
+## Backed by
+
+- \`@medicine-wheel/infra\` — \`HostFacet\`, \`TenantFacet\`, \`ServiceFacet\`,
+  \`PortBinding\`, \`MetisHold\`, \`Precondition\`, \`ObservedState\`,
+  \`detectPortConflicts\`, \`preconditionGuard\`, \`readyService\`, \`reconcile\`
+- \`@medicine-wheel/ontology-core\` — \`part-of\`, \`ordered-after\`, \`binds-port\` in
+  the governed \`KINSHIP_EDGE_TYPES\`; \`INFRA_ENTITY_BINDING\` for which closed
+  \`NodeType\` each kind rides. The union stays closed at six
+- Persistence: JSONL, or the server API when \`MW_API_URL\` is set
+
+## What this skill does NOT do
+
+**It does not poll.** There is no daemon, no interval, no event stream in this
+repo. Every call above is made by an agent or a person when they want the answer.
+A skill that claimed to watch would be claiming a process nobody starts.
+
+**It does not read systemd.** \`reconcile_infra_state\` and \`detect_port_conflicts\`
+take the observed side as an argument. The service-manager adapter — systemd on
+gaia, runit on the Termux device — is owned by the device lane
+(jgwill/medicine-wheel#118), the only body here that can test runit.
+
+That seam is deliberate. It keeps \`@medicine-wheel/infra\` free of I/O, and it
+keeps this skill from describing a machine it cannot reach.
 
 ## Usage
 
-> **Not available yet.** \`mwsrv skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mwsrv skill run\` has no implementation and exits 3. A skill is a document.
+> **The MCP calls above are registered and executable.**
 >
-> **What works today:** \`mwsrv skill install infra-monitor\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mwsrv skill install infra-topology\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`
-mwsrv skill run infra-monitor --poll-interval 30s
-mwsrv skill run infra-monitor --host gaia --linger-report
+mwsrv skill run infra-topology --host gaia
 \`\`\`
 `,
   },
   {
     name: 'precondition-guard',
     title: 'Precondition Guard',
-    description: 'Evaluate infrastructure preconditions (linger, consent, port, reachability)',
+    description:
+      'Evaluate infrastructure preconditions (linger, port-free, unit-present, working-directory) against the consent that authorizes them',
     target: 'srv',
     complement: 'service-provisioning',
     body: `# Skill: Precondition Guard
 
 ## Purpose
-Enforce precondition gates before service provisioning or relational state changes. (Roadmap: @medicine-wheel/infra@0.2.0)
+Hold a service at the door until what must be true is true — and keep the machine
+half and the human half from standing in for each other.
 
-## Precondition Types
-- **Port availability** — detectPortConflicts over declared + observed
-- **Tenant linger** — required for user.slice services; consent record must authorize root step
-- **Consent accountability** — ConsentRecord.id must be present and active
-- **Reachability** — host must be reachable via declared transport (lan, tailnet, cloudflare, ngrok)
+> No longer a roadmap item. \`Precondition\`, \`preconditionGuard\` and
+> \`readyService\` ship in \`@medicine-wheel/infra\`, reachable through
+> \`mw_enforce_gate\`.
 
-## Output
-- Unsatisfied precondition report
-- Fire Keeper hold / proceed recommendation
-- Next ceremony gate to enter (if held)
-- Accountability chain (who can unlock the hold)
+## What runs today
+
+\`\`\`
+mw_enforce_gate {
+  service_node_id: "node:knowledge:...",
+  preconditions: [{
+    id: "pre:gmusic-linger",
+    gates: "node:knowledge:...",
+    description: "gmusic user units must survive logout",
+    fact:    { kind: "linger", facetNodeId: "node:human:gmusic",
+               expected: "enabled", observed: "enabled", observedAt: "..." },
+    consent: { consentId: "consent:root-step:gmusic", state: "active", readAt: "..." },
+    metis:   { exceptions: ["restart twice; first start races the mount"],
+               heldBy: "William" }
+  }]
+}
+\`\`\`
+
+Preconditions gating other services are ignored, so passing a whole host's set is
+safe.
+
+## Precondition kinds
+
+\`linger\` · \`port-free\` · \`unit-present\` · \`working-directory\`
+
+Every one of these is something a host will answer without a person present.
+**That is exactly what disqualifies them from carrying consent.**
+
+## The four verdicts
+
+| verdict | means |
+|---|---|
+| \`satisfied\` | every declared half was read and holds |
+| \`unsatisfied\` | a machine fact was read and does not match |
+| \`unauthorized\` | the machine half holds and consent does not authorize |
+| \`unknown\` | a declared half has not been read |
+
+\`unauthorized\` is kept separate from \`unsatisfied\` so a withdrawn consent can
+never be mistaken for a technical failure an operator can clear by restarting
+something. \`unknown\` is separate from both because a guard that reports "blocked"
+when nobody has looked yet is a guard operators learn to ignore.
+
+Order of decision: an unread half decides nothing · a failed machine fact does
+not consult the human half, because there is nothing yet to authorize · a
+non-authorizing consent wins over any machine state · a precondition declaring
+neither half returns \`unknown\`, never \`satisfied\`. An empty gate that reports
+success has stopped being a gate.
+
+## Métis travels with the block
+
+\`readyService\` carries every \`MetisHold\` from the blocking preconditions into
+its answer. The reason a gate is stuck is exactly where "you have to restart it
+twice" lives, and a readiness report that dropped it would have dropped the one
+thing the operator needed.
 
 ## Usage
 
-> **Not available yet.** \`mwsrv skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mwsrv skill run\` has no implementation and exits 3. A skill is a document,
+> not a program. **The \`mw_enforce_gate\` call above is registered and executable.**
 >
-> **What works today:** \`mwsrv skill install precondition-guard\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mwsrv skill install precondition-guard\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`

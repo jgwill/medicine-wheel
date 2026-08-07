@@ -10,9 +10,14 @@
  * package: the closed `NodeType` union is reused, never widened, and facets are
  * keyed by node id rather than re-declaring nodes.
  *
- * Scope of `0.1.0` — S1, S3, S5 only. `Precondition` / `preconditionGuard` /
- * `readyService` are `0.2.0` (S4); `reconcile()` / `ObservedState` are `0.3.0`
- * (S6). Neither is shipped here.
+ * Every specification is now shipped: S1 (facets), S3 (`detectPortConflicts`),
+ * S4 (`Precondition` / `preconditionGuard` / `readyService`), S5 (`MetisHold`),
+ * S6 (`ObservedState` / `reconcile`). S2 — the governed `part-of`,
+ * `ordered-after` and `binds-port` edges — landed in `ontology-core`, which is
+ * where edge vocabulary belongs; `infra` never forked it.
+ *
+ * The package remains types plus pure functions. Zero I/O, zero persistence,
+ * zero clock: `reconcile` takes `now` as an argument for exactly that reason.
  *
  * @packageDocumentation
  */
@@ -50,6 +55,16 @@ export {
   ServiceFacetSchema,
 } from './schemas';
 
+export {
+  PreconditionKindSchema,
+  MachineFactSchema,
+  ConsentReferenceSchema,
+  PreconditionSchema,
+  PreconditionVerdictSchema,
+  DriftStateSchema,
+  ObservedStateSchema,
+} from './schemas';
+
 export type {
   ValidatedMetisHold,
   ValidatedPortBinding,
@@ -57,7 +72,41 @@ export type {
   ValidatedHostFacet,
   ValidatedTenantFacet,
   ValidatedServiceFacet,
+  ValidatedMachineFact,
+  ValidatedConsentReference,
+  ValidatedPrecondition,
+  ValidatedObservedState,
 } from './schemas';
 
-// ── Port-conflict detection ─────────────────────────────────────────────────
+// ── Port-conflict detection (S3) ────────────────────────────────────────────
 export { detectPortConflicts } from './ports';
+
+// ── Preconditions (S4) ──────────────────────────────────────────────────────
+export {
+  preconditionGuard,
+  readyService,
+  lingerFact,
+  AUTHORIZING_CONSENT_STATES,
+  CONSENT_REQUIRING_KINDS,
+} from './preconditions';
+
+export type {
+  PreconditionKind,
+  MachineFact,
+  ConsentReference,
+  Precondition,
+  PreconditionVerdict,
+  PreconditionResult,
+  ServiceReadiness,
+} from './preconditions';
+
+// ── Reconciliation (S6) ─────────────────────────────────────────────────────
+export { reconcile, DRIFT_STATES } from './reconcile';
+
+export type {
+  DriftState,
+  ObservedState,
+  FieldDifference,
+  DriftRow,
+  ReconcileResult,
+} from './reconcile';

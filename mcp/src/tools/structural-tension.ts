@@ -86,7 +86,7 @@ export const structuralTensionTools: Tool[] = [
           ceremonies_linked: [] as string[],
         };
 
-        store.saveChart(chart);
+        await store.saveChart(chart);
 
         return {
           chart_id: chartId,
@@ -148,7 +148,7 @@ export const structuralTensionTools: Tool[] = [
         chart.action_steps.push(actionStep);
         chart.updated_at = new Date().toISOString();
 
-        store.saveChart(chart);
+        await store.saveChart(chart);
 
         return {
           action_step_id: actionStep.id,
@@ -225,12 +225,12 @@ export const structuralTensionTools: Tool[] = [
           ceremonies_linked: [] as string[],
         };
 
-        store.saveChart(subChart);
+        await store.saveChart(subChart);
 
         // Link sub-chart to action step
         actionStep.sub_chart_id = subChartId;
         parentChart.updated_at = new Date().toISOString();
-        store.saveChart(parentChart);
+        await store.saveChart(parentChart);
 
         return {
           sub_chart_id: subChartId,
@@ -294,7 +294,7 @@ export const structuralTensionTools: Tool[] = [
         }
 
         chart.updated_at = new Date().toISOString();
-        store.saveChart(chart);
+        await store.saveChart(chart);
 
         return {
           action_step_id: args.action_step_id,
@@ -365,7 +365,7 @@ export const structuralTensionTools: Tool[] = [
         }
 
         chart.updated_at = new Date().toISOString();
-        store.saveChart(chart);
+        await store.saveChart(chart);
 
         const allComplete = completedCount === totalCount && totalCount > 0;
 
@@ -415,7 +415,7 @@ export const structuralTensionTools: Tool[] = [
         chart.current_reality = args.new_current_reality;
         chart.updated_at = new Date().toISOString();
 
-        store.saveChart(chart);
+        await store.saveChart(chart);
 
         return {
           chart_id: args.chart_id,
@@ -568,7 +568,7 @@ export const structuralTensionTools: Tool[] = [
 
         const mmotId = `mmot:${args.chart_id}:${Date.now()}`;
 
-        store.saveMmot({
+        await store.saveMmot({
           id: mmotId,
           chart_id: args.chart_id,
           timestamp: new Date().toISOString(),
@@ -582,7 +582,7 @@ export const structuralTensionTools: Tool[] = [
         // Update current reality based on MMOT
         chart.current_reality = args.actual_outcome;
         chart.updated_at = new Date().toISOString();
-        store.saveChart(chart);
+        await store.saveChart(chart);
 
         return {
           mmot_id: mmotId,
@@ -674,7 +674,7 @@ export const structuralTensionTools: Tool[] = [
 
         chart.cycle_id = args.cycle_id;
         chart.updated_at = new Date().toISOString();
-        store.saveChart(chart);
+        await store.saveChart(chart);
 
         return {
           chart_id: args.chart_id,
