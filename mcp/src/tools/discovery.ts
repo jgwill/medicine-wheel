@@ -13,7 +13,7 @@ import { store } from "../store.js";
 export const discoveryTools: Tool[] = [
   {
     name: "list_relational_nodes",
-    description: "List all relational nodes in the medicine wheel memory. Filter by type or direction. Returns nodes sorted by creation date (newest first).",
+    description: "List relational nodes in the medicine wheel memory. Filter by type, direction, artifact kind (metadata.kind), or parent (metadata.parent_id) — filters combine. Returns nodes sorted by creation date (newest first).",
     inputSchema: {
       type: "object",
       properties: {
@@ -27,6 +27,16 @@ export const discoveryTools: Tool[] = [
           enum: ["east", "south", "west", "north"],
           description: "Filter by medicine wheel direction (optional)",
         },
+        kind: {
+          type: "string",
+          description:
+            "Filter by metadata.kind — the artifact kind, e.g. chronicle_episode, structured_plan, service, stc_chart, product_goal. `type` is a closed enum of six and cannot name these (optional)",
+        },
+        parent_id: {
+          type: "string",
+          description:
+            "Filter by metadata.parent_id — the containing node, e.g. chronicle:miadi-chronicle for every episode under the chronicle root (optional)",
+        },
         limit: {
           type: "number",
           description: "Maximum nodes to return (default: 50)",
@@ -37,16 +47,19 @@ export const discoveryTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const { type, direction, limit = 50 } = args;
+        const { type, direction, kind, parent_id, limit = 50 } = args;
 
-        let nodes;
-        if (type) {
-          nodes = (await store.getNodesByType(type));
-        } else if (direction) {
-          nodes = (await store.getNodesByDirection(direction));
-        } else {
-          nodes = (await store.getAllNodes(limit));
-        }
+        // Filters combine rather than shadow each other. The previous
+        // if/else-if chain meant `{ type, direction }` silently dropped the
+        // direction — and `kind`/`parent_id` could not be asked for at all, so
+        // every caller wanting "artifacts of kind X under episode Y" pulled the
+        // whole graph and sifted it locally.
+        const filters = { type, direction, kind, parent_id };
+        const filtering = Object.values(filters).some(Boolean);
+
+        const nodes = filtering
+          ? await store.getNodesFiltered(filters)
+          : await store.getAllNodes(limit);
 
         const sorted = nodes
           .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
@@ -55,7 +68,7 @@ export const discoveryTools: Tool[] = [
         return {
           count: sorted.length,
           total_available: nodes.length,
-          filters: { type, direction, limit },
+          filters: { type, direction, kind, parent_id, limit },
           nodes: sorted,
           teaching: "Every relation is a responsibility. Browse with intention.",
         };

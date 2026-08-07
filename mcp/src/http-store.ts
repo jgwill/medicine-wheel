@@ -10,6 +10,7 @@
  */
 
 import { rankNodes } from './node-search.js';
+import type { NodeFilters } from './types.js';
 
 // ── Types (mirrored from jsonl-store.ts) ──
 
@@ -414,6 +415,31 @@ export class HttpStore {
 
   async getNodesByDirection(direction: string): Promise<StoredNode[]> {
     const url = `${this.baseUrl}/api/nodes?direction=${encodeURIComponent(direction)}`;
+    return readCollection<StoredNode>(await httpGet(url), 'nodes', url);
+  }
+
+  /**
+   * Every supplied filter narrows (AND). Unlike the JSONL twin this pushes the
+   * terms into the query string, so the wheel answers the question rather than
+   * shipping the whole graph for the client to sift — which is what this method
+   * exists to stop doing.
+   *
+   * A server that predates `kind`/`parent_id` answers 400 with an `accepted`
+   * list rather than silently ignoring them, so a filter that arrives at an old
+   * wheel fails loudly instead of returning an unfiltered set the caller
+   * believes was filtered.
+   *
+   * @see mcp/src/jsonl-store.ts — the local twin, same contract
+   * @see app/api/nodes/route.ts — the route that serves these params
+   */
+  async getNodesFiltered(filters: NodeFilters): Promise<StoredNode[]> {
+    const params = new URLSearchParams();
+    for (const key of ['type', 'direction', 'kind', 'parent_id'] as const) {
+      const value = filters[key];
+      if (value) params.set(key, value);
+    }
+    const query = params.toString();
+    const url = `${this.baseUrl}/api/nodes${query ? `?${query}` : ''}`;
     return readCollection<StoredNode>(await httpGet(url), 'nodes', url);
   }
 
