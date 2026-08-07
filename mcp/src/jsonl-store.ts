@@ -16,6 +16,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { rankNodes } from './node-search.js';
+import type { NodeFilters } from './types.js';
 
 // ── Types ──
 
@@ -512,6 +513,23 @@ export class JsonlStore {
 
   getNodesByType(type: string): StoredNode[] { return this.nodes.filter(n => n.type === type); }
   getNodesByDirection(direction: string): StoredNode[] { return this.nodes.filter(n => n.direction === direction); }
+
+  /**
+   * Every supplied filter narrows (AND); an absent one does not constrain.
+   * `kind` and `parent_id` read `metadata`, which is where the closed six-value
+   * `type` enum forced every artifact kind and containment link to live.
+   *
+   * @see mcp/src/http-store.ts — the server-backed twin, which pushes the same
+   *   filters into the `/api/nodes` query string rather than filtering locally
+   */
+  getNodesFiltered(filters: NodeFilters): StoredNode[] {
+    return this.nodes.filter(n =>
+      (!filters.type || n.type === filters.type) &&
+      (!filters.direction || n.direction === filters.direction) &&
+      (!filters.kind || n.metadata?.kind === filters.kind) &&
+      (!filters.parent_id || n.metadata?.parent_id === filters.parent_id)
+    );
+  }
 
   /**
    * Term-based, ranked node search — the same contract the HTTP store serves,
