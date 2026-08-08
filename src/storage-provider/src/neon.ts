@@ -16,6 +16,8 @@ import type {
   DiaryEntryFilters,
   CeremonyEventRecord,
   CeremonyEventFilters,
+  RecordingRecord,
+  RecordingFilters,
   NodePatch,
   EdgePatch,
 } from './interface.js';
@@ -31,6 +33,10 @@ import {
 import { filterInquiryWeaves } from './inquiry-weaves.js';
 import { filterAndOrderDiaryEntries } from './diary-records.js';
 import { matchesCeremonyEventFilters } from './ceremony-events.js';
+import {
+  mergeRecordingRecords,
+  filterAndOrderRecordings,
+} from './recording-records.js';
 
 type QueryRow = Record<string, unknown>;
 type NeonQueryFunction = (strings: TemplateStringsArray, ...params: unknown[]) => Promise<QueryRow[]>;
@@ -48,6 +54,7 @@ export class NeonProvider implements StorageProvider {
     await this.ensurePlanPerspectivesTable();
     await this.ensureDiaryEntriesTable();
     await this.ensureCeremonyEventsTable();
+    await this.ensureRecordingsTable();
   }
 
   async disconnect(): Promise<void> {
@@ -570,6 +577,79 @@ export class NeonProvider implements StorageProvider {
     await this.db`CREATE INDEX IF NOT EXISTS idx_ceremony_events_kind ON ceremony_events(kind)`;
     await this.db`CREATE INDEX IF NOT EXISTS idx_ceremony_events_phase ON ceremony_events(phase)`;
     await this.db`CREATE INDEX IF NOT EXISTS idx_ceremony_events_repository ON ceremony_events(repository)`;
+  }
+
+  // ── Recording Operations (records + URIs, never bytes) ──
+
+  async registerRecording(record: RecordingRecord): Promise<RecordingRecord> {
+    const existing = await this.getRecording(record.id);
+    const merged = existing ? mergeRecordingRecords(existing, record) : record;
+
+    await this.db`
+      INSERT INTO recordings (id, payload, filename, kind, origin, episode_path, episode_number, composition, device, registered_at, updated_at)
+      VALUES (
+        ${merged.id},
+        ${JSON.stringify(merged)},
+        ${merged.filename},
+        ${merged.kind},
+        ${merged.origin},
+        ${merged.episode_path ?? null},
+        ${merged.episode_number ?? null},
+        ${merged.composition ?? null},
+        ${merged.device ?? null},
+        ${merged.registered_at},
+        NOW()
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        payload = EXCLUDED.payload,
+        filename = EXCLUDED.filename,
+        kind = EXCLUDED.kind,
+        origin = EXCLUDED.origin,
+        episode_path = EXCLUDED.episode_path,
+        episode_number = EXCLUDED.episode_number,
+        composition = EXCLUDED.composition,
+        device = EXCLUDED.device,
+        registered_at = EXCLUDED.registered_at,
+        updated_at = NOW()
+    `;
+
+    return merged;
+  }
+
+  async getRecording(id: string): Promise<RecordingRecord | null> {
+    const rows = await this.db`SELECT payload FROM recordings WHERE id = ${id}`;
+    if (rows.length === 0) return null;
+    return parseJsonValue<RecordingRecord>(rows[0].payload, null as unknown as RecordingRecord);
+  }
+
+  async listRecordings(filters: RecordingFilters = {}): Promise<RecordingRecord[]> {
+    const rows = await this.db`SELECT payload FROM recordings ORDER BY updated_at DESC`;
+    return filterAndOrderRecordings(
+      rows.map((row) => parseJsonValue<RecordingRecord | null>(row.payload, null)),
+      filters,
+    );
+  }
+
+  private async ensureRecordingsTable(): Promise<void> {
+    await this.db`
+      CREATE TABLE IF NOT EXISTS recordings (
+        id TEXT PRIMARY KEY,
+        payload JSONB NOT NULL,
+        filename TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        origin TEXT NOT NULL,
+        episode_path TEXT,
+        episode_number INTEGER,
+        composition TEXT,
+        device TEXT,
+        registered_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_recordings_episode_path ON recordings(episode_path)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_recordings_episode_number ON recordings(episode_number)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_recordings_composition ON recordings(composition)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_recordings_kind ON recordings(kind)`;
   }
 }
 

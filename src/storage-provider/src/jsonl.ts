@@ -15,6 +15,8 @@ import type {
   DiaryEntryFilters,
   CeremonyEventRecord,
   CeremonyEventFilters,
+  RecordingRecord,
+  RecordingFilters,
   NodePatch,
   EdgePatch,
 } from './interface.js';
@@ -30,6 +32,10 @@ import {
 import { filterInquiryWeaves } from './inquiry-weaves.js';
 import { filterAndOrderDiaryEntries } from './diary-records.js';
 import { matchesCeremonyEventFilters } from './ceremony-events.js';
+import {
+  mergeRecordingRecords,
+  filterAndOrderRecordings,
+} from './recording-records.js';
 
 interface StoredNode {
   id: string;
@@ -77,6 +83,7 @@ export class JsonlProvider implements StorageProvider {
   private readonly planPerspectivesFile: string;
   private readonly diaryEntriesFile: string;
   private readonly ceremonyEventsFile: string;
+  private readonly recordingsFile: string;
 
   constructor(dataDir?: string) {
     this.dataDir = path.resolve(dataDir ?? resolveProjectDataDir());
@@ -87,6 +94,7 @@ export class JsonlProvider implements StorageProvider {
     this.planPerspectivesFile = path.join(this.dataDir, 'plan-perspectives.jsonl');
     this.diaryEntriesFile = path.join(this.dataDir, 'diary-entries.jsonl');
     this.ceremonyEventsFile = path.join(this.dataDir, 'ceremony-events.jsonl');
+    this.recordingsFile = path.join(this.dataDir, 'recordings.jsonl');
   }
 
   async connect(): Promise<void> {
@@ -377,6 +385,27 @@ export class JsonlProvider implements StorageProvider {
       .sort(sortByNewest('timestamp'));
   }
 
+  async registerRecording(record: RecordingRecord): Promise<RecordingRecord> {
+    let merged = record;
+    await withWriteLock(this.recordingsFile, () => {
+      const records = readJsonl<RecordingRecord>(this.recordingsFile);
+      const existing = records.find((candidate) => candidate.id === record.id);
+      merged = existing ? mergeRecordingRecords(existing, record) : record;
+      const nextRecords = records.filter((candidate) => candidate.id !== record.id);
+      nextRecords.push(merged);
+      writeJsonl(this.recordingsFile, nextRecords);
+    });
+    return merged;
+  }
+
+  async getRecording(id: string): Promise<RecordingRecord | null> {
+    return this.readRecordings().find((record) => record.id === id) ?? null;
+  }
+
+  async listRecordings(filters: RecordingFilters = {}): Promise<RecordingRecord[]> {
+    return filterAndOrderRecordings(this.readRecordings(), filters);
+  }
+
   private readNodes(): StoredNode[] {
     return readJsonl<StoredNode>(this.nodesFile);
   }
@@ -403,6 +432,10 @@ export class JsonlProvider implements StorageProvider {
 
   private readCeremonyEvents(): CeremonyEventRecord[] {
     return readJsonl<CeremonyEventRecord>(this.ceremonyEventsFile);
+  }
+
+  private readRecordings(): RecordingRecord[] {
+    return readJsonl<RecordingRecord>(this.recordingsFile);
   }
 
   private async upsertById<T extends { id: string }>(filePath: string, item: T): Promise<void> {

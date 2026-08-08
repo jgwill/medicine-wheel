@@ -290,6 +290,90 @@ export interface CeremonyEventFilters {
   repository?: string;
 }
 
+// ── Recording Records ──
+// A registry of recordings: records and URIs only, never bytes. The bytes stay
+// behind the capture service that made them (@miadi/recording and the gmtermux
+// edge); this registry makes recordings queryable for chronicle surfaces.
+// Vocabulary aligns with @miadi/episodic-memory-schema's artifact axes.
+
+/**
+ * Kinds are published as a value, not only a type — a plain-JavaScript edge
+ * device cannot import a TypeScript union, so the array is the checkable
+ * contract and the type derives FROM it.
+ */
+export const RECORDING_KINDS = ['audio', 'video', 'midi', 'other'] as const;
+
+export type RecordingKind = (typeof RECORDING_KINDS)[number];
+
+/**
+ * How a recording came to exist — the axis that says what must never be lost.
+ * `captured` is unrepeatable: a device, an instant, one chance. `derived` is
+ * regenerable from a source still held. `authored` was written rather than
+ * captured or generated. Flattening these loses the only property that
+ * distinguishes an irreplaceable take from a file rebuildable on demand.
+ */
+export const RECORDING_ORIGINS = ['captured', 'derived', 'authored'] as const;
+
+export type RecordingOrigin = (typeof RECORDING_ORIGINS)[number];
+
+export interface RecordingRecord extends Record<string, unknown> {
+  /**
+   * Stable upsert key. Convention: `recording:<episode_path>:<filename>` when
+   * episode-bound, `recording:<filename>` otherwise — see recordingRecordId().
+   */
+  id: string;
+  /** The file's own name, as the capture service or author named it. */
+  filename: string;
+  kind: RecordingKind;
+  origin: RecordingOrigin;
+  /**
+   * Where the bytes live — a URI or path the capture service answers for.
+   * The registry stores this pointer and nothing behind it.
+   */
+  uri: string;
+
+  // Capture provenance — observed, not demanded. An absent field is an
+  // absence, not an error, and must not be filled in with a guess.
+
+  /** The device that made the capture, as it named itself. */
+  device?: string;
+  /** ISO 8601 instant the capture began. */
+  started_at?: string;
+  /** ISO 8601 instant the capture finished. */
+  stopped_at?: string;
+  /** Duration of the finished take, in seconds. */
+  duration_seconds?: number;
+  /** Size of the finished file in bytes — a count, never the bytes themselves. */
+  bytes?: number;
+  sha256?: string;
+  mimetype?: string;
+
+  // Associations into the chronicle and the composition tree.
+
+  /** Episode directory path relative to the chronicle root. */
+  episode_path?: string;
+  episode_number?: number;
+  /** Composition slug this recording belongs to, when known. */
+  composition?: string;
+  /** For derived recordings: the filename or record id this one was made from. */
+  source_artifact?: string;
+
+  /** ISO 8601 registration timestamp; the first registration's stamp survives upserts. */
+  registered_at: string;
+  /** Free-form origin-of-registration, e.g. '@miadi/recording' or 'gmtermux'. */
+  source?: string;
+}
+
+export interface RecordingFilters {
+  episode_path?: string;
+  episode_number?: number;
+  composition?: string;
+  kind?: RecordingKind;
+  origin?: RecordingOrigin;
+  device?: string;
+  filename?: string;
+}
+
 // ── Provider Interface ──
 
 export interface StorageProvider {
@@ -349,6 +433,11 @@ export interface StorageProvider {
   registerCeremonyEvent(record: CeremonyEventRecord): Promise<CeremonyEventRecord>;
   getCeremonyEvent(id: string): Promise<CeremonyEventRecord | null>;
   listCeremonyEvents(filters?: CeremonyEventFilters): Promise<CeremonyEventRecord[]>;
+
+  // Recording Operations (records + URIs, never bytes)
+  registerRecording(record: RecordingRecord): Promise<RecordingRecord>;
+  getRecording(id: string): Promise<RecordingRecord | null>;
+  listRecordings(filters?: RecordingFilters): Promise<RecordingRecord[]>;
 }
 
 export type ProviderType = 'jsonl' | 'neon' | 'redis' | 'auto';

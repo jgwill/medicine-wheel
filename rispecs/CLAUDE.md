@@ -15,6 +15,7 @@ This folder contains RISE framework specifications for all Medicine Wheel packag
 | `prompt-decomposition.spec.md` | prompt-decomposition | Intent extraction, Four Directions PDE |
 | `decomposition-strategies.spec.md` | prompt-decomposition (capability) | Strategy framework — depth on demand: multi-pass & dual-framing over the deterministic foundation |
 | `ui-components.spec.md` | ui-components | React components |
+| `recording-registry.spec.md` | storage-provider + app | Recording registry — records + URIs (never bytes), capture provenance, episode/composition query surface |
 
 ## How to Read
 
