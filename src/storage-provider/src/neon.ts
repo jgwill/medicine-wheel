@@ -16,8 +16,8 @@ import type {
   DiaryEntryFilters,
   CeremonyEventRecord,
   CeremonyEventFilters,
-  RecordingRecord,
-  RecordingFilters,
+  CaptureRecord,
+  CaptureFilters,
   NodePatch,
   EdgePatch,
 } from './interface.js';
@@ -34,9 +34,9 @@ import { filterInquiryWeaves } from './inquiry-weaves.js';
 import { filterAndOrderDiaryEntries } from './diary-records.js';
 import { matchesCeremonyEventFilters } from './ceremony-events.js';
 import {
-  mergeRecordingRecords,
-  filterAndOrderRecordings,
-} from './recording-records.js';
+  mergeCaptureRecords,
+  filterAndOrderCaptures,
+} from './capture-records.js';
 
 type QueryRow = Record<string, unknown>;
 type NeonQueryFunction = (strings: TemplateStringsArray, ...params: unknown[]) => Promise<QueryRow[]>;
@@ -54,7 +54,7 @@ export class NeonProvider implements StorageProvider {
     await this.ensurePlanPerspectivesTable();
     await this.ensureDiaryEntriesTable();
     await this.ensureCeremonyEventsTable();
-    await this.ensureRecordingsTable();
+    await this.ensureCapturesTable();
   }
 
   async disconnect(): Promise<void> {
@@ -579,14 +579,14 @@ export class NeonProvider implements StorageProvider {
     await this.db`CREATE INDEX IF NOT EXISTS idx_ceremony_events_repository ON ceremony_events(repository)`;
   }
 
-  // ── Recording Operations (records + URIs, never bytes) ──
+  // ── Capture Operations (records + URIs, never bytes) ──
 
-  async registerRecording(record: RecordingRecord): Promise<RecordingRecord> {
-    const existing = await this.getRecording(record.id);
-    const merged = existing ? mergeRecordingRecords(existing, record) : record;
+  async registerCapture(record: CaptureRecord): Promise<CaptureRecord> {
+    const existing = await this.getCapture(record.id);
+    const merged = existing ? mergeCaptureRecords(existing, record) : record;
 
     await this.db`
-      INSERT INTO recordings (id, payload, filename, kind, origin, episode_path, episode_number, composition, device, registered_at, updated_at)
+      INSERT INTO captures (id, payload, filename, kind, origin, episode_path, episode_number, composition, device, registered_at, updated_at)
       VALUES (
         ${merged.id},
         ${JSON.stringify(merged)},
@@ -616,23 +616,23 @@ export class NeonProvider implements StorageProvider {
     return merged;
   }
 
-  async getRecording(id: string): Promise<RecordingRecord | null> {
-    const rows = await this.db`SELECT payload FROM recordings WHERE id = ${id}`;
+  async getCapture(id: string): Promise<CaptureRecord | null> {
+    const rows = await this.db`SELECT payload FROM captures WHERE id = ${id}`;
     if (rows.length === 0) return null;
-    return parseJsonValue<RecordingRecord>(rows[0].payload, null as unknown as RecordingRecord);
+    return parseJsonValue<CaptureRecord>(rows[0].payload, null as unknown as CaptureRecord);
   }
 
-  async listRecordings(filters: RecordingFilters = {}): Promise<RecordingRecord[]> {
-    const rows = await this.db`SELECT payload FROM recordings ORDER BY updated_at DESC`;
-    return filterAndOrderRecordings(
-      rows.map((row) => parseJsonValue<RecordingRecord | null>(row.payload, null)),
+  async listCaptures(filters: CaptureFilters = {}): Promise<CaptureRecord[]> {
+    const rows = await this.db`SELECT payload FROM captures ORDER BY updated_at DESC`;
+    return filterAndOrderCaptures(
+      rows.map((row) => parseJsonValue<CaptureRecord | null>(row.payload, null)),
       filters,
     );
   }
 
-  private async ensureRecordingsTable(): Promise<void> {
+  private async ensureCapturesTable(): Promise<void> {
     await this.db`
-      CREATE TABLE IF NOT EXISTS recordings (
+      CREATE TABLE IF NOT EXISTS captures (
         id TEXT PRIMARY KEY,
         payload JSONB NOT NULL,
         filename TEXT NOT NULL,
@@ -646,10 +646,10 @@ export class NeonProvider implements StorageProvider {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `;
-    await this.db`CREATE INDEX IF NOT EXISTS idx_recordings_episode_path ON recordings(episode_path)`;
-    await this.db`CREATE INDEX IF NOT EXISTS idx_recordings_episode_number ON recordings(episode_number)`;
-    await this.db`CREATE INDEX IF NOT EXISTS idx_recordings_composition ON recordings(composition)`;
-    await this.db`CREATE INDEX IF NOT EXISTS idx_recordings_kind ON recordings(kind)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_captures_episode_path ON captures(episode_path)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_captures_episode_number ON captures(episode_number)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_captures_composition ON captures(composition)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_captures_kind ON captures(kind)`;
   }
 }
 

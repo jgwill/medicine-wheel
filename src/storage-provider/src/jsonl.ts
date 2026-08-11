@@ -15,8 +15,8 @@ import type {
   DiaryEntryFilters,
   CeremonyEventRecord,
   CeremonyEventFilters,
-  RecordingRecord,
-  RecordingFilters,
+  CaptureRecord,
+  CaptureFilters,
   NodePatch,
   EdgePatch,
 } from './interface.js';
@@ -33,9 +33,9 @@ import { filterInquiryWeaves } from './inquiry-weaves.js';
 import { filterAndOrderDiaryEntries } from './diary-records.js';
 import { matchesCeremonyEventFilters } from './ceremony-events.js';
 import {
-  mergeRecordingRecords,
-  filterAndOrderRecordings,
-} from './recording-records.js';
+  mergeCaptureRecords,
+  filterAndOrderCaptures,
+} from './capture-records.js';
 
 interface StoredNode {
   id: string;
@@ -83,7 +83,7 @@ export class JsonlProvider implements StorageProvider {
   private readonly planPerspectivesFile: string;
   private readonly diaryEntriesFile: string;
   private readonly ceremonyEventsFile: string;
-  private readonly recordingsFile: string;
+  private readonly capturesFile: string;
 
   constructor(dataDir?: string) {
     this.dataDir = path.resolve(dataDir ?? resolveProjectDataDir());
@@ -94,7 +94,7 @@ export class JsonlProvider implements StorageProvider {
     this.planPerspectivesFile = path.join(this.dataDir, 'plan-perspectives.jsonl');
     this.diaryEntriesFile = path.join(this.dataDir, 'diary-entries.jsonl');
     this.ceremonyEventsFile = path.join(this.dataDir, 'ceremony-events.jsonl');
-    this.recordingsFile = path.join(this.dataDir, 'recordings.jsonl');
+    this.capturesFile = path.join(this.dataDir, 'captures.jsonl');
   }
 
   async connect(): Promise<void> {
@@ -385,25 +385,25 @@ export class JsonlProvider implements StorageProvider {
       .sort(sortByNewest('timestamp'));
   }
 
-  async registerRecording(record: RecordingRecord): Promise<RecordingRecord> {
+  async registerCapture(record: CaptureRecord): Promise<CaptureRecord> {
     let merged = record;
-    await withWriteLock(this.recordingsFile, () => {
-      const records = readJsonl<RecordingRecord>(this.recordingsFile);
+    await withWriteLock(this.capturesFile, () => {
+      const records = readJsonl<CaptureRecord>(this.capturesFile);
       const existing = records.find((candidate) => candidate.id === record.id);
-      merged = existing ? mergeRecordingRecords(existing, record) : record;
+      merged = existing ? mergeCaptureRecords(existing, record) : record;
       const nextRecords = records.filter((candidate) => candidate.id !== record.id);
       nextRecords.push(merged);
-      writeJsonl(this.recordingsFile, nextRecords);
+      writeJsonl(this.capturesFile, nextRecords);
     });
     return merged;
   }
 
-  async getRecording(id: string): Promise<RecordingRecord | null> {
-    return this.readRecordings().find((record) => record.id === id) ?? null;
+  async getCapture(id: string): Promise<CaptureRecord | null> {
+    return this.readCaptures().find((record) => record.id === id) ?? null;
   }
 
-  async listRecordings(filters: RecordingFilters = {}): Promise<RecordingRecord[]> {
-    return filterAndOrderRecordings(this.readRecordings(), filters);
+  async listCaptures(filters: CaptureFilters = {}): Promise<CaptureRecord[]> {
+    return filterAndOrderCaptures(this.readCaptures(), filters);
   }
 
   private readNodes(): StoredNode[] {
@@ -434,8 +434,8 @@ export class JsonlProvider implements StorageProvider {
     return readJsonl<CeremonyEventRecord>(this.ceremonyEventsFile);
   }
 
-  private readRecordings(): RecordingRecord[] {
-    return readJsonl<RecordingRecord>(this.recordingsFile);
+  private readCaptures(): CaptureRecord[] {
+    return readJsonl<CaptureRecord>(this.capturesFile);
   }
 
   private async upsertById<T extends { id: string }>(filePath: string, item: T): Promise<void> {

@@ -1,28 +1,34 @@
 /**
- * Recording Record semantics shared by every provider.
+ * Capture Record semantics shared by every provider.
  *
  * The registry holds records and URIs — where a take lives — never the bytes
  * themselves, which stay behind the capture service that made them. Capture is
- * owned by @miadi/recording and the gmtermux edge; here we keep only the id
+ * owned by @miadi/capture and the gmtermux edge; here we keep only the id
  * convention, filter predicate, ordering, and upsert-merge rule so the jsonl
- * and neon backends agree on what a recording means.
+ * and neon backends agree on what a capture means.
+ *
+ * Vocabulary law: capture-vocabulary.spec.md (§8, the registry noun ruling).
  */
 
-import type { RecordingFilters, RecordingRecord } from './interface.js';
+import type { CaptureFilters, CaptureRecord } from './interface.js';
 
 /**
- * Compose the upsert key for a recording, mirroring @miadi/inquiry-weave's
- * weaveRecordId composition: `recording:<episode_path>:<filename>` when the
- * recording is episode-bound, `recording:<filename>` otherwise.
+ * Compose the upsert key for a capture, mirroring @miadi/inquiry-weave's
+ * weaveRecordId composition: `capture:<episode_path>:<filename>` when the
+ * capture is episode-bound, `capture:<filename>` otherwise.
+ *
+ * This convention applies only when no id is sent — it is a fallback for
+ * id-less registration, not the identity rule. The id assigned at first
+ * registration is permanent (capture-vocabulary.spec.md §6).
  */
-export function recordingRecordId(filename: string, episodePath?: string): string {
-  return episodePath ? `recording:${episodePath}:${filename}` : `recording:${filename}`;
+export function captureRecordId(filename: string, episodePath?: string): string {
+  return episodePath ? `capture:${episodePath}:${filename}` : `capture:${filename}`;
 }
 
-/** True when a recording record satisfies every provided filter. */
-export function matchesRecordingFilters(
-  record: RecordingRecord,
-  filters: RecordingFilters,
+/** True when a capture record satisfies every provided filter. */
+export function matchesCaptureFilters(
+  record: CaptureRecord,
+  filters: CaptureFilters,
 ): boolean {
   if (filters.episode_path !== undefined && record.episode_path !== filters.episode_path) {
     return false;
@@ -49,21 +55,21 @@ export function matchesRecordingFilters(
 }
 
 /**
- * Filter a batch of recording rows, dropping anything that did not survive the
+ * Filter a batch of capture rows, dropping anything that did not survive the
  * read (a Postgres payload that fails to parse arrives here as null), then
  * order newest registration first.
  */
-export function filterAndOrderRecordings(
-  records: readonly (RecordingRecord | null | undefined)[],
-  filters: RecordingFilters = {},
-): RecordingRecord[] {
+export function filterAndOrderCaptures(
+  records: readonly (CaptureRecord | null | undefined)[],
+  filters: CaptureFilters = {},
+): CaptureRecord[] {
   return records
     .filter(
-      (record): record is RecordingRecord =>
+      (record): record is CaptureRecord =>
         record !== null &&
         record !== undefined &&
         typeof record === 'object' &&
-        matchesRecordingFilters(record, filters),
+        matchesCaptureFilters(record, filters),
     )
     .sort((left, right) => Date.parse(right.registered_at) - Date.parse(left.registered_at));
 }
@@ -75,11 +81,11 @@ export function filterAndOrderRecordings(
  * erase what an earlier one knew. The first registration timestamp survives,
  * matching the plan-perspective merge contract.
  */
-export function mergeRecordingRecords(
-  existing: RecordingRecord,
-  incoming: RecordingRecord,
-): RecordingRecord {
-  const merged: RecordingRecord = { ...existing };
+export function mergeCaptureRecords(
+  existing: CaptureRecord,
+  incoming: CaptureRecord,
+): CaptureRecord {
+  const merged: CaptureRecord = { ...existing };
   for (const [key, value] of Object.entries(incoming)) {
     if (value !== undefined) merged[key] = value;
   }

@@ -58,8 +58,8 @@ CREATE TABLE IF NOT EXISTS plan_perspectives (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Recordings table (registry of records + URIs from @miadi/recording / gmtermux capture — never bytes)
-CREATE TABLE IF NOT EXISTS recordings (
+-- Captures table (registry of records + URIs from @miadi/capture / gmtermux capture — never bytes)
+CREATE TABLE IF NOT EXISTS captures (
   id TEXT PRIMARY KEY,
   payload JSONB NOT NULL,
   filename TEXT NOT NULL,
@@ -87,10 +87,10 @@ CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_issue ON inquiry_weaves(issue);
 CREATE INDEX IF NOT EXISTS idx_inquiry_weaves_artefact_id ON inquiry_weaves(artefact_id);
 CREATE INDEX IF NOT EXISTS idx_plan_perspectives_session_id ON plan_perspectives(session_id);
 CREATE INDEX IF NOT EXISTS idx_plan_perspectives_episode_paths ON plan_perspectives USING GIN(episode_paths);
-CREATE INDEX IF NOT EXISTS idx_recordings_episode_path ON recordings(episode_path);
-CREATE INDEX IF NOT EXISTS idx_recordings_episode_number ON recordings(episode_number);
-CREATE INDEX IF NOT EXISTS idx_recordings_composition ON recordings(composition);
-CREATE INDEX IF NOT EXISTS idx_recordings_kind ON recordings(kind);
+CREATE INDEX IF NOT EXISTS idx_captures_episode_path ON captures(episode_path);
+CREATE INDEX IF NOT EXISTS idx_captures_episode_number ON captures(episode_number);
+CREATE INDEX IF NOT EXISTS idx_captures_composition ON captures(composition);
+CREATE INDEX IF NOT EXISTS idx_captures_kind ON captures(kind);
 
 -- Updated_at trigger for nodes
 CREATE OR REPLACE FUNCTION update_updated_at_column()
