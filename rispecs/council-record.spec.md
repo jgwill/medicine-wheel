@@ -134,9 +134,15 @@ than being stopped by it.
   has recurred. It is descriptive. It decides nothing and blocks nothing.
 - The circle gains a third outcome — **advance-with-divergence** — recorded as explicitly
   as agreement is, naming what remains unresolved and who holds it.
-- Recognizing a pattern composes teaching material into the record's next reading, through
-  the standings registry of `reading-layer.spec.md`. It never delivers it as a correction
-  aimed at a person.
+- Recognizing a pattern composes material into the record's next reading, through the
+  standings registry of `reading-layer.spec.md`. It never delivers it as a correction aimed
+  at a person.
+- What a participant actually said and what an agent made of it are **two fields**, and the
+  first is never edited.
+- Experience enters as **trade-off scenarios** — situations the system will or will not
+  face — so it can be examined rather than deferred to or argued with.
+- An advance names the conditions under which the circle **returns** to what it carried
+  past.
 - Every volumetric consequence of holding this data is measured and stated before anything
   is written.
 
@@ -196,7 +202,14 @@ Contribution
   council_record_id
   contributor        who
   standing_id?       optional — which registered standing this was offered from
-  content
+  raw_voice          what the participant actually said, verbatim, never rewritten
+  interpretation?    an agent's reading of it — a separate field, never a substitute
+    paraphrase
+    claims[]
+    assumptions[]
+    domains[]
+    generated_by     which agent, named
+    generated_at
   offered_at
 ```
 
@@ -204,6 +217,23 @@ Contribution
 score, no rank, no priority, and no order-of-precedence field. `standing_id` is optional
 and, when present, references the registry in `reading-layer.spec.md` §1 — it says where
 the contribution was offered from, never how much it counts.
+
+### 1.1.1 `raw_voice` and `interpretation` are two fields, always
+
+**An agent's reading of what someone said never occupies the field that holds what they
+said.** An agent may record *"I read this as a modifiability concern"* — attributed,
+timestamped, and named. It may not produce *"Guillaume said this is a modifiability
+concern"* unless those were the words.
+
+This separation is the reason the record can be re-interpreted later without falsifying
+what happened. Understanding of a session commonly deepens after it; `interpretation` may
+be replaced, added to, or discarded. `raw_voice` is written once and never edited.
+
+It also makes a specific failure impossible: an agent cannot gradually become the author of
+a participant's position by summarising it repeatedly. The original sentence stays
+recoverable at every later reading, which is the same discipline
+`rispecs/plan-insight-perspective-registration.spec.md` already applies — this suite holds a
+projection with provenance and never becomes the author or source of truth.
 
 ### 1.2 Storage shape — and the constraints that come with it
 
@@ -272,6 +302,7 @@ RecognizedPattern
   id
   council_record_id
   name              what recurs, in words
+  kind              which sort of divergence this is — see §2.1
   observed_by       who named it
   observed_at
   occurrences[]     references to the contributions where it was seen
@@ -289,7 +320,46 @@ that named it — not as a message addressed to them.
 This is what the original inquiry called *teaching in a discreet manner*. The discretion is
 structural: the teaching is **in the record**, not **aimed at a person**.
 
-### 2.1 What a recognized pattern must not do
+### 2.1 Kinds of divergence — because they are not one thing
+
+A single "there is disagreement here" carries no information about what would help. These
+five do:
+
+| `kind` | What it means | What it invites |
+|---|---|---|
+| `viable-alternatives` | Both positions are workable; they optimise differently | Keep both on the record and compare them against scenarios (§4) |
+| `unshared-concept` | One participant is using concepts another has not met | Material composed into the record, per §2.3 |
+| `unclear-responsibility` | Nobody knows whose decision this is | Name who decides, before continuing to argue the matter |
+| `different-outcome` | The participants are building toward different results | Return to what is being created, before comparing means |
+| `strained-relation` | The exchange has moved from the matter to the people | The circle's own to attend to — see the constraint below |
+
+**Every one of these is assigned by a person, never computed.** `kind` is part of the
+observation someone makes; it is not a classification an agent derives from transcript
+features.
+
+`strained-relation` carries an additional constraint: **no agent may ever assign it.** An
+agent labelling a human exchange as identity conflict is a judgement about people wearing
+the costume of a data field, and it would arrive with the authority of the system behind
+it. Only a participant may name that a relation has become strained, and naming it changes
+nothing automatically.
+
+### 2.2 Material composed, never material sent
+
+When a pattern of kind `unshared-concept` is named, the concept it concerns can be written
+onto the record — the distinction, why it bears on this matter, what it looks like in this
+system.
+
+That material reaches people **by being composed into readings of the record**
+(`reading-layer.spec.md` §2). It is not delivered to a participant, not addressed to
+anyone, and never phrased as an account of what someone does not know.
+
+This is the whole of the discretion the original inquiry asked for, and the mechanism is
+what makes it discreet: **the teaching is in the record, not aimed at a person.** A design
+that instead generates per-participant remediation is a design in which the system has
+formed and stored a view of an individual's deficiency. That is not specified here, and
+§2.3 item 3 forbids the shape it would take.
+
+### 2.3 What a recognized pattern must not do
 
 1. **It must not be inferred.** A pattern is named by a person. No detector, no threshold,
    no clustering job proposes one. The suite has already paid for confident, unsourced
@@ -301,6 +371,12 @@ structural: the teaching is **in the record**, not **aimed at a person**.
    provenance, and it is as far as this goes.
 4. **It must not become a weight.** No count of patterns, and no pattern, ever adjusts how
    any contribution or standing is composed relative to another.
+5. **It must not acquire a graded confidence.** Neither a pattern nor a standing carries a
+   scale of any kind — no `0.87`, and equally no `emerging | working | strong | deep`. A
+   small ordinal is the same claim as a decimal with fewer values: it asserts that one
+   person's grounding in a domain is comparable to another's along a single axis. That is
+   the ranking this suite refuses in five places (§Current Reality), and refusing the
+   decimal while accepting the enum refuses nothing.
 
 ---
 
@@ -314,9 +390,26 @@ AdvanceWithDivergence
   council_record_id
   unresolved        what remains disagreed, in words
   held_by[]         who holds the unresolved position
+  revisit_when[]    the conditions under which the circle returns to this
   decided_by        who recorded the advance
   decided_at
 ```
+
+`revisit_when` is what keeps an advance from becoming a burial. A disagreement carried
+forward with no return condition is one that was quietly overruled and given a gentler
+name. Stating the conditions turns it into something the circle can actually come back to:
+
+```
+Advance with the direct-access approach.
+Revisit when:
+  - a second persistence provider is proposed
+  - this module passes roughly a thousand lines
+  - a test needs to run without the storage service
+```
+
+Those conditions are observable, so the disagreement becomes a thing the work itself can
+settle later — and the person holding the unresolved position knows exactly what would
+bring it back, rather than having to raise it again from nothing.
 
 Recording this sets `CouncilRecord.status` to `advancing`. The unresolved position stays on
 the record and composes into every subsequent reading. It is not archived, not closed, and
@@ -336,6 +429,97 @@ This document **does not modify** `seekConsensus` (`consensus.ts:26-33`) or
 circle chooses to proceed without consensus. Whether any given matter may take that path —
 and whether some matters may not — is a governance question for the circle, not a default
 this specification sets.
+
+### 3.2 No computed gate
+
+It is tempting to close the loop: classify the divergence, weigh the consequence, and have
+the system return `mayProceed: false` when both are high. That is refused here, for three
+reasons.
+
+**It is already forbidden.** `jgwill/medicine-wheel#114` §4.4 item 4: software may record
+that a council occurred and who was present; it may not transition an agreement's status
+without the people who hold it. A computed hold is such a transition.
+
+**It would be the suite's second blocking authority.** `enforceCeremonyGate()` already
+returns `blocked: true` and `production.ts:146` throws; `fire-keeper.issueStopWork()`
+already halts with `resumeCondition: 'Human review required'` `[one lane]`. Adding a third,
+derived from an agent's classification of a conversation, gives the newest and least
+accountable mechanism the same power as the two that people built deliberately.
+
+**It moves the decision to the least answerable place.** A hold computed from
+`kind` × `consequence` reads as a system fact. Nobody signed it, so nobody can be asked
+about it, and the circle argues with a rule instead of a person.
+
+**What is specified instead:** the record shows what is unresolved, of what kind, against
+which scenarios, with what still unanswered. A person reads that and decides — and their
+name is on `decided_by`. The record makes the decision *legible*; it does not make it.
+
+Nothing here prevents a circle from agreeing among themselves to pause whenever a
+`different-outcome` pattern is named. That is an agreement between people, recorded as one.
+It is not a function.
+
+---
+
+## 4. Trade-off scenarios — how experience becomes testable instead of authoritative
+
+A standing carries experience. Experience arrives in conversation as a conclusion —
+*"we need a boundary here or this becomes hard to change"* — and a conclusion is exactly the
+form that invites either deference or argument, and nothing else.
+
+**A trade-off scenario is that same experience restated as a situation the system either
+handles or does not.**
+
+```
+TradeoffScenario
+  id
+  council_record_id
+  situation         a concrete thing that might be asked of the system, in words
+  matters_because   which quality it exercises — changeability, isolation, cost, and so on
+  raised_by
+  standing_id?
+  raised_at
+```
+
+**Behavior:** a scenario is written onto the record. Each alternative under discussion can
+then be described against it — plainly, in words, by whoever wishes. Nothing scores the
+alternatives and nothing selects one.
+
+Worked from the original inquiry's own example. The conclusion *"layering is worth writing
+four or five times more code"* becomes:
+
+```
+Situation:  replace JSONL storage with Postgres, leaving domain logic untouched
+Situation:  run a governance decision test without starting the storage service
+Situation:  add a second participant-facing surface without restating the rules
+Situation:  ship this module unchanged for two years with no second provider appearing
+```
+
+The last one matters as much as the first three. **Scenarios must include the ones under
+which the experienced position does not pay off**, or the practice becomes a way of
+producing agreement rather than a way of examining a choice.
+
+### 4.1 Why this is the honest use of experience
+
+A conclusion asks to be trusted. A scenario asks to be examined — and the person who has
+seen a system age is unusually good at naming which situations will actually arrive. That
+naming is the contribution experience is uniquely able to make, and it survives scrutiny in
+a way *"trust me, I have seen this"* does not.
+
+It is also the form in which someone with less experience can genuinely participate:
+disagreeing about whether a second persistence provider is likely is a conversation anyone
+in the circle can have, where disagreeing about whether layering is correct is not.
+
+### 4.2 What a scenario must not become
+
+1. **Not a score.** No alternative is rated against a scenario numerically, and no
+   arithmetic combines scenarios into a recommendation.
+2. **Not a gate.** Writing scenarios never blocks anything and never sets
+   `CouncilRecord.status`.
+3. **Not exhaustive by claim.** A scenario list is what the circle thought of, never
+   what could happen. A record must not read as though the possibilities were enumerated.
+4. **Not generated as a verdict.** An agent may draft candidate scenarios; each remains a
+   draft carrying `raised_by` naming a person who accepted it. An unaccepted draft is not a
+   scenario on the record.
 
 ---
 
@@ -434,14 +618,28 @@ Steps 1 and 2 gate every step that follows.
    *Current reality:* pattern detection is the obvious thing to automate and the wrong thing
    to automate first.
    *Desired state:* every pattern carries `observed_by` and `observed_at`.
-   *Resolution:* §2.1 item 1. No detector ships in this capability.
+   *Resolution:* §2.3 item 1. No detector ships in this capability.
 
 5. **Record advance-with-divergence as a distinct outcome, leaving consensus untouched.**
    *Current reality:* consensus means no objections, and there is no third result.
    *Desired state:* proceeding-while-disagreeing is expressible and recorded as itself.
    *Resolution:* §3, without modifying `seekConsensus` or `collectiveDecision`.
 
-6. **Route teaching through readings, never through notifications.**
+6. **Keep `raw_voice` and `interpretation` in separate fields from the first write.**
+   *Current reality:* the natural shape for a contribution is one content field, and an
+   agent summarising into it is a one-line change that nobody notices.
+   *Desired state:* what was said stays recoverable at every later reading.
+   *Resolution:* §1.1.1. `raw_voice` is written once and never edited; `interpretation`
+   carries `generated_by` and `generated_at` and may be replaced freely.
+
+7. **Translate experience into scenarios before comparing alternatives.**
+   *Current reality:* experience arrives as a conclusion, and a conclusion can only be
+   deferred to or argued with.
+   *Desired state:* the same experience is examinable by people who do not share it.
+   *Resolution:* §4, including the requirement that scenarios name the situations under
+   which the experienced position does **not** pay off.
+
+8. **Route material through readings, never through notifications.**
    *Current reality:* the natural implementation of "prepare material for participants" is
    a message addressed to someone.
    *Desired state:* material reaches people by being in the record they read.
@@ -496,6 +694,22 @@ silent regression the week after someone starts writing.
 
 ---
 
+## A note on naming, for whoever proposes a package
+
+If this becomes a package, **"weave" is taken twice over.** This repo already ships
+inquiry weaves — `rispecs/inquiry-weave-registration.spec.md`, with MCP tools
+`register_inquiry_weave`, `get_inquiry_weave`, `list_inquiry_weaves`. A
+`deliberation-weave` package holding `CouncilWeave` objects beside `InquiryWeave` objects
+gives the suite three unrelated weaves and a reader no way to tell which is meant.
+
+`council record` is used throughout this document because "council" is already this suite's
+own word — ceremony phases run `opening → council → integration → closure` — and it names
+what the thing is rather than what it resembles.
+
+Where the capability lives, and whether it is a package at all, stays open below.
+
+---
+
 ## Open Questions
 
 1. **Does a council record belong in the node store at all?** §1.3 option 3 says perhaps
@@ -525,8 +739,8 @@ silent regression the week after someone starts writing.
 
 | This spec | Anchor | Relation |
 |---|---|---|
-| §2, §3 delivery | `rispecs/reading-layer.spec.md` | The companion — patterns and unresolved positions reach people by composing into readings. This document depends on that one; the reverse is not true |
-| whole document | `jgwill/medicine-wheel#114` | The gated wampum relation. Nothing here borrows from it beyond the four "must not" rules restated in §2.1 and §3. **Open, unmerged as of 2026-08-10** |
+| §2, §3 delivery | `rispecs/reading-layer.spec.md` | The companion — patterns, material and unresolved positions reach people by composing into readings. This document depends on that one; the reverse is not true |
+| whole document | `jgwill/medicine-wheel#114` | The gated wampum relation. Nothing here borrows from it beyond the four "must not" rules restated in §2.3 and §3. **Open, unmerged as of 2026-08-10** |
 | §Current Reality, §3.1 | `rispecs/community-review.spec.md` | The unanimity rule and the suite's refusal of credentialed authority |
 | §1.2 storage | `tests/node-kind-query.test.ts`, `app/api/nodes/route.ts` | The `?kind=` / `?parent_id=` surface shipped in 0.5.9 (`2e5a54a`, merged `15d4cf3`) |
 | §Current Reality | `rispecs/ceremony-protocol.spec.md` | Describes non-blocking behaviour its package does not have |
