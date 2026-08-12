@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/creative-problem-solving",
-  "version": "0.5.9",
+  "version": "0.5.10",
   "description": "Creative problem solving, routed at the door: name the prior state you are restoring. Named one — this is a fire, and gap analysis is the right instrument. Named none — you are creating, and structural tension is. Re-exports @medicine-wheel/creative-orientation.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -42,7 +42,7 @@
     "directory": "src/creative-problem-solving"
   },
   "dependencies": {
-    "@medicine-wheel/creative-orientation": "^0.5.9"
+    "@medicine-wheel/creative-orientation": "^0.5.10"
   },
   "devDependencies": {
     "typescript": "^5.7.0"
