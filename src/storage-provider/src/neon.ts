@@ -16,6 +16,8 @@ import type {
   DiaryEntryFilters,
   CeremonyEventRecord,
   CeremonyEventFilters,
+  CaptureRecord,
+  CaptureFilters,
   NodePatch,
   EdgePatch,
 } from './interface.js';
@@ -31,6 +33,10 @@ import {
 import { filterInquiryWeaves } from './inquiry-weaves.js';
 import { filterAndOrderDiaryEntries } from './diary-records.js';
 import { matchesCeremonyEventFilters } from './ceremony-events.js';
+import {
+  mergeCaptureRecords,
+  filterAndOrderCaptures,
+} from './capture-records.js';
 
 type QueryRow = Record<string, unknown>;
 type NeonQueryFunction = (strings: TemplateStringsArray, ...params: unknown[]) => Promise<QueryRow[]>;
@@ -48,6 +54,7 @@ export class NeonProvider implements StorageProvider {
     await this.ensurePlanPerspectivesTable();
     await this.ensureDiaryEntriesTable();
     await this.ensureCeremonyEventsTable();
+    await this.ensureCapturesTable();
   }
 
   async disconnect(): Promise<void> {
@@ -570,6 +577,79 @@ export class NeonProvider implements StorageProvider {
     await this.db`CREATE INDEX IF NOT EXISTS idx_ceremony_events_kind ON ceremony_events(kind)`;
     await this.db`CREATE INDEX IF NOT EXISTS idx_ceremony_events_phase ON ceremony_events(phase)`;
     await this.db`CREATE INDEX IF NOT EXISTS idx_ceremony_events_repository ON ceremony_events(repository)`;
+  }
+
+  // ── Capture Operations (records + URIs, never bytes) ──
+
+  async registerCapture(record: CaptureRecord): Promise<CaptureRecord> {
+    const existing = await this.getCapture(record.id);
+    const merged = existing ? mergeCaptureRecords(existing, record) : record;
+
+    await this.db`
+      INSERT INTO captures (id, payload, filename, kind, origin, episode_path, episode_number, composition, device, registered_at, updated_at)
+      VALUES (
+        ${merged.id},
+        ${JSON.stringify(merged)},
+        ${merged.filename},
+        ${merged.kind},
+        ${merged.origin},
+        ${merged.episode_path ?? null},
+        ${merged.episode_number ?? null},
+        ${merged.composition ?? null},
+        ${merged.device ?? null},
+        ${merged.registered_at},
+        NOW()
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        payload = EXCLUDED.payload,
+        filename = EXCLUDED.filename,
+        kind = EXCLUDED.kind,
+        origin = EXCLUDED.origin,
+        episode_path = EXCLUDED.episode_path,
+        episode_number = EXCLUDED.episode_number,
+        composition = EXCLUDED.composition,
+        device = EXCLUDED.device,
+        registered_at = EXCLUDED.registered_at,
+        updated_at = NOW()
+    `;
+
+    return merged;
+  }
+
+  async getCapture(id: string): Promise<CaptureRecord | null> {
+    const rows = await this.db`SELECT payload FROM captures WHERE id = ${id}`;
+    if (rows.length === 0) return null;
+    return parseJsonValue<CaptureRecord>(rows[0].payload, null as unknown as CaptureRecord);
+  }
+
+  async listCaptures(filters: CaptureFilters = {}): Promise<CaptureRecord[]> {
+    const rows = await this.db`SELECT payload FROM captures ORDER BY updated_at DESC`;
+    return filterAndOrderCaptures(
+      rows.map((row) => parseJsonValue<CaptureRecord | null>(row.payload, null)),
+      filters,
+    );
+  }
+
+  private async ensureCapturesTable(): Promise<void> {
+    await this.db`
+      CREATE TABLE IF NOT EXISTS captures (
+        id TEXT PRIMARY KEY,
+        payload JSONB NOT NULL,
+        filename TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        origin TEXT NOT NULL,
+        episode_path TEXT,
+        episode_number INTEGER,
+        composition TEXT,
+        device TEXT,
+        registered_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_captures_episode_path ON captures(episode_path)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_captures_episode_number ON captures(episode_number)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_captures_composition ON captures(composition)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_captures_kind ON captures(kind)`;
   }
 }
 
