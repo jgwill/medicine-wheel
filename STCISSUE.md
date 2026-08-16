@@ -1643,3 +1643,34 @@ Merging PR #117 is authorised by William on green only.
 >
 > **Strongest argument against:** splitting discovery into this issue widens a scope that
 > was deliberately about deployment runnability, and a wider issue is a slower one.
+
+## issue #123 - /api/health counts the store, not the page it just fetched
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-08-16T03:38:08Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/123
+
+### Current Reality
+## Context
+
+`app/api/health/route.ts:11-19` reports the store's cardinality by fetching a page and measuring it:
+
+```ts
+const nodes = await store.getAllNodes();
+const ceremonies = await store.getAllCeremonies();
+
+return NextResponse.json({
+  status: 'healthy',
+  provider: providerType,
+  counts: {
+    nodes: nodes.length,
+    ceremonies: ceremonies.length,
+  },
+  ...
+```
+
+Both calls are unparameterised, so both take the provider's default page size of 100 — `getAllNodes(limit = 100)` and `getA
+
