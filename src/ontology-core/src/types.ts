@@ -565,6 +565,81 @@ export const INFRA_ENTITY_BINDING = {
 /** `'host' | 'tenant' | 'service'` — the registered infrastructure kinds. */
 export const INFRA_ENTITY_KINDS: readonly InfraEntityKind[] = ['host', 'tenant', 'service'];
 
+// ── Academic Entity Kinds (faculty, research fields, programs, institutions) ─
+// The same additive move as ProductionEntityKind and InfraEntityKind above, and
+// for the same reason: a faculty member, a research field, a graduate program
+// and an institution are already beings this ontology can hold — `human`,
+// `knowledge`, `land`. They are NOT new NodeTypes. They ride existing nodes
+// carrying a `metadata.kind: AcademicEntityKind` discriminator. Born in ep332
+// from the Renaud relation (ep067) the same way ProductionRelation was born in
+// ep068: outreach to a department is a greeting between kin, and the wheel
+// holds the relation before any letter travels.
+
+/** Discriminator for academic entities riding on existing nodes. */
+export type AcademicEntityKind = 'faculty' | 'research-field' | 'program' | 'institution';
+
+/**
+ * Which closed `NodeType` each academic kind rides, and which direction it
+ * serves. A faculty member is **south** — protocol and consent, a relation
+ * being established before any action. A research field is **east** — a mode
+ * of inquiry, the door a work is seen through. A program is **south** — the
+ * structure consent-based entry moves through (application, supervision). An
+ * institution carries no direction of its own: like a host, it is the ground
+ * the others stand on.
+ */
+export const ACADEMIC_ENTITY_BINDING = {
+  faculty: { nodeType: 'human', direction: 'south' },
+  'research-field': { nodeType: 'knowledge', direction: 'east' },
+  program: { nodeType: 'knowledge', direction: 'south' },
+  institution: { nodeType: 'land', direction: undefined },
+} as const satisfies Record<
+  AcademicEntityKind,
+  { nodeType: NodeType; direction: DirectionName | undefined }
+>;
+
+/** The registered academic kinds. */
+export const ACADEMIC_ENTITY_KINDS: readonly AcademicEntityKind[] = [
+  'faculty',
+  'research-field',
+  'program',
+  'institution',
+];
+
+/**
+ * Appointment status of a faculty member. `unverified` is a first-class value,
+ * not an absence: a claim the evidence does not yet earn keeps the weaker word.
+ * The supervisor requirement (the principal supervisor must be a full-time
+ * member of the department — Renaud, ep067) is checkable only against this.
+ */
+export type AcademicAppointment =
+  | 'full-time'
+  | 'part-time'
+  | 'tenure-track'
+  | 'tenured'
+  | 'affiliated'
+  | 'emeritus'
+  | 'unverified';
+
+/**
+ * A relation grounded in academic kinship. `field-aligns-with` records that a
+ * research field and a work recognize each other; an alignment claim carries
+ * its `grounding` — the vessel, roster or issue where it was measured — so the
+ * edge can be challenged at its source rather than argued from memory.
+ */
+export interface AcademicRelation extends Relation {
+  relationship_type:
+    | 'researches-in' // faculty → research-field
+    | 'appointed-at' // faculty → institution (carries `appointment`)
+    | 'supervises-in' // faculty → program
+    | 'field-aligns-with' // research-field ↔ episode / work
+    | 'profiled-in' // faculty → the vessel or episode that profiled them
+    | 'corresponds-with'; // human ↔ human — the living relation
+  /** Where the claim was measured — a vessel path, a roster, or owner/repo#n. */
+  grounding?: string;
+  /** Appointment status, when the relation is `appointed-at`. */
+  appointment?: AcademicAppointment;
+}
+
 // ── MCP Tool/Resource/Prompt types ──────────────────────────────────────────
 
 export interface MWTool {
