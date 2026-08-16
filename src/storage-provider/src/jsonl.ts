@@ -135,6 +135,10 @@ export class JsonlProvider implements StorageProvider {
       .map((node) => this.parseNode(node));
   }
 
+  async countNodes(): Promise<number> {
+    return countJsonl(this.nodesFile);
+  }
+
   async updateNode(id: string, patch: NodePatch): Promise<RelationalNode> {
     return withWriteLock(this.nodesFile, () => {
       const nodes = this.readNodes();
@@ -311,6 +315,10 @@ export class JsonlProvider implements StorageProvider {
       .sort(sortByNewest('timestamp'))
       .slice(0, limit)
       .map((ceremony) => this.parseCeremony(ceremony));
+  }
+
+  async countCeremonies(): Promise<number> {
+    return countJsonl(this.ceremoniesFile);
   }
 
   async registerInquiryWeave(record: WeaveRecord): Promise<void> {
@@ -522,6 +530,36 @@ function readJsonl<T>(filePath: string): T[] {
   }
 
   return records;
+}
+
+/**
+ * How many records the file holds, without building them.
+ *
+ * Counts exactly what `readJsonl` would have returned — a malformed line is
+ * skipped by both, so a count can never disagree with a read — but retains no
+ * objects, sorts nothing, and parses no record into its domain shape. Skipping
+ * is silent here: `readJsonl` already warns about the same line, and counting
+ * must not double the noise.
+ */
+function countJsonl(filePath: string): number {
+  if (!fs.existsSync(filePath)) return 0;
+
+  let count = 0;
+  const content = fs.readFileSync(filePath, 'utf-8');
+
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    try {
+      JSON.parse(trimmed);
+      count += 1;
+    } catch {
+      // Same skip readJsonl performs; it owns the warning.
+    }
+  }
+
+  return count;
 }
 
 function writeJsonl<T>(filePath: string, records: T[]): void {

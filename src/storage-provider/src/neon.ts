@@ -105,6 +105,11 @@ export class NeonProvider implements StorageProvider {
     return rows.map((row: Record<string, unknown>) => this.parseNode(row));
   }
 
+  async countNodes(): Promise<number> {
+    const counts = await this.db`SELECT COUNT(*)::int AS count FROM nodes`;
+    return Number(counts[0]?.count ?? 0);
+  }
+
   async updateNode(id: string, patch: NodePatch): Promise<RelationalNode> {
     const existing = await this.getNode(id);
     if (!existing) throw new NodeNotFoundError(id);
@@ -302,6 +307,11 @@ export class NeonProvider implements StorageProvider {
 
   async getAllCeremonies(limit = 100): Promise<CeremonyLog[]> {
     return this.getCeremoniesTimeline(limit);
+  }
+
+  async countCeremonies(): Promise<number> {
+    const counts = await this.db`SELECT COUNT(*)::int AS count FROM ceremonies`;
+    return Number(counts[0]?.count ?? 0);
   }
 
   private parseCeremony(row: Record<string, unknown>): CeremonyLog {
