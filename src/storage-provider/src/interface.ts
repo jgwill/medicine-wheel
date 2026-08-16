@@ -390,6 +390,14 @@ export interface StorageProvider {
   getNodesByType(type: NodeType): Promise<RelationalNode[]>;
   getNodesByDirection(direction: DirectionName): Promise<RelationalNode[]>;
   getAllNodes(limit?: number): Promise<RelationalNode[]>;
+  /**
+   * Cardinality of the whole node collection, never a page of it.
+   * `getAllNodes()` answers with a page (default 100), so its length is
+   * `min(actual, limit)` and cannot be used as a total. Implementations answer
+   * this without materialising the collection — a line count on jsonl, a
+   * `COUNT(*)` on Postgres.
+   */
+  countNodes(): Promise<number>;
   /** Throws NodeNotFoundError when the node does not exist. */
   updateNode(id: string, patch: NodePatch): Promise<RelationalNode>;
   /** Throws NodeNotFoundError or NodeHasRelationsError (refusal, never cascade). */
@@ -413,6 +421,8 @@ export interface StorageProvider {
   getCeremoniesByDirection(direction: DirectionName): Promise<CeremonyLog[]>;
   getCeremoniesByType(type: CeremonyType): Promise<CeremonyLog[]>;
   getAllCeremonies(limit?: number): Promise<CeremonyLog[]>;
+  /** Cardinality of the whole ceremony collection — see `countNodes()`. */
+  countCeremonies(): Promise<number>;
 
   // Inquiry Weave Operations
   registerInquiryWeave(record: WeaveRecord): Promise<void>;
