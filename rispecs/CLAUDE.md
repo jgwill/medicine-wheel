@@ -16,6 +16,13 @@ This folder contains RISE framework specifications for all Medicine Wheel packag
 | `decomposition-strategies.spec.md` | prompt-decomposition (capability) | Strategy framework — depth on demand: multi-pass & dual-framing over the deterministic foundation |
 | `ui-components.spec.md` | ui-components | React components |
 | `capture-registry.spec.md` | storage-provider + app | Capture registry — records + URIs (never bytes), capture provenance, episode/composition query surface, `/api/recordings` deprecated alias |
+| `reading-layer.spec.md` | *(unassigned)* | Standings registry, read-time composition, refusal as a return type, read-as-event |
+| `council-record.spec.md` | *(unassigned)* | Contributions gathered on a matter, recognized patterns, advance-with-divergence |
+
+> **This table covers a subset.** `rispecs/` holds well over forty documents; the rows above
+> are the package specs plus later additions, not a complete listing. Run `ls rispecs/`
+> before assuming a subject is unspecified — and read git dates, not file mtimes, when
+> judging freshness: any checkout rewrites mtimes across the whole tree.
 
 ## How to Read
 
