@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/infra",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Typed infrastructure facets for the Medicine Wheel Developer Suite — hosts, tenants, services, and port bindings as facets keyed by relational node id, with port-conflict detection over declared ∪ observed state",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -53,7 +53,7 @@
     "directory": "src/infra"
   },
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.6.0",
+    "@medicine-wheel/ontology-core": "^0.6.1",
     "zod": "^3.23.0"
   },
   "devDependencies": {
