@@ -1,0 +1,42 @@
+{
+  "name": "medicine-wheel",
+  "version": "1.0.4",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@medicine-wheel/app": "^0.6.1",
+    "@medicine-wheel/brainstorming": "^0.6.1",
+    "@medicine-wheel/ceremonial-diary": "^0.6.1",
+    "@medicine-wheel/ceremony-protocol": "^0.6.1",
+    "@medicine-wheel/community-review": "^0.6.1",
+    "@medicine-wheel/consent-lifecycle": "^0.6.1",
+    "@medicine-wheel/creative-orientation": "^0.6.1",
+    "@medicine-wheel/creative-problem-solving": "^0.6.1",
+    "@medicine-wheel/data-store": "^0.6.1",
+    "@medicine-wheel/data-store-postgres": "^0.6.1",
+    "@medicine-wheel/fire-keeper": "^0.6.1",
+    "@medicine-wheel/gap-analysis": "^0.6.1",
+    "@medicine-wheel/github-ceremony": "^0.6.1",
+    "@medicine-wheel/graph-viz": "^0.6.1",
+    "@medicine-wheel/importance-unit": "^0.6.1",
+    "@medicine-wheel/infra": "^0.6.1",
+    "@medicine-wheel/narrative-cluster": "^0.6.1",
+    "@medicine-wheel/narrative-engine": "^0.6.1",
+    "@medicine-wheel/ontology-core": "^0.6.1",
+    "@medicine-wheel/perception-layer": "^0.6.1",
+    "@medicine-wheel/prompt-decomposition": "^0.6.1",
+    "@medicine-wheel/relational-index": "^0.6.1",
+    "@medicine-wheel/relational-query": "^0.6.1",
+    "@medicine-wheel/session-reader": "^0.6.1",
+    "@medicine-wheel/storage-provider": "^0.6.1",
+    "@medicine-wheel/transformation-tracker": "^0.6.1",
+    "@medicine-wheel/ui-components": "^0.6.1"
+  }
+}
