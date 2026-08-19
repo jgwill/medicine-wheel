@@ -14,7 +14,7 @@ does not have to change to make that true.
 ## Install
 
 ```bash
-npm install @medicine-wheel/infra@^0.5.8
+npm install @medicine-wheel/infra
 ```
 
 Depends only on `@medicine-wheel/ontology-core` and `zod`.
@@ -193,9 +193,9 @@ Every specification ships: S1 facets, S3 `detectPortConflicts`, S4
 `ontology-core`'s `KINSHIP_EDGE_TYPES`, which is where edge vocabulary belongs.
 `infra` never forked it.
 
-S4 and S6 first ship in **0.5.8**. `0.5.7` and earlier contain S1, S3 and S5
-only — a package that installs `^0.5.7` may resolve a dist with no
-`preconditionGuard` and no `reconcile`.
+The current package ships S4 and S6 alongside S1, S3 and S5. Consumers should
+check the exported API rather than infer capability from release notes copied
+into this README.
 
 The package stays types plus pure functions: zero I/O, zero persistence, zero
 clock. `reconcile` takes `now` as an argument for exactly that reason.

@@ -2,11 +2,10 @@
 
 > A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's (Respect, Reciprocity, Responsibility), and OCAP® data sovereignty principles.
 
-**Version:** 0.5.5 (lockstep packages) · MCP server 4.5.5
 **Language:** TypeScript (ES2022, ESM, strict mode)
 **Runtime:** Node.js
-**Validation:** Zod ^3.23.0
-**UI:** React ^18 || ^19
+**Validation:** Zod
+**UI:** React
 **License:** MIT
 
 ---
@@ -425,8 +424,6 @@ const access = getAccessLevel('ceremony/smudging.md', config.governance!);
 npm install medicine-wheel-fire-keeper
 ```
 
-**Version:** 0.5.5
-
 The Fire Keeper is the ceremony coordination agent. It does not write code or produce artifacts directly — it receives, evaluates, routes, and gates the work of sub-agents through relational integrity checks.
 
 ### Core Class: FireKeeper
@@ -570,8 +567,6 @@ const result = keeper.evaluateImportance(
 ```bash
 npm install medicine-wheel-community-review
 ```
-
-**Version:** 0.5.5
 
 Wilson describes research validation through *community review* — Elders, knowledge keepers, and community members validate whether research honors relational accountability. This package implements that vision.
 
@@ -732,8 +727,6 @@ circle = closeCircle(circle, outcome);
 ```bash
 npm install medicine-wheel-consent-lifecycle
 ```
-
-**Version:** 0.5.5
 
 Transforms consent from a boolean checkbox into a living relational obligation with lifecycle tracking, renewal, renegotiation, and community-level consent protocols. Wilson's relational accountability means consent is not an event — it's a *relationship*.
 
@@ -1111,8 +1104,6 @@ import {
 npm install medicine-wheel-importance-unit
 ```
 
-**Version:** 0.5.5
-
 The ImportanceUnit is the relational unit of knowledge in Wilson's epistemology — a relationally-accountable piece of meaning that carries epistemic weight, source dimensions, accountability links, and circle depth tracking. Not all knowledge is equal: dream-state and embodied knowledge may carry more epistemic authority than rational analysis.
 
 ### Types
@@ -1263,8 +1254,6 @@ const analysis = detectDeepening(linked);
 npm install medicine-wheel-relational-index
 ```
 
-**Version:** 0.5.5
-
 Four-source epistemic dimensional indexing. Wilson's epistemology recognises multiple sources of knowing — Land, Dream, Code, and Vision each teach differently. This package enables querying, traversal, and cross-dimensional mapping across those epistemic sources.
 
 ### Types
@@ -1413,8 +1402,6 @@ const health = indexHealth(index);
 ```bash
 npm install medicine-wheel-transformation-tracker
 ```
-
-**Version:** 0.5.5
 
 Research transformation tracking — Wilson's validity criterion: "If research doesn't change you, you haven't done it right." Tracks the transformative impact of research on researchers, communities, and relational networks.
 
@@ -1929,8 +1916,6 @@ const obs = formatDirectionObservation({ east: 40, south: 30, west: 20, north: 1
 npm install medicine-wheel-prompt-decomposition
 ```
 
-**Version:** 0.5.5
-
 ### MedicineWheelDecomposer
 
 ```typescript
@@ -2038,8 +2023,6 @@ const md = decompositionToMarkdown(decomposition);
 npm install medicine-wheel-ui-components
 ```
 
-**Version:** 0.5.5
-
 ### DirectionCard
 
 Displays a direction with color, Ojibwe name, teachings, and current-direction highlighting.
@@ -2122,8 +2105,6 @@ import type { WilsonMeterProps } from 'medicine-wheel-ui-components';
 npm install medicine-wheel-data-store
 ```
 
-**Version:** 0.5.5
-
 ### Overview
 
 Shared Redis data-access layer for the Medicine Wheel Developer Suite. Provides connection management, Node/Edge/Ceremony CRUD, session-ceremony linking, and generic Redis helpers.
@@ -2137,8 +2118,8 @@ Shared Redis data-access layer for the Medicine Wheel Developer Suite. Provides 
 
 ### Dependencies
 
--   `@medicine-wheel/ontology-core` ^0.5.5
--   `redis` ^4.6.0
+-   `@medicine-wheel/ontology-core`
+-   `redis`
 
 ---
 
@@ -2147,8 +2128,6 @@ Shared Redis data-access layer for the Medicine Wheel Developer Suite. Provides 
 ```bash
 npm install medicine-wheel-session-reader
 ```
-
-**Version:** 0.5.5
 
 ### Overview
 
@@ -2170,8 +2149,6 @@ Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, s
 ```bash
 npm install @medicine-wheel/storage-provider
 ```
-
-**Version:** 0.5.5
 
 ### Overview
 
@@ -2200,8 +2177,6 @@ const store = await createProvider();
 npm install @medicine-wheel/data-store-postgres
 ```
 
-**Version:** 0.5.5
-
 ### Overview
 
 PostgreSQL/Neon provider scaffold for the Medicine Wheel Developer Suite — shared connection-pool management and provider-ready storage entrypoints for cloud-backed persistence.
@@ -2222,8 +2197,6 @@ PostgreSQL/Neon provider scaffold for the Medicine Wheel Developer Suite — sha
 ```bash
 npm install @medicine-wheel/ceremonial-diary
 ```
-
-**Version:** 0.5.5
 
 ### Overview
 
@@ -2250,8 +2223,6 @@ Ceremonial Diary — a participant's voice across the Five-Phase ceremonial meth
 npm install @medicine-wheel/github-ceremony
 ```
 
-**Version:** 0.5.5
-
 ### Overview
 
 GitHub-ceremony processing — witness GitHub webhook events (issues, pull requests, merges, commits) through a ceremonial lens and record them as relational ceremony beads. Pure, framework-free functions that take a parsed payload and a `@medicine-wheel/storage-provider`. Came home from Miadi (jgwill/Miadi#506).
@@ -2275,8 +2246,6 @@ GitHub-ceremony processing — witness GitHub webhook events (issues, pull reque
 npm install @medicine-wheel/perception-layer
 ```
 
-**Version:** 0.5.5
-
 ### Overview
 
 Eyes & ears of agent-supported Indigenous film production — witness a belt-device recording / transcript as typed `PerceptualEvent`s and seed a production knowledge graph in ontology-core. Relationship, not extraction.
@@ -2299,8 +2268,6 @@ Eyes & ears of agent-supported Indigenous film production — witness a belt-dev
 npm install @medicine-wheel/narrative-cluster
 ```
 
-**Version:** 0.5.5
-
 ### Overview
 
 Narrative Cluster Processor — turn witnessed perceptual events / rushes into thematic clusters, narrative beats, and a Film Edit Brief (EDL markers). Deterministic; consumes perception-layer output.
@@ -2322,8 +2289,6 @@ Narrative Cluster Processor — turn witnessed perceptual events / rushes into t
 ```bash
 npm install @medicine-wheel/creative-orientation
 ```
-
-**Version:** 0.5.5
 
 ### Overview
 
@@ -2352,8 +2317,6 @@ None. This package sits below the instruments it routes to.
 npm install @medicine-wheel/gap-analysis
 ```
 
-**Version:** 0.5.5
-
 ### Overview
 
 Problem-solving built properly for the case where it genuinely applies: something worked and stopped. Root cause, incidents, regressions, troubleshooting.
@@ -2378,8 +2341,6 @@ The structure requires an evidenced baseline, an observation of the present, the
 npm install @medicine-wheel/creative-problem-solving
 ```
 
-**Version:** 0.5.5
-
 ### Overview
 
 A signpost, not a door. It holds no logic of its own and never will — it carries one question and then sends the caller one of two ways.
@@ -2402,8 +2363,6 @@ Name a prior state that genuinely existed, and this is a fire: `gap-analysis` is
 ```bash
 npm install @medicine-wheel/brainstorming
 ```
-
-**Version:** 0.5.5
 
 ### Overview
 
@@ -2430,8 +2389,6 @@ Every outcome it emits — including its own multiple-choice questions — passe
 npm install @medicine-wheel/infra
 ```
 
-**Version:** 0.5.5
-
 ### Overview
 
 Typed infrastructure facets — a home for the machine specifics (`port`, `unit`, `linger`) that otherwise leak into `metadata: Record<string, unknown>`.
@@ -2457,8 +2414,6 @@ Hosts, tenants, services, and port bindings are modelled as facets **keyed by re
 ```bash
 npx @medicine-wheel/mcp        # stdio transport
 ```
-
-**Version:** 4.5.5 (independent of the 0.x lockstep line)
 
 ### Overview
 

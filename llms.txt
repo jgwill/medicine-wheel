@@ -2,7 +2,6 @@
 
 > A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's, and OCAP® data sovereignty principles.
 
-**Version:** 0.5.5 (lockstep packages) · MCP server 4.5.5
 **Language:** TypeScript (ES2022, ESM)
 **License:** MIT
 
@@ -35,7 +34,7 @@
 - [github-ceremony](src/github-ceremony): GitHub-ceremony processing — witness GitHub webhook events (issues, PRs, merges, commits) through a ceremonial lens and record them as relational ceremony beads; pure, framework-free functions over a `@medicine-wheel/storage-provider`
 - [perception-layer](src/perception-layer): Eyes & ears of agent-supported Indigenous film production — witness a belt-device recording / transcript as typed `PerceptualEvent`s and seed a production knowledge graph in ontology-core
 - [narrative-cluster](src/narrative-cluster): Narrative Cluster Processor — turn witnessed perceptual events / rushes into thematic clusters, narrative beats, and a Film Edit Brief (EDL markers); deterministic; consumes perception-layer output
-- [mcp](mcp): Medicine Wheel MCP Server (`@medicine-wheel/mcp`, independent 4.x line) — 74 tools across orientation, the ceremony lifecycle, relational CRUD, structural tension, narrative, Four-Directions guidance, inquiry-weaves, plan-perspectives, and validators; stdio + StreamableHTTP transports
+- [mcp](mcp): Medicine Wheel MCP Server (`@medicine-wheel/mcp`) — 74 tools across orientation, the ceremony lifecycle, relational CRUD, structural tension, narrative, Four-Directions guidance, inquiry-weaves, plan-perspectives, and validators; stdio + StreamableHTTP transports
 
 ## MCP Server & HTTP API
 

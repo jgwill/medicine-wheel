@@ -52,8 +52,8 @@ import { openGapAnalysis, addStep, doorAdvice } from '@medicine-wheel/gap-analys
 
 let analysis = openGapAnalysis(
   { description: 'the published image matched the published packages',
-    evidence: 'true through 0.5.0, tagged 2026-07-17' },
-  { description: 'newest versioned image tag is 0.5.0; npm is at 0.5.2; 0.5.1 has no image',
+    evidence: 'true in the previously tagged release, verified from registry and image metadata' },
+  { description: 'the newest image tag trails npm; an intermediate release has no image',
     source: 'Docker Hub tags API, read 2026-07-25' },
   'the image no longer tracks npm because building it depends on a human remembering a flag',
 );

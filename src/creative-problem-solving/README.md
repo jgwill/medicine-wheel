@@ -39,7 +39,7 @@ readOrientation({
 
 readOrientation({
   outcome: 'the published image matches the published packages',
-  restores: 'true through 0.5.0',
+  restores: 'true in the previously tagged release',
   evidence: 'tagged 2026-07-17',
 }).route;       // 'gap-analysis' — a named, evidenced baseline
 ```
