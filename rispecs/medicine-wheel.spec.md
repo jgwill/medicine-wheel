@@ -1,232 +1,270 @@
 # Medicine Wheel — System RISE Specification
 
-> A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development. Fifteen packages that together enable developers to create relationally accountable systems grounded in the Four Directions, Wilson's three R's, and OCAP® principles.
+> Relational software framework for Four-Directions inquiry, ceremony-aware development, narrative continuity, persistence, governance, and interactive tooling. The system keeps relational accountability visible across ontology, storage, orchestration, interfaces, and agent-facing surfaces.
 
-**Version:** 0.2.1  
-**Document ID:** rispec-@medicine-wheel/system-v1  
-**Last Updated:** 2026-06-04  
+**Version:** 0.6.3  
+**Document ID:** rispec-@medicine-wheel/system-v2  
+**Parity Baseline:** 2026-08-19
 
 ---
 
 ## Desired Outcome
 
-Users create **complete Medicine Wheel software systems** — from ontological data models through ceremony-aware workflows to interactive visualizations — where every component honors Indigenous relational principles.
+Users create **relationally accountable software systems** in which ontology, persistence, narrative, ceremony, inquiry, infrastructure, and interfaces can evolve without becoming disconnected islands.
+
+The framework should make relations, consent, provenance, direction, ceremony, and uncertainty visible at the points where software would otherwise flatten them into generic records or invisible implementation detail.
 
 ---
 
-## Package Architecture
+## Current Reality
 
-```
-@medicine-wheel/ontology-core              ← Foundation (types, schemas, vocabulary)
-    ├── @medicine-wheel/ceremony-protocol      ← Ceremony state & governance
-    ├── @medicine-wheel/narrative-engine        ← Beat sequencing & arc validation
-    ├── @medicine-wheel/graph-viz              ← Circular layout & visualization
-    ├── @medicine-wheel/relational-query        ← Query, traversal & audit
-    ├── @medicine-wheel/prompt-decomposition    ← Intent extraction & PDE
-    ├── @medicine-wheel/ui-components          ← React components
-    ├── @medicine-wheel/data-store             ← Redis persistence (+ redis ^4.6.0)
-    ├── @medicine-wheel/importance-unit         ← Relational knowledge with epistemic weight
-    ├── @medicine-wheel/fire-keeper            ← Ceremony coordination agent
-    ├── @medicine-wheel/transformation-tracker  ← Research impact & growth tracking
-    ├── @medicine-wheel/relational-index        ← Four-source dimensional indexing
-    ├── @medicine-wheel/consent-lifecycle       ← Consent as ongoing relationship
-    └── @medicine-wheel/community-review        ← Ceremonial review with Elder validation
+The repository is no longer the fifteen-package system described by the earlier specification.
 
-@medicine-wheel/session-reader                 ← JSONL session parsing (standalone)
-```
+The current release line contains:
 
-All packages depend on `ontology-core` for shared types except `session-reader` which is standalone. The six new Wilson-alignment packages have these additional dependencies:
-- `importance-unit` → ontology-core
-- `fire-keeper` → ontology-core, ceremony-protocol
-- `transformation-tracker` → ontology-core, ceremony-protocol
-- `relational-index` → ontology-core, importance-unit
-- `consent-lifecycle` → ontology-core, ceremony-protocol
-- `community-review` → ontology-core, ceremony-protocol
+- the root `@medicine-wheel/app` application and CLI;
+- **27 ordered workspaces** including the MCP surface;
+- suite packages on the 0.6.3 line, while MCP has its own 4.6.3 line;
+- a canonical `storage-provider` abstraction with JSONL and Neon implementations;
+- newer domain layers for infrastructure, creative orientation, narrative clustering, perception, ceremonial diary, GitHub ceremony, and discovery/orientation;
+- registry families for inquiry weaves, plan perspectives, diary entries, ceremony events, and captures;
+- a closed six-kind ontology extended through typed domain discriminators rather than uncontrolled node-type expansion.
 
-No circular dependencies.
+The system specification must therefore describe the architecture that exists now, not preserve an earlier package count as doctrine.
 
 ---
 
-## How to Use These Specifications
+## Structural Tension
 
-Each rispec describes one package. To implement the full system:
+**Desired state:** each package can deepen one domain while still participating in a coherent relational system.
 
-1. **Start with** `ontology-core.spec.md` — implement all types, schemas, vocabulary, constants, and query helpers
-2. **Then build** any of the five core packages — they only depend on ontology-core
-3. **Finally build** ui-components — composable React components using ontology-core types
+**Current pressure:** rapid experimentation naturally produces parallel vocabularies, duplicated persistence paths, stale package maps, and interfaces that lag behind engines.
 
-### Specification Files
-
-| Rispec | Package | Role |
-|--------|---------|------|
-| [`ontology-core.spec.md`](./ontology-core.spec.md) | Foundation | Types, Zod schemas, RDF vocabulary, constants, semantic queries |
-| [`ceremony-protocol.spec.md`](./ceremony-protocol.spec.md) | Governance | Ceremony state, phase transitions, governance enforcement |
-| [`narrative-engine.spec.md`](./narrative-engine.spec.md) | Narrative | Beat sequencing, cadence, arc validation, timeline, cycle |
-| [`graph-viz.spec.md`](./graph-viz.spec.md) | Visualization | Circular layout, SVG paths, data converters, Mermaid export |
-| [`relational-query.spec.md`](./relational-query.spec.md) | Query | Filtering, traversal, accountability audit, Cypher generation |
-| [`prompt-decomposition.spec.md`](./prompt-decomposition.spec.md) | PDE | Intent extraction, Four Directions classification, narrative beats |
-| [`ui-components.spec.md`](./ui-components.spec.md) | UI | DirectionCard, BeatTimeline, NodeInspector, OcapBadge, WilsonMeter |
-| [`data-store.spec.md`](./data-store.spec.md) | Persistence | Redis CRUD for nodes, edges, ceremonies; session linking |
-| [`session-reader.spec.md`](./session-reader.spec.md) | Sessions | JSONL session parsing, listing, analytics, search |
-| [`importance-unit.spec.md`](./importance-unit.spec.md) | Epistemology | Relational knowledge units with epistemic weight, circle depth |
-| [`fire-keeper.spec.md`](./fire-keeper.spec.md) | Coordination | Ceremony coordination agent, gating, trajectory, stop-work |
-| [`transformation-tracker.spec.md`](./transformation-tracker.spec.md) | Validity | Research impact tracking, Wilson's validity criterion |
-| [`relational-index.spec.md`](./relational-index.spec.md) | Indexing | Four-source dimensional indexing (Land/Dream/Code/Vision) |
-| [`consent-lifecycle.spec.md`](./consent-lifecycle.spec.md) | Consent | Consent as ongoing relationship, lifecycle, cascade |
-| [`community-review.spec.md`](./community-review.spec.md) | Review | Community review circles, Elder validation, consensus |
-
-### Companion Capability Specs
-
-Capability specs extend a package with an optional advancing layer rather than describing a separate package:
-
-| Rispec | Extends | Role |
-|--------|---------|------|
-| [`decomposition-strategies.spec.md`](./decomposition-strategies.spec.md) | prompt-decomposition | Strategy framework — depth on demand via multi-pass elaboration & dual-framing reconciliation over the deterministic Four Directions foundation |
+**Natural resolution:** preserve small canonical contracts at the seams — ontology-core for shared relational meaning, storage-provider for persistence meaning, explicit phase vocabularies, and agent/UI surfaces that invoke rather than bypass the domain engines.
 
 ---
 
-## Core Concepts
+## Current Workspace Architecture
+
+Workspace order is dependency-sensitive. The architecture is better read as layers than as one flat package list.
+
+### Foundation and environment
+
+- `@medicine-wheel/ontology-core` — relational types, schemas, kinship vocabulary, constants, queries, RDF interop.
+- `@medicine-wheel/infra` — typed infrastructure facets and reconciliation over existing ontology nodes.
+- `@medicine-wheel/creative-orientation` — distinguishes creative orientation from reactive problem solving.
+- `@medicine-wheel/session-reader` — session parsing and reading utilities.
+
+### Ceremony and persistence
+
+- `@medicine-wheel/ceremony-protocol` — ceremony state and governance framing.
+- `@medicine-wheel/storage-provider` — canonical JSONL/Neon persistence contract and record registries.
+- `@medicine-wheel/data-store` — Redis-specific data-access package; not the canonical cross-backend provider interface.
+- `@medicine-wheel/data-store-postgres` — minimal `pg`/Postgres scaffold; not a competing provider architecture.
+
+### Narrative, perception, and knowledge
+
+- `@medicine-wheel/graph-viz` — graph layout and visualization helpers.
+- `@medicine-wheel/importance-unit` — epistemically weighted relational knowledge.
+- `@medicine-wheel/narrative-engine` — narrative beat sequencing and cycle behavior.
+- `@medicine-wheel/narrative-cluster` — clustering/derivation layer for narrative material.
+- `@medicine-wheel/perception-layer` — perceptual/interpretive layer.
+- `@medicine-wheel/prompt-decomposition` — Four-Directions decomposition and inquiry.
+- `@medicine-wheel/relational-index` — relational/epistemic indexing.
+- `@medicine-wheel/relational-query` — traversal and relational query behavior.
+- `@medicine-wheel/ui-components` — reusable interface components.
+
+### Orientation, review, and governance
+
+- `@medicine-wheel/brainstorming` — generative exploration capability.
+- `@medicine-wheel/gap-analysis` — reactive/problem-oriented gap analysis.
+- `@medicine-wheel/creative-problem-solving` — orientation/signpost surface that routes users toward the appropriate creative or reactive capability.
+- `@medicine-wheel/community-review` — ceremonial/community review.
+- `@medicine-wheel/consent-lifecycle` — consent as a changing relationship.
+- `@medicine-wheel/fire-keeper` — active relational gating and stewardship.
+- `@medicine-wheel/transformation-tracker` — transformation and research-impact tracking.
+
+### Ceremony adapters and agent surfaces
+
+- `@medicine-wheel/ceremonial-diary` — participant diary across its own five-phase ceremonial methodology.
+- `@medicine-wheel/github-ceremony` — interprets GitHub events through ceremonial records.
+- `@medicine-wheel/mcp` — agent-facing protocol/tools, released on its own 4.x version line.
+- `@medicine-wheel/app` — root web/CLI serving surface around the packages.
+
+---
+
+## Canonical Seams
+
+### 1. Ontology seam
+
+`ontology-core` is the shared relational grammar.
+
+The top-level `NodeType` union remains six values: human, land, spirit, ancestor, future, knowledge. Domain-specific kinds such as production, infrastructure, and academic entities ride existing nodes through typed discriminators and bindings.
+
+Relations remain first-class and can carry obligations, OCAP governance, Wilson accountability, ceremony context, authorization context, and governed kinship names.
+
+### 2. Persistence seam
+
+`storage-provider` is the cross-backend runtime persistence contract.
+
+Implemented provider behavior:
+
+- JSONL default/local backend;
+- Neon/Postgres backend;
+- explicit backend selection;
+- Redis named but deliberately unsupported in the canonical provider factory until implemented.
+
+Historical Redis and Postgres packages remain useful boundaries but do not supersede the provider contract.
+
+### 3. Narrative seam
+
+Narrative beats carry direction, act, ceremonies, learnings, relational honoring, optional cycle membership, telescoping lineage, and origin/provenance.
+
+A surface that creates beats should pass through the narrative engine's validation/authoring semantics rather than writing around them.
+
+### 4. Ceremony seam
+
+The system contains multiple legitimate phase vocabularies and must not collapse them:
+
+- ceremony protocol: opening → council → integration → closure;
+- Fire Keeper lifecycle: gathering → kindling → tending → harvesting → resting;
+- ceremonial diary: its five Ojibwe phase names;
+- engineering delivery waves: their own scout/design/build/review/test cadence.
+
+Shared words do not imply one universal state machine.
+
+### 5. Surface seam
+
+Web, CLI, REST, MCP, and external consumers should expose domain capabilities without silently bypassing the rules those capabilities exist to enforce.
+
+A feature is not complete merely because an internal engine exists. The serving surface is part of the system contract.
+
+---
+
+## Persistence and Registry Families
+
+The current storage-provider contract includes more than generic graph records.
+
+Core families:
+
+- nodes;
+- edges;
+- ceremonies.
+
+Registered families:
+
+- inquiry weaves;
+- plan perspectives;
+- ceremonial diary entries;
+- ceremony events;
+- captures.
+
+Capture registration stores records and URIs, never media bytes. Family-specific filtering, merging, provenance, and refusal behavior should remain centralized instead of being reimplemented independently by each backend or route.
+
+---
+
+## API/Observability Invariants
+
+The current system distinguishes a **page** from a **total**. Collection reads can be limited; whole-store counts use dedicated provider operations.
+
+Filtering must not silently ignore unsupported parameters. When a route claims to filter, either the requested filter is actually applied or the request fails visibly.
+
+Mutation failures should preserve their meaning. A node that still holds relations is a relational refusal, not merely a generic storage error and never an invitation to cascade-delete silently.
+
+---
+
+## Core Conceptual Vocabularies
 
 ### Four Directions
 
-| Direction | Ojibwe | Season | Life Stage | Focus |
-|-----------|--------|--------|------------|-------|
-| East | Waabinong | Spring | Good Life | Vision, intention, emergence |
-| South | Zhaawanong | Summer | Fast Life | Growth, learning, analysis |
-| West | Epangishmok | Fall | Truth & Planning | Reflection, validation, ceremony |
-| North | Kiiwedinong | Winter | Elder | Wisdom, action, integration |
+```text
+East   — vision, emergence, inquiry
+South  — relationship, learning, preparation
+West   — implementation, validation, embodied work
+North  — integration, reflection, wisdom
+```
+
+Different packages may apply direction at different altitudes. Ceremonial teaching constants and working-session guidance are related vocabularies, not interchangeable fields.
 
 ### Wilson's Three R's
 
-Relational accountability measured as three scores (0–1):
-- **Respect** — Honoring the dignity and sovereignty of all relations
-- **Reciprocity** — Ensuring mutual benefit flows through relationships
-- **Responsibility** — Maintaining obligations and commitments
+- Respect
+- Reciprocity
+- Responsibility
 
-### OCAP® Principles
+The system can track these relationally and aggregate alignment, but the numbers do not replace human or community judgement.
 
-Indigenous data sovereignty governance:
-- **Ownership** — Who owns this data/relation
-- **Control** — Who controls access and use
-- **Access** — Who may access (community/researchers/public/restricted)
-- **Possession** — Where data is physically held
+### OCAP®
+
+Ownership, Control, Access, and Possession are held as governance information on relations. Consent additionally carries current state and affirmation timing where available.
 
 ### Structural Tension
 
-Three phases of creative advancement:
-1. **Germination** — Vision + honest current reality assessment
-2. **Assimilation** — Building momentum through ritualized action
-3. **Completion** — Integration and transformation
-
-### ImportanceUnit (Epistemic Weight)
-
-A relationally-accountable piece of meaning that carries:
-- **Epistemic weight** (0–1) — dream-state knowledge starts at 0.85+
-- **Source dimension** — Land, Dream, Code, or Vision
-- **Circle depth** — increments with each revisitation
-- **Accountability links** — connections to relations this knowledge is accountable to
-
-### Fire Keeper (Ceremony Coordination)
-
-The living keeper of ceremony — an active coordination agent that:
-- **Gates** work behind relational conditions
-- **Monitors** Wilson alignment trajectory continuously
-- **Escalates** value conflicts to humans
-- **Issues** stop-work orders when relational accountability is violated
-
-### Transformation Tracking (Wilson Validity)
-
-Wilson's validity criterion — research success measured by transformation:
-- **Researcher growth** — periodic understanding snapshots
-- **Community benefit** — impact voiced by community, not self-reported
-- **Relational shifts** — before/after strength changes
-- **Reciprocity balance** — giving and receiving across categories
-- **Seven-generation assessment** — impact on future generations
-
-### Consent Lifecycle
-
-Consent as ongoing relational obligation, not boolean:
-- **State machine** — pending → granted → active → renewal-needed → expired/withdrawn
-- **Ceremony-witnessed** — consent moments formalized with witnesses
-- **Cascading withdrawal** — withdrawal ripples through dependent relations
-- **Community consent** — distinct from individual consent, includes Elder and youth voice
-
-### Community Review
-
-Community-based ceremonial review replacing Western peer review:
-- **Review circles** — community body with directional perspectives
-- **Talking circle** — each voice heard in turn
-- **Elder validation** — authoritative blessing grounded in relational accountability
-- **Wilson's three R's check** — Respect, Reciprocity, Responsibility assessed
+Creative advancement is represented through a desired outcome held together with current reality, producing action without replacing the tension with a problem-only frame.
 
 ---
 
 ## Creative Advancement Scenarios
 
-### Scenario: Research Cycle
+### Scenario: A new domain enters without widening the ontology
 
-**User Intent:** Create a ceremony-guided research cycle  
-**Current Reality:** Raw research question, no structure  
-**Natural Progression:**
-1. `createCycle(id, question)` → Initializes at East/opening
-2. `decompose(prompt)` → Extracts intents with Four Directions classification
-3. `insertBeat(beats, beat)` → Records work in directional sequence
-4. `validateCadence(beats, ceremonies)` → Ensures ceremony at transitions
-5. `computeProgress(cycle, beats, ceremonies, relations)` → Suggests next steps
-6. `validateArc(beats, ceremonies, relations)` → Checks completeness
-**Achieved Outcome:** Complete four-direction arc with Wilson alignment and OCAP® compliance
+**Desired Outcome:** Represent a new class of beings in a specialized domain.  
+**Current Reality:** The six core node kinds do not name that domain directly.  
+**Natural Progression:** Define a typed domain discriminator and binding onto existing node kinds; add specialized facets or relations outside the foundational enum.  
+**Resolution:** The domain becomes first-class enough to validate and query while the core ontology remains stable.
 
-### Scenario: Governance-Aware Development
+### Scenario: Local persistence becomes hosted persistence
 
-**User Intent:** Modify ceremony protocols with proper governance  
-**Current Reality:** Code changes needed in protected paths  
-**Natural Progression:**
-1. `checkGovernance(filePath, config)` → Detects protected path
-2. `formatGovernanceWarning(rule)` → Surfaces governance requirements
-3. `checkCeremonyRequired(filePath, config)` → Confirms ceremony needed
-4. `getPhaseFraming(phase)` → Frames the change in ceremony context
-**Achieved Outcome:** Changes made with relational accountability and proper authority
+**Desired Outcome:** Move a working installation from local JSONL to hosted Postgres.  
+**Current Reality:** Application behavior already depends on provider-level operations.  
+**Natural Progression:** Select Neon through the canonical provider contract and validate observable parity.  
+**Resolution:** Location changes without rewriting domain semantics.
 
-### Scenario: Relational Accountability Audit
+### Scenario: An engine becomes reachable
 
-**User Intent:** Assess relational health of the knowledge graph  
-**Current Reality:** Relations exist but accountability unknown  
-**Natural Progression:**
-1. `auditAccountability(nodes, edges, relations)` → Full report
-2. `relationsNeedingAttention(relations)` → Priority list
-3. `traverse(rootId, nodes, edges, relations, { ocapOnly: true })` → Compliant traversal
-4. `generateReciprocityObservation(stewards, flows)` → Invitational narrative
-**Achieved Outcome:** Clear picture of where relational attention is needed
+**Desired Outcome:** Let a user or agent actually perform a domain capability.  
+**Current Reality:** Internal package logic exists but no reliable CLI/REST/MCP/UI path reaches it.  
+**Natural Progression:** Add a serving surface that invokes the same engine/validation path rather than duplicating or bypassing it.  
+**Resolution:** The capability becomes operational without creating a second interpretation of its rules.
 
 ---
 
-## Technology Stack
+## Specification Parity Law
 
-- **Language:** TypeScript (ES2022, strict mode)
-- **Runtime:** Node.js (ESM modules)
-- **Validation:** Zod ^3.23.0
-- **UI Framework:** React ^18.0.0 || ^19.0.0
-- **Graph DB (optional):** KuzuDB (via Cypher query builders)
-- **Build:** tsc with source maps and declaration files
+A RISE specification is not considered current because its prose remains philosophically aligned.
 
----
+Parity requires checking at least:
 
-## Build & Publish
+1. package/workspace existence and version line;
+2. exported domain types and runtime schemas;
+3. canonical provider or orchestration boundary;
+4. implemented versus deferred capabilities;
+5. REST/CLI/MCP/UI surfaces that materially change user-visible behavior;
+6. migration, pagination, filtering, refusal, and compatibility semantics where they are load-bearing;
+7. renamed concepts and deliberate aliases;
+8. recent changes that alter an invariant even if the package name did not change.
 
-All packages share a consistent build and publish configuration:
-
-- **Compiler:** `tsc` (TypeScript compiler) with declaration files and source maps
-- **Scripts:** `prepublishOnly: "tsc"` ensures builds run before every `npm publish`
-- **Module format:** `"type": "module"` — pure ESM across the monorepo
-- **Side effects:** `"sideEffects": false` — enables tree-shaking in bundlers
-- **Published files:** `"files": ["dist", "README.md"]` — only compiled output and docs ship to npm
+Implementation evidence may be listed in an appendix so the main RISE contract remains re-implementable without confusing current file paths with the conceptual design.
 
 ---
 
 ## Quality Criteria
 
-- ✅ **Black Box Test:** Another LLM can re-implement the full system from these specs
-- ✅ **Creative Orientation:** Every package enables creation, not just data storage
-- ✅ **Structural Dynamics:** Four Directions provide natural progression structure
-- ✅ **Relational Accountability:** Wilson alignment and OCAP® woven through all layers
-- ✅ **Cultural Grounding:** Ojibwe names, ceremonial teachings, and directional medicines embedded
+- Package architecture matches the current workspace graph rather than a historical count.
+- Canonical seams are named explicitly so parallel packages do not accidentally become competing authorities.
+- Implemented and deferred capabilities are distinguished.
+- Multiple ceremonial/delivery phase systems remain distinct.
+- Surfaces are treated as part of capability completeness.
+- Persistence parity includes pagination, totals, filters, refusal semantics, and registry families.
+- Ontology extensions remain additive unless an explicit foundational revision widens the core.
+
+---
+
+## Implementation Evidence Appendix
+
+- Workspace topology and suite versions: root `package.json`
+- Core ontology: `src/ontology-core/`
+- Canonical persistence: `src/storage-provider/`
+- Root serving surfaces: `app/`, `lib/`, `dist/cli` source inputs, and `mcp/`
+- Current suite line: 0.6.3
+- Current MCP line: 4.6.3
