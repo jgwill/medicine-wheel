@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/narrative-engine",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Beat sequencing, arc validation, and ceremonial cadence engine for the Medicine Wheel Developer Suite",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -38,7 +38,7 @@
     "directory": "src/narrative-engine"
   },
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.6.1"
+    "@medicine-wheel/ontology-core": "^0.6.2"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

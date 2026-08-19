@@ -3,25 +3,28 @@
 **Read this before depending on anything here.**
 
 The Medicine Wheel Developer Suite is under active development and is published
-in the open so the work can be examined, discussed, and improved. It is not
-finished software. Publishing early is deliberate — but so is telling you what
-you are installing.
+in the open so the work can be examined, discussed, and improved. It now
+includes a usable app, CLI, MCP server, and a growing set of composable
+libraries, but its public contracts are not yet stable. Publishing early is
+deliberate — and so is telling you what you are installing.
 
 ## What that means concretely
 
-- **APIs change between patch versions.** All packages move in lockstep, so a
-  bump you would normally read as "nothing changed for me" may still change
-  what you depend on. Pin exact versions.
-- **Packages appear, and their boundaries move.** Three packages were added in
-  `0.5.3`. Where a responsibility lives is still being decided.
+- **APIs can change between patch versions.** Most packages move together while
+  the MCP package keeps its own major version, so a bump you would normally read
+  as "nothing changed for me" may still change what you depend on. Pin exact
+  versions.
+- **Packages appear, and their boundaries move.** The suite has grown beyond
+  its first library packages, and where a responsibility lives is still being
+  refined.
 - **Some packages are intentionally small first cuts.** They express an
   intention with a working minimum rather than a finished surface. Their
   READMEs say so where it applies.
 - **Storage shapes are still settling.** Records written by one version may
   need repair by a later one. Do not treat any store here as an archive of
   record yet.
-- **Test coverage is real but uneven.** 210 tests pass at `0.5.3`; that is a
-  floor, not a claim of completeness.
+- **Automated tests and release checks are in place, but coverage is uneven.**
+  Passing checks are a floor, not a claim of completeness.
 
 ## What it does *not* mean
 
