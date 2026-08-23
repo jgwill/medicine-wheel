@@ -17,8 +17,11 @@ import {
   Route,
   Save,
   ShieldCheck,
+  SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { type RelationalNode, type RelationalEdge, DIRECTION_COLORS } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import {
   applyWheelLayout,
   buildGraphData,
@@ -108,6 +111,40 @@ export default function GraphPage() {
     loadStoredGraphLayoutStore(null),
   );
   const layoutStoreRef = useRef(layoutStore);
+
+  // Mobile presentation: the side panel becomes a slide-up sheet so the
+  // canvas can own the screen, and the canvas height fills the viewport.
+  const [isMobile, setIsMobile] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [graphHeight, setGraphHeight] = useState<number | string>(600);
+  const selectedPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => {
+      setIsMobile(mq.matches);
+      setGraphHeight(
+        mq.matches ? Math.max(360, Math.round(window.innerHeight * 0.66)) : 600,
+      );
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    window.addEventListener("resize", apply);
+    return () => {
+      mq.removeEventListener("change", apply);
+      window.removeEventListener("resize", apply);
+    };
+  }, []);
+
+  // When a being is tapped on mobile the sheet opens; bring its details into
+  // view once the slide-up transition settles.
+  useEffect(() => {
+    if (!isMobile || !sheetOpen || !selectedNode) return;
+    const t = window.setTimeout(() => {
+      selectedPanelRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+    }, 320);
+    return () => window.clearTimeout(t);
+  }, [isMobile, sheetOpen, selectedNode]);
 
   const saveLayoutStore = useCallback(
     (
@@ -380,21 +417,21 @@ export default function GraphPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-white p-6">
+    <div className="min-h-screen bg-[#0a0a1a] text-white p-3 sm:p-6">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col gap-3 mb-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <span className="text-3xl">🔮</span> Medicine Wheel Graph
+            <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+              <span className="text-2xl sm:text-3xl">🔮</span> Medicine Wheel Graph
             </h1>
-            <p className="text-gray-400 text-sm mt-1">
-              Interactive relational web — drag, pan, zoom across the four directions
+            <p className="text-gray-400 text-xs sm:text-sm mt-1">
+              Interactive relational web — tap a being, drag, pan, and pinch to zoom
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setShowLabels(!showLabels)}
-              className={`px-3 py-1.5 rounded text-sm ${showLabels ? "bg-white/10" : "bg-white/5"}`}
+              className={`min-h-11 px-3 py-1.5 rounded text-sm ${showLabels ? "bg-white/10" : "bg-white/5"}`}
             >
               Labels {showLabels ? "ON" : "OFF"}
             </button>
@@ -402,18 +439,18 @@ export default function GraphPage() {
               onClick={() =>
                 setRadialSnap((s) => (s === "off" ? "ring" : s === "ring" ? "sector" : "off"))
               }
-              className={`px-3 py-1.5 rounded text-sm ${radialSnap !== "off" ? "bg-white/10" : "bg-white/5"}`}
+              className={`min-h-11 px-3 py-1.5 rounded text-sm ${radialSnap !== "off" ? "bg-white/10" : "bg-white/5"}`}
               title="Radial snapping: the wheel guides dragged beings — ring keeps them in their band, sector also inside their quadrant"
             >
               Snap {radialSnap === "off" ? "OFF" : radialSnap.toUpperCase()}
             </button>
-            <button onClick={loadData} className="px-3 py-1.5 rounded text-sm bg-white/5 hover:bg-white/10 inline-flex items-center gap-2">
+            <button onClick={loadData} className="min-h-11 px-3 py-1.5 rounded text-sm bg-white/5 hover:bg-white/10 inline-flex items-center gap-2">
               <RefreshCw className="h-4 w-4" /> Refresh
             </button>
           </div>
         </div>
 
-        <div className="flex gap-6">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
           <div className="relative flex-1 rounded-xl border border-white/10 overflow-hidden">
             {!loading && graph.nodes.length > 0 && (
               <label className="absolute right-3 top-3 z-10 inline-flex items-center gap-2 rounded-md border border-white/10 bg-[#0a0a1a]/80 px-2 py-1 text-[11px] text-gray-300 shadow-sm backdrop-blur">
@@ -428,9 +465,9 @@ export default function GraphPage() {
               </label>
             )}
             {loading ? (
-              <div className="flex items-center justify-center h-[600px] text-gray-500">Loading graph data...</div>
+              <div className="flex items-center justify-center text-gray-500" style={{ height: graphHeight }}>Loading graph data...</div>
             ) : graph.nodes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-[600px] text-gray-500">
+              <div className="flex flex-col items-center justify-center text-gray-500" style={{ height: graphHeight }}>
                 <span className="text-4xl mb-3">🌀</span>
                 <p>No relational nodes yet.</p>
                 <p className="text-sm mt-1">Create nodes via the Nodes page.</p>
@@ -438,12 +475,16 @@ export default function GraphPage() {
             ) : (
               <MedicineWheelFlowGraph
                 data={graphData}
-                height={600}
+                height={graphHeight}
                 darkMode
                 showNodeLabels={showLabels}
+                showMiniMap={!isMobile}
                 animationsEnabled={animationsEnabled}
                 nodePositions={activeLayout.positions}
-                onNodeClick={(node) => setSelectedNode(node)}
+                onNodeClick={(node) => {
+                  setSelectedNode(node);
+                  if (isMobile) setSheetOpen(true);
+                }}
                 onNodeDoubleClick={navigateToNode}
                 onNodePositionsChange={handleNodePositionsChange}
                 enableConnections
@@ -458,7 +499,53 @@ export default function GraphPage() {
             )}
           </div>
 
-          <div className="w-72 space-y-4">
+          {/* Mobile: floating toggle opens the panels as a slide-up sheet so
+              the canvas keeps the whole screen. */}
+          {isMobile && !sheetOpen && (
+            <button
+              onClick={() => setSheetOpen(true)}
+              className="fixed bottom-4 right-4 z-30 inline-flex min-h-11 max-w-[70vw] items-center gap-2 rounded-full border border-white/15 bg-[#12122a]/95 px-4 py-2 text-sm font-medium text-white shadow-lg backdrop-blur"
+              aria-label="Open graph panels"
+            >
+              <SlidersHorizontal className="h-4 w-4 shrink-0" />
+              <span className="truncate">{selectedNode ? selectedNode.label : "Panels"}</span>
+            </button>
+          )}
+
+          {/* Mobile: dim backdrop behind the open sheet. */}
+          {isMobile && sheetOpen && (
+            <div
+              onClick={() => setSheetOpen(false)}
+              className="fixed inset-0 z-40 bg-black/60"
+              aria-hidden="true"
+            />
+          )}
+
+          <div
+            className={cn(
+              isMobile
+                ? cn(
+                    "fixed inset-x-0 bottom-0 z-50 max-h-[82vh] overflow-y-auto rounded-t-2xl border-t border-white/10 bg-[#0a0a1a] px-4 pb-8 shadow-2xl transition-transform duration-300 ease-out",
+                    sheetOpen ? "translate-y-0" : "translate-y-full",
+                  )
+                : "w-72",
+            )}
+            aria-hidden={isMobile && !sheetOpen ? "true" : undefined}
+          >
+            {isMobile && (
+              <div className="sticky top-0 z-10 -mx-4 mb-3 flex items-center justify-between gap-2 border-b border-white/10 bg-[#0a0a1a] px-4 pb-3 pt-3">
+                <span className="text-sm font-semibold text-gray-300">Graph panels</span>
+                <button
+                  onClick={() => setSheetOpen(false)}
+                  aria-label="Close panels"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-white/10 text-white hover:bg-white/15"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            )}
+
+            <div className="space-y-4">
             <div className="rounded-lg border border-white/10 p-4">
               <h3 className="text-sm font-semibold text-gray-400 mb-3">Dispositions</h3>
               <div className="space-y-3">
@@ -539,7 +626,7 @@ export default function GraphPage() {
             </div>
 
             {selectedNode && (
-              <div className="rounded-xl border border-white/10 p-4">
+              <div ref={selectedPanelRef} className="rounded-xl border border-white/10 p-4 scroll-mt-16">
                 <h3 className="text-sm font-semibold text-gray-400 mb-2">Selected Node</h3>
                 <div className="space-y-2">
                   <div><span className="text-xs text-gray-500">Name</span><p className="font-medium">{selectedNode.label}</p></div>
@@ -564,6 +651,7 @@ export default function GraphPage() {
                 <div><p className="text-2xl font-bold">{ceremoniedCount}</p><p className="text-xs text-gray-500">Ceremonied</p></div>
                 <div><p className="text-2xl font-bold">{directionCount}</p><p className="text-xs text-gray-500">Directions</p></div>
               </div>
+            </div>
             </div>
           </div>
         </div>
