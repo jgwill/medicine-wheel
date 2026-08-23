@@ -89,9 +89,8 @@ const needsWork = relationsNeedingAttention(relations, 0.5);
 
 ## Peer dependency
 
-Requires `@medicine-wheel/ontology-core` ^0.1.0.
+Requires `@medicine-wheel/ontology-core`.
 
 ## License
 
 MIT
-

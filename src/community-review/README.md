@@ -113,11 +113,10 @@ circle = closeCircle(circle, outcome);
 
 ## Dependencies
 
-- `@medicine-wheel/ontology-core` ^0.1.1
-- `@medicine-wheel/ceremony-protocol` ^0.1.0
-- `zod` ^3.23.0
+- `@medicine-wheel/ontology-core`
+- `@medicine-wheel/ceremony-protocol`
+- `zod`
 
 ## License
 
 MIT
-

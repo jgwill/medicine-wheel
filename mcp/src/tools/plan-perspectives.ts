@@ -175,7 +175,7 @@ export function createPlanPerspectiveTools(targetStore: PlanPerspectiveStore): T
     {
       name: "list_plan_perspectives",
       description:
-        "List Plan Perspective records from Medicine Wheel storage by episode path, session id, or record id. Requires at least one filter.",
+        "List Plan Perspective records from Medicine Wheel storage. Optionally filter by episode path, session id, or record id; with no filter the whole collection is returned.",
       inputSchema: {
         type: "object",
         properties: {
@@ -186,18 +186,6 @@ export function createPlanPerspectiveTools(targetStore: PlanPerspectiveStore): T
       },
       handler: async (args) => {
         const filters = planPerspectiveFiltersFromArgs(args);
-        if (
-          filters.episode_path === undefined &&
-          filters.session_id === undefined &&
-          filters.id === undefined
-        ) {
-          return {
-            success: false,
-            status: "error",
-            message: "list_plan_perspectives requires episode_path, session_id, or id",
-          };
-        }
-
         const planPerspectives = await targetStore.listPlanPerspectives(filters);
 
         return {

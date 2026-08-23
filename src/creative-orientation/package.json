@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/creative-orientation",
-  "version": "0.5.3",
-  "description": "Which orientation a situation calls for — advancing toward a state that has never existed, or restoring one that did. Routes to structural tension or to gap analysis.",
+  "version": "0.6.3",
+  "description": "The orientation question, asked before the work: is there a prior state you are restoring? Yes — this is a fire, route to gap analysis. No — you are creating, route to structural tension. Creative problem solving lands here first, then goes one way or the other.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -15,7 +15,8 @@
   "sideEffects": false,
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "ALPHA.md"
   ],
   "scripts": {
     "build": "tsc",
@@ -23,12 +24,16 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
-    "medicine-wheel",
     "creative-orientation",
+    "creative-problem-solving",
+    "problem-solving",
     "structural-tension",
-    "robert-fritz",
     "advancing",
-    "oscillating"
+    "oscillating",
+    "orientation",
+    "gap-analysis",
+    "robert-fritz",
+    "medicine-wheel"
   ],
   "author": "jgwill",
   "license": "MIT",

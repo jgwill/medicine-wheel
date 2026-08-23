@@ -70,9 +70,8 @@ console.log(progress.suggestedAction); // "Move to the west direction (integrati
 
 ## Peer dependency
 
-Requires `@medicine-wheel/ontology-core` ^0.1.0.
+Requires `@medicine-wheel/ontology-core`.
 
 ## License
 
 MIT
-

@@ -290,6 +290,91 @@ export interface CeremonyEventFilters {
   repository?: string;
 }
 
+// ── Capture Records ──
+// A registry of captures: records and URIs only, never bytes. The bytes stay
+// behind the capture service that made them (@miadi/capture and the gmtermux
+// edge); this registry makes captures queryable for chronicle surfaces.
+// Vocabulary aligns with @miadi/episodic-memory-schema's artifact axes and is
+// ruled by capture-vocabulary.spec.md (§8, the registry noun ruling).
+
+/**
+ * Kinds are published as a value, not only a type — a plain-JavaScript edge
+ * device cannot import a TypeScript union, so the array is the checkable
+ * contract and the type derives FROM it.
+ */
+export const CAPTURE_KINDS = ['audio', 'video', 'midi', 'other'] as const;
+
+export type CaptureKind = (typeof CAPTURE_KINDS)[number];
+
+/**
+ * How a capture came to exist — the axis that says what must never be lost.
+ * `captured` is unrepeatable: a device, an instant, one chance. `derived` is
+ * regenerable from a source still held. `authored` was written rather than
+ * captured or generated. Flattening these loses the only property that
+ * distinguishes an irreplaceable take from a file rebuildable on demand.
+ */
+export const CAPTURE_ORIGINS = ['captured', 'derived', 'authored'] as const;
+
+export type CaptureOrigin = (typeof CAPTURE_ORIGINS)[number];
+
+export interface CaptureRecord extends Record<string, unknown> {
+  /**
+   * Stable upsert key. Convention: `capture:<episode_path>:<filename>` when
+   * episode-bound, `capture:<filename>` otherwise — see captureRecordId().
+   */
+  id: string;
+  /** The file's own name, as the capture service or author named it. */
+  filename: string;
+  kind: CaptureKind;
+  origin: CaptureOrigin;
+  /**
+   * Where the bytes live — a URI or path the capture service answers for.
+   * The registry stores this pointer and nothing behind it.
+   */
+  uri: string;
+
+  // Capture provenance — observed, not demanded. An absent field is an
+  // absence, not an error, and must not be filled in with a guess.
+
+  /** The device that made the capture, as it named itself. */
+  device?: string;
+  /** ISO 8601 instant the capture began. */
+  started_at?: string;
+  /** ISO 8601 instant the capture finished. */
+  stopped_at?: string;
+  /** Duration of the finished take, in seconds. */
+  duration_seconds?: number;
+  /** Size of the finished file in bytes — a count, never the bytes themselves. */
+  bytes?: number;
+  sha256?: string;
+  mimetype?: string;
+
+  // Associations into the chronicle and the composition tree.
+
+  /** Episode directory path relative to the chronicle root. */
+  episode_path?: string;
+  episode_number?: number;
+  /** Composition slug this capture belongs to, when known. */
+  composition?: string;
+  /** For derived captures: the filename or record id this one was made from. */
+  source_artifact?: string;
+
+  /** ISO 8601 registration timestamp; the first registration's stamp survives upserts. */
+  registered_at: string;
+  /** Free-form origin-of-registration, e.g. '@miadi/capture' or 'gmtermux'. */
+  source?: string;
+}
+
+export interface CaptureFilters {
+  episode_path?: string;
+  episode_number?: number;
+  composition?: string;
+  kind?: CaptureKind;
+  origin?: CaptureOrigin;
+  device?: string;
+  filename?: string;
+}
+
 // ── Provider Interface ──
 
 export interface StorageProvider {
@@ -305,6 +390,14 @@ export interface StorageProvider {
   getNodesByType(type: NodeType): Promise<RelationalNode[]>;
   getNodesByDirection(direction: DirectionName): Promise<RelationalNode[]>;
   getAllNodes(limit?: number): Promise<RelationalNode[]>;
+  /**
+   * Cardinality of the whole node collection, never a page of it.
+   * `getAllNodes()` answers with a page (default 100), so its length is
+   * `min(actual, limit)` and cannot be used as a total. Implementations answer
+   * this without materialising the collection — a line count on jsonl, a
+   * `COUNT(*)` on Postgres.
+   */
+  countNodes(): Promise<number>;
   /** Throws NodeNotFoundError when the node does not exist. */
   updateNode(id: string, patch: NodePatch): Promise<RelationalNode>;
   /** Throws NodeNotFoundError or NodeHasRelationsError (refusal, never cascade). */
@@ -328,6 +421,8 @@ export interface StorageProvider {
   getCeremoniesByDirection(direction: DirectionName): Promise<CeremonyLog[]>;
   getCeremoniesByType(type: CeremonyType): Promise<CeremonyLog[]>;
   getAllCeremonies(limit?: number): Promise<CeremonyLog[]>;
+  /** Cardinality of the whole ceremony collection — see `countNodes()`. */
+  countCeremonies(): Promise<number>;
 
   // Inquiry Weave Operations
   registerInquiryWeave(record: WeaveRecord): Promise<void>;
@@ -349,6 +444,11 @@ export interface StorageProvider {
   registerCeremonyEvent(record: CeremonyEventRecord): Promise<CeremonyEventRecord>;
   getCeremonyEvent(id: string): Promise<CeremonyEventRecord | null>;
   listCeremonyEvents(filters?: CeremonyEventFilters): Promise<CeremonyEventRecord[]>;
+
+  // Capture Operations (records + URIs, never bytes)
+  registerCapture(record: CaptureRecord): Promise<CaptureRecord>;
+  getCapture(id: string): Promise<CaptureRecord | null>;
+  listCaptures(filters?: CaptureFilters): Promise<CaptureRecord[]>;
 }
 
 export type ProviderType = 'jsonl' | 'neon' | 'redis' | 'auto';

@@ -1,10 +1,40 @@
+# The image must COLD-BUILD. Every artifact the build produces is excluded from
+# the context, so nothing can be smuggled in from the host: if `npm run
+# build:packages` is broken, the docker build fails here rather than succeeding
+# on a prebuilt dist/ that only exists on one laptop.
+
+# --- build outputs: must be produced inside the image, never copied in ---
 node_modules
-.next
+**/node_modules
 dist
+src/*/dist
+mcp/dist
+.next
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# --- secrets and local state ---
 .git
 .env
 .env.*
 *.log
+
+# --- agent / session scratch: large, never part of a build ---
 output
 .pde
 .mw
+.mw-handoff
+.playwright-mcp
+.claude
+.gemini
+.context
+.hch
+.pi
+.miette
+.coaia
+
+# --- screenshots and captures left at the repo root ---
+*.jpeg
+*.jpg
+*.png
+*.gif

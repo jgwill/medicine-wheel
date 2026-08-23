@@ -13,17 +13,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const filters = planPerspectiveFiltersFromSearchParams(searchParams);
 
-    if (
-      filters.episode_path === undefined &&
-      filters.session_id === undefined &&
-      filters.id === undefined
-    ) {
-      return NextResponse.json(
-        { error: "Plan Perspective queries require episode_path, session_id, or id" },
-        { status: 400 },
-      );
-    }
-
     const store = await createProvider();
     const planPerspectives = await store.listPlanPerspectives(filters);
 

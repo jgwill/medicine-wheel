@@ -67,7 +67,7 @@ describe('upsertCycle', () => {
 
     // Seed data already occupies this store, so hold the returned beat rather
     // than reaching for an index — the demo beat sorts ahead of it.
-    const beat = store.createBeat({
+    const { beat } = store.createBeat({
       direction: 'south',
       title: 'a moment inside the cycle',
       description: 'bound at creation',

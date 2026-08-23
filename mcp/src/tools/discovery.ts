@@ -13,7 +13,7 @@ import { store } from "../store.js";
 export const discoveryTools: Tool[] = [
   {
     name: "list_relational_nodes",
-    description: "List all relational nodes in the medicine wheel memory. Filter by type or direction. Returns nodes sorted by creation date (newest first).",
+    description: "List relational nodes in the medicine wheel memory. Filter by type, direction, artifact kind (metadata.kind), or parent (metadata.parent_id) — filters combine. Returns nodes sorted by creation date (newest first).",
     inputSchema: {
       type: "object",
       properties: {
@@ -27,6 +27,16 @@ export const discoveryTools: Tool[] = [
           enum: ["east", "south", "west", "north"],
           description: "Filter by medicine wheel direction (optional)",
         },
+        kind: {
+          type: "string",
+          description:
+            "Filter by metadata.kind — the artifact kind, e.g. chronicle_episode, structured_plan, service, stc_chart, product_goal. `type` is a closed enum of six and cannot name these (optional)",
+        },
+        parent_id: {
+          type: "string",
+          description:
+            "Filter by metadata.parent_id — the containing node, e.g. chronicle:miadi-chronicle for every episode under the chronicle root (optional)",
+        },
         limit: {
           type: "number",
           description: "Maximum nodes to return (default: 50)",
@@ -37,16 +47,19 @@ export const discoveryTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const { type, direction, limit = 50 } = args;
+        const { type, direction, kind, parent_id, limit = 50 } = args;
 
-        let nodes;
-        if (type) {
-          nodes = (await store.getNodesByType(type));
-        } else if (direction) {
-          nodes = (await store.getNodesByDirection(direction));
-        } else {
-          nodes = (await store.getAllNodes(limit));
-        }
+        // Filters combine rather than shadow each other. The previous
+        // if/else-if chain meant `{ type, direction }` silently dropped the
+        // direction — and `kind`/`parent_id` could not be asked for at all, so
+        // every caller wanting "artifacts of kind X under episode Y" pulled the
+        // whole graph and sifted it locally.
+        const filters = { type, direction, kind, parent_id };
+        const filtering = Object.values(filters).some(Boolean);
+
+        const nodes = filtering
+          ? await store.getNodesFiltered(filters)
+          : await store.getAllNodes(limit);
 
         const sorted = nodes
           .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
@@ -55,7 +68,7 @@ export const discoveryTools: Tool[] = [
         return {
           count: sorted.length,
           total_available: nodes.length,
-          filters: { type, direction, limit },
+          filters: { type, direction, kind, parent_id, limit },
           nodes: sorted,
           teaching: "Every relation is a responsibility. Browse with intention.",
         };
@@ -308,13 +321,21 @@ export const discoveryTools: Tool[] = [
   },
   {
     name: "search_nodes",
-    description: "Search relational nodes by name or description. Supports filtering by type and direction.",
+    description:
+      "Search relational nodes across name, description and metadata values. " +
+      "A multi-word query is split into terms; nodes matching every term are returned first, " +
+      "ranked by where the terms were found (name beats description beats metadata). " +
+      "If no node matches every term, nodes matching some terms are returned instead. " +
+      "Supports filtering by type, direction, and the `metadata.kind` discriminator.",
     inputSchema: {
       type: "object",
       properties: {
         query: {
           type: "string",
-          description: "Search query (matches name and description)",
+          description:
+            "Search query. Words may be given in any order and may live in different fields — " +
+            "'veritas stc surface service' finds a node named 'veritas-stc-surface' whose " +
+            "metadata kind is 'service'. Matching is case-insensitive.",
         },
         type: {
           type: "string",
@@ -325,6 +346,15 @@ export const discoveryTools: Tool[] = [
           type: "string",
           enum: ["east", "south", "west", "north"],
           description: "Filter by direction (optional)",
+        },
+        kind: {
+          type: "string",
+          description:
+            "Filter by the metadata.kind discriminator — 'service', 'host', 'tenant', 'shot', " +
+            "'scene'. A first-class filter, not a search term: asking for every service by typing " +
+            "the word depends on that word surviving into some text field, and asking for " +
+            "kind='service' does not. It does NOT replace the query — a filter with an empty " +
+            "query returns zero results, not every node of that kind.",
         },
         limit: {
           type: "number",
@@ -337,14 +367,14 @@ export const discoveryTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const { query, type, direction, limit = 20 } = args;
+        const { query, type, direction, kind, limit = 20 } = args;
 
-        const nodes = (await store.searchNodes(query, { type, direction, limit }));
+        const nodes = (await store.searchNodes(query, { type, direction, kind, limit }));
 
         return {
           query,
           count: nodes.length,
-          filters: { type, direction, limit },
+          filters: { type, direction, kind, limit },
           nodes: nodes,
           teaching: "Searching is asking. The relations you find are those ready to be known.",
         };

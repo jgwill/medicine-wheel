@@ -1,6 +1,24 @@
 # @medicine-wheel/gap-analysis
 
-Problem-solving, built properly and without apology.
+Problem-solving, built properly and without apology. Root cause, incidents,
+regressions, troubleshooting — if something worked and stopped, you are in the
+right room.
+
+One question confirms it:
+
+> **Is there a prior state you are restoring?**
+
+**Yes, and you can evidence it.** Stay. This is the instrument: baseline,
+observation, the difference between them, and elimination steps you can verify.
+
+**No — you cannot name a state that actually existed.** Then the difference has
+nothing to be measured against, and
+[`@medicine-wheel/creative-orientation`](https://www.npmjs.com/package/@medicine-wheel/creative-orientation)
+will point you toward structural tension instead. A feeling of urgency is not
+evidence.
+
+That requirement — a baseline with evidence — is what separates a fire from a
+creating act, and it is why this package carries the name it does.
 
 > [!WARNING]
 > **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
@@ -34,8 +52,8 @@ import { openGapAnalysis, addStep, doorAdvice } from '@medicine-wheel/gap-analys
 
 let analysis = openGapAnalysis(
   { description: 'the published image matched the published packages',
-    evidence: 'true through 0.5.0, tagged 2026-07-17' },
-  { description: 'newest versioned image tag is 0.5.0; npm is at 0.5.2; 0.5.1 has no image',
+    evidence: 'true in the previously tagged release, verified from registry and image metadata' },
+  { description: 'the newest image tag trails npm; an intermediate release has no image',
     source: 'Docker Hub tags API, read 2026-07-25' },
   'the image no longer tracks npm because building it depends on a human remembering a flag',
 );

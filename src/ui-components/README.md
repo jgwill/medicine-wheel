@@ -63,10 +63,9 @@ import { WilsonMeter } from '@medicine-wheel/ui-components';
 
 ## Peer dependencies
 
-- `react` ^18.0.0 || ^19.0.0
-- `@medicine-wheel/ontology-core` ^0.1.0
+- `react`
+- `@medicine-wheel/ontology-core`
 
 ## License
 
 MIT
-

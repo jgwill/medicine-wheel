@@ -91,9 +91,8 @@ const all = listDecompositions('.');
 
 ## Dependencies
 
-- `@medicine-wheel/ontology-core` ^0.1.0
+- `@medicine-wheel/ontology-core`
 
 ## License
 
 MIT
-

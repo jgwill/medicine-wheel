@@ -15,6 +15,8 @@ import type {
   DiaryEntryFilters,
   CeremonyEventRecord,
   CeremonyEventFilters,
+  CaptureRecord,
+  CaptureFilters,
   NodePatch,
   EdgePatch,
 } from './interface.js';
@@ -30,6 +32,10 @@ import {
 import { filterInquiryWeaves } from './inquiry-weaves.js';
 import { filterAndOrderDiaryEntries } from './diary-records.js';
 import { matchesCeremonyEventFilters } from './ceremony-events.js';
+import {
+  mergeCaptureRecords,
+  filterAndOrderCaptures,
+} from './capture-records.js';
 
 interface StoredNode {
   id: string;
@@ -77,6 +83,7 @@ export class JsonlProvider implements StorageProvider {
   private readonly planPerspectivesFile: string;
   private readonly diaryEntriesFile: string;
   private readonly ceremonyEventsFile: string;
+  private readonly capturesFile: string;
 
   constructor(dataDir?: string) {
     this.dataDir = path.resolve(dataDir ?? resolveProjectDataDir());
@@ -87,6 +94,7 @@ export class JsonlProvider implements StorageProvider {
     this.planPerspectivesFile = path.join(this.dataDir, 'plan-perspectives.jsonl');
     this.diaryEntriesFile = path.join(this.dataDir, 'diary-entries.jsonl');
     this.ceremonyEventsFile = path.join(this.dataDir, 'ceremony-events.jsonl');
+    this.capturesFile = path.join(this.dataDir, 'captures.jsonl');
   }
 
   async connect(): Promise<void> {
@@ -125,6 +133,10 @@ export class JsonlProvider implements StorageProvider {
       .sort(sortByNewest('created_at'))
       .slice(0, limit)
       .map((node) => this.parseNode(node));
+  }
+
+  async countNodes(): Promise<number> {
+    return countJsonl(this.nodesFile);
   }
 
   async updateNode(id: string, patch: NodePatch): Promise<RelationalNode> {
@@ -305,6 +317,10 @@ export class JsonlProvider implements StorageProvider {
       .map((ceremony) => this.parseCeremony(ceremony));
   }
 
+  async countCeremonies(): Promise<number> {
+    return countJsonl(this.ceremoniesFile);
+  }
+
   async registerInquiryWeave(record: WeaveRecord): Promise<void> {
     await this.upsertById(this.inquiryWeavesFile, record);
   }
@@ -377,6 +393,27 @@ export class JsonlProvider implements StorageProvider {
       .sort(sortByNewest('timestamp'));
   }
 
+  async registerCapture(record: CaptureRecord): Promise<CaptureRecord> {
+    let merged = record;
+    await withWriteLock(this.capturesFile, () => {
+      const records = readJsonl<CaptureRecord>(this.capturesFile);
+      const existing = records.find((candidate) => candidate.id === record.id);
+      merged = existing ? mergeCaptureRecords(existing, record) : record;
+      const nextRecords = records.filter((candidate) => candidate.id !== record.id);
+      nextRecords.push(merged);
+      writeJsonl(this.capturesFile, nextRecords);
+    });
+    return merged;
+  }
+
+  async getCapture(id: string): Promise<CaptureRecord | null> {
+    return this.readCaptures().find((record) => record.id === id) ?? null;
+  }
+
+  async listCaptures(filters: CaptureFilters = {}): Promise<CaptureRecord[]> {
+    return filterAndOrderCaptures(this.readCaptures(), filters);
+  }
+
   private readNodes(): StoredNode[] {
     return readJsonl<StoredNode>(this.nodesFile);
   }
@@ -403,6 +440,10 @@ export class JsonlProvider implements StorageProvider {
 
   private readCeremonyEvents(): CeremonyEventRecord[] {
     return readJsonl<CeremonyEventRecord>(this.ceremonyEventsFile);
+  }
+
+  private readCaptures(): CaptureRecord[] {
+    return readJsonl<CaptureRecord>(this.capturesFile);
   }
 
   private async upsertById<T extends { id: string }>(filePath: string, item: T): Promise<void> {
@@ -489,6 +530,36 @@ function readJsonl<T>(filePath: string): T[] {
   }
 
   return records;
+}
+
+/**
+ * How many records the file holds, without building them.
+ *
+ * Counts exactly what `readJsonl` would have returned — a malformed line is
+ * skipped by both, so a count can never disagree with a read — but retains no
+ * objects, sorts nothing, and parses no record into its domain shape. Skipping
+ * is silent here: `readJsonl` already warns about the same line, and counting
+ * must not double the noise.
+ */
+function countJsonl(filePath: string): number {
+  if (!fs.existsSync(filePath)) return 0;
+
+  let count = 0;
+  const content = fs.readFileSync(filePath, 'utf-8');
+
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    try {
+      JSON.parse(trimmed);
+      count += 1;
+    } catch {
+      // Same skip readJsonl performs; it owns the warning.
+    }
+  }
+
+  return count;
 }
 
 function writeJsonl<T>(filePath: string, records: T[]): void {

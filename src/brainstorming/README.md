@@ -1,6 +1,23 @@
 # @medicine-wheel/brainstorming
 
-Idea into committed design, through approval gates a human holds.
+Idea into committed design, through approval gates a human holds. Ideation,
+requirements gathering, design review — the convergent half of creative problem
+solving.
+
+Every outcome this package emits passes one question before it is spoken —
+including its own multiple-choice options:
+
+> **Is there a prior state you are restoring?**
+
+**Yes.** The option is describing a repair, and
+[`@medicine-wheel/gap-analysis`](https://www.npmjs.com/package/@medicine-wheel/gap-analysis)
+is the instrument for it.
+
+**No.** Then an option phrased as removing something is aiming at a list of
+known failures rather than at the state you want — and the moment of speaking is
+the only point where that is still catchable, because once a human selects it,
+it stops looking like the agent's proposal and starts looking like the
+requirement.
 
 > [!WARNING]
 > **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is

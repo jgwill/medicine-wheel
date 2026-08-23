@@ -22,7 +22,7 @@ import type {
   MedicineWheelCycle,
 } from '@/lib/types';
 
-import { actForDirection } from '@medicine-wheel/narrative-engine';
+import { createBeat as authorBeat, validateBeatDraft, type BeatDraft } from '@medicine-wheel/narrative-engine';
 import { extractBeats } from './beat-response';
 import { extractCycles, normalizeMedicineWheelCycle } from './cycle-response';
 import { getJsonlStore } from './jsonl-store';
@@ -138,31 +138,72 @@ export function getBeatsByDirection(direction: string): NarrativeBeat[] {
 // `act` is optional because it is derived from `direction`, not supplied.
 // Requiring it invited callers to pass a constant, which is how a west beat
 // came to be recorded in act 1.
+/**
+ * Create a beat through the authoring door.
+ *
+ * This delegates to `@medicine-wheel/narrative-engine` rather than assembling
+ * the record itself. It did assemble it, and that made the REST surface a
+ * second minting site: a beat posted over HTTP was never checked by
+ * `validateBeatDraft`, so the door only governed callers who happened to come
+ * through MCP. Five beats were registered that way before this was noticed —
+ * they were valid, but nothing had confirmed it.
+ *
+ * Throws on an invalid draft. The route turns that into a 400, which is the
+ * honest answer: a beat that fails the wheel's laws should not be stored and
+ * then reported as created.
+ */
 export function createBeat(
   data: Omit<NarrativeBeat, 'id' | 'timestamp' | 'act'> & { id?: string; timestamp?: string; act?: number },
-): NarrativeBeat {
-  const id = data.id || crypto.randomUUID();
-  const beat: NarrativeBeat = {
-    id,
+): { beat: NarrativeBeat; warnings: string[] } {
+  // A POST carrying an existing id is an update. Its provenance was stamped at
+  // creation; re-stamping `origin` on every touch would rewrite who authored
+  // the beat — the record must keep its first producer unless the caller
+  // states a new one deliberately.
+  const existing = data.id ? (store.getBeat(data.id) as any) : undefined;
+
+  const draft: BeatDraft = {
     direction: data.direction,
     title: data.title,
     description: data.description,
     prose: data.prose,
     ceremonies: data.ceremonies ?? [],
     learnings: data.learnings ?? [],
-    timestamp: data.timestamp || new Date().toISOString(),
-    // Derive the act from the direction rather than defaulting to 1. A west
-    // beat posted without an act was being recorded as an opening moment,
-    // which places it wrongly on the wheel for every reader downstream.
-    act: data.act ?? actForDirection(data.direction),
     relations_honored: data.relations_honored ?? [],
+    act: data.act,
+    id: data.id ?? crypto.randomUUID(),
+    timestamp: data.timestamp,
+    cycle_id: data.cycle_id,
+    parent_beat_id: data.parent_beat_id,
+    origin: data.origin ?? existing?.origin ?? { producer: 'rest' },
   };
-  if (data.cycle_id !== undefined) beat.cycle_id = data.cycle_id;
-  if (data.parent_beat_id !== undefined) beat.parent_beat_id = data.parent_beat_id;
+
+  // `strictAct` turns an act that contradicts the direction into an error
+  // instead of a stored contradiction. The act is derived, never chosen; a
+  // caller supplying the natural act is fine, a caller supplying any other is
+  // told so rather than silently recorded.
+  const beat = authorBeat(draft, { strictAct: true });
+
+  // The door computes warnings on every draft; discarding them made the
+  // advisory half of validation invisible on the paths people actually use.
+  const warnings = validateBeatDraft(draft)
+    .violations.filter(v => v.severity === 'warning')
+    .map(v => `${v.field}: ${v.message}`);
+
   if (data.sub_beats !== undefined) beat.sub_beats = data.sub_beats;
-  if (data.origin !== undefined) beat.origin = data.origin;
 
   store.createBeat(beat as any);
+
+  // Reciprocate the child side of any sub_beats named on this beat. A parent
+  // listing children that do not point back is the same one-sided relation the
+  // cycle and parent bindings below exist to prevent.
+  if (beat.sub_beats?.length) {
+    for (const childId of beat.sub_beats) {
+      const child = store.getBeat(childId) as any;
+      if (child && child.parent_beat_id !== beat.id) {
+        store.createBeat({ ...child, parent_beat_id: beat.id });
+      }
+    }
+  }
 
   // Bind the cycle side of the relation. A beat naming a cycle that does not
   // list it back is invisible to every arc reader that starts from the cycle.
@@ -181,7 +222,7 @@ export function createBeat(
     }
   }
 
-  return beat;
+  return { beat, warnings };
 }
 
 // ── Cycles ──

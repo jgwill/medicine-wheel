@@ -12,7 +12,9 @@
 import { spawnSync } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
-import { viewSkills, installSkill } from './skills';
+import { viewSkills, installSkill, explainSkillRunUnavailable } from './skills';
+import { registerEpisodeBeats, describeArc } from './beats-register';
+import { cmdOrient } from './orientation';
 
 // ── Config ────────────────────────────────────────────────────────
 const MW_API_URL = process.env.MW_API_URL ?? 'http://localhost:8040';
@@ -71,6 +73,27 @@ const C = {
   bold:  '\x1b[1m',
   reset: '\x1b[0m',
 };
+
+// ── Exit codes ────────────────────────────────────────────────────
+// A command that did not do what it was asked must never exit 0.
+//   0  the command did what it said
+//   1  the command ran and failed
+//   2  usage error — unknown command / sub-command, or a missing argument
+//   3  the sub-command is recognised but has no implementation yet
+const EXIT_USAGE = 2;
+const EXIT_UNIMPLEMENTED = 3;
+
+/**
+ * Report an unknown sub-command and mark the process as failed.
+ *
+ * Uses `process.exitCode` rather than `process.exit()` so buffered stderr is
+ * flushed before the process leaves.
+ */
+function unknownSub(group: string, sub: string, available: string[]): void {
+  console.error(`${C.south}Unknown ${group} sub-command: ${sub}${C.reset}`);
+  console.error(`  Available: ${available.join(', ')}`);
+  process.exitCode = EXIT_USAGE;
+}
 
 // ── Arg parsing ───────────────────────────────────────────────────
 interface ParsedArgs {
@@ -187,6 +210,20 @@ function cmdHelp(): void {
   console.log(`
 ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
 
+  ORIENTATION
+    mw orient "<outcome>"                  Which orientation does this call for?
+      [--restores "<prior state>"]         A prior state you are returning to
+      [--evidence "<when it existed>"]     When that state was actually true
+
+    Ask before problem-solving, debugging, fixing, troubleshooting, root-cause
+    or creative-problem-solving work. It reads the claim you supply:
+
+      --restores named  → a fire; gap analysis is the right instrument
+      --restores absent → you are creating; structural tension is
+
+    Urgency is not evidence — under pressure every situation feels like a fire.
+    It reports and offers a restatement; it never refuses.
+
   CEREMONY LIFECYCLE
     mw ceremony open <intention>           Open ceremony (starts in East)
     mw ceremony close <id> [summary]       Close ceremony
@@ -210,6 +247,8 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
 
   NARRATIVE
     mw beat create <dir> <title> <desc>    Create narrative beat
+    mw beat register <episode-dir>         Register authored beats via the door
+    mw beat register <episode-dir> --dry-run   Check legality, write nothing
     mw beat list [--direction east]        List beats
     mw arc <cycle_id>                      Get narrative arc
 
@@ -233,6 +272,8 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
   SKILLS
     mw skill view                          List available CLI skills
     mw skill install [name]                Install a skill (or all)
+    mw skill run <name>                    NOT AVAILABLE — skills are definitions,
+                                           not programs. Exits ${EXIT_UNIMPLEMENTED}.
 
   MEMORY
     mw memory store <key> <value> [dir]   Store relational memory
@@ -346,7 +387,7 @@ async function cmdCeremony(
       break;
     }
     default:
-      console.error(`Unknown ceremony sub-command: ${sub}`);
+      unknownSub('ceremony', sub, ['open', 'close', 'get', 'list']);
   }
 }
 
@@ -449,7 +490,7 @@ async function cmdCycle(positional: string[]): Promise<void> {
       mcpCall('get_narrative_arc', { cycle_id: positional[1] ?? '' });
       break;
     default:
-      console.error(`Unknown cycle sub-command: ${sub}`);
+      unknownSub('cycle', sub, ['create', 'list', 'advance', 'get', 'arc']);
   }
 }
 
@@ -507,15 +548,55 @@ async function cmdNode(
       mcpCall('search_nodes', { query: positional.slice(1).join(' ') });
       break;
     default:
-      console.error(`Unknown node sub-command: ${sub}`);
+      unknownSub('node', sub, ['create', 'list', 'get', 'search']);
   }
 }
 
 // ── Beat ──────────────────────────────────────────────────────────
-async function cmdBeat(positional: string[]): Promise<void> {
+async function cmdBeat(positional: string[], flags: Record<string, string | boolean> = {}): Promise<void> {
   const sub = positional[0] ?? 'list';
 
   switch (sub) {
+    case 'register': {
+      const dir = positional[1];
+      if (!dir) {
+        console.error('Usage: mw beat register <episode-dir> [--dry-run]');
+        console.error('  Registers an episode\'s authored beats through the authoring door.');
+        process.exit(2);
+      }
+      try {
+        const out = await registerEpisodeBeats(dir, {
+          apiUrl: MW_API_URL,
+          dryRun: flags['dry-run'] === true,
+        });
+
+        if (out.rejected.length > 0) {
+          console.error(`${C.south}${out.rejected.length} beat(s) rejected — nothing was written${C.reset}`);
+          for (const r of out.rejected) {
+            console.error(`  ${r.id}`);
+            for (const v of r.violations) console.error(`    ${v}`);
+          }
+          process.exit(1);
+        }
+
+        if (flags['dry-run'] === true) {
+          console.log(`${C.green}dry run — all beats are legal, nothing written${C.reset}`);
+          break;
+        }
+
+        if (out.cycleCreated) console.log(`${C.dim}cycle created:${C.reset} ${out.cycleId}`);
+        console.log(`${C.green}registered ${out.registered.length}${C.reset}${out.skipped.length ? `  ${C.dim}(${out.skipped.length} already present)${C.reset}` : ''}`);
+
+        const all = (await api('GET', '/api/narrative/beats')) as any[];
+        const scoped = out.cycleId ? all.filter(b => b.cycle_id === out.cycleId) : all;
+        console.log('');
+        for (const line of describeArc(scoped)) console.log(line);
+      } catch (err) {
+        console.error(`${C.south}${(err as Error).message}${C.reset}`);
+        process.exit(1);
+      }
+      break;
+    }
     case 'create':
       mcpCall('create_narrative_beat', {
         direction: positional[1] ?? '',
@@ -534,7 +615,7 @@ async function cmdBeat(positional: string[]): Promise<void> {
       break;
     }
     default:
-      console.error(`Unknown beat sub-command: ${sub}`);
+      unknownSub('beat', sub, ['register', 'create', 'list']);
   }
 }
 
@@ -559,7 +640,7 @@ function cmdEdge(
       break;
     }
     default:
-      console.error(`Unknown edge sub-command: ${sub}`);
+      unknownSub('edge', sub, ['create', 'list']);
   }
 }
 
@@ -589,7 +670,7 @@ function cmdChart(positional: string[]): void {
       mcpCall('get_chart_progress', { chart_id: positional[1] ?? '' });
       break;
     default:
-      console.error(`Unknown chart sub-command: ${sub}`);
+      unknownSub('chart', sub, ['create', 'list', 'progress']);
   }
 }
 
@@ -632,7 +713,7 @@ function cmdValidate(positional: string[]): void {
       });
       break;
     default:
-      console.error(`Unknown validate sub-command: ${sub}`);
+      unknownSub('validate', sub, ['wilson', 'ocap', 'accountability', 'bridge']);
   }
 }
 
@@ -647,12 +728,17 @@ function cmdSkill(positional: string[]): void {
       break;
     case 'install': {
       const name = positional[1]; // undefined means install all
-      installSkill('cli', name, C);
+      // installSkill returns -1 when `name` matched no skill for this target.
+      if (installSkill('cli', name, C) < 0) process.exitCode = EXIT_USAGE;
       break;
     }
+    case 'run':
+      // Recognised, deliberately unimplemented. See explainSkillRunUnavailable.
+      explainSkillRunUnavailable('mw', C);
+      process.exitCode = EXIT_UNIMPLEMENTED;
+      break;
     default:
-      console.error(`Unknown skill sub-command: ${sub}`);
-      console.error("Available: view, install");
+      unknownSub('skill', sub, ['view', 'list', 'install']);
   }
 }
 
@@ -671,7 +757,7 @@ function cmdMemory(positional: string[]): void {
       break;
     }
     default:
-      console.error(`Unknown memory sub-command: ${sub}`);
+      unknownSub('memory', sub, ['store']);
   }
 }
 
@@ -693,7 +779,7 @@ async function main(): Promise<void> {
     case 'directions': case 'dirs': await cmdDirections(); break;
     case 'cycle': case 'cy':        await cmdCycle(rest); break;
     case 'node': case 'n':          await cmdNode(rest, flags); break;
-    case 'beat': case 'b':          await cmdBeat(rest); break;
+    case 'beat': case 'b':          await cmdBeat(rest, flags); break;
     case 'edge': case 'e':                cmdEdge(rest, flags); break;
     case 'web': case 'w':                 cmdWeb(rest); break;
     case 'chart': case 'stc':             cmdChart(rest); break;
@@ -704,10 +790,13 @@ async function main(): Promise<void> {
     case 'arc':
       mcpCall('get_narrative_arc', { cycle_id: rest[0] ?? '' });
       break;
+    case 'orient': case 'orientation':
+      cmdOrient(rest, flags);
+      break;
     default:
       console.error(`${C.south}Unknown command: ${cmd}${C.reset}`);
       console.error("Run 'mw help' for usage.");
-      process.exit(1);
+      process.exitCode = EXIT_USAGE;
   }
 }
 

@@ -1,21 +1,32 @@
+# Must list exactly the same packages as the root package.json "workspaces"
+# array. pnpm resolves build order from the dependency graph, so this list is
+# kept alphabetical; npm does not, which is why package.json's copy is
+# topological. Adding a package means editing BOTH files.
 packages:
+  - src/brainstorming
+  - src/ceremonial-diary
   - src/ceremony-protocol
   - src/community-review
   - src/consent-lifecycle
+  - src/creative-orientation
+  - src/creative-problem-solving
   - src/data-store
   - src/data-store-postgres
   - src/fire-keeper
+  - src/gap-analysis
+  - src/github-ceremony
   - src/graph-viz
   - src/importance-unit
+  - src/infra
+  - src/narrative-cluster
   - src/narrative-engine
   - src/ontology-core
+  - src/perception-layer
   - src/prompt-decomposition
   - src/relational-index
   - src/relational-query
   - src/session-reader
   - src/storage-provider
-  - src/ceremonial-diary
-  - src/github-ceremony
   - src/transformation-tracker
   - src/ui-components
   - mcp

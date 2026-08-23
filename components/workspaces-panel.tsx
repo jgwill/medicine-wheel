@@ -47,22 +47,20 @@ export function WorkspacesPanel({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  // Robustness: when closed, render nothing at all so the panel can never
+  // occupy layout space — not even if the CSS bundle that hides it (transform)
+  // fails to load. This is what keeps the switcher discreet on first paint.
+  if (!open) return null;
+
   return (
     <>
       <div
-        aria-hidden={!open}
         onClick={onClose}
-        className={cn(
-          "fixed inset-0 z-40 bg-background/60 backdrop-blur-sm transition-opacity",
-          open ? "opacity-100" : "pointer-events-none opacity-0"
-        )}
+        className="fixed inset-0 z-40 bg-background/60 backdrop-blur-sm"
       />
       <aside
         aria-label="Workspaces"
-        className={cn(
-          "fixed left-0 top-0 z-50 h-full w-[340px] border-r border-border bg-card transition-transform",
-          open ? "translate-x-0" : "-translate-x-full"
-        )}
+        className="fixed left-0 top-0 z-50 h-full w-[340px] max-w-[85vw] border-r border-border bg-card"
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div className="mw-h2">Workspaces</div>

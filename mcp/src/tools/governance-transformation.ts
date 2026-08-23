@@ -50,7 +50,7 @@ export const governanceTransformationTools: Tool[] = [
         const circle = createReviewCircle(artifactId, artifactType as any);
         
         // Persist as a specialized node for UI visibility
-        store.createNode({
+        await store.createNode({
           id: circle.id,
           type: "knowledge",
           name: `Review Circle: ${artifactId}`,
@@ -116,7 +116,7 @@ export const governanceTransformationTools: Tool[] = [
 
         const granted = grantConsent(record);
 
-        store.createNode({
+        await store.createNode({
           id: granted.id,
           type: "knowledge",
           name: `Consent: ${grantor} ──▶ ${grantee}`,

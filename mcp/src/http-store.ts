@@ -9,6 +9,9 @@
  * Default behavior (MW_DATA_DIR / local JSONL) is preserved.
  */
 
+import { rankNodes } from './node-search.js';
+import type { NodeFilters } from './types.js';
+
 // ── Types (mirrored from jsonl-store.ts) ──
 
 interface StoredNode {
@@ -415,19 +418,46 @@ export class HttpStore {
     return readCollection<StoredNode>(await httpGet(url), 'nodes', url);
   }
 
+  /**
+   * Every supplied filter narrows (AND). Unlike the JSONL twin this pushes the
+   * terms into the query string, so the wheel answers the question rather than
+   * shipping the whole graph for the client to sift — which is what this method
+   * exists to stop doing.
+   *
+   * A server that predates `kind`/`parent_id` answers 400 with an `accepted`
+   * list rather than silently ignoring them, so a filter that arrives at an old
+   * wheel fails loudly instead of returning an unfiltered set the caller
+   * believes was filtered.
+   *
+   * @see mcp/src/jsonl-store.ts — the local twin, same contract
+   * @see app/api/nodes/route.ts — the route that serves these params
+   */
+  async getNodesFiltered(filters: NodeFilters): Promise<StoredNode[]> {
+    const params = new URLSearchParams();
+    for (const key of ['type', 'direction', 'kind', 'parent_id'] as const) {
+      const value = filters[key];
+      if (value) params.set(key, value);
+    }
+    const query = params.toString();
+    const url = `${this.baseUrl}/api/nodes${query ? `?${query}` : ''}`;
+    return readCollection<StoredNode>(await httpGet(url), 'nodes', url);
+  }
+
   async searchNodes(
     query: string,
-    opts: { type?: string; direction?: string; limit?: number } = {}
+    opts: { type?: string; direction?: string; kind?: string; limit?: number } = {}
   ): Promise<StoredNode[]> {
-    // Server has no search endpoint yet — fetch all and filter client-side
-    const all = await this.getAllNodes();
-    const q = query.toLowerCase();
-    let results = all.filter(n =>
-      (n.name && n.name.toLowerCase().includes(q)) ||
-      (n.description && n.description.toLowerCase().includes(q))
-    );
-    if (opts.type) results = results.filter(n => n.type === opts.type);
-    if (opts.direction) results = results.filter(n => n.direction === opts.direction);
+    // Server has no search endpoint yet — fetch all and rank client-side.
+    // Filters apply BEFORE ranking so `limit` spends its slots on nodes the
+    // caller can actually receive, rather than trimming a ranked list down to
+    // rows a type filter then discards.
+    let candidates = await this.getAllNodes();
+    if (opts.type) candidates = candidates.filter(n => n.type === opts.type);
+    if (opts.direction) candidates = candidates.filter(n => n.direction === opts.direction);
+    // `kind` is a filter, not a search term — see the JSONL store for why.
+    if (opts.kind) candidates = candidates.filter(n => n.metadata?.kind === opts.kind);
+
+    const results = rankNodes(candidates, query);
     return opts.limit !== undefined ? results.slice(0, opts.limit) : results;
   }
 

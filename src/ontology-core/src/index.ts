@@ -45,6 +45,12 @@ export type {
   // Production (film & media) relation subtype — additive
   ProductionEntityKind,
   ProductionRelation,
+  // Infrastructure entity kinds — additive, ride existing nodes
+  InfraEntityKind,
+  // Academic entity kinds — additive, ride existing nodes (ep332)
+  AcademicEntityKind,
+  AcademicAppointment,
+  AcademicRelation,
   // RSIS types
   SunName,
   CeremonyPhase,
@@ -115,6 +121,12 @@ export {
   GOVERNANCE_ACCESS_LEVELS,
   DIRECTION_INFO,
 } from './constants';
+
+// ── Infrastructure entity binding (additive — no NodeType was widened) ──────
+export { INFRA_ENTITY_BINDING, INFRA_ENTITY_KINDS } from './types';
+
+// ── Academic entity binding (additive — no NodeType was widened) ────────────
+export { ACADEMIC_ENTITY_BINDING, ACADEMIC_ENTITY_KINDS } from './types';
 
 // ── Zod Schemas ─────────────────────────────────────────────────────────────
 export {

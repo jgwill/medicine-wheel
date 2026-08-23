@@ -1,6 +1,21 @@
 # @medicine-wheel/creative-orientation
 
-Which orientation does this situation call for?
+Before the work, one question:
+
+> **Is there a prior state you are restoring?**
+
+**Yes, and you can name it.** This is a fire. Route to
+[`@medicine-wheel/gap-analysis`](https://www.npmjs.com/package/@medicine-wheel/gap-analysis)
+— evidenced baseline, observation, difference, verifiable steps.
+
+**No, nothing existed that you are returning to.** You are creating. Route to
+structural tension — the outcome named as a state that will exist, held against
+current reality.
+
+Looking for creative problem solving? It lands here first, then goes one way or
+the other. The package that carries that name
+([`@medicine-wheel/creative-problem-solving`](https://www.npmjs.com/package/@medicine-wheel/creative-problem-solving))
+is a signpost pointing at this one.
 
 > [!WARNING]
 > **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is

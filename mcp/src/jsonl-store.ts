@@ -15,6 +15,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { rankNodes } from './node-search.js';
+import type { NodeFilters } from './types.js';
 
 // ── Types ──
 
@@ -30,6 +32,12 @@ interface StoredNode {
 }
 
 interface StoredEdge {
+  /**
+   * Stable identity for the edge. `edgeKey` falls back to `from_id:to_id` when
+   * absent — which silently collapses two distinct relations between the same
+   * pair. A service binding both :80 and :443 on one host needs two, so an edge
+   * whose identity is finer than its endpoints must carry an `id`.
+   */
   id?: string;
   from_id: string;
   to_id: string;
@@ -38,6 +46,8 @@ interface StoredEdge {
   ceremony_honored: boolean;
   ceremony_id?: string;
   obligations: string[];
+  /** Annotation carried by the relation itself — e.g. which port a `binds-port` claims. */
+  metadata?: Record<string, unknown>;
   created_at: string;
 }
 
@@ -504,10 +514,40 @@ export class JsonlStore {
   getNodesByType(type: string): StoredNode[] { return this.nodes.filter(n => n.type === type); }
   getNodesByDirection(direction: string): StoredNode[] { return this.nodes.filter(n => n.direction === direction); }
 
-  searchNodes(query: string, opts: { type?: string; direction?: string; limit?: number } = {}): StoredNode[] {
-    let results = this.nodes.search(query, ['name', 'description'] as any);
-    if (opts.type)      results = results.filter(n => n.type === opts.type);
-    if (opts.direction) results = results.filter(n => n.direction === opts.direction);
+  /**
+   * Every supplied filter narrows (AND); an absent one does not constrain.
+   * `kind` and `parent_id` read `metadata`, which is where the closed six-value
+   * `type` enum forced every artifact kind and containment link to live.
+   *
+   * @see mcp/src/http-store.ts — the server-backed twin, which pushes the same
+   *   filters into the `/api/nodes` query string rather than filtering locally
+   */
+  getNodesFiltered(filters: NodeFilters): StoredNode[] {
+    return this.nodes.filter(n =>
+      (!filters.type || n.type === filters.type) &&
+      (!filters.direction || n.direction === filters.direction) &&
+      (!filters.kind || n.metadata?.kind === filters.kind) &&
+      (!filters.parent_id || n.metadata?.parent_id === filters.parent_id)
+    );
+  }
+
+  /**
+   * Term-based, ranked node search — the same contract the HTTP store serves,
+   * so `search_nodes` answers identically whichever backend is mounted.
+   * Filters run before ranking so `limit` is spent on receivable rows.
+   *
+   * @see mcp/src/node-search.ts — the matching and ranking contract
+   */
+  searchNodes(query: string, opts: { type?: string; direction?: string; kind?: string; limit?: number } = {}): StoredNode[] {
+    let candidates = this.nodes.getAll();
+    if (opts.type)      candidates = candidates.filter(n => n.type === opts.type);
+    if (opts.direction) candidates = candidates.filter(n => n.direction === opts.direction);
+    // `kind` is a filter, not a search term. Asking for every service by typing
+    // the word "service" depends on that word surviving into some text field;
+    // asking for `kind: 'service'` does not.
+    if (opts.kind)      candidates = candidates.filter(n => n.metadata?.kind === opts.kind);
+
+    const results = rankNodes(candidates, query);
     return opts.limit !== undefined ? results.slice(0, opts.limit) : results;
   }
 

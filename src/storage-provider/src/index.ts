@@ -38,10 +38,17 @@ export type {
   CeremonyEventParticipant,
   CeremonyEventRecord,
   CeremonyEventFilters,
+  CaptureKind,
+  CaptureOrigin,
+  CaptureRecord,
+  CaptureFilters,
   ProviderType,
   NodePatch,
   EdgePatch,
 } from './interface.js';
+
+// Capture vocabulary as values — checkable from plain JavaScript
+export { CAPTURE_KINDS, CAPTURE_ORIGINS } from './interface.js';
 
 // Typed errors (thrown by update/delete operations)
 export {
@@ -71,6 +78,14 @@ export {
 
 // Ceremony Event filter semantics (shared across providers)
 export { matchesCeremonyEventFilters } from './ceremony-events.js';
+
+// Capture id/filter/merge semantics (shared across providers)
+export {
+  captureRecordId,
+  matchesCaptureFilters,
+  filterAndOrderCaptures,
+  mergeCaptureRecords,
+} from './capture-records.js';
 
 // Factory
 export { createProvider, detectProvider } from './factory.js';
