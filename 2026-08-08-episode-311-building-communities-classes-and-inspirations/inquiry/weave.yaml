@@ -1,0 +1,21 @@
+id: "inquiry-weave:2026-08-08-episode-311-building-communities-classes-and-inspirations:ep311-building-communities-classes-and-inspirations-260808-8c2100c7-25c0-49c3-8983-bc4be317e6c6"
+weave: 1
+
+artefact:
+  id: "ep311-building-communities-classes-and-inspirations-260808-8c2100c7-25c0-49c3-8983-bc4be317e6c6"
+
+issue: "jgwill/medicine-wheel#114"
+issue_url: "https://github.com/jgwill/medicine-wheel/pull/114"
+
+episode:
+  path: "2026-08-08-episode-311-building-communities-classes-and-inspirations"
+  number: 311
+
+last_sync:
+  state: "never-synced"
+
+source:
+  package: "@miadi/inquiry-weave"
+  record_path: "2026-08-08-episode-311-building-communities-classes-and-inspirations/inquiry/weave.yaml"
+  registered_at: "2026-08-23T19:49:49Z"
+  updated_at: "2026-08-23T19:49:49Z"
