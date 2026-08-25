@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { extractCeremonyLogs, normalizeCeremonyLog } from "../lib/ceremony-response";
+import {
+  ceremonyBelongsToEpisode,
+  ceremonyEpisodePath,
+  extractCeremonyLogs,
+  normalizeCeremonyLog,
+} from "../lib/ceremony-response";
 
 const ceremony = {
   id: "ceremony-1",
@@ -53,5 +58,23 @@ describe("ceremony response normalization", () => {
   it("drops records that carry no identity", () => {
     expect(extractCeremonyLogs([{ type: "opening" }, null, "not-a-ceremony"])).toEqual([]);
     expect(normalizeCeremonyLog(null)).toBeNull();
+  });
+
+  it("reads canonical and legacy episode membership from research context", () => {
+    expect(ceremonyEpisodePath({
+      research_context: JSON.stringify({ episode_path: "episode-339" }),
+    })).toBe("episode-339");
+    expect(ceremonyEpisodePath({
+      research_context: JSON.stringify({ episodePath: "episode-legacy" }),
+    })).toBe("episode-legacy");
+    expect(ceremonyBelongsToEpisode({
+      research_context: JSON.stringify({ episode_path: "episode-339" }),
+    }, "episode-339")).toBe(true);
+  });
+
+  it("does not infer membership from malformed or unrelated context", () => {
+    expect(ceremonyEpisodePath({ research_context: "not-json" })).toBeUndefined();
+    expect(ceremonyEpisodePath({ research_context: JSON.stringify({ source: "elsewhere" }) })).toBeUndefined();
+    expect(ceremonyBelongsToEpisode(ceremony, "episode-339")).toBe(false);
   });
 });

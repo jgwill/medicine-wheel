@@ -50,6 +50,27 @@ export function normalizeCeremonyLog(value: unknown): CeremonyLog | null {
   };
 }
 
+export function ceremonyEpisodePath(value: unknown): string | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const researchContext = (value as Record<string, unknown>).research_context;
+  if (typeof researchContext !== "string") return undefined;
+
+  try {
+    const parsed = JSON.parse(researchContext) as Record<string, unknown> | null;
+    if (!parsed || typeof parsed !== "object") return undefined;
+    const episodePath = parsed.episode_path ?? parsed.episodePath;
+    return typeof episodePath === "string" && episodePath.length > 0
+      ? episodePath
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function ceremonyBelongsToEpisode(value: unknown, episodePath: string): boolean {
+  return ceremonyEpisodePath(value) === episodePath;
+}
+
 export function extractCeremonyLogs(response: unknown): CeremonyLog[] {
   const candidate = Array.isArray(response)
     ? response

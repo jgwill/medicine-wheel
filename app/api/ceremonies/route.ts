@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import { createProvider, detectProvider } from "@medicine-wheel/storage-provider";
+import { ceremonyBelongsToEpisode } from "@/lib/ceremony-response";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const direction = searchParams.get("direction");
     const type = searchParams.get("type");
+    const episodePath = searchParams.get("episode_path");
 
     const store = await createProvider();
-    let ceremonies = await store.getAllCeremonies();
+    // Provider list methods intentionally default to one page (100). A scoped
+    // episode query must search the complete ceremony store before filtering,
+    // or an older but valid ceremony silently disappears from its episode.
+    let ceremonies = await store.getAllCeremonies(
+      episodePath ? Number.MAX_SAFE_INTEGER : undefined,
+    );
 
     if (direction) {
       ceremonies = ceremonies.filter((c) => c.direction === direction);
@@ -16,6 +23,12 @@ export async function GET(request: Request) {
 
     if (type) {
       ceremonies = ceremonies.filter((c) => c.type === type);
+    }
+
+    if (episodePath) {
+      ceremonies = ceremonies.filter((ceremony) =>
+        ceremonyBelongsToEpisode(ceremony, episodePath),
+      );
     }
 
     return NextResponse.json({ 
