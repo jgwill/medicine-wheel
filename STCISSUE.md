@@ -1674,3 +1674,133 @@ return NextResponse.json({
 
 Both calls are unparameterised, so both take the provider's default page size of 100 — `getAllNodes(limit = 100)` and `getA
 
+
+## issue #125 - Inquiry: community-held teaching profiles for colors, circles, and the four Rs
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-08-19T02:02:56Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/125
+
+### Current Reality
+## Desired outcome
+
+The Medicine Wheel suite can hold **community-authored, source-attributed teaching profiles** without presenting one community’s colors, directional associations, language, or ceremonies as universal defaults. Relationships—including the land as teacher—remain first-class rather than being reduced to visual configuration or scalar scores.
+
+## Source and provenance
+
+- Public teaching: [Medicine Wheel Teachings with Karen Bannon](https://youtu.be/oGC1EncFa50) (24:18)
+- Sp
+
+
+## issue #127 - Graph Inspired Connected Papers https://arxiv.org/
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-08-20T18:04:21Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/127
+
+### Current Reality
+
+
+<img width="978" height="983" alt="Image" src="https://github.com/user-attachments/assets/bb4ee7b2-1905-4904-a48e-6dad3dd97b18" />
+
+
+## (What is Connected Papers?)
+
+- [ ] TODO
+
+
+### Examples
+
+#### no 1
+
+<img width="1419" height="879" alt="Image" src="https://github.com/user-attachments/assets/0b74ca52-e2d6-49b6-b3f3-3e26ecaddd35" />
+
+## RESOURCES
+
+### https://arxiv.org/
+
+
+## issue #128 - Add network-safe sequence allocator for ep/op/jr creative artifacts
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-08-22T16:44:10Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/128
+
+### Current Reality
+## Query from Jerry to William
+
+Jerry wants Medicine Wheel to become the shared numbering authority for creative artifacts across the whole network: phone, Termux devices, laptop, portals, agents, and future web tools.
+
+Today, different tools can create or reference things like episodes, opus folders, journals, plans, and recordings. The risk is that two devices or agents may independently decide that the next item is the same number, e.g. both create `op-019` or `ep-301`.
+
+We want one Medicine 
+
+
+## issue #129 - Architecture: user-defined, data-scoped and relational workspaces
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-08-22T21:54:50Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/129
+
+### Current Reality
+## Context / current reality
+
+The left-hand workspace switcher is currently presentation-only:
+
+- `components/workspaces-panel.tsx` exports a hardcoded `WORKSPACES` array.
+- `components/navigation.tsx` keeps the selection in component state.
+- Selecting a workspace changes only the displayed name and color; it does not change any API request or Medicine Wheel data.
+- The selection resets on refresh, and every deployment receives the same list.
+
+This is useful as a design sketch, but it can misle
+
+
+## issue #128 - Add network-safe sequence allocator for ep/op/jr creative artifacts
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-08-24T01:13:48Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/128
+
+### Current Reality
+## Query from Jerry to William
+
+Jerry wants Medicine Wheel to become the shared numbering authority for creative artifacts across the whole network: phone, Termux devices, laptop, portals, agents, and future web tools.
+
+Today, different tools can create or reference things like episodes, opus folders, journals, plans, and recordings. The risk is that two devices or agents may independently decide that the next item is the same number, e.g. both create `op-019` or `ep-301`.
+
+We want one Medicine 
+
+
+## issue #128 - Add network-safe sequence allocator for ep/op/jr creative artifacts
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-08-24T01:13:48Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/128
+
+### Current Reality
+## Query from Jerry to William
+
+Jerry wants Medicine Wheel to become the shared numbering authority for creative artifacts across the whole network: phone, Termux devices, laptop, portals, agents, and future web tools.
+
+Today, different tools can create or reference things like episodes, opus folders, journals, plans, and recordings. The risk is that two devices or agents may independently decide that the next item is the same number, e.g. both create `op-019` or `ep-301`.
+
+We want one Medicine 
+
