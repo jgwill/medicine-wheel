@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/creative-orientation",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "The orientation question, asked before the work: is there a prior state you are restoring? Yes — this is a fire, route to gap analysis. No — you are creating, route to structural tension. Creative problem solving lands here first, then goes one way or the other.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
