@@ -50,13 +50,16 @@ export default function NodesPage() {
   const loadNodes = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
+      // The list is client-side paginated below, so it needs the whole store.
+      // Without this the route applies its 100-row default and the table silently
+      // ends at 100 of 205 with no page control to reveal the rest.
+      const params = new URLSearchParams({ limit: "all" });
       if (filterType !== "all") params.set("type", filterType);
       if (filterDirection !== "all") params.set("direction", filterDirection);
 
       const [nodesRes, edgesRes] = await Promise.all([
         fetch(`/api/nodes?${params.toString()}`),
-        fetch("/api/edges"),
+        fetch("/api/edges?limit=all"),
       ]);
       const nodesResponse = await nodesRes.json();
       const edgesData: RelationalEdge[] = edgesRes.ok ? await edgesRes.json() : [];

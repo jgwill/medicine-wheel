@@ -73,9 +73,22 @@ describe("GET /api/nodes — artifact-kind and parent filtering", () => {
 
     expect(body.count).toBe(corpus().length);
     expect(body.nodes).toHaveLength(corpus().length);
-    // The exact keys every existing consumer already destructures.
-    expect(Object.keys(body).sort()).toEqual(["count", "nodes", "provider"]);
+    // The keys every existing consumer destructures, plus the two added on
+    // 2026-09-03. `total` and `truncated` are additive — no consumer destructures
+    // by exact key set — and they exist because their absence was a defect: a
+    // bare GET took the provider's 100-row default in silence, so the graph drew
+    // 100 of 205 nodes and reported "100 Nodes" as if that were the store.
+    expect(Object.keys(body).sort()).toEqual([
+      "count",
+      "nodes",
+      "provider",
+      "total",
+      "truncated",
+    ]);
     expect(body).not.toHaveProperty("filters");
+    // Unfiltered and under the page size: nothing was left out, and it says so.
+    expect(body.total).toBe(corpus().length);
+    expect(body.truncated).toBe(false);
     expect(new Set(body.nodes.map((n: RelationalNode) => n.id))).toEqual(
       new Set(corpus().map((n) => n.id)),
     );
@@ -182,12 +195,63 @@ describe("GET /api/nodes — artifact-kind and parent filtering", () => {
     await seed(corpus());
     const route = await import("../app/api/nodes/route");
 
-    for (const query of ["?kinds=service", "?metadata.kind=service", "?limit=5", "?kind=service&bogus=1"]) {
+    // `?limit=5` was on this list until 2026-09-03, when limit became a real
+    // parameter. It moved from "rejected" to "honoured" — see the paging tests
+    // below — and `accepted` grew to name it.
+    for (const query of ["?kinds=service", "?metadata.kind=service", "?limits=5", "?kind=service&bogus=1"]) {
       const response = await route.GET(new Request(`http://localhost/api/nodes${query}`));
       expect(response.status, query).toBe(400);
       const body = await response.json();
-      expect(body.accepted).toEqual(["type", "direction", "kind", "parent_id"]);
+      expect(body.accepted).toEqual(["type", "direction", "kind", "parent_id", "limit"]);
       expect(body.nodes, query).toBeUndefined();
+    }
+  });
+
+  it("honours ?limit and reports the store total alongside the page", async () => {
+    await seed(corpus());
+    const route = await import("../app/api/nodes/route");
+
+    const page = await getJson(route.GET, "http://localhost/api/nodes?limit=2");
+    expect(page.nodes).toHaveLength(2);
+    expect(page.count).toBe(2);
+    // The point of the whole change: a windowed answer says it is one.
+    expect(page.total).toBe(corpus().length);
+    expect(page.truncated).toBe(true);
+
+    const all = await getJson(route.GET, "http://localhost/api/nodes?limit=all");
+    expect(all.nodes).toHaveLength(corpus().length);
+    expect(all.truncated).toBe(false);
+  });
+
+  it("pages after filtering, so ?kind&limit means n of the matches", async () => {
+    await seed(corpus());
+    const route = await import("../app/api/nodes/route");
+
+    const unpaged = await getJson(route.GET, "http://localhost/api/nodes?kind=service&limit=all");
+    expect(unpaged.matched).toBe(unpaged.count);
+
+    const paged = await getJson(route.GET, "http://localhost/api/nodes?kind=service&limit=1");
+    expect(paged.nodes).toHaveLength(1);
+    // Every returned node still satisfies the filter — the page was taken from
+    // the matches, not the matches from the page.
+    expect(paged.nodes[0].metadata?.kind).toBe("service");
+    expect(paged.matched).toBe(unpaged.count);
+    expect(paged.truncated).toBe(unpaged.count > 1);
+  });
+
+  it("refuses an unparseable limit rather than silently falling back", async () => {
+    await seed(corpus());
+    const route = await import("../app/api/nodes/route");
+
+    for (const query of ["?limit=0", "?limit=-3", "?limit=everything", "?limit=1.5"]) {
+      const response = await route.GET(new Request(`http://localhost/api/nodes${query}`));
+      expect(response.status, query).toBe(400);
+      const body = await response.json();
+      expect(body.nodes, query).toBeUndefined();
+      // Coercing a bad limit to the default would reintroduce the exact
+      // truncation this parameter closes, and would do it at the moment a
+      // caller had actually tried to ask.
+      expect(body.error, query).toMatch(/limit/i);
     }
   });
 

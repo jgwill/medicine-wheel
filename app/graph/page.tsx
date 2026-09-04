@@ -166,7 +166,7 @@ export default function GraphPage() {
 
   const loadData = useCallback(async () => {
     try {
-      const [nodesRes, edgesRes] = await Promise.all([fetch("/api/nodes"), fetch("/api/edges")]);
+      const [nodesRes, edgesRes] = await Promise.all([fetch("/api/nodes?limit=all"), fetch("/api/edges?limit=all")]);
       const nodesResponse = await nodesRes.json();
       const edgesData: RelationalEdge[] = await edgesRes.json();
 

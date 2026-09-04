@@ -11,6 +11,7 @@
 // ── Types ───────────────────────────────────────────────────────────────────
 export type {
   PersonRole,
+  ReviewOnlyRole,
   ArtifactType,
   ReviewCircleStatus,
   ReviewOutcomeType,
@@ -20,6 +21,9 @@ export type {
   WilsonCheck,
   TalkingCircleEntry,
 } from './types.js';
+
+// ── Role vocabulary ─────────────────────────────────────────────────────────
+export { REVIEW_ONLY_ROLES, isGovernanceRole } from './types.js';
 
 // ── Zod Schemas ─────────────────────────────────────────────────────────────
 export {

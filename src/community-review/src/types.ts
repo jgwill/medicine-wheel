@@ -6,18 +6,42 @@
  * and community members validate relational accountability.
  */
 
-import type { DirectionName, AccountabilityTracking, OcapFlags } from '@medicine-wheel/ontology-core';
+import type {
+  DirectionName,
+  AccountabilityTracking,
+  OcapFlags,
+  PersonRole as GovernancePersonRole,
+} from '@medicine-wheel/ontology-core';
 
 // ── Person & Artifact Roles ─────────────────────────────────────────────────
 
-/** Roles within the review circle */
-export type PersonRole =
-  | 'steward'
-  | 'contributor'
-  | 'elder'
-  | 'firekeeper'
-  | 'community-member'
-  | 'youth';
+/**
+ * Roles within the review circle.
+ *
+ * This is `ontology-core`'s governance `PersonRole` **widened**, never a second
+ * list that happens to overlap. It was a redeclared union until 2026-09-03, so a
+ * consumer importing both packages held two symbols named `PersonRole` with
+ * incompatible domains — assignable one way and not the other, with no error at
+ * either import site. Widening by reference means the four governance roles have
+ * exactly one definition and this package can only ever add to them.
+ *
+ * The two additions are review-circle roles with no governance standing:
+ * a community member and a youth may speak in the talking circle, and neither
+ * stewards, keeps the fire, nor blesses.
+ */
+export type PersonRole = GovernancePersonRole | 'community-member' | 'youth';
+
+/**
+ * The roles this package adds beyond governance — exported so a consumer can ask
+ * which half of the union it is holding without re-deriving the difference.
+ */
+export const REVIEW_ONLY_ROLES = ['community-member', 'youth'] as const;
+export type ReviewOnlyRole = (typeof REVIEW_ONLY_ROLES)[number];
+
+/** True when a role carries governance standing (steward, contributor, elder, firekeeper). */
+export function isGovernanceRole(role: PersonRole): role is GovernancePersonRole {
+  return !(REVIEW_ONLY_ROLES as readonly string[]).includes(role);
+}
 
 /** Types of artifacts that can be reviewed */
 export type ArtifactType =

@@ -21,8 +21,8 @@ export default function AccountabilityPage() {
   useEffect(() => {
     Promise.all([
       fetch("/api/resources").then((r) => r.json()),
-      fetch("/api/nodes").then((r) => r.json()),
-      fetch("/api/edges").then((r) => r.json()),
+      fetch("/api/nodes?limit=all").then((r) => r.json()),
+      fetch("/api/edges?limit=all").then((r) => r.json()),
       fetch("/api/ceremonies").then((r) => r.json()),
       fetch("/api/narrative/beats").then((r) => r.json()),
     ]).then(([res, nodesResponse, e, c, b]) => {

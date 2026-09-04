@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { DirectionNameSchema, NodeTypeSchema } from "@medicine-wheel/ontology-core";
 import { createProvider, detectProvider } from "@medicine-wheel/storage-provider";
+import { parseLimit } from "@/lib/api-paging";
 
 const NodeCreateSchema = z.object({
   id: z.string().trim().min(1).optional(),
@@ -38,6 +39,20 @@ const NodeCreateSchema = z.object({
 const NODE_FILTER_PARAMS = ["type", "direction", "kind", "parent_id"] as const;
 
 /**
+ * `limit` is accepted but is not a filter — it pages, it does not narrow. Kept in
+ * its own list so `filters` stays a description of what was *matched*, and so the
+ * echoed `filters` object never claims a page size was a predicate.
+ *
+ * It exists because the provider's default page size is 100 and a bare read took
+ * it silently: the graph drew 100 of 205 nodes and its own panel reported "100
+ * Nodes" as though that were the store. `?limit=all` asks for everything;
+ * `?limit=<n>` asks for n. The response now always carries `total`, so a caller
+ * that forgets to ask can still tell it was handed a window.
+ */
+const NODE_PAGING_PARAMS = ["limit"] as const;
+const NODE_QUERY_PARAMS = [...NODE_FILTER_PARAMS, ...NODE_PAGING_PARAMS] as const;
+
+/**
  * A silently-ignored filter is the failure this route exists to prevent: a
  * consumer that asks `?kinds=service` and gets a filtered-looking payload it
  * never filtered has been lied to. An unknown param is therefore a 400 naming
@@ -45,14 +60,14 @@ const NODE_FILTER_PARAMS = ["type", "direction", "kind", "parent_id"] as const;
  */
 function rejectUnknownParams(searchParams: URLSearchParams) {
   const unknown = [...new Set(searchParams.keys())].filter(
-    (key) => !(NODE_FILTER_PARAMS as readonly string[]).includes(key),
+    (key) => !(NODE_QUERY_PARAMS as readonly string[]).includes(key),
   );
   if (unknown.length === 0) return null;
 
   return NextResponse.json(
     {
       error: `Unknown query parameter${unknown.length > 1 ? "s" : ""}: ${unknown.join(", ")} — nothing was filtered.`,
-      accepted: [...NODE_FILTER_PARAMS],
+      accepted: [...NODE_QUERY_PARAMS],
     },
     { status: 400 },
   );
@@ -72,17 +87,25 @@ export async function GET(request: Request) {
     ) as Partial<Record<(typeof NODE_FILTER_PARAMS)[number], string>>;
     const filtering = Object.values(filters).some(Boolean);
 
+    const limit = parseLimit(searchParams.get("limit"));
+    if (limit instanceof NextResponse) return limit;
+
     const store = await createProvider();
 
-    // Unfiltered reads keep the provider's own default page size, so this route
-    // answers a bare GET exactly as it always has. A *filtered* read must see
-    // the whole store or it answers from a truncated window — `getAllNodes()`
-    // defaults to 100 and the live wheel already holds 76, so filtering after
-    // the default slice would start returning quietly incomplete sets rather
-    // than failing loudly.
-    let nodes = filtering
-      ? await store.getAllNodes(Number.MAX_SAFE_INTEGER)
-      : await store.getAllNodes();
+    // Always read the whole store, then page here. Two reasons, both paid for:
+    //
+    // A *filtered* read must see everything or it answers from a truncated
+    // window — filtering after the provider's 100-row slice returns quietly
+    // incomplete sets rather than failing loudly.
+    //
+    // An *unfiltered* read must know the true size even when it returns a page,
+    // because the previous behaviour let `getAllNodes()` take its 100-row default
+    // in silence: the graph rendered 100 of 205 nodes and reported "100 Nodes".
+    // `total` below is what makes a windowed answer legible as one.
+    const allNodes = await store.getAllNodes(Number.MAX_SAFE_INTEGER);
+    const total = allNodes.length;
+
+    let nodes = allNodes;
 
     // Every supplied filter narrows (AND). Previously `type` and `direction`
     // were `else if`, so `?type=x&direction=y` silently dropped the direction —
@@ -95,10 +118,20 @@ export async function GET(request: Request) {
       nodes = nodes.filter((n) => n.metadata?.parent_id === filters.parent_id);
     }
 
+    // Paging is applied after filtering so `?kind=x&limit=10` means "ten of the
+    // matching nodes", not "the matches among the first ten".
+    const matched = nodes.length;
+    if (limit !== null && nodes.length > limit) nodes = nodes.slice(0, limit);
+
     return NextResponse.json({
       nodes,
       provider: detectProvider(),
       count: nodes.length,
+      // `total` is the whole store; `matched` is what the filters selected. When
+      // count < matched the caller is holding a page, and can now see that it is.
+      total,
+      ...(filtering ? { matched } : {}),
+      truncated: nodes.length < matched,
       // Echoed only when asked for, so an unfiltered response stays byte-identical
       // to what every existing consumer already parses — and so a caller can tell
       // an empty result from an unapplied filter.

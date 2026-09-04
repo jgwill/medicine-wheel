@@ -64,7 +64,7 @@ export default function RelationsPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [nodesRes, edgesRes] = await Promise.all([fetch("/api/nodes"), fetch("/api/edges")]);
+      const [nodesRes, edgesRes] = await Promise.all([fetch("/api/nodes?limit=all"), fetch("/api/edges?limit=all")]);
       const nodesResponse = await nodesRes.json();
       const edgesData = await edgesRes.json();
       const nodesData: NodeRecord[] = Array.isArray(nodesResponse) ? nodesResponse : (nodesResponse.nodes || []);

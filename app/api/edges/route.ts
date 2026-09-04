@@ -5,6 +5,7 @@ import {
   detectProvider,
   EdgeNotFoundError,
 } from "@medicine-wheel/storage-provider";
+import { parseLimit } from "@/lib/api-paging";
 
 const EdgeCreateSchema = z.object({
   from_id: z.string({ required_error: "from_id is required" }).trim().min(1),
@@ -83,10 +84,27 @@ function unexpected(error: unknown) {
   return NextResponse.json({ error: message }, { status: 500 });
 }
 
-export async function GET() {
+/**
+ * Relations, oldest-visible-first as the provider orders them.
+ *
+ * The response stays a bare array. Five callers parse it that way — the graph,
+ * relations, nodes and accountability pages, and `mcp/src/http-store.ts` — so
+ * wrapping it in an object to carry a total would break the MCP server to fix a
+ * page. `?limit=all` is the honest ask instead, and a caller that wants the
+ * count of what it received can read `.length` of a complete answer.
+ *
+ * Without it this route took `getAllEdges()`'s 100-row default in silence: the
+ * graph drew 100 of 191 relations, and 27 of those 100 pointed at nodes the
+ * nodes route had not sent, so React Flow dropped them without a word.
+ */
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const limit = parseLimit(searchParams.get("limit"));
+    if (limit instanceof NextResponse) return limit;
+
     const store = await createProvider();
-    const edges = await store.getAllEdges();
+    const edges = await store.getAllEdges(limit ?? Number.MAX_SAFE_INTEGER);
     return NextResponse.json(edges);
   } catch (error: unknown) {
     return unexpected(error);
