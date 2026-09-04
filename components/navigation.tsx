@@ -13,6 +13,7 @@ import { WorkspacesPanel, WORKSPACES, type Workspace } from "@/components/worksp
 const NAV_ITEMS = [
   { href: "/", label: "Wheel", color: "var(--mw-east)" },
   { href: "/graph", label: "Graph", color: "var(--mw-primary)" },
+  { href: "/episodes", label: "Episodes", color: "var(--mw-node-ancestor)" },
   { href: "/nodes", label: "Nodes", color: "var(--mw-node-land)" },
   { href: "/relations", label: "Relations", color: "var(--mw-node-future)" },
   { href: "/ceremonies", label: "Ceremonies", color: "var(--mw-south)" },
