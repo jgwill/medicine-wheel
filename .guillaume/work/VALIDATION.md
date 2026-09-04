@@ -11,6 +11,9 @@ it), `A` inference. EXECUTION.md, the three lane files and COORDINATOR-FINDINGS.
 
 **Opus 5** (`claude-opus-5`).
 
+> **Read the addendum at the foot of this file before acting on any finding.** Execution
+> began in parallel with this validation. Six items are already resolved; six are still live.
+
 ---
 
 ## Claims that did not reproduce
@@ -85,11 +88,39 @@ nodes.jsonl:0   edges.jsonl:0   ceremonies.jsonl:0   beats.jsonl:0
 captures.jsonl:0  cycles.jsonl:0  inquiry-weaves.jsonl:0  plan-perspectives.jsonl:0
 ```
 
-The flag exists in exactly one place in the whole system:
-`mcp/src/tools/governance-transformation.ts:59`. No review circle has ever been persisted.
-The read alias costs nothing and can stay as insurance for stores this seat cannot see, but
-the premise stated to justify it is false — and it points at F4/B9: the tool writes through
-a door that is closed.
+**Corrected after a wider sweep — and the correction is worse for the plan, not better.**
+Rows carrying the flag *do* exist. They are in the wrong wheels. Eleven `.mw/store` node
+files exist on this host `X`:
+
+```
+/srv/miadi/episodes/miadi-chronicle/.mw          nodes=205   is_review_circle=0
+/home/mia/workspace/chronicles/miadi/…/.mw       nodes=89    is_review_circle=0
+/workspace/repos/jgwill/Miadi/.mw                nodes=49    is_review_circle=1
+/workspace/repos/miadisabelle/mightyeagle/.mw    nodes=49    is_review_circle=1
+/home/mia/Miadi/.mw                              nodes=49    is_review_circle=1
+/home/mia/workspace/repos/jgwill/Miadi/.mw       nodes=49    is_review_circle=1
+/home/mia/.openclaw/…/Miadi-431-run/.mw          nodes=23    is_review_circle=1
+/workspace/repos/jgwill/medicine-wheel/.mw       nodes=16    is_review_circle=0
++ 3 more with 1-8 nodes, all 0
+```
+
+All five hits are the **same single row**, replicated because those folders are copies of one
+store `X`:
+
+```
+id        circle-1780507850023-e5toce
+type      knowledge          created  2026-06-03T17:30:50.023Z
+kind      NONE               circle_status  gathering
+artifact  cycle-1780507736849-zbh6vr / research
+```
+
+One review circle has ever been opened, on 2026-06-03. It is still in `gathering` — exactly
+the dead end L1 predicted, since no tool exists to advance it. It carries no `metadata.kind`.
+And it landed in a **Miadi-local decoy store, not the chronicle**.
+
+So the read alias should stay — but for the opposite reason the plan gives. It is not
+"existing rows carry it" in the store being repaired (0 there `X`); it is that the one row
+that exists is evidence of a misrouted write. See B14.
 
 ### F4 — chronicle root degree before the repair is **3**, not 2
 
@@ -296,21 +327,28 @@ pairs that already have an edge; do not double-edge them.
 concurrent writes merge"*; `src/storage-provider/src/jsonl.ts` carries the same lock at
 `:643`/`:724`. No `.lock` file is present right now `X`. A raw append script bypasses that.
 
-There **is** a live relation on this store's address. `ps` `X`:
+There are **five** live medicine-wheel MCP servers on this host, not one. `ps` `X`:
 
 ```
-3016652 mia 17-02:26:01 npm exec @medicine-wheel/mcp@4.6.1
-3016945 mia 17-02:25:55 node .../medicine-wheel-mcp
-3016061 mia 17-02:26:06 claude --mcp-config /home/mia/workspace/.mcp.json …
+3016652  17d   npm exec @medicine-wheel/mcp@4.6.1   (claude, /home/mia/workspace/.mcp.json)
+ 737610   3d   npm exec @medicine-wheel/mcp@4.6.3
+1148313  12d   npm exec @medicine-wheel/mcp@4.6.3
+2123845   3d   npm exec @medicine-wheel/mcp@4.6.3
+ 796023   6h   npm exec @medicine-wheel/mcp@4.6.3   (claude, mcp-config-mw-ilex.json,
+                                                     --add-dir /srv/miadi/episodes/miadi-chronicle)
 ```
 
-Its environment carries `MW_API_URL=http://127.0.0.1:8040` `X`, so per `mcp/src/store.ts` it
-uses `HttpStore` — and nothing listens on 8040, so it is not a competing JSONL writer. It is,
-however, a 17-day-old process on `4.6.1` whose every write has been failing. Restarting it is
-someone's decision, not this plan's.
+Every one carries `MW_API_URL=http://127.0.0.1:8040` `X`. Per `mcp/src/store.ts` that routes
+them all to `HttpStore`, and nothing listens on 8040 — so none is a competing JSONL writer,
+and **every MCP write any of them has attempted has failed**, for between 6 hours and 17 days.
+Three versions are in the field (4.6.1, 4.6.3) against a published 4.6.4.
 
-Something else *does* write the JSONL directly: `nodes.jsonl` mtime `2026-09-03 15:14`,
-`edges.jsonl` `15:12` `X`.
+Also live and not to be disturbed: tmux sessions `mw-film-prod-concordia` (3d) and
+`mw-guillaume-260831` (5h) `X`.
+
+Something else *does* write the chronicle JSONL directly: `nodes.jsonl` mtime
+`2026-09-03 15:14`, `edges.jsonl` `15:12` `X`. That writer is unidentified and is the real
+concurrency risk for step 8.
 
 **Do:** copy `nodes.jsonl` and `edges.jsonl` before the repair; write through
 `storage-provider`'s `createEdge` (which takes the lock), not a script; state the rollback —
@@ -334,7 +372,8 @@ silently skipped and `npx vitest run` stays green — the exact failure shape
 
 `mcp/src/store.ts` routes to `HttpStore` whenever `MW_API_URL` is set, and throws at startup
 if it is malformed. The chronicle seat sets it to `http://127.0.0.1:8040`; `ss -ltnp` shows
-nothing bound there `X` (re-confirmed this lane). So `mw_register_review`,
+nothing bound there `X` (re-confirmed this lane), and all five live MCP servers point at it
+(B7). So `mw_register_review`,
 `mw_choice_set_open` and the review-circle verbs would be written and published without a
 single successful round trip.
 
@@ -447,6 +486,23 @@ consumers can use) is undercut by this.
 `peerDependency` with a range the consumer satisfies, or accept and document that MW schemas
 are terminal validators and never composed. Pick one; do not discover it at install time.
 
+### B14 — eleven `.mw` stores exist and the plan never names its write target (steps 5, 8)
+
+`X` — eleven `.mw/store/nodes.jsonl` files on this host (listed under F3). Two look like a
+chronicle: `/srv/miadi/episodes/miadi-chronicle` (205 nodes, the real one) and
+`/home/mia/workspace/chronicles/miadi/miadi-chronicle` (89 nodes). The repo itself carries
+`/workspace/repos/jgwill/medicine-wheel/.mw` with 16 nodes.
+
+`mcp/src/store.ts` falls back to `getJsonlStore()` — `<cwd>/.mw/store` — whenever
+`MW_API_URL` is unset. Step 8's repair and any step-5 verification will be run **from the
+repo**, whose cwd already holds a 16-node decoy. And the only review circle ever opened (F3)
+sits in a Miadi-local decoy, which is what a misrouted write looks like after the fact.
+
+**Do:** name the absolute store path in the step, resolve it from `MIADI_CHRONICLE_ROOT`
+(`/srv/miadi/episodes/miadi-chronicle` `X` in the live env), and assert `wc -l` before and
+after: nodes 205 → 205, edges 191 → 292. A repair that lands in `./.mw/store` reports success
+and changes nothing.
+
 ---
 
 ## Non-blocking findings
@@ -541,15 +597,18 @@ that licenses shipping more.
 proposes converting the one working path onto it.**
 
 L2's headline is *no package can speak HTTP*. L3's is *the graph truncates silently*. The
-coordinator's own survey recorded *nothing listens on 8040*. Put together with F6: the only
+coordinator's own survey recorded *nothing listens on 8040*. Add the measurement neither lane
+made: **five live MCP servers, on three versions, all pointed at that dead port** (B7). Put
+together with F6: the only
 thing in the whole ecosystem that currently reaches the wheel's data is
 `/src/Miadi/lib/mw-store.ts`, and it works **because it does not use HTTP** — it calls
 `createProvider()` and touches `.mw/store` directly. Step 2 proposes to turn that into "a
 thin wrapper over the typed client." Meanwhile step 5's MCP verbs write through `store.ts`,
-which routes to HTTP the moment `MW_API_URL` is set, which it is, at a dead port (B9). And
-the live MCP process has been failing every write for 17 days without anyone noticing (B7) —
-which is itself the strongest argument *for* building `client`, and the strongest argument
-against making anything depend on it before 8040 answers.
+which routes to HTTP the moment `MW_API_URL` is set, which it is, at a dead port (B9). The
+fleet has been failing every write for between 6 hours and 17 days without anyone noticing
+(B7) — the only visible trace being one review circle stranded in a decoy store since
+2026-06-03 (F3). That is the strongest argument *for* building `client`, and the strongest
+argument against making anything depend on it before 8040 answers.
 
 `@medicine-wheel/client` is worth building. Nothing should be migrated onto it in the same
 release.
@@ -762,7 +821,8 @@ engineering's to make.
 Execute after fixing, in this order:
 
 - **Fix before touching anything:** B1 (one publish, or a patch per step — say which), B2
-  (new packages born at `0.6.4`), B3 (root `dependencies` + widen the detector to `app/` and
+  (new packages born at `0.6.4`), B14 (name the absolute store path, assert the counts),
+  B3 (root `dependencies` + widen the detector to `app/` and
   `lib/`), B4 (all 24 Miadi ranges or none), B8 (tests in root `tests/`), B13 (pick a zod
   story).
 - **Steps 1, 7, 9** — sound. Step 1 minus its "consume" half: B5 makes the direction import a
@@ -787,8 +847,9 @@ Execute after fixing, in this order:
   the wait. Step 6 depends on B11 and B12 being settled first.
 
 The two things that are not engineering's call: the eight-role preset (see *The
-knowledge-holder question*), and restarting the 17-day-old MCP process on `4.6.1` that has
-been writing into a closed port (B7).
+knowledge-holder question*), and restarting or upgrading the five live MCP servers — on
+`4.6.1` and `4.6.3`, all pointed at a closed port, one of them a session that has been on the
+chronicle for six hours (B7).
 
 Nothing here says the plan is wrong about what to build. It is wrong about six versions
 called `0.7.0`, about `part-of`, about which `AuthUser` is real, about `mw-store.ts`, and
@@ -798,3 +859,61 @@ publication.
 🌸: A release that ships the right packages under the wrong version numbers reaches nobody,
 and a hundred edges written with the wrong relation name are harder to take back than to get
 right the first time.
+
+---
+
+## Addendum — 2026-09-03 20:45, after execution began in parallel
+
+This validation was written while the plan was being executed. Re-measured at 20:45 `X`.
+`git log` shows `a79f298`, `e0910bc`, `a6e3142`, `37fef03`, `b719d29`, `e5927c9` landed
+between 20:20 and 20:41, and `.guillaume/work/PROGRESS.md` (`W`) logs them.
+
+### Resolved — do not act on these again
+
+- **B6 / F1 / F2 — resolved correctly.** `scripts/materialise-containment.mjs` (`37fef03`)
+  used `belongs_to` for episode→root and `documented_in` for child artefact→episode, and
+  explicitly did **not** use `part-of`, citing the miscount. Verified on the live store `X`:
+  edges `191 → 292`, `belongs_to` `2 → 81`, `documented_in` `5 → 27`, `part-of` unchanged at
+  `33`, **0 dangling**, **0 duplicate pairs**, components `82 → 26`, isolates `75 → 22`, root
+  degree `3 → 82`. Exactly the predicted outcome.
+- **B7 — satisfied for step 8.1.** A snapshot exists at
+  `.mw/store/.backup-2026-09-04T00-35-42-114Z` `X`, and the script writes through
+  `storage-provider`'s `createEdge`, taking the file lock. `.mw/` contains only `store` `X` —
+  no stray JSONL one level up.
+- **B14 — confirmed by the work itself.** PROGRESS records the first run writing to
+  `MW_DATA_DIR` instead of `MW_DATA_DIR/store`, creating a second empty JSONL set one level
+  up and reporting success. Caught on a copy by an edge-count guard. That is B14's failure
+  mode, observed. **It still applies unchanged to step 5.**
+- **B12 — resolved** (`a79f298`, `W`): `community-review` now widens `ontology-core`'s
+  `PersonRole` by reference instead of redeclaring it.
+- **B1, B2, B4, B10 and the knowledge-holder answer — accepted into the plan** (`W`, PROGRESS
+  "Not done, and why"): one release at the end, new packages born at `0.6.4`, Miadi's 24
+  ranges widened together, and steps 3/4/6 **held** — mechanism shippable, the eight-role
+  preset not.
+
+### Still live — nothing above addresses these
+
+- **B3** — root `package.json` `dependencies` must gain each new package, and RELEASING.md's
+  detector still scans only `dist/cli`. Unmentioned anywhere in PROGRESS. This is the
+  2026-08-02 defect class and steps 1/2/5 are "ready to write".
+- **B13** — suite is zod `^3.23.0`; `/src/Miadi` declares `zod: "latest"` (4.x). Unmentioned.
+  It undercuts step 1's entire rationale and must be decided before publishing.
+- **B5** — the `DIRECTIONS` shape mismatch and `#1a1a2e` west on a `#151515` ground. Still a
+  design decision inside step 1's "consume" half.
+- **B9** — 8040 is still closed and all five MCP servers still point at it. Step 5's verbs
+  remain unverifiable end to end.
+- **B8** — confirm step 4's tests land in root `tests/`; `vitest.config.ts` `include` has not
+  changed.
+- **F10** — PROGRESS repeats "~170 `lineage:` entries against 59 edges" for step 8.3. That
+  number did not reproduce (242 list items across 75 `episode.yaml`; 17 lineage-shaped edges
+  under a strict reading). Re-measure before sizing 8.3.
+
+### One thing measured only now
+
+`X` **0 of 83** episode nodes carry `metadata.occurred_at` — PROGRESS states this and it
+reproduces. Step 8.2 has not started, and step 9 correctly depends on it.
+
+### Verdict, unchanged
+
+**EXECUTE WITH THE LISTED CHANGES.** The changes are being made. The six live items above are
+the remainder, and B3 and B13 are the two that would ship a broken package to npm.
