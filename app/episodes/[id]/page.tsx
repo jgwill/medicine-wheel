@@ -212,7 +212,7 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
         )}
 
         <Link
-          href={`/graph?focus=${encodeURIComponent(id)}`}
+          href={`/graph?scope=${encodeURIComponent(id)}`}
           className="mw-btn mw-btn--ghost mt-3 inline-block"
         >
           Open in graph

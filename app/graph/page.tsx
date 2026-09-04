@@ -98,6 +98,20 @@ export default function GraphPage() {
   const [graph, setGraph] = useState<MWGraphData>({ nodes: [], links: [] });
   const [selectedNode, setSelectedNode] = useState<MWGraphNode | null>(null);
   const [focusedNodeId, setFocusedNodeId] = useState<string | undefined>(undefined);
+  /**
+   * Scope is not focus.
+   *
+   * `focusedNodeId` zooms the viewport at a node and leaves all 205 mounted —
+   * useful, and not an answer to "I cannot navigate", because the field is still
+   * there behind the zoom. `scopeId` replaces the graph with one node's
+   * neighbourhood, so the canvas holds only what was asked for. Two names
+   * because they are two questions; collapsing them would make the control
+   * silently mean different things depending on how the page was entered.
+   */
+  const [scopeId, setScopeId] = useState<string | null>(null);
+  const [scopeDepth, setScopeDepth] = useState(2);
+  const [scopeMeta, setScopeMeta] = useState<{ count: number; truncated: boolean } | null>(null);
+  const [storeTotal, setStoreTotal] = useState<number | null>(null);
   const [highlightDirection, setHighlightDirection] = useState<DirectionParam | undefined>(undefined);
   const [radialSnap, setRadialSnap] = useState<"off" | "ring" | "sector">("off");
   const [loading, setLoading] = useState(true);
@@ -166,22 +180,49 @@ export default function GraphPage() {
 
   const loadData = useCallback(async () => {
     try {
+      // Scoped and whole-wheel are different questions, not the same question
+      // with a filter. `focusedNodeId` already existed and only zooms the
+      // viewport — every one of the 205 nodes stays mounted, so "focus" was
+      // never a way to look at less. Scope replaces the data.
+      if (scopeId) {
+        const res = await fetch(
+          `/api/nodes/${encodeURIComponent(scopeId)}/web?depth=${scopeDepth}`,
+        );
+        if (!res.ok) {
+          toast.error(
+            res.status === 404
+              ? "That node is not in the wheel."
+              : "Could not read that neighbourhood.",
+          );
+          setScopeId(null);
+          return;
+        }
+        const web = await res.json();
+        setGraph(buildGraphData(web.nodes ?? [], web.edges ?? []));
+        setScopeMeta({ count: web.count ?? 0, truncated: Boolean(web.truncated) });
+        return;
+      }
+
       const [nodesRes, edgesRes] = await Promise.all([fetch("/api/nodes?limit=all"), fetch("/api/edges?limit=all")]);
       const nodesResponse = await nodesRes.json();
       const edgesData: RelationalEdge[] = await edgesRes.json();
 
-      // API returns { nodes: [...], provider: '...', count: N }
+      // API returns { nodes: [...], provider: '...', count: N, total, truncated }
       const nodesData: RelationalNode[] = Array.isArray(nodesResponse)
         ? nodesResponse
         : nodesResponse.nodes || [];
 
       setGraph(buildGraphData(nodesData, edgesData));
+      setScopeMeta(null);
+      setStoreTotal(
+        Array.isArray(nodesResponse) ? nodesData.length : (nodesResponse.total ?? nodesData.length),
+      );
     } catch {
       toast.error("Failed to load graph data");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scopeId, scopeDepth]);
 
   useEffect(() => {
     loadData();
@@ -204,11 +245,30 @@ export default function GraphPage() {
     const params = new URLSearchParams(window.location.search);
     const node = params.get("node");
     if (node) setFocusedNodeId(node);
+    // ?scope=<id> arrives from an episode page's "Open in graph" and means
+    // "show me this and its neighbours", not "zoom at this".
+    const scope = params.get("scope");
+    if (scope) {
+      setScopeId(scope);
+      setFocusedNodeId(scope);
+    }
     const direction = params.get("direction");
     if (direction && (DIRECTION_NAMES as readonly string[]).includes(direction)) {
       setHighlightDirection(direction as DirectionParam);
     }
   }, []);
+
+  // Escape leaves the neighbourhood and returns the whole wheel. It is the only
+  // way out that needs no aiming, which matters when the reason you scoped was
+  // that you could not find anything.
+  useEffect(() => {
+    if (!scopeId) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setScopeId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [scopeId]);
 
   // Surface the deep-linked node in the side panel once data arrives.
   useEffect(() => {
@@ -450,6 +510,44 @@ export default function GraphPage() {
           </div>
         </div>
 
+        {scopeId && (
+          <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-yellow-400/30 bg-yellow-400/5 px-3 py-2 text-sm">
+            <span className="text-gray-300">
+              Showing{" "}
+              <strong className="text-yellow-300">{scopeMeta?.count ?? graph.nodes.length}</strong>{" "}
+              nodes within {scopeDepth} {scopeDepth === 1 ? "hop" : "hops"} of
+            </span>
+            <code className="font-mono text-xs text-gray-400 break-all">{scopeId}</code>
+            <label className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+              Depth
+              <select
+                value={scopeDepth}
+                onChange={(e) => setScopeDepth(Number(e.target.value))}
+                className="rounded bg-white/5 px-1.5 py-0.5 text-gray-200"
+                aria-label="Neighbourhood depth"
+              >
+                {[1, 2, 3, 4, 5, 6].map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {scopeMeta?.truncated && (
+              <span className="text-xs text-gray-500">
+                stopped at the depth limit — there is more further out
+              </span>
+            )}
+            <button
+              onClick={() => setScopeId(null)}
+              className="ml-auto min-h-8 rounded bg-white/5 px-2 py-1 text-xs hover:bg-white/10 inline-flex items-center gap-1.5"
+            >
+              <X className="h-3.5 w-3.5" /> Whole wheel
+              <span className="text-gray-500">(Esc)</span>
+            </button>
+          </div>
+        )}
+
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
           <div className="relative flex-1 rounded-xl border border-white/10 overflow-hidden">
             {!loading && graph.nodes.length > 0 && (
@@ -633,6 +731,14 @@ export default function GraphPage() {
                   <div><span className="text-xs text-gray-500">Type</span><p className="capitalize">{selectedNode.type}</p></div>
                   {selectedNode.direction && <div><span className="text-xs text-gray-500">Direction</span><p className="capitalize">{selectedNode.direction}</p></div>}
                   <div><span className="text-xs text-gray-500">ID</span><p className="text-xs text-gray-400 font-mono break-all">{selectedNode.id}</p></div>
+                  {scopeId !== selectedNode.id && (
+                    <button
+                      onClick={() => setScopeId(selectedNode.id)}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-yellow-400/15 px-3 py-2 text-sm text-yellow-200 hover:bg-yellow-400/25"
+                    >
+                      <Route className="h-4 w-4" /> Show only its neighbourhood
+                    </button>
+                  )}
                   <Link
                     href={`/nodes?node=${encodeURIComponent(selectedNode.id)}`}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/15"
@@ -644,9 +750,25 @@ export default function GraphPage() {
             )}
 
             <div className="rounded-xl border border-white/10 p-4">
-              <h3 className="text-sm font-semibold text-gray-400 mb-3">Graph Stats</h3>
+              <h3 className="text-sm font-semibold text-gray-400 mb-3">
+                Graph Stats
+                {/* This panel read "100 Nodes / 100 Relations" against a store of
+                    205 and 191 until 2026-09-03, because the page fetched without
+                    a limit and took the provider's default page in silence. A
+                    count with nothing to compare it to cannot be doubted, which
+                    is what made it a lie rather than a number. */}
+                {scopeId && <span className="ml-2 font-normal text-yellow-300/80">scoped</span>}
+              </h3>
               <div className="grid grid-cols-2 gap-3 text-center">
-                <div><p className="text-2xl font-bold">{graph.nodes.length}</p><p className="text-xs text-gray-500">Nodes</p></div>
+                <div>
+                  <p className="text-2xl font-bold">{graph.nodes.length}</p>
+                  <p className="text-xs text-gray-500">
+                    Nodes
+                    {storeTotal !== null && graph.nodes.length < storeTotal && (
+                      <span className="text-gray-600"> of {storeTotal}</span>
+                    )}
+                  </p>
+                </div>
                 <div><p className="text-2xl font-bold">{graph.links.length}</p><p className="text-xs text-gray-500">Relations</p></div>
                 <div><p className="text-2xl font-bold">{ceremoniedCount}</p><p className="text-xs text-gray-500">Ceremonied</p></div>
                 <div><p className="text-2xl font-bold">{directionCount}</p><p className="text-xs text-gray-500">Directions</p></div>
