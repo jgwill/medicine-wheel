@@ -4,6 +4,7 @@
  */
 import type { RelationalNode, RelationalEdge, Relation } from '@medicine-wheel/ontology-core';
 import type {
+  HubHold,
   TraversalOptions,
   TraversalPath,
   TraversalResult,
@@ -88,6 +89,7 @@ export function traverse(
   // BFS traversal
   const paths: TraversalPath[] = [];
   const escalations: GuardEscalation[] = [];
+  const heldAtHubs: HubHold[] = [];
   const visited = new Set<string>([rootId]);
   let maxDepthReached = false;
 
@@ -149,6 +151,38 @@ export function traverse(
         depth: current.depth + 1,
       });
 
+      // A hub is reached but not expanded through. The node is in the result —
+      // "this episode belongs to the chronicle" is true and worth showing — but
+      // the walk does not leave again through its other 81 edges, which would
+      // return the corpus rather than a neighbourhood.
+      //
+      // The degree used here is over `adj`, which is already direction-filtered,
+      // so it is the number of edges this walk could actually have followed.
+      // Recording it (rather than letting a caller recompute) is what keeps the
+      // report honest under `direction: 'outgoing'`, where the chronicle root has
+      // 82 incoming edges and none outgoing.
+      const outward = adj.get(nodeId) ?? [];
+      const nodeKind =
+        typeof node.metadata?.kind === 'string' ? node.metadata.kind : undefined;
+      const isNamedContainer =
+        nodeKind !== undefined && (options.containerKinds ?? []).includes(nodeKind);
+      const overDegree =
+        options.maxExpandDegree !== undefined && outward.length > options.maxExpandDegree;
+
+      if (isNamedContainer || overDegree) {
+        heldAtHubs.push({
+          nodeId,
+          degree: outward.length,
+          reason: isNamedContainer ? 'kind' : 'degree',
+          // Filled in after the walk: a neighbour another path reached anyway was
+          // not withheld, and counting it as "beyond here" overstates what is
+          // hidden. `degree - 1` was the first spelling and it counted the edge
+          // the walk had just arrived on.
+          unexpanded: outward.map((n) => n.nodeId),
+        });
+        continue;
+      }
+
       queue.push({
         nodeId,
         path: newPath,
@@ -158,7 +192,21 @@ export function traverse(
     }
   }
 
-  return { root: rootNode, paths, visitedNodes: visited, maxDepthReached, escalations };
+  // A neighbour another path reached anyway was never withheld. Resolving this
+  // after the walk is what makes `unexpanded` mean "you cannot see this from
+  // here" rather than "this node has edges".
+  for (const hold of heldAtHubs) {
+    hold.unexpanded = hold.unexpanded.filter((id) => !visited.has(id));
+  }
+
+  return {
+    root: rootNode,
+    paths,
+    visitedNodes: visited,
+    maxDepthReached,
+    escalations,
+    heldAtHubs,
+  };
 }
 
 /** Find shortest path between two nodes */

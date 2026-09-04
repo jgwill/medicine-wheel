@@ -202,11 +202,106 @@ describe("GET /api/nodes/[id]/web — one node's relational web", () => {
     expect(outgoing.follow).toBe("outgoing");
   });
 
-  it("refuses a bad depth, a bad follow, and an unknown parameter", async () => {
+  it("reaches a hub but does not expand through it", async () => {
+    const provider = new JsonlProvider(tempDir);
+    await provider.connect();
+
+    // A container with many children, exactly the chronicle root's shape: every
+    // episode belongs_to it, so without suppression depth 2 from ANY episode
+    // returns every other episode. Measured on the live wheel before the fix:
+    // episode 011 had one relation and a "2-hop neighbourhood" of 83.
+    const hub = node({ id: "root", metadata: { kind: "chronicle_root" } });
+    await provider.createNode(hub);
+    const children = Array.from({ length: 12 }, (_, i) =>
+      node({ id: `ep-${i}`, metadata: { kind: "chronicle_episode" } }),
+    );
+    for (const c of children) await provider.createNode(c);
+    for (const c of children) {
+      await provider.createEdge({
+        from_id: c.id,
+        to_id: "root",
+        relationship_type: "belongs_to",
+        strength: 1,
+        ceremony_honored: false,
+        obligations: [],
+        created_at: "2026-09-03T00:00:00.000Z",
+      });
+    }
+
+    // hub=5: the root has degree 12, each episode has 1.
+    const held = await getWeb("ep-0", "?depth=2&hub=5");
+    const ids = new Set(held.nodes.map((n: RelationalNode) => n.id));
+    // The root is REACHED — "this episode belongs to the chronicle" is true and
+    // worth showing — and not expanded through.
+    expect(ids.has("root")).toBe(true);
+    expect(ids).toEqual(new Set(["ep-0", "root"]));
+    // And it says what it held back, rather than quietly stopping.
+    expect(held.hubs).toHaveLength(1);
+    expect(held.hubs[0].id).toBe("root");
+    expect(held.hubs[0].degree).toBe(12);
+    // 11, not 12: the edge the walk arrived on leads back to ep-0, which is
+    // already returned. `degree - 1` was the first spelling and counted it.
+    expect(held.hubs[0].unexpanded).toBe(11);
+    // Held for a named kind, not merely for being busy.
+    expect(held.hubs[0].reason).toBe("kind");
+    // A walk stopped at a container is truncated. Suppression skips the queue
+    // push, so maxDepthReached alone stays false and the reader would be told
+    // they are seeing everything while 11 nodes are withheld.
+    expect(held.truncated).toBe(true);
+    expect(held.depthLimited).toBe(false);
+
+    // hub=0 is the honest spelling of "expand through everything" — not
+    // "suppress anything with more than zero edges".
+    const open = await getWeb("ep-0", "?depth=2&hub=0");
+    expect(open.nodes).toHaveLength(13);
+    expect(open.hubs).toEqual([]);
+    expect(open.truncated).toBe(false);
+  });
+
+  it("reports the hub by the direction actually followed, not undirected degree", async () => {
+    const provider = new JsonlProvider(tempDir);
+    await provider.connect();
+    await provider.createNode(node({ id: "root", metadata: { kind: "chronicle_root" } }));
+    const kids = Array.from({ length: 8 }, (_, i) => node({ id: `k-${i}` }));
+    for (const k of kids) await provider.createNode(k);
+    for (const k of kids) {
+      await provider.createEdge({
+        from_id: k.id, to_id: "root", relationship_type: "belongs_to",
+        strength: 1, ceremony_honored: false, obligations: [],
+        created_at: "2026-09-03T00:00:00.000Z",
+      });
+    }
+
+    // Every edge points child -> root, so following OUTGOING from k-0 reaches
+    // root with out-degree 0. On the live wheel the chronicle root is exactly
+    // this: in-degree 82, out-degree 0. Reporting undirected degree here told
+    // the caller "82 relations, 81 beyond it" about a node the walk had just
+    // expanded straight through.
+    const out = await getWeb("k-0", "?depth=3&follow=outgoing&hub=3");
+    const held = out.hubs.find((h: { id: string }) => h.id === "root");
+    if (held) expect(held.degree).toBe(0);
+    expect(new Set(out.nodes.map((n: RelationalNode) => n.id))).toEqual(
+      new Set(["k-0", "root"]),
+    );
+  });
+
+  it("defaults to depth 1, because depth 2 through a hub returns the corpus", async () => {
+    await seedChain();
+    const body = await getWeb("ep-b");
+    expect(body.depth).toBe(1);
+    expect(new Set(body.nodes.map((n: RelationalNode) => n.id))).toEqual(
+      new Set(["ep-b", "ep-a", "ep-c"]),
+    );
+  });
+
+  it("refuses a bad depth, a bad follow, an unknown parameter, and a bad hub", async () => {
     await seedChain();
     const route = await import("../app/api/nodes/[id]/web/route");
 
-    const cases = ["?depth=0", "?depth=99", "?depth=two", "?follow=sideways", "?bogus=1"];
+    const cases = [
+      "?depth=0", "?depth=99", "?depth=two", "?follow=sideways", "?bogus=1",
+      "?hub=-1", "?hub=many",
+    ];
     for (const query of cases) {
       const response = await route.GET(
         new Request(`http://localhost/api/nodes/ep-a/web${query}`),

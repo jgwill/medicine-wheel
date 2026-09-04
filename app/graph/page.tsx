@@ -109,13 +109,23 @@ export default function GraphPage() {
    * silently mean different things depending on how the page was entered.
    */
   const [scopeId, setScopeId] = useState<string | null>(null);
-  const [scopeDepth, setScopeDepth] = useState(2);
-  const [scopeMeta, setScopeMeta] = useState<{ count: number; truncated: boolean } | null>(null);
+  // 1, not 2. With the chronicle root at degree 82, depth 2 from any episode
+  // used to return the whole corpus — see the route's DEFAULT_DEPTH.
+  const [scopeDepth, setScopeDepth] = useState(1);
+  const [scopeMeta, setScopeMeta] = useState<{
+    count: number;
+    truncated: boolean;
+    hubs: { id: string; name: string; degree: number; reason: string; unexpanded: number }[];
+    rootName: string | null;
+  } | null>(null);
   const [storeTotal, setStoreTotal] = useState<number | null>(null);
   const [highlightDirection, setHighlightDirection] = useState<DirectionParam | undefined>(undefined);
   const [radialSnap, setRadialSnap] = useState<"off" | "ring" | "sector">("off");
   const [loading, setLoading] = useState(true);
-  const [showLabels, setShowLabels] = useState(true);
+  // `null` means "nobody has chosen" — the default then follows the crowding
+  // (see labelsAutoSuppressed). Once the user touches the toggle their choice
+  // sticks, including across a scope change.
+  const [showLabels, setShowLabels] = useState<boolean | null>(null);
   const [animationsEnabled, setAnimationsEnabled] = useState(
     DEFAULT_GRAPH_ANIMATION_ENABLED,
   );
@@ -199,7 +209,12 @@ export default function GraphPage() {
         }
         const web = await res.json();
         setGraph(buildGraphData(web.nodes ?? [], web.edges ?? []));
-        setScopeMeta({ count: web.count ?? 0, truncated: Boolean(web.truncated) });
+        setScopeMeta({
+          count: web.count ?? 0,
+          truncated: Boolean(web.truncated),
+          hubs: web.hubs ?? [],
+          rootName: web.root?.name ?? null,
+        });
         return;
       }
 
@@ -277,10 +292,58 @@ export default function GraphPage() {
     if (node) setSelectedNode(node);
   }, [focusedNodeId, graph.nodes]);
 
-  const graphData = useMemo<MWGraphData>(
-    () => (focusedNodeId ? { ...graph, focusedNodeId } : graph),
-    [graph, focusedNodeId],
-  );
+  /**
+   * The node you asked about must be findable in the picture.
+   *
+   * Before this, arriving from an episode page put your episode somewhere in a
+   * field of identical dots — the graph knew which node you meant (it zoomed at
+   * it) and gave you no way to see which one it was once you panned. Marking is
+   * done here rather than in `graph-viz` because `MedicineWheelNode` already
+   * reads `size`, `color` and `opacity` off each node; the renderer needs no
+   * new concept, only better data.
+   *
+   * Hubs are dimmed rather than hidden. The chronicle root genuinely is in your
+   * neighbourhood — every episode belongs to it — but it is context, not the
+   * subject, and drawing it at full weight makes the one true container compete
+   * with the thing you were looking at.
+   */
+  const graphData = useMemo<MWGraphData>(() => {
+    const hubIds = new Set((scopeMeta?.hubs ?? []).map((h) => h.id));
+    const marked =
+      scopeId || hubIds.size > 0
+        ? {
+            ...graph,
+            nodes: graph.nodes.map((n) => {
+              if (n.id === scopeId) {
+                return {
+                  ...n,
+                  size: (n.size ?? 8) * 1.9,
+                  color: "#ffd75e",
+                  opacity: 1,
+                };
+              }
+              if (hubIds.has(n.id)) {
+                return { ...n, size: (n.size ?? 8) * 1.25, opacity: 0.45 };
+              }
+              return n;
+            }),
+          }
+        : graph;
+
+    return focusedNodeId ? { ...marked, focusedNodeId } : marked;
+  }, [graph, focusedNodeId, scopeId, scopeMeta]);
+
+  /**
+   * Labels are legible up to a point and then they are texture.
+   *
+   * At 83 nodes crushed into one quadrant the labels stacked into unreadable
+   * bands — worse than absent, because they cost the whole canvas its clarity
+   * while conveying nothing. Off past the threshold, and the existing toggle
+   * still wins: this sets the default, it does not take the control away.
+   */
+  const LABEL_LEGIBLE_UP_TO = 35;
+  const labelsAutoSuppressed = graph.nodes.length > LABEL_LEGIBLE_UP_TO;
+  const labelsVisible = showLabels ?? !labelsAutoSuppressed;
 
   useEffect(() => {
     layoutStoreRef.current = layoutStore;
@@ -490,10 +553,15 @@ export default function GraphPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setShowLabels(!showLabels)}
-              className={`min-h-11 px-3 py-1.5 rounded text-sm ${showLabels ? "bg-white/10" : "bg-white/5"}`}
+              onClick={() => setShowLabels(!labelsVisible)}
+              className={`min-h-11 px-3 py-1.5 rounded text-sm ${labelsVisible ? "bg-white/10" : "bg-white/5"}`}
+              title={
+                showLabels === null && labelsAutoSuppressed
+                  ? `Off by default above ${LABEL_LEGIBLE_UP_TO} nodes — they overlap into bands`
+                  : undefined
+              }
             >
-              Labels {showLabels ? "ON" : "OFF"}
+              Labels {labelsVisible ? "ON" : "OFF"}
             </button>
             <button
               onClick={() =>
@@ -511,40 +579,60 @@ export default function GraphPage() {
         </div>
 
         {scopeId && (
-          <div className="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-yellow-400/30 bg-yellow-400/5 px-3 py-2 text-sm">
-            <span className="text-gray-300">
-              Showing{" "}
-              <strong className="text-yellow-300">{scopeMeta?.count ?? graph.nodes.length}</strong>{" "}
-              nodes within {scopeDepth} {scopeDepth === 1 ? "hop" : "hops"} of
-            </span>
-            <code className="font-mono text-xs text-gray-400 break-all">{scopeId}</code>
-            <label className="inline-flex items-center gap-1.5 text-xs text-gray-400">
-              Depth
-              <select
-                value={scopeDepth}
-                onChange={(e) => setScopeDepth(Number(e.target.value))}
-                className="rounded bg-white/5 px-1.5 py-0.5 text-gray-200"
-                aria-label="Neighbourhood depth"
-              >
-                {[1, 2, 3, 4, 5, 6].map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {scopeMeta?.truncated && (
-              <span className="text-xs text-gray-500">
-                stopped at the depth limit — there is more further out
+          <div className="mb-3 rounded-xl border border-yellow-400/30 bg-yellow-400/5 px-3 py-2 text-sm">
+            {/* min-w-0 on the growing child, so a long chronicle id truncates
+                instead of pushing the depth control and the exit off-screen —
+                the banner clipped its own warning at this width before. */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <span className="min-w-0 flex-1 text-gray-300">
+                <strong className="text-yellow-300">
+                  {scopeMeta?.count ?? graph.nodes.length}
+                </strong>{" "}
+                nodes, {scopeDepth} {scopeDepth === 1 ? "hop" : "hops"} from{" "}
+                <span className="text-gray-100">{scopeMeta?.rootName ?? scopeId}</span>
               </span>
+              <label className="inline-flex shrink-0 items-center gap-1.5 text-xs text-gray-400">
+                Depth
+                <select
+                  value={scopeDepth}
+                  onChange={(e) => setScopeDepth(Number(e.target.value))}
+                  className="rounded bg-white/5 px-1.5 py-0.5 text-gray-200"
+                  aria-label="Neighbourhood depth"
+                >
+                  {[1, 2, 3, 4, 5, 6].map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                onClick={() => setScopeId(null)}
+                className="min-h-8 shrink-0 rounded bg-white/5 px-2 py-1 text-xs hover:bg-white/10 inline-flex items-center gap-1.5"
+              >
+                <X className="h-3.5 w-3.5" /> Whole wheel
+                <span className="text-gray-500">(Esc)</span>
+              </button>
+            </div>
+
+            {/* Say what was held back. A neighbourhood that quietly stopped at a
+                container is the same class of lie as a list that quietly
+                stopped at 100 rows. */}
+            {(scopeMeta?.hubs?.length ?? 0) > 0 && (
+              <p className="mt-1.5 text-xs text-gray-500">
+                {scopeMeta!.hubs.map((h) => (
+                  <span key={h.id} className="mr-3 inline-block">
+                    <span className="text-gray-400">{h.name}</span> holds {h.degree} relations —
+                    shown, not expanded{h.unexpanded > 0 ? ` (${h.unexpanded} beyond it)` : ""}
+                  </span>
+                ))}
+              </p>
             )}
-            <button
-              onClick={() => setScopeId(null)}
-              className="ml-auto min-h-8 rounded bg-white/5 px-2 py-1 text-xs hover:bg-white/10 inline-flex items-center gap-1.5"
-            >
-              <X className="h-3.5 w-3.5" /> Whole wheel
-              <span className="text-gray-500">(Esc)</span>
-            </button>
+            {scopeMeta?.truncated && (
+              <p className="mt-1 text-xs text-gray-500">
+                stopped at the depth limit — there is more further out
+              </p>
+            )}
           </div>
         )}
 
@@ -575,7 +663,7 @@ export default function GraphPage() {
                 data={graphData}
                 height={graphHeight}
                 darkMode
-                showNodeLabels={showLabels}
+                showNodeLabels={labelsVisible}
                 showMiniMap={!isMobile}
                 animationsEnabled={animationsEnabled}
                 nodePositions={activeLayout.positions}
