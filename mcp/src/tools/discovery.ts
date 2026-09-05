@@ -43,11 +43,17 @@ export const discoveryTools: Tool[] = [
           minimum: 1,
           maximum: 200,
         },
+        detail: {
+          type: "string",
+          enum: ["summary", "full"],
+          description:
+            "summary (default): id, name, type, direction, kind, parent_id, created_at — enough to choose what to look at, and small enough to read. full: the whole node including description and all metadata. A full listing of the 84 chronicle episodes is ~74,000 characters and overruns the tool-result limit, so the answer arrives spilled to a file; ask for one node with get_relational_node instead of asking for all of them in full.",
+        },
       },
     },
     handler: async (args) => {
       try {
-        const { type, direction, kind, parent_id, limit = 50 } = args;
+        const { type, direction, kind, parent_id, limit = 50, detail = "summary" } = args;
 
         // Filters combine rather than shadow each other. The previous
         // if/else-if chain meant `{ type, direction }` silently dropped the
@@ -65,11 +71,41 @@ export const discoveryTools: Tool[] = [
           .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
           .slice(0, limit);
 
+        // A listing is for choosing what to look at, not for carrying every
+        // node's prose. Removing the silent 100-row cap made that visible: a
+        // full read of the 84 chronicle episodes is ~74,000 characters, which
+        // overruns the tool-result limit and lands in a file the caller then has
+        // to read back. `summary` keeps a listing a listing; `detail: "full"`
+        // remains available for a caller that genuinely wants everything and can
+        // afford it.
+        const projected =
+          detail === "full"
+            ? sorted
+            : sorted.map((n) => {
+                const metadata = (n.metadata ?? {}) as Record<string, unknown>;
+                return {
+                  id: n.id,
+                  name: n.name,
+                  type: n.type,
+                  direction: n.direction,
+                  kind: metadata.kind,
+                  parent_id: metadata.parent_id,
+                  created_at: n.created_at,
+                };
+              });
+
         return {
           count: sorted.length,
           total_available: nodes.length,
+          detail,
           filters: { type, direction, kind, parent_id, limit },
-          nodes: sorted,
+          nodes: projected,
+          ...(detail === "summary"
+            ? {
+                note:
+                  "Summary fields only. Use get_relational_node for one node's description and full metadata, or detail: \"full\" for all of them.",
+              }
+            : {}),
           teaching: "Every relation is a responsibility. Browse with intention.",
         };
       } catch (error) {
