@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/gap-analysis",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Problem-solving built properly for when something worked and stopped: evidenced baseline, observation, difference, verifiable elimination steps. Root cause, incidents, regressions, troubleshooting. The baseline requirement is what separates a fire from a creating act.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -45,7 +45,7 @@
     "directory": "src/gap-analysis"
   },
   "dependencies": {
-    "@medicine-wheel/creative-orientation": "^0.7.0"
+    "@medicine-wheel/creative-orientation": "^0.8.0"
   },
   "devDependencies": {
     "typescript": "^5.7.0"
