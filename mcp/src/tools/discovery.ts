@@ -63,9 +63,14 @@ export const discoveryTools: Tool[] = [
         const filters = { type, direction, kind, parent_id };
         const filtering = Object.values(filters).some(Boolean);
 
+        // Read whole, then page. Passing `limit` into getAllNodes made
+        // `total_available` equal whatever the caller asked for — `limit: 1`
+        // reported a store of 1, `limit: 200` a store of 200, against an actual
+        // 207. The filtered path was already honest, so the two paths disagreed
+        // about what "available" meant in the same response shape.
         const nodes = filtering
           ? await store.getNodesFiltered(filters)
-          : await store.getAllNodes(limit);
+          : await store.getAllNodes(Number.MAX_SAFE_INTEGER);
 
         const sorted = nodes
           .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
@@ -97,6 +102,8 @@ export const discoveryTools: Tool[] = [
         return {
           count: sorted.length,
           total_available: nodes.length,
+          // A reader should not have to compare two numbers to notice a page.
+          truncated: sorted.length < nodes.length,
           detail,
           filters: { type, direction, kind, parent_id, limit },
           nodes: projected,
@@ -398,6 +405,12 @@ export const discoveryTools: Tool[] = [
             "kind='service' does not. It does NOT replace the query — a filter with an empty " +
             "query returns zero results, not every node of that kind.",
         },
+        detail: {
+          type: "string",
+          enum: ["summary", "full"],
+          description:
+            "summary (default): id, name, type, direction, kind, parent_id, created_at. full: whole nodes including descriptions, which for a large result can overrun the tool-result limit and arrive spilled to a file.",
+        },
         limit: {
           type: "number",
           description: "Maximum results (default: 20)",
@@ -578,6 +591,8 @@ export const discoveryTools: Tool[] = [
         return {
           count: limited.length,
           total_available: edges.length,
+          // Stated, not left for the reader to infer by comparing two numbers.
+          truncated: limited.length < edges.length,
           filters: { node_id, limit },
           edges: limited,
           teaching: "Every edge is a responsibility. Relationships are not mere links — they carry obligations.",

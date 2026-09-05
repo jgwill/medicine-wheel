@@ -222,6 +222,12 @@ export const integrationTools: Tool[] = [
           type: "string",
           description: "Center node ID",
         },
+        detail: {
+          type: "string",
+          enum: ["summary", "full"],
+          description:
+            "summary (default): id, name, type, direction, kind, parent_id per node — the shape of the web. full: whole nodes with descriptions, which for a wide web overruns the tool-result limit and arrives spilled to a file. Use get_relational_node for the one node you want in full.",
+        },
         depth: {
           type: "number",
           description: "How many relationship hops to traverse (default: 2)",
@@ -241,7 +247,7 @@ export const integrationTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const { node_id, depth = 2, edge_types } = args;
+        const { node_id, depth = 2, edge_types, detail = "summary" } = args;
 
         // Without this, a missing node_id returns an empty web with status ok —
         // and "this host has no tenants and no services" is indistinguishable
@@ -284,9 +290,37 @@ export const integrationTools: Tool[] = [
           nodes = web.nodes.filter((n: { id: string }) => reachable.has(n.id));
         }
 
+        // `capped` describes the UNFILTERED walk. Echoing it beside a filtered
+        // payload produced a response that contradicted itself in place:
+        // `{nodes_count: 1, edges_count: 0, capped: {returned: 60, available: 83},
+        // truncated: true}` — one node returned, sixty claimed. When a filter has
+        // narrowed the result, the walk's cap is no longer a fact about what the
+        // caller is holding.
+        const cappedReport = filtering ? undefined : web.capped;
+
+        // Capping the node COUNT was not enough: 60 full nodes with their
+        // descriptions and metadata still came to 110,961 characters, past the
+        // tool-result limit and into a file. A web is for seeing shape; the
+        // bodies belong to get_relational_node.
+        const projectedNodes =
+          detail === "full"
+            ? nodes
+            : (nodes as { id: string; name?: string; type?: string; direction?: string; metadata?: Record<string, unknown> }[]).map((n) => {
+                const metadata = (n.metadata ?? {}) as Record<string, unknown>;
+                return {
+                  id: n.id,
+                  name: n.name,
+                  type: n.type,
+                  direction: n.direction,
+                  kind: metadata.kind,
+                  parent_id: metadata.parent_id,
+                };
+              });
+
         return {
           center_node_id: node_id,
           depth,
+          detail,
           ...(filtering ? { edge_types } : {}),
           ...(unregistered.length > 0
             ? {
@@ -308,8 +342,15 @@ export const integrationTools: Tool[] = [
           truncated: web.truncated,
           // Set when the centre is itself a container and the answer had to be
           // paged rather than returned whole.
-          ...(web.capped ? { capped: web.capped } : {}),
-          nodes,
+          ...(cappedReport ? { capped: cappedReport } : {}),
+          ...(filtering && web.capped
+            ? {
+                capped_before_filter: web.capped,
+                capped_note:
+                  "The walk was capped before edge_types was applied, so some nodes matching your filter may sit beyond the cap. Narrow with depth, or call without edge_types to see what the cap held.",
+              }
+            : {}),
+          nodes: projectedNodes,
           edges,
           teaching: "Reality is relational; everything interconnected",
         };
@@ -638,13 +679,20 @@ export const integrationTools: Tool[] = [
         const westBeats = cycleBeats.filter(b => b.direction === 'west');
         const northBeats = cycleBeats.filter(b => b.direction === 'north');
 
-        const totalCeremonies = new Set(cycleBeats.flatMap(b => b.ceremonies)).size;
+        // Ceremonies REACHED THROUGH THIS CYCLE'S BEATS — not the same thing as
+        // the cycle's own `ceremonies_conducted` counter, which can be higher
+        // when a ceremony was conducted in the cycle without a beat referencing
+        // it. Both used to be called `total_ceremonies` and both appeared in one
+        // response: the top level said 1 while `full_arc.cycle` and list_cycles
+        // said 2, so the tool read as contradicting itself over one number.
+        const ceremoniesViaBeats = new Set(cycleBeats.flatMap(b => b.ceremonies)).size;
+        const ceremoniesConducted = (cycle as { ceremonies_conducted?: number }).ceremonies_conducted;
         const orphanCount = storedBeats.length - cycleBeats.length;
 
         const journeySummary = `Research cycle "${cycle.research_question}" — ` +
           `${eastBeats.length} East beats, ${southBeats.length} South beats, ` +
           `${westBeats.length} West beats, ${northBeats.length} North beats. ` +
-          `${totalCeremonies} ceremonies conducted.`;
+          `${ceremoniesViaBeats} ceremonies reached through its beats.`;
 
         return {
           cycle_id: args.cycle_id,
@@ -655,7 +703,16 @@ export const integrationTools: Tool[] = [
           west_beats: westBeats.length,
           north_beats: northBeats.length,
           total_beats: cycleBeats.length,
-          total_ceremonies: totalCeremonies,
+          ceremonies_via_beats: ceremoniesViaBeats,
+          ...(ceremoniesConducted !== undefined
+            ? { ceremonies_conducted: ceremoniesConducted }
+            : {}),
+          ...(ceremoniesConducted !== undefined && ceremoniesConducted !== ceremoniesViaBeats
+            ? {
+                ceremonies_note:
+                  `The cycle records ${ceremoniesConducted} ceremonies conducted; ${ceremoniesViaBeats} are reachable through its beats. A ceremony conducted without a beat referencing it appears in the first count only.`,
+              }
+            : {}),
           wilson_alignment: cycle.wilson_alignment,
           ocap_compliant: cycle.ocap_compliant,
           journey_summary: journeySummary,
@@ -671,7 +728,7 @@ export const integrationTools: Tool[] = [
             south_beats: southBeats,
             west_beats: westBeats,
             north_beats: northBeats,
-            total_ceremonies: totalCeremonies,
+            ceremonies_via_beats: ceremoniesViaBeats,
             journey_summary: journeySummary,
           },
         };
