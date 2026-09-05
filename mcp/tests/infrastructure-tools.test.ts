@@ -333,15 +333,38 @@ describe('hold_metis', () => {
 });
 
 describe('finding it again — the defect that blocked the whole goal', () => {
+  // `search_nodes` returns a summary projection by default since 2026-09-05:
+  // `kind` is lifted out of `metadata` alongside id/name/type/direction/
+  // parent_id/created_at, because 100 full nodes came to 108,522 characters and
+  // spilled past the tool-result limit. `detail: "full"` keeps the whole node.
   it('finds a service by kind, without depending on a word surviving into text', async () => {
     const result = await call('search_nodes', { query: 'service', kind: 'service' });
     expect(result.count).toBeGreaterThan(0);
-    expect(result.nodes.every((n: any) => n.metadata.kind === 'service')).toBe(true);
+    expect(result.nodes.every((n: any) => n.kind === 'service')).toBe(true);
+    // The count is over everything matched, not over the page — the defect that
+    // let a caller mistake `limit` hits for a complete answer.
+    expect(result.total_available).toBeGreaterThanOrEqual(result.count);
+    expect(result.detail).toBe('summary');
   });
 
   it('does not return hosts when filtering for services', async () => {
     const result = await call('search_nodes', { query: 'eury', kind: 'service' });
-    expect(result.nodes.every((n: any) => n.metadata.kind === 'service')).toBe(true);
+    expect(result.nodes.every((n: any) => n.kind === 'service')).toBe(true);
+  });
+
+  it('detail: "full" is honoured, not merely accepted', async () => {
+    // The schema advertised `detail` for a full release while the handler
+    // destructured only `limit` — so it was accepted, discarded, and not even
+    // echoed back in `filters`. Advertising a parameter that does nothing is
+    // worse than not offering it.
+    const summary = await call('search_nodes', { query: 'service', kind: 'service' });
+    const full = await call('search_nodes', { query: 'service', kind: 'service', detail: 'full' });
+
+    expect(summary.detail).toBe('summary');
+    expect(full.detail).toBe('full');
+    expect(summary.nodes[0].metadata).toBeUndefined();
+    expect(full.nodes[0].metadata).toBeDefined();
+    expect(full.filters.detail).toBe('full');
   });
 
   it('finds a registered service by words scattered across name and metadata', async () => {

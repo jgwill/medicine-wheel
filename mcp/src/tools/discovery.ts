@@ -213,22 +213,35 @@ export const discoveryTools: Tool[] = [
         if (direction) {
           beats = (await store.getBeatsByDirection(direction));
         } else {
-          beats = (await store.getAllBeats(limit));
+          // Read whole, page after — `getAllBeats(limit)` made every aggregate
+          // below a statement about the page.
+          beats = (await store.getAllBeats(Number.MAX_SAFE_INTEGER));
         }
 
         const sorted = beats.slice(0, limit);
 
+        // Counted over EVERYTHING MATCHED, never over the page.
+        //
+        // This was computed from `sorted` and published as `summary`, so asking
+        // for 5 of 39 beats returned {east 1, south 1, west 2, north 1} — which
+        // reads as the shape of the whole journey and was wrong by 7, 7, 10 and
+        // 11. That is worse than the missing totals elsewhere in this file: they
+        // withheld a number, this asserted one.
+        const countIn = (dir: string) => beats.filter(b => b.direction === dir).length;
         const byDirection = {
-          east: sorted.filter(b => b.direction === 'east').length,
-          south: sorted.filter(b => b.direction === 'south').length,
-          west: sorted.filter(b => b.direction === 'west').length,
-          north: sorted.filter(b => b.direction === 'north').length,
+          east: countIn('east'),
+          south: countIn('south'),
+          west: countIn('west'),
+          north: countIn('north'),
         };
 
         return {
           count: sorted.length,
+          total_available: beats.length,
+          truncated: sorted.length < beats.length,
           filters: { direction, limit },
-          summary: byDirection,
+          // Named for its scope. `summary` did not say what it summarised.
+          direction_totals: byDirection,
           beats: sorted,
           teaching: "Each beat marks a moment in the research journey. Together they form the narrative arc.",
         };
@@ -422,15 +435,46 @@ export const discoveryTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const { query, type, direction, kind, limit = 20 } = args;
+        const { query, type, direction, kind, limit = 20, detail = "summary" } = args;
 
-        const nodes = (await store.searchNodes(query, { type, direction, kind, limit }));
+        // Match everything, then page here. Passing `limit` down meant the
+        // result had no idea how many actually matched: a caller received
+        // exactly `limit` hits with no way to tell a full page from a complete
+        // answer.
+        const matched = await store.searchNodes(query, {
+          type,
+          direction,
+          kind,
+          limit: Number.MAX_SAFE_INTEGER,
+        });
+        const nodes = matched.slice(0, limit);
+
+        // Full node bodies made a 100-hit search 108,522 characters, past the
+        // tool-result limit and into a file.
+        const projected =
+          detail === "full"
+            ? nodes
+            : nodes.map((n) => {
+                const metadata = (n.metadata ?? {}) as Record<string, unknown>;
+                return {
+                  id: n.id,
+                  name: n.name,
+                  type: n.type,
+                  direction: n.direction,
+                  kind: metadata.kind,
+                  parent_id: metadata.parent_id,
+                  created_at: n.created_at,
+                };
+              });
 
         return {
           query,
           count: nodes.length,
-          filters: { type, direction, kind, limit },
-          nodes: nodes,
+          total_available: matched.length,
+          truncated: nodes.length < matched.length,
+          detail,
+          filters: { type, direction, kind, limit, detail },
+          nodes: projected,
           teaching: "Searching is asking. The relations you find are those ready to be known.",
         };
       } catch (error) {

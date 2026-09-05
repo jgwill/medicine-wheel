@@ -317,6 +317,30 @@ export const integrationTools: Tool[] = [
                 };
               });
 
+        // The cap was applied to the smaller half. Measured on the hub-centred
+        // web: 60 summary nodes serialize to 15,031 characters and their 93
+        // edges to 41,647 — each carrying obligations prose, strength,
+        // ceremony_honored, created_at and a composite id concatenating two full
+        // node ids. Capping nodes alone took the response from 110,961 to
+        // 68,482 and still spilled.
+        // Drop only what is derivable or prose; keep everything that carries
+        // information. Measured across the store's 292 edges:
+        //
+        //   id 34,665 bytes   from_id 22,013   obligations 13,297   to_id 12,944
+        //   created_at 7,592  relationship_type 3,793  ceremony_honored 1,438
+        //
+        // `id` is the largest field and is just `from_id` + `to_id`
+        // concatenated. `obligations` is prose. Together they are half the edge
+        // payload. Everything else stays — including `metadata`, which carries
+        // the port on a `binds-port` edge and is not decoration.
+        const projectedEdges =
+          detail === "full"
+            ? edges
+            : (edges as unknown as Record<string, unknown>[]).map((e) => {
+                const { id: _id, obligations: _obligations, ...rest } = e;
+                return rest;
+              });
+
         return {
           center_node_id: node_id,
           depth,
@@ -342,7 +366,9 @@ export const integrationTools: Tool[] = [
           truncated: web.truncated,
           // Set when the centre is itself a container and the answer had to be
           // paged rather than returned whole.
-          ...(cappedReport ? { capped: cappedReport } : {}),
+          // Named for what it counts. "60 of 83" sitting beside `edges_count: 93`
+          // read as a contradiction when it was a different unit.
+          ...(cappedReport ? { capped_nodes: cappedReport } : {}),
           ...(filtering && web.capped
             ? {
                 capped_before_filter: web.capped,
@@ -351,7 +377,7 @@ export const integrationTools: Tool[] = [
               }
             : {}),
           nodes: projectedNodes,
-          edges,
+          edges: projectedEdges,
           teaching: "Reality is relational; everything interconnected",
         };
       } catch (error) {
