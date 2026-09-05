@@ -47,7 +47,7 @@ export const discoveryTools: Tool[] = [
           type: "string",
           enum: ["summary", "full"],
           description:
-            "summary (default): id, name, type, direction, kind, parent_id, created_at — enough to choose what to look at, and small enough to read. full: the whole node including description and all metadata. A full listing of the 84 chronicle episodes is ~74,000 characters and overruns the tool-result limit, so the answer arrives spilled to a file; ask for one node with get_relational_node instead of asking for all of them in full.",
+            "summary (default): id, name, type, direction, kind, parent_id, created_at — enough to choose what to look at, and small enough to read inline. full: the whole node including description and all metadata, which for a large collection can overrun the tool-result limit and arrive spilled to a file. Prefer summary to browse, then get_relational_node for the one you want.",
         },
       },
     },
@@ -146,19 +146,25 @@ export const discoveryTools: Tool[] = [
       try {
         const { direction, type, limit = 50 } = args;
 
-        let ceremonies;
-        if (direction) {
-          ceremonies = (await store.getCeremoniesByDirection(direction));
-        } else if (type) {
-          ceremonies = (await store.getCeremoniesByType(type));
-        } else {
-          ceremonies = (await store.getAllCeremonies(limit));
-        }
+        // Filters combine. The if/else-if this replaces picked ONE: asking for
+        // `{ direction: "east", type: "closing" }` sent only the direction and
+        // returned 82 opening ceremonies, with `type: "closing"` echoed back in
+        // `filters` as though it had been applied. Same shadowing that
+        // list_relational_nodes had already removed, in the tool beside it.
+        const filtering = Boolean(direction || type);
+        const ceremonies = filtering
+          ? await store.getCeremoniesFiltered({ direction, type })
+          : await store.getAllCeremonies(Number.MAX_SAFE_INTEGER);
 
         const sorted = ceremonies.slice(0, limit);
 
         return {
           count: sorted.length,
+          // Present so a caller can tell 100-of-100 from 100-of-thousands. Its
+          // absence here was the difference between a complete answer and a
+          // window that looked like one.
+          total_available: ceremonies.length,
+          truncated: sorted.length < ceremonies.length,
           filters: { direction, type, limit },
           ceremonies: sorted,
           teaching: "Research is ceremony. Each logged ceremony is a witness to relational practice.",

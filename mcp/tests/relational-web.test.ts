@@ -65,11 +65,16 @@ describe('buildRelationalWeb', () => {
 
   it('expands through everything when suppression is disabled', () => {
     const { nodes, edges } = chronicle(82);
-    const web = buildRelationalWeb('ep-0', nodes, edges, { depth: 2, maxExpandDegree: null });
+    const web = buildRelationalWeb('ep-0', nodes, edges, {
+      depth: 2,
+      maxExpandDegree: null,
+      maxNodes: 500,
+    });
     expect(web.nodes).toHaveLength(83);
     expect(web.hubs).toEqual([]);
     // Nothing adjacent was left out — the whole component came back.
     expect(web.truncated).toBe(false);
+    expect(web.capped).toBeUndefined();
   });
 
   it('returns only edges whose endpoints are both present', () => {
@@ -100,10 +105,28 @@ describe('buildRelationalWeb', () => {
     const { nodes, edges } = chronicle(82);
     // Asking *about* the chronicle is a legitimate question; it must not vanish
     // from its own answer.
-    const web = buildRelationalWeb('root', nodes, edges, { depth: 1 });
+    const web = buildRelationalWeb('root', nodes, edges, { depth: 1, maxNodes: 500 });
     expect(web.nodes.map((n) => n.id)).toContain('root');
     expect(web.nodes).toHaveLength(83);
     expect(web.hubs).toEqual([]);
+  });
+
+  it('caps a hub-centred web instead of returning the corpus, and says it did', () => {
+    const { nodes, edges } = chronicle(82);
+
+    // Suppression protects a walk that ENCOUNTERS a hub and does nothing for one
+    // that starts on it — the centre is never suppressed, correctly, because
+    // asking about the chronicle is a real question. Measured on the live wheel
+    // 2026-09-05, that answer was 157,233 characters: over twice the listing
+    // that had just been cut for overrunning the tool-result limit.
+    const web = buildRelationalWeb('root', nodes, edges, { depth: 1 });
+
+    expect(web.nodes).toHaveLength(60);
+    expect(web.capped).toEqual({ returned: 60, available: 83 });
+    // The centre survives the cap. Trimming it to fit would answer a different
+    // question than the one asked.
+    expect(web.nodes[0].id).toBe('root');
+    expect(web.truncated).toBe(true);
   });
 
   it('falls back to degree for a container nobody has named', () => {

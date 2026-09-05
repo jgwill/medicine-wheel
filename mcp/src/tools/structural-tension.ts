@@ -517,6 +517,21 @@ export const structuralTensionTools: Tool[] = [
             due_date: c.due_date,
             updated_at: c.updated_at,
           })),
+          // An empty chart store and "there is no structural tension work" are
+          // different facts, and this tool used to make them look identical:
+          // `{count: 0}` plus a teaching about the strategic landscape reads as
+          // an answer. Meanwhile `list_relational_nodes` with kind "stc_chart"
+          // returns rows — a DIFFERENT record, a relational node carrying that
+          // metadata kind rather than a chart in the chart store. Saying where
+          // this tool looked lets a caller tell the two apart instead of
+          // concluding nothing exists.
+          ...(charts.length === 0
+            ? {
+                searched: "the chart store (/api/charts)",
+                note:
+                  "No charts in the chart store. Nodes carrying metadata.kind 'stc_chart' are a separate record — list_relational_nodes with kind 'stc_chart' searches those.",
+              }
+            : {}),
           teaching: "Each chart holds structural tension that seeks resolution. Together they form the strategic landscape.",
         };
       } catch (error) {

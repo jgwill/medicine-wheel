@@ -66,7 +66,24 @@ export interface RelationalWebOptions {
   /** `null` disables suppression entirely. */
   maxExpandDegree?: number | null;
   containerKinds?: readonly string[];
+  /**
+   * Hard cap on returned nodes, applied when the CENTRE is itself a container.
+   *
+   * Suppression protects a walk that *encounters* a hub, and does nothing for a
+   * walk that starts on one — asking about the chronicle root is a legitimate
+   * question, and the centre is never suppressed. But its answer is the whole
+   * corpus: measured 2026-09-05, `get_relational_web` centred on
+   * `chronicle:miadi-chronicle` at depth 1 returned **157,233 characters**, over
+   * twice the listing that had just been cut for overrunning the tool-result
+   * limit, reachable by an obvious call.
+   *
+   * So the centre still answers, and answers a page, and says it is one.
+   */
+  maxNodes?: number;
 }
+
+/** Nodes returned when the centre is a container and the answer would be the corpus. */
+export const DEFAULT_MAX_NODES = 60;
 
 /** A container the walk reached and declined to expand through. */
 export interface WebHubHold {
@@ -84,6 +101,8 @@ export interface RelationalWebResult<N, E> {
   hubs: WebHubHold[];
   /** True when some node adjacent to the returned set was not returned. */
   truncated: boolean;
+  /** Set when the node cap trimmed the answer, with what the whole would have been. */
+  capped?: { returned: number; available: number };
 }
 
 export function buildRelationalWeb<N extends WebNode, E extends WebEdge>(
@@ -145,9 +164,19 @@ export function buildRelationalWeb<N extends WebNode, E extends WebEdge>(
     }
   }
 
-  const nodes = [...visited]
+  const maxNodes = options.maxNodes ?? DEFAULT_MAX_NODES;
+  const walked = [...visited]
     .map((id) => nodeMap.get(id))
     .filter((n): n is N => n !== undefined);
+
+  // Keep the centre first, then cap. Dropping the centre to fit would answer a
+  // different question than the one asked.
+  const centreFirst = [
+    ...walked.filter((n) => n.id === nodeId),
+    ...walked.filter((n) => n.id !== nodeId),
+  ];
+  const capped = centreFirst.length > maxNodes;
+  const nodes = capped ? centreFirst.slice(0, maxNodes) : centreFirst;
 
   // Induced edges only — both ends present. An edge to a node that was not
   // returned is a reference the consumer cannot resolve.
@@ -172,5 +201,11 @@ export function buildRelationalWeb<N extends WebNode, E extends WebEdge>(
       (returned.has(e.to_id) && !returned.has(e.from_id)),
   );
 
-  return { nodes, edges, hubs, truncated };
+  return {
+    nodes,
+    edges,
+    hubs,
+    truncated,
+    ...(capped ? { capped: { returned: nodes.length, available: centreFirst.length } } : {}),
+  };
 }

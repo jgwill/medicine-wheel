@@ -570,7 +570,7 @@ export class JsonlStore {
   getRelationalWeb(
     nodeId: string,
     depth = 2
-  ): { nodes: StoredNode[]; edges: StoredEdge[]; hubs: WebHubHold[]; truncated: boolean } {
+  ): { nodes: StoredNode[]; edges: StoredEdge[]; hubs: WebHubHold[]; truncated: boolean; capped?: { returned: number; available: number } } {
     return buildRelationalWeb(nodeId, this.nodes.getAll(), this.edges.getAll(), { depth });
   }
 
@@ -584,8 +584,17 @@ export class JsonlStore {
     return limit !== undefined ? sorted.slice(0, limit) : sorted;
   }
 
-  getCeremoniesByDirection(direction: string): StoredCeremony[] { return this.ceremonies.filter(c => c.direction === direction); }
-  getCeremoniesByType(type: string): StoredCeremony[] { return this.ceremonies.filter(c => c.type === type); }
+  getCeremoniesByDirection(direction: string): StoredCeremony[] { return this.getCeremoniesFiltered({ direction }); }
+  getCeremoniesByType(type: string): StoredCeremony[] { return this.getCeremoniesFiltered({ type }); }
+
+  /** Filters combine — see the HTTP store's note on the if/else-if that dropped one. */
+  getCeremoniesFiltered(filters: { direction?: string; type?: string } = {}): StoredCeremony[] {
+    return this.ceremonies.filter((c) => {
+      if (filters.direction && c.direction !== filters.direction) return false;
+      if (filters.type && c.type !== filters.type) return false;
+      return true;
+    });
+  }
 
   // === Beats ===
   createBeat(beat: StoredBeat): void { this.beats.set(beat.id, beat); }

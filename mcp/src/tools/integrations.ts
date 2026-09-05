@@ -306,6 +306,9 @@ export const integrationTools: Tool[] = [
           ...(web.hubs.length > 0 ? { hubs_held: web.hubs } : {}),
           // True when some node adjacent to what came back was not returned.
           truncated: web.truncated,
+          // Set when the centre is itself a container and the answer had to be
+          // paged rather than returned whole.
+          ...(web.capped ? { capped: web.capped } : {}),
           nodes,
           edges,
           teaching: "Reality is relational; everything interconnected",

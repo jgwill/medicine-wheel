@@ -522,7 +522,7 @@ export class HttpStore {
   async getRelationalWeb(
     nodeId: string,
     depth = 2
-  ): Promise<{ nodes: StoredNode[]; edges: StoredEdge[]; hubs: WebHubHold[]; truncated: boolean }> {
+  ): Promise<{ nodes: StoredNode[]; edges: StoredEdge[]; hubs: WebHubHold[]; truncated: boolean; capped?: { returned: number; available: number } }> {
     const [allNodes, allEdges] = await Promise.all([this.getAllNodes(), this.getAllEdges()]);
     return buildRelationalWeb(nodeId, allNodes, allEdges, { depth });
   }
@@ -540,7 +540,7 @@ export class HttpStore {
   }
 
   async getAllCeremonies(limit?: number): Promise<StoredCeremony[]> {
-    const url = `${this.baseUrl}/api/ceremonies`;
+    const url = `${this.baseUrl}/api/ceremonies?limit=all`;
     const sorted = readCollection<StoredCeremony>(await httpGet(url), 'ceremonies', url).sort(
       (a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp)
     );
@@ -548,12 +548,30 @@ export class HttpStore {
   }
 
   async getCeremoniesByDirection(direction: string): Promise<StoredCeremony[]> {
-    const url = `${this.baseUrl}/api/ceremonies?direction=${encodeURIComponent(direction)}`;
-    return readCollection<StoredCeremony>(await httpGet(url), 'ceremonies', url);
+    return this.getCeremoniesFiltered({ direction });
   }
 
   async getCeremoniesByType(type: string): Promise<StoredCeremony[]> {
-    const url = `${this.baseUrl}/api/ceremonies?type=${encodeURIComponent(type)}`;
+    return this.getCeremoniesFiltered({ type });
+  }
+
+  /**
+   * Filters combine, and the read is unbounded before they are applied.
+   *
+   * `list_ceremonies` used to pick ONE filter with an if/else-if chain, so
+   * `{ direction: "east", type: "closing" }` sent only the direction and
+   * returned 82 opening ceremonies while echoing `type: "closing"` back as
+   * honored. That is the same shadowing `list_relational_nodes` had removed, in
+   * the tool immediately beside it.
+   */
+  async getCeremoniesFiltered(
+    filters: { direction?: string; type?: string; episode_path?: string } = {}
+  ): Promise<StoredCeremony[]> {
+    const query = new URLSearchParams({ limit: 'all' });
+    if (filters.direction) query.set('direction', filters.direction);
+    if (filters.type) query.set('type', filters.type);
+    if (filters.episode_path) query.set('episode_path', filters.episode_path);
+    const url = `${this.baseUrl}/api/ceremonies?${query.toString()}`;
     return readCollection<StoredCeremony>(await httpGet(url), 'ceremonies', url);
   }
 
