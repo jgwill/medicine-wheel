@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/consent-lifecycle",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Ongoing relational consent lifecycle for the Medicine Wheel Developer Suite — consent as a living relational obligation, not a boolean checkbox",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -53,8 +53,8 @@
     "directory": "src/consent-lifecycle"
   },
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.9.0",
-    "@medicine-wheel/ceremony-protocol": "^0.9.0",
+    "@medicine-wheel/ontology-core": "^0.10.0",
+    "@medicine-wheel/ceremony-protocol": "^0.10.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {

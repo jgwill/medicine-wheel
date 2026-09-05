@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/brainstorming",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Idea into committed design through approval gates a human holds. Every outcome it emits — including its own multiple-choice questions — passes the orientation question before it is spoken. Brainstorming, ideation, requirements gathering, design review.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -43,7 +43,7 @@
     "directory": "src/brainstorming"
   },
   "dependencies": {
-    "@medicine-wheel/creative-orientation": "^0.9.0"
+    "@medicine-wheel/creative-orientation": "^0.10.0"
   },
   "devDependencies": {
     "typescript": "^5.7.0"
