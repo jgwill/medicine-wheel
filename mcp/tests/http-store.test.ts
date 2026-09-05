@@ -242,6 +242,10 @@ describe('HttpStore read robustness', () => {
     const error = await store.getAllNodes().catch((e: unknown) => e);
     expect(error).toBeInstanceOf(HttpStoreError);
     expect((error as HttpStoreError).status).toBe(503);
-    expect((error as HttpStoreError).url).toBe(`${BASE}/api/nodes`);
+    // `?limit=all` since 2026-09-03: a bare read took the server's 100-row
+    // default, so `getAllNodes()` answered "all" with the newest 100 and
+    // `getNode()` — which reads all, then finds — reported every node past row
+    // 100 as missing.
+    expect((error as HttpStoreError).url).toBe(`${BASE}/api/nodes?limit=all`);
   });
 });

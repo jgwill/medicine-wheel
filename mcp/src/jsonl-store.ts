@@ -15,6 +15,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { buildRelationalWeb, type WebHubHold } from './relational-web.js';
 import { rankNodes } from './node-search.js';
 import type { NodeFilters } from './types.js';
 
@@ -560,24 +561,17 @@ export class JsonlStore {
     this.edges.updateCeremony(fromId, toId, ceremonyId);
   }
 
-  getRelationalWeb(nodeId: string, depth = 2): { nodes: StoredNode[]; edges: StoredEdge[] } {
-    const visited = new Set<string>();
-    const resultNodes: StoredNode[] = [];
-    const resultEdges: StoredEdge[] = [];
-    const queue: { id: string; d: number }[] = [{ id: nodeId, d: 0 }];
-    while (queue.length > 0) {
-      const { id, d } = queue.shift()!;
-      if (visited.has(id) || d > depth) continue;
-      visited.add(id);
-      const node = this.nodes.get(id);
-      if (node) resultNodes.push(node);
-      for (const edge of this.edges.getForNode(id)) {
-        if (!resultEdges.includes(edge)) resultEdges.push(edge);
-        const otherId = edge.from_id === id ? edge.to_id : edge.from_id;
-        if (!visited.has(otherId)) queue.push({ id: otherId, d: d + 1 });
-      }
-    }
-    return { nodes: resultNodes, edges: resultEdges };
+  /**
+   * Delegates to the shared walk so the JSONL and HTTP stores cannot answer the
+   * same question differently. Both had their own BFS and both had the same two
+   * defects — edges returned for nodes that were not, and no notion of a
+   * container. See `relational-web.ts`.
+   */
+  getRelationalWeb(
+    nodeId: string,
+    depth = 2
+  ): { nodes: StoredNode[]; edges: StoredEdge[]; hubs: WebHubHold[]; truncated: boolean } {
+    return buildRelationalWeb(nodeId, this.nodes.getAll(), this.edges.getAll(), { depth });
   }
 
   // === Ceremonies ===

@@ -9,6 +9,7 @@
  * Default behavior (MW_DATA_DIR / local JSONL) is preserved.
  */
 
+import { buildRelationalWeb, type WebHubHold } from './relational-web.js';
 import { rankNodes } from './node-search.js';
 import type { NodeFilters } from './types.js';
 
@@ -402,8 +403,21 @@ export class HttpStore {
     return all.find(n => n.id === id);
   }
 
+  /**
+   * `?limit=all`, always.
+   *
+   * A bare `GET /api/nodes` returns the provider's default page — 100 rows on a
+   * store of 205 — so this method used to answer "all nodes" with the newest
+   * 100, and `getNode()` above, which reads all and then finds, reported every
+   * node past row 100 as missing. Client-side `.slice(limit)` on top of that was
+   * slicing an already-truncated window.
+   *
+   * The server has understood `?limit=` since 2026-09-03. Older servers reject
+   * it with a 400 naming what they accept, which is loud — and far better than
+   * the silent short read this replaces.
+   */
   async getAllNodes(limit?: number): Promise<StoredNode[]> {
-    const url = `${this.baseUrl}/api/nodes`;
+    const url = `${this.baseUrl}/api/nodes?limit=all`;
     const nodes = readCollection<StoredNode>(await httpGet(url), 'nodes', url);
     return limit !== undefined ? nodes.slice(0, limit) : nodes;
   }
@@ -468,8 +482,9 @@ export class HttpStore {
     return this.track('createEdge', url, httpPost(url, edge));
   }
 
+  /** `?limit=all` for the same reason as `getAllNodes` — the default was 100 of 292. */
   async getAllEdges(): Promise<StoredEdge[]> {
-    const url = `${this.baseUrl}/api/edges`;
+    const url = `${this.baseUrl}/api/edges?limit=all`;
     return readCollection<StoredEdge>(await httpGet(url), 'edges', url);
   }
 
@@ -507,33 +522,9 @@ export class HttpStore {
   async getRelationalWeb(
     nodeId: string,
     depth = 2
-  ): Promise<{ nodes: StoredNode[]; edges: StoredEdge[] }> {
-    const allNodes = await this.getAllNodes();
-    const allEdges = await this.getAllEdges();
-
-    const nodeMap = new Map(allNodes.map(n => [n.id, n]));
-    const visited = new Set<string>();
-    const resultNodes: StoredNode[] = [];
-    const resultEdges: StoredEdge[] = [];
-    const queue: { id: string; d: number }[] = [{ id: nodeId, d: 0 }];
-
-    while (queue.length > 0) {
-      const { id, d } = queue.shift()!;
-      if (visited.has(id) || d > depth) continue;
-      visited.add(id);
-
-      const node = nodeMap.get(id);
-      if (node) resultNodes.push(node);
-
-      for (const edge of allEdges) {
-        if (edge.from_id !== id && edge.to_id !== id) continue;
-        if (!resultEdges.includes(edge)) resultEdges.push(edge);
-        const otherId = edge.from_id === id ? edge.to_id : edge.from_id;
-        if (!visited.has(otherId)) queue.push({ id: otherId, d: d + 1 });
-      }
-    }
-
-    return { nodes: resultNodes, edges: resultEdges };
+  ): Promise<{ nodes: StoredNode[]; edges: StoredEdge[]; hubs: WebHubHold[]; truncated: boolean }> {
+    const [allNodes, allEdges] = await Promise.all([this.getAllNodes(), this.getAllEdges()]);
+    return buildRelationalWeb(nodeId, allNodes, allEdges, { depth });
   }
 
   // === Ceremonies ===

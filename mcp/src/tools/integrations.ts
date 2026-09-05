@@ -298,6 +298,14 @@ export const integrationTools: Tool[] = [
             : {}),
           nodes_count: nodes.length,
           edges_count: edges.length,
+          // Containers the walk reached and did not expand through, with what
+          // sits behind each. Reported rather than silently applied: a web that
+          // quietly stopped at the chronicle root is indistinguishable from an
+          // episode with nothing around it, and an agent cannot tell which it
+          // was handed.
+          ...(web.hubs.length > 0 ? { hubs_held: web.hubs } : {}),
+          // True when some node adjacent to what came back was not returned.
+          truncated: web.truncated,
           nodes,
           edges,
           teaching: "Reality is relational; everything interconnected",
