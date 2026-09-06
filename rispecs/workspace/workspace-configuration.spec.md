@@ -11,6 +11,28 @@
 **Last Updated:** 2026-09-06
 **Companion documents:** `workspace-scope-and-access.spec.md` (the architecture), `workspace-erd-internal.md` (ERD 1), `workspace-erd-relations.md` (ERD 2), `workspace-display-analysis.md` (display consequence)
 
+> [!NOTE]
+> **Revised framing — 2026-09-06.** This document costs out the seams, and every count and file
+> reference in it stands. But it was written against the inherited *definition* (workspace as data
+> and access boundary), which `workspace-definition.spec.md` has since superseded on evidence
+> (`workspace-prior-art.research.md`).
+>
+> Two things change how you should read it:
+>
+> 1. **The order.** Section 3 ("Every workspace-owned read and write changes shape") is the largest
+>    implication here, and under the revised cadence it is **Slice 3**, not Slice 1. Slice 1 is
+>    naming the binding that `mwsrv --directory` already makes anonymously, which requires **no
+>    data-model change at all**.
+> 2. **Section 1's catalog options** are now settled in favour of a registry of `WorkspaceBinding`
+>    records that carry `location` and `provider` — so a binding may point at its own store rather
+>    than partitioning one shared backend. That is the direct answer to HashiCorp's warning that
+>    shared-backend workspaces are "not a suitable isolation mechanism", and it overrides the
+>    inherited prohibition on per-workspace providers.
+>
+> Section 2's precedence chain survives, extended with an explicit **whole-binding, no-field-merging**
+> rule borrowed from Claude Code's MCP scope resolution. Sections 4–8 (serving surfaces, migration,
+> release mechanics, the privacy claim, the closed ontology) are unchanged.
+
 ---
 
 ## Desired Outcome

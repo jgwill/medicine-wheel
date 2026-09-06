@@ -4,9 +4,45 @@
 > stop hardcoding them, how they relate to each other, and what happens to the drawn wheel once it
 > is drawn per workspace.
 
-**Status:** Design and analysis. **Nothing here is implemented.** The application still ships a
-hardcoded six-entry catalog in `components/workspaces-panel.tsx` whose selection changes only a
-label and a colour.
+**Status:** Design and analysis. **Nothing here is implemented as a *named* workspace layer** — but
+the binding itself already exists anonymously (see below). The application still ships a hardcoded
+six-entry catalog in `components/workspaces-panel.tsx` whose selection changes only a label and a
+colour.
+
+> **Definition revised 2026-09-06.** `workspace-definition.spec.md` supersedes the *definition* held
+> in `workspace-scope-and-access.spec.md`, on evidence gathered in `workspace-prior-art.research.md`.
+> Read the revision first.
+
+---
+
+## 🔑 The definition, in one paragraph
+
+**A workspace is a named, resolvable binding of one Medicine Wheel — its store location, its storage
+provider, and the service endpoints that serve it — under a stable identity that people, services and
+agents can refer to.** Data scope is a *consequence* of the binding, not the definition of it. Access
+control attaches to the binding later and is never implied by it.
+
+**This binding already exists; it is anonymous.** `mwsrv --directory ~/my-research --port 4000`
+resolves `~/my-research/.mw/store`, binds a port, and sets `MW_DATA_DIR`; `mw` and the MCP server
+connect through `MW_API_URL` or that store. The tuple is re-typed by hand every time, and nothing can
+enumerate the bindings that exist, notice that two want `:8040`, or tell an agent which wheel it
+holds. `rispecs/docker-containerized-app.kin.md` said it first: *"many of them opened in different
+workspace (project location)."*
+
+🔑 This is `kubectl --server=… --user=… --namespace=…` typed on every command, before anyone invented
+`use-context`. **We are not inventing scoping — we are naming a binding that is already being made
+anonymously.**
+
+### Three layers, never one word
+
+| Layer | What it is | Enforced by | Slice |
+| --- | --- | --- | --- |
+| **Binding** | name → location + provider + endpoints | Nothing — a client convenience | 1–2 |
+| **Scope** | the boundary a request may touch | Provider + API, server-side | 3 |
+| **Governance** | who may do what; how wheels relate | Authz, after identity | 4 |
+
+The inherited spec called all three "workspace". A binding that *feels* like a guarantee is how a
+client-side preference gets mistaken for isolation.
 
 ---
 
@@ -37,23 +73,30 @@ sequence. The wheel workspaces are the **lodges** — each complete, each holdin
 
 | File | Kind | Purpose |
 | --- | --- | --- |
-| `INPUT.md` | Record | The originating request, verbatim, kept for compliance and provenance |
-| `workspace-scope-and-access.spec.md` | RISE spec | **The architecture.** Catalog plane, data plane, working sets, cross-workspace references, provider contract, migration, delivery cadence. Moved here from `rispecs/` |
-| `workspace-configuration.spec.md` | RISE spec | **The cost.** What implementing configurable workspaces implies across every seam — vocabulary, catalog bootstrap, precedence chain, 20 API routes, legacy stores, browser keys, CLI/MCP, migration, release mechanics, and what must not be claimed |
-| `workspace-erd-internal.md` | ERD 1 | A workspace and its interior: the three planes, owned records, mandatory scope in the primary key, qualified references, unclassified collections |
-| `workspace-erd-relations.md` | ERD 2 | Workspace↔workspace: the governed relationship record, bilateral acceptance, working sets — and the package economy (producer, releases, consumption, resolution) |
+| `INPUT.md` | Record | First request, verbatim — implications, ERDs, display analysis |
+| `INPUT-02.md` | Record | Second request, verbatim — question the definition, research it, name the service layer |
+| `workspace-definition.spec.md` | **RISE spec — current definition** | **Start here.** The revised, grounded definition: six problems with the inherited one, `WorkspaceBinding`, three layers, whole-binding resolution, the service configuration layer, revised 4-slice cadence |
+| `workspace-prior-art.research.md` | Research | Ten systems that already solved a version of this — kubectl contexts, Terraform's own warning, k8s namespaces, Postgres tenancy, VS Code, MCP scopes, Compose project names, level-triggered reconciliation, 12-factor, Slack/Notion/Linear. With sources |
+| `workspace-scope-and-access.spec.md` | RISE spec — *definition superseded* | The inherited architecture. Values kept in full; its data shapes remain the reference for Slices 3–4. Carries a supersession banner |
+| `workspace-configuration.spec.md` | RISE spec | Seam-by-seam implications: the homonym, catalog bootstrap, precedence chain, 20 API routes, legacy stores, browser keys, CLI/MCP, migration, release mechanics |
+| `workspace-erd-services.md` | **ERD 3** | The service configuration layer: bindings → service intents → per-host port scarcity → declared vs observed → drift. Builds on shipped `@medicine-wheel/infra` |
+| `workspace-erd-internal.md` | ERD 1 | The scope layer (Slice 3): a workspace's interior, mandatory scope in the primary key, qualified references |
+| `workspace-erd-relations.md` | ERD 2 | The governance layer (Slice 4): the governed relationship record, and the package economy |
 | `workspace-display-analysis.md` | Analysis | What scoping does to the drawn wheel, surface by surface, plus the Wheel of Workspaces and the colour collision |
 
 ---
 
 ## Reading order
 
-1. **`INPUT.md`** — what was asked.
-2. **`workspace-scope-and-access.spec.md`** — the desired architecture in full.
-3. **`workspace-configuration.spec.md`** — what it costs and what it breaks.
-4. **`workspace-erd-internal.md`** then **`workspace-erd-relations.md`** — the data model, in two
-   diagrams because one would have flattened containment into governance.
-5. **`workspace-display-analysis.md`** — the consequence a person actually sees.
+1. **`workspace-definition.spec.md`** — the current definition, and why the previous one was wrong.
+2. **`workspace-prior-art.research.md`** — the evidence behind it.
+3. **`workspace-erd-services.md`** (ERD 3) — the layer that actually runs.
+4. **`workspace-configuration.spec.md`** — what it costs, seam by seam.
+5. **`workspace-erd-internal.md`** (ERD 1) then **`workspace-erd-relations.md`** (ERD 2) — the scope
+   and governance layers, deferred to Slices 3–4 but modelled.
+6. **`workspace-display-analysis.md`** — the consequence a person actually sees.
+7. **`workspace-scope-and-access.spec.md`** — the inherited architecture, read as desired state.
+8. **`INPUT.md`**, **`INPUT-02.md`** — what was asked, verbatim.
 
 ---
 
@@ -68,6 +111,14 @@ sequence. The wheel workspaces are the **lodges** — each complete, each holdin
 - **Local configurability is not authenticated privacy.** There is no identity contract in this
   system; nothing here may be documented as secure multi-user access.
 - The npm `workspaces` array stays topological.
+- **A binding resolves whole, from one source.** No field-level merging across sources — half a
+  binding from a cookie and half from an env var is how a wheel named `research` writes to `~/other`.
+- **`id` is never derived from a directory name.** Compose derives its project name from the folder,
+  and the documented consequence is collisions and orphaned volumes. Moving a project edits
+  `location`; it does not create a workspace.
+- **A service never reads the registry to discover itself.** The registry configures the *caller* and
+  resolves a name into environment; the service reads environment. That is the twelve-factor line.
+- **Declared and observed never merge.** Their disagreement is the product — `undeclared` most of all.
 
 ---
 
@@ -80,6 +131,11 @@ sequence. The wheel workspaces are the **lodges** — each complete, each holdin
 mentions supplying a project path for `.mw/store`. It is workspace-*adjacent* (and is the origin of
 [#40](https://github.com/jgwill/medicine-wheel/issues/40), referenced from the architecture spec),
 but it is not a workspace specification.
+
+**2026-09-06 revision:** `workspace-definition.spec.md`, `workspace-prior-art.research.md`,
+`workspace-erd-services.md` and `INPUT-02.md` added; a supersession banner added to
+`workspace-scope-and-access.spec.md`. Nothing was deleted — the inherited spec's values and data
+shapes remain in force for Slices 3–4.
 
 ---
 

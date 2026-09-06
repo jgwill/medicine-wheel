@@ -9,6 +9,30 @@
 **Last Updated:** 2026-08-22
 **Tracking Issue:** [jgwill/medicine-wheel#129](https://github.com/jgwill/medicine-wheel/issues/129)
 
+> [!IMPORTANT]
+> **Definition superseded — 2026-09-06.** The `Workspace` *definition* in this document was
+> reviewed against prior art and revised in **`workspace-definition.spec.md`**. In short: this
+> document imported the SaaS meaning of "workspace" (billing + membership, as in Slack/Notion/
+> Linear) and leads with memberships, `subject_id`, capabilities and bilateral relation acceptance
+> — none of which can be implemented before an identity contract exists, and none of which describe
+> the case that actually ships today. It also has **no `location`**, partitions a shared backend and
+> calls it isolation (the shape HashiCorp's own docs say is "not a suitable isolation mechanism"),
+> and never mentions a port, a process, or a service endpoint.
+>
+> A workspace is now defined as a **named binding** of store location + provider + service
+> endpoints; data scope is a *consequence* of the binding and governance attaches later.
+>
+> **This document is not withdrawn.** Its values are kept in full and restated by the revision:
+> isolation is not disconnection; a visible relationship is not an access grant; reads may compose
+> but writes name one destination; provenance is preserved; local configurability is not
+> authenticated privacy; a workspace is not a seventh `NodeType`. Its data shapes remain the
+> reference for **Slice 3 (scope)** and **Slice 4 (governance)**. Read it as *desired state*,
+> with `workspace-definition.spec.md` as the current definition and sequencing.
+>
+> One prohibition is explicitly overridden: "Selecting a different storage provider per workspace"
+> under *What This Stub Does Not Authorize* protected a shared-backend design the revision
+> abandons. See `workspace-definition.spec.md` §2.3 and §7 Open Decision 1.
+
 ---
 
 ## Desired Outcome
