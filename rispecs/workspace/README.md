@@ -4,10 +4,9 @@
 > stop hardcoding them, how they relate to each other, and what happens to the drawn wheel once it
 > is drawn per workspace.
 
-**Status:** Design and analysis. **Nothing here is implemented as a *named* workspace layer** — but
-the binding itself already exists anonymously (see below). The application still ships a hardcoded
-six-entry catalog in `components/workspaces-panel.tsx` whose selection changes only a label and a
-colour.
+**Status:** Design and analysis. **Nothing here is implemented as a *named* workspace layer.** The
+application ships a hardcoded six-entry catalog in `components/workspaces-panel.tsx`; the selection
+lives in `components/navigation.tsx:30` and nothing downstream reads it.
 
 > **Definition revised 2026-09-06.** `workspace-definition.spec.md` supersedes the *definition* held
 > in `workspace-scope-and-access.spec.md`, on evidence gathered in `workspace-prior-art.research.md`.
@@ -15,34 +14,17 @@ colour.
 
 ---
 
-## 🔑 The definition, in one paragraph
+## The definition, in one paragraph
 
 **A workspace is a named, resolvable binding of one Medicine Wheel — its store location, its storage
 provider, and the service endpoints that serve it — under a stable identity that people, services and
-agents can refer to.** Data scope is a *consequence* of the binding, not the definition of it. Access
-control attaches to the binding later and is never implied by it.
+agents can refer to.** Data scope is a *consequence* of the binding; access control attaches later
+and is never implied by it.
 
-**This binding already exists; it is anonymous.** `mwsrv --directory ~/my-research --port 4000`
-resolves `~/my-research/.mw/store`, binds a port, and sets `MW_DATA_DIR`; `mw` and the MCP server
-connect through `MW_API_URL` or that store. The tuple is re-typed by hand every time, and nothing can
-enumerate the bindings that exist, notice that two want `:8040`, or tell an agent which wheel it
-holds. `rispecs/docker-containerized-app.kin.md` said it first: *"many of them opened in different
-workspace (project location)."*
-
-🔑 This is `kubectl --server=… --user=… --namespace=…` typed on every command, before anyone invented
-`use-context`. **We are not inventing scoping — we are naming a binding that is already being made
-anonymously.**
-
-### Three layers, never one word
-
-| Layer | What it is | Enforced by | Slice |
-| --- | --- | --- | --- |
-| **Binding** | name → location + provider + endpoints | Nothing — a client convenience | 1–2 |
-| **Scope** | the boundary a request may touch | Provider + API, server-side | 3 |
-| **Governance** | who may do what; how wheels relate | Authz, after identity | 4 |
-
-The inherited spec called all three "workspace". A binding that *feels* like a guarantee is how a
-client-side preference gets mistaken for isolation.
+The binding already exists and is anonymous — `mwsrv --directory … --port …` makes it by hand on
+every invocation. The evidence, the three layers it separates (binding / scope / governance), and
+what each layer is enforced by are in **`workspace-definition.spec.md` §2**. They are not restated
+here; an index that restates its own contents is a second place for them to drift.
 
 ---
 
@@ -63,9 +45,6 @@ folder exists to prevent.
 **Every document in this folder means *wheel workspace* unless it says "suite workspace".**
 The npm array is not being renamed; the new concept is always qualified in code
 (`workspaceId`, `WorkspaceScope`, `MW_WORKSPACE`) and never appears in build tooling.
-
-🪶 The suite workspaces are the **poles of the lodge** — ordered, load-bearing, meaningless out of
-sequence. The wheel workspaces are the **lodges** — each complete, each holding its own fire.
 
 ---
 

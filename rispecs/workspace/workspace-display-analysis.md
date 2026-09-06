@@ -16,11 +16,6 @@ Today the wheel's shape is a property of *the deployment*; after scoping it beco
 *the workspace* — so switching workspaces does not re-label the wheel, it **redraws** it, and every
 surface that assumed one stable shape has to learn to be redrawn.
 
-🎡 *The metaphor:* right now the wheel is a **mural** — painted once, always the same, and the
-switcher is a nameplate screwed to the frame. After scoping it is a **sand painting** — made fresh
-for the work at hand, different in every lodge, and unmade when you leave. Murals need a frame;
-sand paintings need a floor, a rite for making, and a rite for sweeping away.
-
 ---
 
 ## Surface by surface

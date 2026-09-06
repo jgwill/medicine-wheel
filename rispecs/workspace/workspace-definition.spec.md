@@ -132,9 +132,11 @@ interface WorkspaceBinding {
 **Three rules the shape encodes:**
 
 - **`id` is never derived from the directory name.** Docker Compose derives its project name from the
-  folder, and the documented consequence is that two checkouts named `app` collide and a rename
-  orphans the old volumes ([Compose tip 053](https://lours.me/posts/compose-tip-053-project-name-workdir/)).
-  Moving a project is a `location` edit on an existing binding, never the birth of a new one.
+  directory its compose file lives in, so a different path is a different project and different
+  volumes ([Compose tip 053](https://lours.me/posts/compose-tip-053-project-name-workdir/)); two
+  checkouts under the same folder name therefore collide, and a rename leaves the old volumes with
+  no project to claim them. Moving a project is a `location` edit on an existing binding, never the
+  birth of a new one.
 - **`provider` moves into the binding.** This is the direct answer to the Terraform warning. Two
   bindings may point at two different stores — that is *separate backends*, the isolation HashiCorp
   actually recommends — instead of two labels over one `MW_STORAGE_PROVIDER`. It also supersedes the

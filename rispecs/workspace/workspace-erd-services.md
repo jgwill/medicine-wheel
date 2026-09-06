@@ -19,10 +19,6 @@ Four questions the system cannot answer today:
 3. Is what is running the same as what was declared?
 4. **Is something running that nobody wrote down** — holding the port the next wheel wants?
 
-⚙️ *The metaphor:* the binding is the **written arrangement** — who camps where, which fire is whose.
-The running services are the **fires actually burning**. `reconcile()` is walking the camp at dusk
-and comparing. `undeclared` is the fire nobody claims, in the spot the next family was promised.
-
 ---
 
 ## ERD 3 — bindings, services, ports, drift

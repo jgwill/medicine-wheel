@@ -39,13 +39,6 @@ workspace (project location)."*
 
 **Workspace (project location).** The parenthesis was the definition all along.
 
-🔑 *The analogy:* this is `kubectl --server=… --user=… --namespace=…` typed on every single command,
-before anyone invented `kubectl config use-context`. The work is not to invent scoping. The work is
-to **give a name to a binding that is already being made anonymously**, and then let services
-resolve that name instead of re-deriving it.
-
----
-
 ## The ten systems
 
 ### 1. kubectl contexts — the closest match, and the one to copy
@@ -145,10 +138,15 @@ name says `research` and the store is `~/other`". No field-level merging, ever.
 ### 7. Docker Compose project names — the naming failure we must not repeat
 
 `COMPOSE_PROJECT_NAME` prefixes every container, network, and volume, and lets the same stack run
-many times on one host. **By default it is the lowercased directory name** — so two checkouts in
-folders both called `app` collide, and renaming the directory makes Compose think it is a brand-new
-project: it cannot find the old containers, and named volumes are orphaned.
-— [Docker: Compose networks](https://docs.docker.com/reference/compose-file/networks/) · [Compose tip: project name and working directory](https://lours.me/posts/compose-tip-053-project-name-workdir/)
+many times on one host. **By default it is derived from the directory the compose file lives in** —
+*"By default, the project name is the directory name where your `compose.yml` lives"*, and a
+different directory path therefore "means different volumes."
+— [Compose tip 053: project name and working directory](https://lours.me/posts/compose-tip-053-project-name-workdir/) · [Docker: Compose networks](https://docs.docker.com/reference/compose-file/networks/)
+
+The consequences follow from that derivation rather than from the cited post, which does not state
+them: two checkouts in folders both named `app` land on one project name, and renaming a directory
+gives Compose a project name it has no containers or volumes under. Treat the derivation as the
+sourced fact and the consequences as the reasoning from it.
 
 **Implication, and it is concrete:** *do not derive workspace identity from the directory name.* The
 directory is the *location*, an attribute of the binding; the `id` is stable, explicit, and never

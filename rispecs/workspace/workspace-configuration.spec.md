@@ -58,9 +58,6 @@ downstream reads it. Concretely, as of this document:
 - `mw` talks to `MW_API_URL` with no scope; the MCP server picks a store from env at boot and holds it;
 - there is no authenticated subject anywhere in the system.
 
-**The switcher is a light switch wired to nothing.** The room brightens on the card and stays dark
-in the house.
-
 ---
 
 ## The vocabulary problem that must be solved before anything else
@@ -93,14 +90,6 @@ honestly). It is to make the new one always qualified in code: `workspaceId` / `
 `MW_WORKSPACE` never appear in build tooling, and `scripts/workspace-packages.mjs` and
 `scripts/publish-workspaces.mjs` keep the npm meaning exclusively. Where a document could be read
 either way, it says **wheel workspace** or **suite workspace** explicitly.
-
-🪶 *An analogy:* the suite workspaces are the **poles of the lodge** — ordered, load-bearing, raised
-in sequence, and structurally meaningless out of order. The wheel workspaces are the **lodges
-themselves** — each one complete, each holding its own fire, none of them a pole in another's frame.
-Calling both "workspace" is calling both the tent pole and the tent by the same name; it works until
-someone hands you the wrong one in the dark.
-
----
 
 ## What implementing workspace configuration implies
 
@@ -220,10 +209,6 @@ A workspace does not ride a node either — it is the **container** the nodes ar
 The only place a workspace legitimately appears *as a node* is inside a meta-workspace whose subject
 matter happens to be the estate of workspaces; there it is a `knowledge` node with
 `metadata.kind: "workspace"`, and it is a *portrait* of the catalog record, never the record itself.
-
-🌀 *The metaphor that keeps this straight:* the wheel is drawn **on the ground**. A workspace is the
-**ground**. You can paint a picture of the ground and hang it in the lodge — that is a node — but
-the picture does not hold anyone's weight.
 
 ---
 
