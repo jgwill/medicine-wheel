@@ -9,25 +9,25 @@
 The goal is to let one Medicine Wheel installation **hold more than one place at a time without
 confusing them.** A wheel is where a set of relations is kept — a project, a body of research, a
 community's work — and that keeping only means something if the boundary is real: what is added here
-stays here, what is ceremonied here is not counted there, and a person or an agent opening the wheel
-can trust that what they see is the whole of *this* context and none of another. Today the
-application can only be one place. Every wheel that has ever been served by it has been served by the
-same store, and the six cards in the switcher are a promise of plurality that the data underneath
-does not keep. Configurable workspaces are how that promise stops being decorative: a wheel gets a
-name, a location it lives in, and a boundary that holds whether you reach it through the browser, the
-`mw` command, or an agent on the far side of the network.
+stays here, what is ceremonied here is not counted there, and whoever opens the wheel can trust that
+what they see is the whole of *this* context and none of another. Today the application can only be
+one place. Every wheel it has ever served has been served from the same store, and the six cards in
+the switcher promise a plurality the data underneath does not keep. Configurable workspaces are how
+that promise stops being decorative: a wheel gets a name, a place it lives, and a boundary that holds
+whether you reach it through the browser, the `mw` command, or an agent somewhere else on the
+network.
 
-The second half of the goal — the half that makes the first half work — is that **the services
-themselves learn which wheel they are serving.** That binding is already being made every time
-someone runs `mwsrv --directory ~/some-project --port 4000`; it is simply anonymous, re-typed by
-hand, and invisible to everything else in the system, which is why two wheels quietly collide on one
-port, an MCP server keeps writing to the store it was booted with long after the browser moved on,
-and nothing can answer "which wheels exist on this machine, and is what is running what we said we
-wanted?" Naming that binding turns a tuple of flags into something the system can enumerate, check
-before it starts, and reconcile against what is actually running. 🔥 The practical shape of the goal
-is that an operator can keep several fires without one of them being fed by mistake, and an agent
-arriving at any of them can be told, plainly and by the system rather than by a prompt, which fire it
-is sitting at.
+The second half of the goal is that **the services learn which wheel they are serving.** A wheel is
+only usable while a server is running for it, and today you tell that server where the wheel is by
+typing it out each time you start one. Nothing writes it down. So nothing in the system can list the
+wheels that exist on a machine; two servers started with the defaults quietly fight over the same
+port; and an MCP server keeps reading and writing the store it was launched with, long after the
+person at the browser has moved to a different wheel. The goal is to write that instruction down once
+and give it a name. Then the system can show which wheels exist, refuse to start a second one on a
+port that is already taken, and compare what is supposed to be running against what actually is —
+including the case that matters most, a server running that nobody wrote down. 🔥 In practice: an
+operator can keep several fires without feeding the wrong one, and an agent arriving at any of them
+is told by the system, not by a prompt, which fire it is sitting at.
 
 🌸: A workspace is not a partition of one world. It is the system finally being able to say *where* it
 is, out loud, to everyone who asks.
