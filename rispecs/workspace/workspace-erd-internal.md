@@ -53,6 +53,11 @@ flowchart TB
     style GLOBAL fill:#1c2a22,stroke:#89b39a,color:#e9f3ed
 ```
 
+🏕️ *The metaphor:* the **catalog** is the map of the camp — it knows the lodges exist and who may
+enter. The **scope** is the key in your hand for one door on one visit. The **data plane** is what is
+actually inside a lodge — its fire, its stories, its obligations. The **global** plane is the sky:
+East is East from inside every lodge, and no lodge owns it.
+
 ---
 
 ## ERD 1 — Workspace and its owned records

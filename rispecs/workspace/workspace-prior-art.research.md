@@ -39,6 +39,13 @@ workspace (project location)."*
 
 **Workspace (project location).** The parenthesis was the definition all along.
 
+🔑 *The analogy:* this is `kubectl --server=… --user=… --namespace=…` typed on every single command,
+before anyone invented `kubectl config use-context`. The work is not to invent scoping. The work is
+to **give a name to a binding that is already being made anonymously**, and then let services
+resolve that name instead of re-deriving it.
+
+---
+
 ## The ten systems
 
 ### 1. kubectl contexts — the closest match, and the one to copy

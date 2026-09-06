@@ -24,6 +24,11 @@ Three things about workspace↔workspace relations refuse to sit inside ERD 1:
    edge. It is a package, a stream of versioned releases, a declared range on the consumer's side,
    and a resolution between them that changes over time without anyone editing the relationship.
 
+🌾 *The metaphor:* the **relation** is the agreement between two camps that one will send corn each
+harvest. The **package economy** is the actual corn — which year's harvest, how much, whether it
+arrived. Recording only the agreement tells you nothing about whether anyone ate. Recording only the
+corn tells you nothing about whether it was owed, gifted, or taken.
+
 ---
 
 ## ERD 2a — The governed relationship
