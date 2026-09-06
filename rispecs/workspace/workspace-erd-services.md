@@ -236,6 +236,14 @@ require guessing which of seven sources won.
 - `workspace-erd-internal.md` — ERD 1, the scope layer (Slice 3)
 - `workspace-erd-relations.md` — ERD 2, the governance layer (Slice 4)
 - `src/infra/` — `ServiceFacet`, `PortBinding`, `detectPortConflicts`, `reconcile`, `Precondition`, `MetisHold`
+
+> [!NOTE]
+> **The root `CLAUDE.md` understates what `infra` ships.** It reads *"`@medicine-wheel/infra` is
+> types plus one pure function (`detectPortConflicts`)"*. `src/infra/src/index.ts` says otherwise
+> and the files are there: `ports.ts` (S3), `preconditions.ts` (S4), `reconcile.ts` (S6),
+> `schemas.ts`, alongside `MetisHold` (S5) in `types.ts`. Everything this diagram builds on exists
+> and is exported. A reader who checks `CLAUDE.md` first will conclude ERD 3 rests on code that was
+> never written; correcting that line is `CLAUDE.md`'s owner's call, not this folder's.
 - `../infrastructure-topology-ui.spec.md` — the operator-facing surface this could render into
 
 🌸: Configuration that cannot be compared against what is running is not configuration. It is a wish with a filename.

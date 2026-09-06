@@ -12,26 +12,16 @@
 **Companion documents:** `workspace-scope-and-access.spec.md` (the architecture), `workspace-erd-internal.md` (ERD 1), `workspace-erd-relations.md` (ERD 2), `workspace-display-analysis.md` (display consequence)
 
 > [!NOTE]
-> **Revised framing — 2026-09-06.** This document costs out the seams, and every count and file
-> reference in it stands. But it was written against the inherited *definition* (workspace as data
-> and access boundary), which `workspace-definition.spec.md` has since superseded on evidence
-> (`workspace-prior-art.research.md`).
+> **What in this document still governs, after `workspace-definition.spec.md` — 2026-09-06.**
+> Every count, file reference, and cost estimate here stands and was re-verified. The *definition*
+> it was written against has been superseded.
 >
-> Two things change how you should read it:
->
-> 1. **The order.** Section 3 ("Every workspace-owned read and write changes shape") is the largest
->    implication here, and under the revised cadence it is **Slice 3**, not Slice 1. Slice 1 is
->    naming the binding that `mwsrv --directory` already makes anonymously, which requires **no
->    data-model change at all**.
-> 2. **Section 1's catalog options** are now settled in favour of a registry of `WorkspaceBinding`
->    records that carry `location` and `provider` — so a binding may point at its own store rather
->    than partitioning one shared backend. That is the direct answer to HashiCorp's warning that
->    shared-backend workspaces are "not a suitable isolation mechanism", and it overrides the
->    inherited prohibition on per-workspace providers.
->
-> Section 2's precedence chain survives, extended with an explicit **whole-binding, no-field-merging**
-> rule borrowed from Claude Code's MCP scope resolution. Sections 4–8 (serving surfaces, migration,
-> release mechanics, the privacy claim, the closed ontology) are unchanged.
+> | Section | Status |
+> | --- | --- |
+> | 1 — catalog bootstrap | Settled: a registry of `WorkspaceBinding` records carrying `location` and `provider` |
+> | 2 — precedence chain | **Withdrawn.** The normative chain is `workspace-definition.spec.md` §2.4 |
+> | 3 — scoping every read and write | Still the largest cost here, but it is **Slice 3**, not Slice 1 |
+> | 4–8 — serving surfaces, migration, release, the privacy claim, the closed ontology | Unchanged |
 
 ---
 
@@ -140,20 +130,21 @@ Six surfaces can each claim to know the active workspace: the URL, a header, a c
 storage, an env var, and the "there is only one" default. If they can disagree, they eventually
 will, and the failure is a write landing in the wrong wheel.
 
-Proposed, and it must be written down before code:
+> [!IMPORTANT]
+> **The chain proposed here is withdrawn.** This section originally carried a six-level chain that
+> ranked the request header (2) above the explicit CLI/MCP argument (3). The normative chain is now
+> the seven-level one in **`workspace-definition.spec.md` §2.4**, which reverses those two and adds
+> the implicit-cwd layer that every existing install already depends on.
+>
+> Two documents holding two orderings of the same chain is the failure this section exists to
+> prevent, so only one of them may state it. `workspace-erd-services.md` encodes the surviving one as
+> `CLIENT_SESSION.resolved_from`.
 
-```text
-1. Explicit route scope        /api/workspaces/:workspaceId/...     ← wins, always
-2. Explicit request header     MW-Workspace: <id>
-3. CLI / MCP explicit argument --workspace <id> / { workspace_id }
-4. Session cookie              mw_workspace=<id>                    ← what the UI sets
-5. Environment default         MW_WORKSPACE=<id>
-6. Legacy/default workspace    the deterministic migration target
-```
-
-**Implication:** every layer above (4) is *presentation*. A client-supplied cookie is a request, not
-an authority — once identity exists, the server re-validates it and may refuse. Writing this chain
-down is cheap now and impossible to retrofit later without an audit of every caller.
+**What survives from this section, unchanged:** resolution must be a *single* documented chain, it
+must be written down before code, and every layer below the explicit ones is *presentation*. A
+client-supplied cookie is a request, not an authority — once identity exists, the server re-validates
+it and may refuse. Writing the chain down is cheap now and impossible to retrofit later without an
+audit of every caller.
 
 ### 3. Every workspace-owned read and write changes shape
 
@@ -164,7 +155,7 @@ id must not bypass the scope.
 The blast radius, counted:
 
 - **`src/storage-provider`** — interface, factory, `jsonl.ts`, `neon.ts`, and the parity test suite. JSONL gains per-workspace directories; Neon gains `workspace_id` on every owned table with `(workspace_id, id)` node identity and workspace-aware edge keys so an internal edge cannot silently span two wheels.
-- **20 API route files** — scoped paths, plus a documented compatibility window mapping historical unscoped routes to the legacy/default workspace. Compatibility behavior must be *deterministic*, never derived from UI state.
+- **20 API route files** — **but not all 20 gain a scope.** The count is the inventory, not the work item: `app/api/directions/route.ts` serves the Four Directions, which ERD 1 places on the *global* plane and says are never copied per workspace; `app/api/health/route.ts` reports deployment-level provider state; `app/api/mcp/route.ts` is transport. Each of the 20 needs a classification (workspace-owned / catalog / global / transport) recorded before any of them is rewritten, and only the owned ones gain scoped paths, plus a documented compatibility window mapping historical unscoped routes to the legacy/default workspace. Compatibility behavior must be *deterministic*, never derived from UI state.
 - **`lib/store.ts` / `lib/jsonl-store.ts`** — narrative beats and cycles are outside the provider seam today. They must either move onto the seam or be scoped separately; leaving them global means the wheel's narrative layer bleeds across workspaces while the node layer does not, which is worse than either consistent choice.
 - **`/api/charts`, `/api/mmots`** — direct file access; each needs classification (owned / catalog / global) before it can be routed.
 - **`lib/graph-layout-storage.ts`** — `medicine-wheel:graph-layouts:v1` must become workspace-qualified, and the historical key must be adopted *once* by the legacy/default workspace.
@@ -272,14 +263,18 @@ CLI and MCP → *only then* allow a second workspace → *only after identity* c
 ## Open Decisions Inherited
 
 These belong to `workspace-scope-and-access.spec.md` and are not re-decided here; they are the
-gates this analysis is blocked behind:
+gates this analysis is blocked behind. **Numbering follows that document's own list** — an earlier
+draft renumbered them 1–6 here, which sent `#6` and `#8` to different decisions depending on which
+file the reader started from.
 
-1. Which identity/session provider establishes `subject_id`?
-2. Route path, header, or both for active scope? *(this document proposes both, path winning)*
-3. Which relationship vocabulary is governed? *(ERD 2 proposes a starting set)*
-4. Can record ids repeat across workspaces, or must they be globally unique?
-5. Which secondary collections are owned vs catalog vs user-global vs deployment-global?
-6. Are `repo`, `direction`, and `color` descriptive metadata or integration-driving fields?
+- **#1** Which identity/session provider establishes `subject_id`?
+- **#2** Route path, header, or both for active scope? *(resolved in `workspace-definition.spec.md`
+  §2.4: both, route winning, and the explicit flag above the header)*
+- **#3** Which relationship vocabulary is governed? *(ERD 2 proposes a starting set)*
+- **#5** Can record ids repeat across workspaces, or must they be globally unique?
+- **#6** Which secondary collections are owned vs catalog vs user-global vs deployment-global?
+- **#8** Are `repo`, `direction`, and `color` descriptive metadata or integration-driving fields?
+  *(closed by construction in `workspace-definition.spec.md` §2.3 — quarantined in `descriptors`)*
 
 ---
 

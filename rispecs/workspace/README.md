@@ -73,6 +73,7 @@ sequence. The wheel workspaces are the **lodges** — each complete, each holdin
 
 | File | Kind | Purpose |
 | --- | --- | --- |
+| `GOAL.md` | Statement of intent | **Read this first.** What configurable workspaces are *for*, in two paragraphs, before any mechanism |
 | `INPUT.md` | Record | First request, verbatim — implications, ERDs, display analysis |
 | `INPUT-02.md` | Record | Second request, verbatim — question the definition, research it, name the service layer |
 | `workspace-definition.spec.md` | **RISE spec — current definition** | **Start here.** The revised, grounded definition: six problems with the inherited one, `WorkspaceBinding`, three layers, whole-binding resolution, the service configuration layer, revised 4-slice cadence |
@@ -88,6 +89,7 @@ sequence. The wheel workspaces are the **lodges** — each complete, each holdin
 
 ## Reading order
 
+0. **`GOAL.md`** — what this is for, before what it is.
 1. **`workspace-definition.spec.md`** — the current definition, and why the previous one was wrong.
 2. **`workspace-prior-art.research.md`** — the evidence behind it.
 3. **`workspace-erd-services.md`** (ERD 3) — the layer that actually runs.
@@ -131,11 +133,6 @@ sequence. The wheel workspaces are the **lodges** — each complete, each holdin
 mentions supplying a project path for `.mw/store`. It is workspace-*adjacent* (and is the origin of
 [#40](https://github.com/jgwill/medicine-wheel/issues/40), referenced from the architecture spec),
 but it is not a workspace specification.
-
-**2026-09-06 revision:** `workspace-definition.spec.md`, `workspace-prior-art.research.md`,
-`workspace-erd-services.md` and `INPUT-02.md` added; a supersession banner added to
-`workspace-scope-and-access.spec.md`. Nothing was deleted — the inherited spec's values and data
-shapes remain in force for Slices 3–4.
 
 ---
 

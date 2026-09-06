@@ -147,8 +147,13 @@ interface WorkspaceBinding {
 
 ### 2.4 Resolution: whole-binding, highest source wins
 
-Adopted from Claude Code's MCP scope rule, verbatim in spirit: the highest-precedence definition
-**wins entirely; fields are not merged across sources** ([Claude Code](https://code.claude.com/docs/en/mcp-quickstart)).
+Adopted from Claude Code's MCP scope rule, which states it exactly: *"The entire server entry from
+that source is used; fields are not merged across scopes."*
+([Claude Code — MCP installation scopes](https://code.claude.com/docs/en/mcp#mcp-installation-scopes)).
+
+**This chain is the single normative one for the whole folder.** `workspace-configuration.spec.md` §2
+proposed an earlier six-level version that ranked the request header above the explicit flag; that
+ordering is withdrawn and that section now points here.
 
 ```text
 1. explicit route scope   /api/workspaces/:workspaceId/...      ← always wins
@@ -159,6 +164,17 @@ Adopted from Claude Code's MCP scope rule, verbatim in spirit: the highest-prece
 6. registry default       the binding marked default
 7. implicit cwd binding   a .mw/store under the working directory
 ```
+
+**Why the explicit flag outranks the header (2 above 3).** A flag is typed by the operator running
+the command. A header is set by whatever sits between the client and the server — a proxy, a browser
+extension, a misconfigured gateway. Ranking the header higher would let an injected `MW-Workspace`
+silently retarget a write that a human had already named on the command line.
+
+**Why layer 7 exists and what it may not do.** An implicit `.mw/store` under the working directory is
+how every wheel is reached today, so the chain has to admit it or Slice 1 breaks every existing
+install. It resolves to the *default* binding's identity when one claims that directory, and
+otherwise to an anonymous binding that `mw status` must print as unnamed. It never supplies a field
+to a binding resolved at any other layer — that would be the field-level merging the rule forbids.
 
 **No field-level merging, ever.** A name from one source and a directory from another is how you get
 a wheel labelled `research` writing into `~/other`. Layers 1–5 are *requests*; once identity exists
@@ -226,11 +242,24 @@ cannot even represent.
 `mcp/src/store.ts` resolves its store at boot. Switching workspace in the browser does not move a
 running MCP server, and no amount of UI state will.
 
-Two honest consequences:
+The same is true of the web server, and it is not only an MCP problem. `lib/store.ts:30` is
+`const store = getJsonlStore()` at module scope, resolving `MW_DATA_DIR` (or a walked-up `.mw/store`)
+once per process; `mcp/src/store.ts:49` is `export const store = createStore()`, the same shape.
+
+**So Slice 1 is one process per binding, and the chain's layer 1 is inert until Slice 3.** A route
+scope — `/api/workspaces/:workspaceId/...`, the layer that always wins — presumes one server able to
+answer for several bindings. No shipped process can do that: `location` and `provider` are resolved
+at boot and held. Until the storage seam takes a scope per request (Slice 3), a binding is served by
+its own `mwsrv`, the route layer has nothing to switch between, and the honest `mw workspace use`
+either starts a different process or points the client at a different port.
+
+Three honest consequences:
 - every MCP tool response should name the workspace it answered from, so an agent cannot be wrong
   silently;
 - re-binding a running service is a **restart** — a decision to be named, not a cleanup performed
-  quietly.
+  quietly;
+- the precedence chain must ship documented in full and *implemented* only down to the layers a
+  one-process-per-binding deployment can honour, rather than shipping a layer that silently no-ops.
 
 ---
 
@@ -288,15 +317,31 @@ Memberships, capabilities, relation lifecycle, working sets. Nothing here is cla
 - `undeclared` wheels are reportable.
 - No service reads the registry to discover itself.
 - Documentation nowhere implies authenticated privacy.
-- If both providers are offered, their isolation strengths are stated, not assumed equal.
+- If both providers are offered, their isolation strengths are stated, not assumed equal. **They
+  are stated here, and they are not equal:** JSONL under `location.kind: "local"` is
+  directory-per-workspace — the strongest of the three Postgres tenancy shapes, because a separate
+  path is a separate store. Neon under the Slice 3 model is shared-schema with `workspace_id` in the
+  primary key — the cheapest and the leakiest, whose failure mode is one query written without the
+  scope. Making `workspace_id` part of the key rather than a filter column is the right mitigation
+  and it is not parity. Any claim that the two providers have "the same observable isolation
+  semantics" is a claim about the *API surface*, never about what a mistake costs.
 - The `NodeType` union is still closed at six; the npm `workspaces` array is still topological.
 
 ---
 
 ## 7. Open decisions this revision creates
 
-1. Is `provider` truly per-binding? (It is the anti-Terraform move, and it contradicts an inherited
-   prohibition — the contradiction is deliberate and needs a decision, not a silent overwrite.)
+1. **Is `provider` truly per-binding?** This one question currently carries three answers in this
+   folder, which is two too many:
+   - `workspace-scope-and-access.spec.md` §What This Stub Does Not Authorize forbids it outright
+     ("Selecting a different storage provider per workspace"), and that document's supersession
+     banner says its non-definition content stands;
+   - §2.3 above authorizes it and calls that prohibition superseded;
+   - this list calls it open.
+
+   **The status of record is open, and nothing may be built on it until it is decided.** §2.3 states
+   the case *for* — separate backends are the isolation HashiCorp actually recommends — and a case
+   is not a decision. Whoever decides it edits all three places in one diff.
 2. Where does the registry file live — `~/.mw/workspaces.json`, or per-project, or both with VS
    Code-style precedence?
 3. Does a binding own its port, or request one from a per-host allocator?
