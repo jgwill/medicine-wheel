@@ -10,12 +10,25 @@
 
 ---
 
-> [!CAUTION]
-> **Answers the wrong question — see `STATUS.md` (2026-09-06).** The requirement is **one server that
-> resolves the store per request**, so choosing a workspace changes what the running server reads and
-> writes on disk. This folder assumes one server per location, with switching deferred to a slice it
-> does not plan. Do not implement from this document.
+> [!NOTE]
+> **Corrected 2026-09-06 — see `STATUS.md`.** The requirement is **one server that resolves the store
+> per request**: choosing a workspace changes what the running server reads and writes on disk. This
+> document has been corrected to that; where older sections still describe one server per location,
+> they say so.
 
+
+## Scope of this diagram — corrected 2026-09-06
+
+This models **several servers on one or more hosts**: ports, preconditions, and declared-versus-
+observed drift. That is real and it is `@medicine-wheel/infra`'s territory.
+
+It is **not** the requirement. The requirement is *one* server resolving a store per request — see
+`STATUS.md` and `workspace-definition.spec.md` §2.0. Where this diagram implies that switching
+workspace means starting or restarting a service, that implication is superseded: switching is a
+resolver lookup inside a running process. `SERVICE_INTENT` here declares a server; it does not
+declare a workspace.
+
+---
 
 ## What this layer answers
 

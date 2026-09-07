@@ -10,11 +10,12 @@
 
 ---
 
-> [!CAUTION]
-> **Answers the wrong question — see `STATUS.md` (2026-09-06).** The requirement is **one server that
-> resolves the store per request**, so choosing a workspace changes what the running server reads and
-> writes on disk. This folder assumes one server per location, with switching deferred to a slice it
-> does not plan. Do not implement from this document.
+> [!NOTE]
+> **Largely holds — see `STATUS.md` (2026-09-06).** `workspace_id` in the primary key is exactly what
+> one server resolving a store per request needs, so this diagram is closer to the requirement than
+> the definition that superseded it. What is deferred is its identity surface (`SUBJECT`,
+> `WORKSPACE_MEMBERSHIP`), not its scope model. `UNCLASSIFIED_COLLECTION` is still the required
+> exercise.
 
 
 ## The three planes

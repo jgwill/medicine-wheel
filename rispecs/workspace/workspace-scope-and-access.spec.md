@@ -10,6 +10,23 @@
 **Tracking Issue:** [jgwill/medicine-wheel#129](https://github.com/jgwill/medicine-wheel/issues/129)
 
 > [!IMPORTANT]
+> **The supersession below overreached — corrected 2026-09-06. See `STATUS.md`.**
+>
+> This document's **server model is the requirement**: scoped routes, an active workspace context
+> above the router, and one provider seam taking a scope per operation — that is one server serving
+> several workspaces, which is what was asked for. `workspace-definition.spec.md` replaced it with
+> one process per location, and that was the divergence.
+>
+> What remains fairly criticised is the **identity model** it leads with — memberships, `subject_id`,
+> capabilities, bilateral relation acceptance — which cannot be built before an identity contract
+> exists and should not gate the storage work. Deferring those was right. Discarding the server model
+> along with them was not.
+>
+> Read this document as the architecture of record for **scope**, with its identity surface deferred.
+> The original supersession banner follows, kept because the reasoning in it about the SaaS meaning of
+> "workspace" still holds.
+>
+> [!IMPORTANT]
 > **Definition superseded — 2026-09-06.** The `Workspace` *definition* in this document was
 > reviewed against prior art and revised in **`workspace-definition.spec.md`**. In short: this
 > document imported the SaaS meaning of "workspace" (billing + membership, as in Slack/Notion/
@@ -35,11 +52,11 @@
 
 ---
 
-> [!CAUTION]
-> **Answers the wrong question — see `STATUS.md` (2026-09-06).** The requirement is **one server that
-> resolves the store per request**, so choosing a workspace changes what the running server reads and
-> writes on disk. This folder assumes one server per location, with switching deferred to a slice it
-> does not plan. Do not implement from this document.
+> [!NOTE]
+> **Corrected 2026-09-06 — see `STATUS.md`.** The requirement is **one server that resolves the store
+> per request**: choosing a workspace changes what the running server reads and writes on disk. This
+> document has been corrected to that; where older sections still describe one server per location,
+> they say so.
 
 
 ## Desired Outcome

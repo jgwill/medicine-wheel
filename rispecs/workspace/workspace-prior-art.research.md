@@ -14,13 +14,12 @@
 ---
 
 > [!CAUTION]
-> **Answers the wrong question — see `STATUS.md` (2026-09-06).** The requirement is **one server that
-> resolves the store per request**, so choosing a workspace changes what the running server reads and
-> writes on disk. This folder assumes one server per location, with switching deferred to a slice it
-> does not plan.
+> **Diverged from the requirement — see `STATUS.md` (2026-09-06).** The requirement is **one server
+> that resolves the store per request**. This document was written assuming one server per location.
+> It is kept as evidence, not reverted. Read `STATUS.md` §6 for what in it survives.
 >
-> **This file is the exception worth keeping.** The sources were verified and still apply; what
-> was wrong is the conclusion drawn from them in `workspace-definition.spec.md`, not the research.
+> **The sources hold.** They were verified and still apply; what was wrong is the
+> conclusion drawn from them.
 
 
 ## The finding that reorganised everything

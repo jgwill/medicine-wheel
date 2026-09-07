@@ -1,17 +1,18 @@
-# STATUS — This Folder Answers the Wrong Question
+# DIVERGENCE — What Was Asked, What Was Built, and Where They Parted
 
 **Date:** 2026-09-06
-**State:** ⛔ Not the plan of record. Do not implement from it.
-**Recorded by:** the authoring agent, at the requester's instruction, after the misunderstanding was found in conversation.
+**State:** ⚠️ This folder diverged from the requirement. It is not reverted and not deleted — it is corrected here.
+**Recorded by:** the authoring agent, at the requester's instruction, after the divergence was found in conversation.
 
 ---
 
-## The requirement
+## 1. The requirement
 
-**One server. The workspace is chosen per request. The server reads and writes a different location on
-disk depending on which workspace was chosen.**
+**One running Medicine Wheel serves several workspaces. You choose one, and that same server reads
+and writes that workspace's location on disk. Agents on the network connect to the same app and say
+which workspace they are in.**
 
-That is what was asked for. It was stated plainly in conversation on 2026-09-06:
+Stated in conversation on 2026-09-06:
 
 > *"So we start one service And depending on which workspace I choose, it reads and it writes on
 > different location on disk?"*
@@ -19,86 +20,87 @@ That is what was asked for. It was stated plainly in conversation on 2026-09-06:
 and, when the answer came back as "no":
 
 > *"The whole logic doesn't work. I mean, we have a server. and it needs to work with different
-> workspaces. So my understanding is it has nothing... what your design has nothing to do with this."*
-
-That is correct. It does not.
+> workspaces."*
 
 ---
 
-## What this folder built instead
+## 2. It was knowable from the beginning
 
-A naming scheme for running **several servers**, one per location, each holding its store for the life
-of the process — with the ability to switch inside one server deferred to "Slice 3", the slice the
-documents describe as expensive and explicitly do not plan.
+`rispecs/docker-containerized-app.kin.md` was quoted in this folder as the origin of the definition.
+The full sentence:
 
-So the requirement was not deferred by accident. It was reclassified as the expensive part, and the
-cheap part shipped in its place. The cheap part is a way of *avoiding* the requirement, not a step
-toward it.
+> *"the goal is that on the network, we are capable to **connect all agent to the medicine-wheel
+> app** and potentially have many of them **opened in different workspace (project location)**."*
+
+Both halves are in one sentence. **One app. Many workspaces open at once.** This folder quoted the
+parenthesis — *(project location)* — and read it as *one server per location*, which is the opposite
+of what the first half of the same sentence says.
 
 ---
 
-## Where the actual work is
+## 3. What was built instead
 
-Two lines:
+A named binding, one process per location, each holding its store for the life of the process.
+Switching inside one server was reclassified as "Slice 3", described as expensive, and explicitly not
+planned. So the requirement was not overlooked — it was renamed the expensive part, and a cheaper
+thing shipped in its place.
+
+## 4. The worst part of the divergence
+
+**`workspace-scope-and-access.spec.md` — the document this folder superseded — already had the right
+server model.** Scoped routes (`/api/workspaces/:workspaceId/nodes`), an active workspace context
+above the router, one provider seam taking a scope per operation: that is one server serving many
+workspaces. It is the requirement.
+
+Its actual fault was leading with memberships, `subject_id`, capabilities and bilateral acceptance —
+an identity model that cannot be built yet. The revision was right to defer those, **and then threw
+out the server model along with them**, replacing it with one-process-per-location on the strength of
+prior art about client-side context switching (kubectl, VS Code, Compose). Those are tools where a
+*client* picks among many servers. This is a server that must serve many stores. Wrong analogy,
+correctly applied.
+
+---
+
+## 5. Where the work actually is
 
 ```
 lib/store.ts:32       const store = getJsonlStore();
 mcp/src/store.ts:49   export const store = createStore();
 ```
 
-Both are module-level. The location is resolved once, at import, and held until the process exits.
-No request can change it. Every route, every MCP tool and every CLI call downstream inherits that one
-store.
+Module-level. Location resolves once at import, held until the process exits, and no request can
+change it. Every route, MCP tool and CLI call downstream inherits that one store.
 
-**Making those resolve per request, from a workspace named in the request, is the feature.** The
-registry, the naming, the precedence chain and the slice ordering in this folder are decoration around
-those two lines — and the folder never says so.
+**Making the store resolve per request, from a workspace named in the request, is the feature.** Three
+questions follow from it, and they are the next work:
+
+1. How does a request name its workspace — path, header, or session?
+2. How does the server hold several open stores at once without reopening files on every call?
+3. What happens to those two constants and everything importing them?
 
 ---
 
-## What is still worth keeping
+## 6. What survives, and what is corrected
 
-- **`workspace-prior-art.research.md`** — the research holds. The kubectl `context` / `namespace`
-  split, HashiCorp's warning about shared backends, the Postgres tenancy patterns and the MCP
-  no-merge rule are all verified and all still apply. What was wrong is the conclusion drawn from
-  them, not the sources.
-- **ERD 1's `UNCLASSIFIED_COLLECTION`** — which stored families are workspace-owned versus global is
-  a real exercise, needed under any design, and not yet done.
-- **The port and reconciliation material in ERD 3** — several servers on one host still collide, and
-  `@medicine-wheel/infra` still detects it. That is real, it is just not the requirement.
-- **The honesty rules** — local configurability is not authenticated privacy; a visible relationship
-  is not an access grant; the `NodeType` union stays closed at six.
+| | Verdict |
+| --- | --- |
+| `workspace-prior-art.research.md` | **Sources hold.** The kubectl/Terraform/Postgres/MCP findings were verified. What was wrong is the conclusion drawn from them — see §4 |
+| `workspace-scope-and-access.spec.md` | **Restored in standing.** Its server model is the requirement. Its identity model stays deferred. The supersession banner overreached |
+| `workspace-erd-internal.md` (ERD 1) | **Closer to right than the revision.** Mandatory scope at the storage seam is exactly what per-request resolution needs. `UNCLASSIFIED_COLLECTION` is still the required exercise |
+| `workspace-erd-services.md` (ERD 3) | **Half right.** Ports, drift and reconciliation are real for several *hosts*. The one-process-per-binding premise is corrected |
+| `workspace-definition.spec.md` | **Definition corrected** — see §2 of that file |
+| `workspace-configuration.spec.md` | **Slice order corrected.** Per-request scope was third; it is first |
+| `workspace-display-analysis.md` | **Now applies.** It assumed a server that redraws on switch — which is the requirement, not a deferred slice |
+| `GOAL.md` | **Rewritten.** Its "several fires" described several servers |
 
-## What is void
+---
 
-- **`workspace-definition.spec.md`** — its definition ("a name for a store location and the service
-  that serves it") is built on one process per location. Under the real requirement one process
-  serves many locations, and the definition has to be rewritten from the request boundary inward,
-  not from the process outward.
-- **The four-slice cadence** — it puts the requirement third.
-- **The precedence chain's premise** — its top layer is `/api/workspaces/:id/nodes`, which assumes a
-  server answering for several workspaces. Written for the right system, then attached to a design
-  that cannot host it.
-- **`GOAL.md`'s second paragraph** — "an operator can keep several fires" describes several servers.
-  Wrong picture.
-
-## Also unresolved, from review
+## 7. Also unresolved, from review
 
 `jgwill/medicine-wheel#135` and `#136` (Mia, 2026-09-06) reviewed this folder against the tree and
-against the two `INPUT` files. Their findings stand independently of this status and are not
-superseded by it — in particular `G4`: the six hardcoded cards already encode two tiers (four
-repositories, two `#fragment` subjects on one repository), and no document in this folder read that
-data before proposing to replace it.
+against the two `INPUT` files. Those findings stand and are not superseded by this record. `G4` in
+particular is untouched by it: the six hardcoded cards encode two tiers — four repositories, and two
+`#fragment` subjects on one repository — and no document here read that data before proposing to
+replace it.
 
----
-
-## Next
-
-Start from the requirement, not from this folder:
-
-1. How does a request name its workspace, and how does a server resolve that name to a store — per
-   request, cheaply, without reopening files on every call?
-2. What happens to `lib/store.ts` and `mcp/src/store.ts`, which are the whole blocker?
-3. Only then: what is a workspace, in a system where one server holds many?
-
-🌸: Recorded rather than rewritten. The folder is evidence of a misunderstanding, and deleting it would delete the evidence.
+🌸: Recorded rather than reverted. The folder is the evidence of the divergence, and the correction is only legible next to it.

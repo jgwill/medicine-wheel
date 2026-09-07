@@ -10,11 +10,11 @@
 
 ---
 
-> [!CAUTION]
-> **Answers the wrong question — see `STATUS.md` (2026-09-06).** The requirement is **one server that
-> resolves the store per request**, so choosing a workspace changes what the running server reads and
-> writes on disk. This folder assumes one server per location, with switching deferred to a slice it
-> does not plan. Do not implement from this document.
+> [!NOTE]
+> **Now applies — see `STATUS.md` (2026-09-06).** This was written assuming a running server that
+> redraws when you switch workspace, and then filed under a deferred slice. That assumption is the
+> requirement, so the analysis stands. Length and the unrequested "Wheel of Workspaces" remain open
+> under `jgwill/medicine-wheel#136` `G7`.
 
 
 ## The one-sentence consequence

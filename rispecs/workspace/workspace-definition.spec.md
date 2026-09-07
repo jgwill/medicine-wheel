@@ -15,11 +15,11 @@
 
 ---
 
-> [!CAUTION]
-> **Answers the wrong question — see `STATUS.md` (2026-09-06).** The requirement is **one server that
-> resolves the store per request**, so choosing a workspace changes what the running server reads and
-> writes on disk. This folder assumes one server per location, with switching deferred to a slice it
-> does not plan. Do not implement from this document.
+> [!NOTE]
+> **Corrected 2026-09-06 — see `STATUS.md`.** The requirement is **one server that resolves the store
+> per request**: choosing a workspace changes what the running server reads and writes on disk. This
+> document has been corrected to that; where older sections still describe one server per location,
+> they say so.
 
 
 ## 1. Why the inherited definition was questioned
@@ -55,12 +55,34 @@ document's real contribution and this revision keeps every one of them.
 
 ## 2. The definition
 
-> **A workspace is a named, resolvable binding of one Medicine Wheel — its store location, its
-> storage provider, and the service endpoints that serve it — under a stable identity that people,
-> services, and agents can refer to.**
+> **A workspace is a named store location that a request can select, and that one running server
+> resolves per request — so the same server reads and writes a different location depending on which
+> workspace the request named.**
 >
-> **Data scope is a consequence of the binding, not the definition of it. Access control attaches
-> to the binding later, and is never implied by it.**
+> **The name and the registry exist to make that selection possible. Access control attaches later
+> and is never implied by it.**
+
+**Corrected 2026-09-06 — see `DIVERGENCE` in `STATUS.md`.** The definition previously read here was
+*"a named, resolvable binding of one Medicine Wheel — its store location, its storage provider, and
+the service endpoints that serve it."* That is one process per location, with switching between
+locations deferred. It is the wrong shape: the requirement is one server serving several locations at
+once. `§2.2` and `§2.3` below still describe the superseded shape and are corrected in `§2.0`.
+
+### 2.0 What per-request resolution requires
+
+Three things, and none of them is a name:
+
+1. **A request carries a workspace.** Path segment, header, or session — the mechanism is open; that
+   it is *on the request* is not.
+2. **The server holds several open stores at once**, keyed by workspace, rather than one resolved at
+   import. `lib/store.ts:32` and `mcp/src/store.ts:49` are the module-level constants that make this
+   impossible today, and changing them is the feature.
+3. **Every operation downstream takes the resolved store**, so no route, tool or helper can reach a
+   store it was not handed.
+
+That third point is what `workspace-scope-and-access.spec.md` called mandatory scope at the storage
+seam, and what ERD 1 draws as `workspace_id` in the primary key. **Those were right.** This document
+superseded them in favour of separate processes, which is the divergence.
 
 ### 2.1 It already exists; it is anonymous
 
@@ -87,7 +109,7 @@ The single biggest correction. Prior art keeps these separate and so must we:
 
 | Layer | What it is | Where it lives | Enforced by | Exists today |
 | --- | --- | --- | --- | --- |
-| **Binding** | A name → location + provider + endpoints | Client/operator config | Nothing — it is a convenience | Anonymously, in `mwsrv` flags |
+| **Selection** | A name a request carries, resolved to a store per request | Server, at the request boundary | The resolver — not a convenience | No: resolved once at import |
 | **Scope** | The boundary a request may touch | Server, at the storage seam | Provider + API | No |
 | **Governance** | Who may do what, and how wheels relate | Server, after identity | Authz | No |
 
@@ -295,27 +317,26 @@ model, not a security property.
 
 ---
 
-## 5. Revised delivery cadence
+## 5. Delivery cadence — corrected 2026-09-06
 
-**Slice 1 — Name the binding that already exists.**
-Registry of `WorkspaceBinding` records; `mw workspace list|add|use|current`; `mwsrv --workspace <id>`
-resolving location, provider and port; `mw status` printing the active binding; adopt the current
-`.mw/store` as the default binding. *No data-model change at all.* Isolation comes from the location,
-exactly as Terraform recommends. This slice is shippable, useful immediately, and reversible.
+The cadence previously here put per-request scope **third**, behind naming and service legibility.
+That deferred the requirement. Corrected:
 
-**Slice 2 — Make services legible.**
-Bindings declare `ServiceFacet` + `PortBinding`; `detectPortConflicts` before start; `mw workspace
-status` reports drift via `reconcile()`; every MCP tool response names its workspace.
+**Slice 1 — Per-request store resolution.** A request names its workspace; the server resolves it to
+a store and hands that store to every operation downstream. `lib/store.ts` and `mcp/src/store.ts`
+stop being module-level constants. One workspace registry, so a name resolves to a location. This is
+the feature; nothing below is usable without it.
 
-**Slice 3 — Scope inside a shared store.**
-Only now the `workspace_id` work: mandatory scope at the storage seam, composite keys, scoped routes,
-migration into a legacy/default binding. This is the expensive slice and it is *third*, because
-Slices 1–2 deliver most of the value without it.
+**Slice 2 — The switch means something.** The UI selection, the `mw --workspace` flag and the MCP
+tool argument all reach the resolver. Every response names the workspace it answered from. Existing
+data adopted into a default workspace.
 
-**Slice 4 — Identity, then governance.**
-Memberships, capabilities, relation lifecycle, working sets. Nothing here is claimed before it runs.
+**Slice 3 — Several servers, several hosts.** Ports, conflict detection, declared-versus-observed
+drift. Real, and orthogonal: it is about running more than one server, not about one server serving
+more than one workspace. `workspace-erd-services.md` covers it.
 
----
+**Slice 4 — Identity, then governance.** Memberships, capabilities, relation lifecycle. Unchanged,
+still blocked, still not claimed before it runs.
 
 ## 6. Quality criteria
 
