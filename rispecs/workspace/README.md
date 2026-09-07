@@ -1,5 +1,12 @@
 # `rispecs/workspace/` — The Workspace Specification Set
 
+> [!CAUTION]
+> **Answers the wrong question — see `STATUS.md` (2026-09-06).** The requirement is **one server that
+> resolves the store per request**, so choosing a workspace changes what the running server reads and
+> writes on disk. This folder assumes one server per location, with switching deferred to a slice it
+> does not plan. Do not implement from this document.
+
+
 > Everything the Medicine Wheel knows about **wheel workspaces**: what one is, what it would take to
 > stop hardcoding them, how they relate to each other, and what happens to the drawn wheel once it
 > is drawn per workspace.
@@ -53,6 +60,7 @@ The npm array is not being renamed; the new concept is always qualified in code
 | File | Kind | Purpose |
 | --- | --- | --- |
 | `GOAL.md` | Statement of intent | **Read this first.** What configurable workspaces are *for*, in two paragraphs, before any mechanism |
+| `STATUS.md` | **Record — read first** | Why this folder answers the wrong question, what survives, and where the actual work is (`lib/store.ts:32`, `mcp/src/store.ts:49`) |
 | `INPUT.md` | Record | First request, verbatim — implications, ERDs, display analysis |
 | `INPUT-02.md` | Record | Second request, verbatim — question the definition, research it, name the service layer |
 | `workspace-definition.spec.md` | **RISE spec — current definition** | **Start here.** The revised, grounded definition: six problems with the inherited one, `WorkspaceBinding`, three layers, whole-binding resolution, the service configuration layer, revised 4-slice cadence |

@@ -10,6 +10,13 @@
 
 ---
 
+> [!CAUTION]
+> **Answers the wrong question — see `STATUS.md` (2026-09-06).** The requirement is **one server that
+> resolves the store per request**, so choosing a workspace changes what the running server reads and
+> writes on disk. This folder assumes one server per location, with switching deferred to a slice it
+> does not plan. Do not implement from this document.
+
+
 ## The one-sentence consequence
 
 Today the wheel's shape is a property of *the deployment*; after scoping it becomes a property of
