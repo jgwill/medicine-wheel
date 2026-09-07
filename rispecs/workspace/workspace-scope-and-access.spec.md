@@ -52,11 +52,12 @@
 
 ---
 
-> [!NOTE]
-> **Corrected 2026-09-06 — see `STATUS.md`.** The requirement is **one server that resolves the store
-> per request**: choosing a workspace changes what the running server reads and writes on disk. This
-> document has been corrected to that; where older sections still describe one server per location,
-> they say so.
+> [!CAUTION]
+> **Not settled — see `STATUS.md` §0 (2026-09-06).** The requirement has been stated three times and
+> this folder matches none of them. The requester's last statement is **one storage location, many
+> workspaces held inside it, one deployment** — not the several-locations-per-request model this
+> document was corrected to. In the requester's words: *"we did not understood each other on the
+> definition of the workspace."* Read this folder as evidence of two attempts, not as a plan.
 
 
 ## Desired Outcome

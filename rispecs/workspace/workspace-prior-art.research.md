@@ -20,6 +20,11 @@
 >
 > **The sources hold.** They were verified and still apply; what was wrong is the
 > conclusion drawn from them.
+>
+> **Still not settled — `STATUS.md` §0.** The requirement was stated a third time after this banner
+> was written: **one storage location, many workspaces inside it.** That is not the several-locations
+> model this folder was corrected to, and the two are still both present. The requester's words:
+> *"we did not understood each other on the definition of the workspace."*
 
 
 ## The finding that reorganised everything

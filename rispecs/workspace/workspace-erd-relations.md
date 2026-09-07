@@ -15,6 +15,11 @@
 > **Diverged from the requirement — see `STATUS.md` (2026-09-06).** The requirement is **one server
 > that resolves the store per request**. This document was written assuming one server per location.
 > It is kept as evidence, not reverted. Read `STATUS.md` §6 for what in it survives.
+>
+> **Still not settled — `STATUS.md` §0.** The requirement was stated a third time after this banner
+> was written: **one storage location, many workspaces inside it.** That is not the several-locations
+> model this folder was corrected to, and the two are still both present. The requester's words:
+> *"we did not understood each other on the definition of the workspace."*
 
 
 ## Why this is a separate diagram

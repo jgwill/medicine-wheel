@@ -1,12 +1,71 @@
 # DIVERGENCE — What Was Asked, What Was Built, and Where They Parted
 
 **Date:** 2026-09-06
-**State:** ⚠️ This folder diverged from the requirement. It is not reverted and not deleted — it is corrected here.
-**Recorded by:** the authoring agent, at the requester's instruction, after the divergence was found in conversation.
+**State:** ⛔ **Not settled.** The requirement has been stated three times; this folder has been
+corrected twice and matches none of the three. The requester does not consider the definition agreed.
+**Recorded by:** the authoring agent, at the requester's instruction, after the divergence was found
+in conversation. **§0 added by a second agent after the requirement was stated a third time.**
 
 ---
 
-## 1. The requirement
+## 0. The requirement, stated a third time — and this record is not the last word
+
+§1 below states the requirement as *one server resolving **that workspace's location** on disk*. The
+requester's words later the same day say something narrower:
+
+> *"what we want is we want the storage to be **in the same location** and be capable of supporting
+> multiple workspaces. At least this was the idea at the beginning and the whole discussion with both
+> of you has led somewhere else that I don't think starting a server will support what we need."*
+
+> *"we load up the web page, and there are workspaces in there. So I don't see how we're gonna be
+> able to serve that inside of, based on the specifications and what we did. So we we did not
+> understood each other on the definition of the workspace."*
+
+**One storage location. Many workspaces inside it. One deployment. Chosen in the web page.**
+
+That is not several locations resolved per request. It is one store, partitioned — `workspace_id` on
+owned records with composite keys, the shape `workspace-scope-and-access.spec.md` and ERD 1 already
+carry, and the shape §6 below correctly restores to standing.
+
+**The correction of 2026-09-06 landed on both designs at once, and they are not the same design.**
+`workspace-definition.spec.md` §2 now defines a workspace as *"a named store location … so the same
+server reads and writes a **different location** depending on which workspace the request named"* —
+several stores, one switching server. Its own §2.0 point 3 then requires mandatory scope at the
+storage seam and points at ERD 1's `workspace_id` in the primary key — **one** store, partitioned.
+A document cannot be built from both. Neither statement is marked as the one that governs.
+
+This is not a drafting slip to be tidied. It is the same disagreement, still live, now inside one
+file: **is a workspace a place the server switches to, or a partition inside the place it is already
+in?** Nobody has answered that, and every correction so far has been made without answering it.
+
+### The requester's own account of the day
+
+Recorded because a status file that reads more settled than the person it reports to is not a status
+file:
+
+> *"it's pretty much like we did some bullshit today … I want that to be reflected in respected
+> words."*
+
+> *"or if that's not a failure, and this is why I wanna leave it there, it's… I don't understand, uh,
+> and I don't think my feeling is really… it's not gonna serve us."*
+
+**Whether this is a failure is left open, at the requester's instruction.** Not softened into a
+recovery, not hardened into a verdict. What is not in dispute is narrower: the word *workspace* was
+specified at length before it was agreed, by two agents and a person who each meant something
+different, and none of them checked. Eleven documents, three statements of the requirement, two
+corrections, and the definition is still open.
+
+### For whoever reads this next
+
+Do not read §§1–7 as a corrected plan. Read them as the record of two attempts that each believed
+they had understood. The next move is not another correction of this folder — it is agreeing what a
+workspace is, with the requester, before anything else is written. `jgwill/medicine-wheel#136` `G4`
+is the evidence to start from: the six cards in `components/workspaces-panel.tsx` are two tiers, and
+they were sitting in the code the whole time.
+
+---
+
+## 1. The requirement, as recorded on the first correction
 
 **One running Medicine Wheel serves several workspaces. You choose one, and that same server reads
 and writes that workspace's location on disk. Agents on the network connect to the same app and say

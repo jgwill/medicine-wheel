@@ -22,6 +22,11 @@
 > | 2 — precedence chain | **Withdrawn.** The normative chain is `workspace-definition.spec.md` §2.4 |
 > | 3 — scoping every read and write | Still the largest cost here, but it is **Slice 3**, not Slice 1 |
 > | 4–8 — serving surfaces, migration, release, the privacy claim, the closed ontology | Unchanged |
+>
+> **Still not settled — `STATUS.md` §0.** The requirement was stated a third time after this banner
+> was written: **one storage location, many workspaces inside it.** That is not the several-locations
+> model this folder was corrected to, and the two are still both present. The requester's words:
+> *"we did not understood each other on the definition of the workspace."*
 
 ---
 
