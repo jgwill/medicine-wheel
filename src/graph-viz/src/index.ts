@@ -27,6 +27,12 @@ export type {
 
 // ── Layout Engine ───────────────────────────────────────────────────────────
 export {
+  applyLineageLayout,
+  DEFAULT_LINEAGE_LAYOUT,
+} from './lineage-layout.js';
+export type { LineageLayoutConfig, LineageLayoutResult } from './lineage-layout.js';
+
+export {
   applyWheelLayout,
   DEFAULT_LAYOUT,
   getQuadrantGeometries,

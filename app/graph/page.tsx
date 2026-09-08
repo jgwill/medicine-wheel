@@ -23,6 +23,7 @@ import {
 import { type RelationalNode, type RelationalEdge, DIRECTION_COLORS } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
+  applyLineageLayout,
   applyWheelLayout,
   buildGraphData,
   type MWGraphData,
@@ -74,11 +75,17 @@ const GRAPH_COMPONENT_LINKS = [
   { href: "/accountability", label: "Accountability", icon: ShieldCheck },
 ];
 
-function graphNodePositions(data: MWGraphData): MWGraphNodePositions {
-  const laidOut = applyWheelLayout({
-    nodes: data.nodes.map((node) => ({ ...node })),
-    links: data.links,
-  });
+function graphNodePositions(
+  data: MWGraphData,
+  mode: "wheel" | "lineage" = "wheel",
+): MWGraphNodePositions {
+  const laidOut =
+    mode === "lineage"
+      ? applyLineageLayout({ nodes: data.nodes.map((node) => ({ ...node })), links: data.links })
+      : applyWheelLayout({
+          nodes: data.nodes.map((node) => ({ ...node })),
+          links: data.links,
+        });
   const positions: MWGraphNodePositions = {};
 
   for (const node of laidOut.nodes) {
@@ -119,6 +126,18 @@ export default function GraphPage() {
     rootName: string | null;
   } | null>(null);
   const [storeTotal, setStoreTotal] = useState<number | null>(null);
+  /**
+   * The wheel answers "what direction is this?" and cannot answer "what came
+   * before this?" — a circle has no before. Lineage lays x as time and y as
+   * direction, which is only honest because episodes carry `occurred_at`:
+   * `created_at` is when the wheel LEARNED of a node, and 34 of 76 episodes
+   * disagreed with it, episode 001 by four months.
+   */
+  const [layoutMode, setLayoutMode] = useState<"wheel" | "lineage">("wheel");
+  const [lineageMeta, setLineageMeta] = useState<{
+    span: { from: string; to: string } | null;
+    undated: number;
+  } | null>(null);
   const [highlightDirection, setHighlightDirection] = useState<DirectionParam | undefined>(undefined);
   const [radialSnap, setRadialSnap] = useState<"off" | "ring" | "sector">("off");
   const [loading, setLoading] = useState(true);
@@ -352,13 +371,35 @@ export default function GraphPage() {
   useEffect(() => {
     if (!layoutsHydrated || graph.nodes.length === 0) return;
 
+    // Choosing lineage re-seeds unconditionally: it is a different question
+    // about the same graph, not a nudge to the current arrangement, and keeping
+    // a saved wheel disposition would leave the beings where the circle put
+    // them while claiming to show time.
+    if (layoutMode === "lineage") {
+      const laid = applyLineageLayout({
+        nodes: graph.nodes.map((n) => ({ ...n })),
+        links: graph.links,
+      });
+      const positions: MWGraphNodePositions = {};
+      for (const n of laid.nodes) {
+        if (typeof n.x === "number" && typeof n.y === "number") {
+          positions[n.id] = { x: n.x, y: n.y };
+        }
+      }
+      setLineageMeta({ span: laid.span, undated: laid.undated.length });
+      saveLayoutStore(upsertCurrentGraphLayout(layoutStoreRef.current, positions));
+      return;
+    }
+
+    setLineageMeta(null);
+
     const activeLayout = getActiveGraphLayout(layoutStoreRef.current);
     if (Object.keys(activeLayout.positions).length > 0) return;
 
     saveLayoutStore(
       upsertCurrentGraphLayout(layoutStoreRef.current, graphNodePositions(graph)),
     );
-  }, [graph, layoutsHydrated, saveLayoutStore]);
+  }, [graph, layoutsHydrated, saveLayoutStore, layoutMode]);
 
   const ceremoniedCount = useMemo(
     () => graph.links.filter((l) => l.ceremonyHonored).length,
@@ -572,6 +613,17 @@ export default function GraphPage() {
             >
               Snap {radialSnap === "off" ? "OFF" : radialSnap.toUpperCase()}
             </button>
+            <button
+              onClick={() => setLayoutMode(layoutMode === "wheel" ? "lineage" : "wheel")}
+              className={`min-h-11 px-3 py-1.5 rounded text-sm ${layoutMode === "lineage" ? "bg-yellow-400/20 text-yellow-200" : "bg-white/5 hover:bg-white/10"}`}
+              title={
+                layoutMode === "wheel"
+                  ? "Lay the beings out by when they happened, left to right"
+                  : "Return to the four-direction wheel"
+              }
+            >
+              {layoutMode === "wheel" ? "Wheel" : "Lineage"}
+            </button>
             <button onClick={loadData} className="min-h-11 px-3 py-1.5 rounded text-sm bg-white/5 hover:bg-white/10 inline-flex items-center gap-2">
               <RefreshCw className="h-4 w-4" /> Refresh
             </button>
@@ -631,6 +683,29 @@ export default function GraphPage() {
             {scopeMeta?.truncated && (
               <p className="mt-1 text-xs text-gray-500">
                 stopped at the depth limit — there is more further out
+              </p>
+            )}
+          </div>
+        )}
+
+        {layoutMode === "lineage" && lineageMeta && (
+          <div className="mb-3 rounded-xl border border-yellow-400/30 bg-yellow-400/5 px-3 py-2 text-sm">
+            <span className="text-gray-300">
+              Laid out by when things happened
+              {lineageMeta.span && (
+                <>
+                  {" — "}
+                  <span className="text-yellow-300">{lineageMeta.span.from}</span> to{" "}
+                  <span className="text-yellow-300">{lineageMeta.span.to}</span>
+                </>
+              )}
+              . Left to right is time; the bands are the four directions.
+            </span>
+            {lineageMeta.undated > 0 && (
+              <p className="mt-1 text-xs text-gray-500">
+                {lineageMeta.undated} of {graph.nodes.length} carry no{" "}
+                <code>occurred_at</code> and are placed by when the wheel recorded them —
+                registration order, not history.
               </p>
             )}
           </div>
