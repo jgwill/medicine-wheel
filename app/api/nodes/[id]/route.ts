@@ -70,7 +70,35 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const store = await createProvider();
-    const node = await store.updateNode(id, parsed.data);
+
+    // `metadata` MERGES. It used to replace, and that cost 76 episode nodes
+    // their `kind`, `contract`, `schema_version`, `root`, `relative_path`,
+    // `parent_id`, `status` and `source_issue` on 2026-09-08 — a migration sent
+    // `{metadata: {occurred_at}}` intending to add one key, got 200 OK seventy-six
+    // times, and silently emptied the rest. `chronicle_episode` fell from 85 to 9.
+    //
+    // Replace-on-PATCH is a landmine because every caller reasonably assumes
+    // otherwise: PATCH means "change these fields", and a nested object that
+    // silently drops its siblings breaks that everywhere it is used. A caller
+    // that genuinely wants to clear a key now says so with `null`.
+    let patch = parsed.data;
+    if (patch.metadata) {
+      const existing = await store.getNode(id);
+      if (existing) {
+        const merged: Record<string, unknown> = {
+          ...(existing.metadata ?? {}),
+          ...patch.metadata,
+        };
+        // Explicit null removes a key — the only way to shrink metadata, and it
+        // has to be asked for rather than being the accidental default.
+        for (const [key, value] of Object.entries(patch.metadata)) {
+          if (value === null) delete merged[key];
+        }
+        patch = { ...patch, metadata: merged };
+      }
+    }
+
+    const node = await store.updateNode(id, patch);
     return NextResponse.json({ success: true, node, provider: detectProvider() });
   } catch (error: unknown) {
     if (error instanceof NodeNotFoundError) return notFound(error.nodeId);
