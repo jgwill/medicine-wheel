@@ -224,4 +224,4 @@ available via a local `MW_MCP_PATH`.
 
 ## License
 
-MIT  see [LICENSE](LICENSE)
+Indigenous Knowledge Stewardship License (IKSL) v1.0 MIT Derived   see [LICENSE](LICENSE)
