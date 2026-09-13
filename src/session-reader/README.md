@@ -62,7 +62,27 @@ import type { SessionEvent, SessionFilters } from '@medicine-wheel/session-reade
 import { listSessions, searchSessions } from '@medicine-wheel/session-reader/sessions';
 ```
 
+## Configuration
+
+The reader locates the `_sessiondata/` root in this order:
+
+| Source | Value |
+|--------|-------|
+| `SESSION_DATA_DIR` environment variable | Used as-is (resolved to an absolute path) when set |
+| Default | `_sessiondata/` beneath the current working directory |
+
+The package carries no machine-specific default. Call `getSessionDir()` to see
+which directory a given process will read.
+
+```bash
+SESSION_DATA_DIR=/srv/agents/_sessiondata node my-report.js
+```
+
 ## API Reference
+
+### Session directory
+
+**`getSessionDir()`** — The absolute `_sessiondata/` path the reader will use, after applying `SESSION_DATA_DIR`.
 
 ### Session listing
 

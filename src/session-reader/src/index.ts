@@ -34,4 +34,5 @@ export {
   searchSessions,
   readSessionFile,
   getLatestEvents,
+  getSessionDir,
 } from './sessions.js';
