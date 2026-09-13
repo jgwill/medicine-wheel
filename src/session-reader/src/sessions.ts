@@ -9,10 +9,18 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import type { SessionSummary, SessionEvent, SessionAnalytics, SessionFilters } from './types.js';
 
-const DEFAULT_SESSION_DATA_DIR = '/a/src/_sessiondata';
-
-function getSessionDir(): string {
-  return process.env.SESSION_DATA_DIR || DEFAULT_SESSION_DATA_DIR;
+/**
+ * Resolve the `_sessiondata/` root.
+ *
+ * `SESSION_DATA_DIR` wins when set. Otherwise the reader looks for a
+ * `_sessiondata/` directory beneath the current working directory — the
+ * package is codebase-agnostic and must not carry any one machine's layout
+ * as a default.
+ */
+export function getSessionDir(): string {
+  const configured = process.env.SESSION_DATA_DIR;
+  if (configured && configured.trim()) return path.resolve(configured);
+  return path.resolve(process.cwd(), '_sessiondata');
 }
 
 function parseJsonlLines(content: string): Record<string, unknown>[] {
