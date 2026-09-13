@@ -110,6 +110,16 @@ jobs:
         id: typecheck
         run: npx tsc --noEmit -p tsconfig.json
 
+      - name: Lint
+        id: lint
+        run: npm run lint
+
+      # Every @medicine-wheel import must be declared by the package that ships it.
+      # The 2026-08-02 `Cannot find module` release would have failed here.
+      - name: Declared dependencies
+        id: deps
+        run: npm run check:deps
+
       - name: Test
         id: test
         run: npx vitest run
@@ -184,6 +194,8 @@ jobs:
             echo "|---|---|"
             echo "| build packages + cli | ${{ steps.build.outcome || 'did not run' }} |"
             echo "| typecheck | ${{ steps.typecheck.outcome || 'did not run' }} |"
+            echo "| lint | ${{ steps.lint.outcome || 'did not run' }} |"
+            echo "| declared dependencies | ${{ steps.deps.outcome || 'did not run' }} |"
             echo "| tests | ${{ steps.test.outcome || 'did not run' }} |"
             echo "| pack check (cold rebuild) | ${{ steps.pack.outcome || 'did not run' }} |"
             echo "| registry dry-run | ${{ steps.publish_dry.outcome || 'did not run' }} |"

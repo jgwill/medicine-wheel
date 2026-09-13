@@ -45,7 +45,7 @@ export interface RegisterOutcome {
 /** Minimal YAML reader for the beats file — avoids a dependency for one shape. */
 function readBeatsFile(file: string): { cycle_id: string | null; cycle_question?: string; beats: any[] } {
   // js-yaml ships with the app; require lazily so the CLI stays usable without it.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const yaml = require('js-yaml');
   const parsed = yaml.load(fs.readFileSync(file, 'utf8'));
   if (!parsed || typeof parsed !== 'object') {

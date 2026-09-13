@@ -8,6 +8,16 @@ import { extractCeremonyLogs } from "@/lib/ceremony-response";
 import { relativeTime, absoluteTime } from "@/lib/format-time";
 import { toast } from "sonner";
 
+// Static tables — module scope so they are one object for the life of the page,
+// not re-created on every render. `PHASE_FOR_DIRECTION` used to be declared inside
+// the component and read by a `useMemo` that did not list it: correct only by
+// accident of it never changing, and flagged by react-hooks/exhaustive-deps.
+const directions: DirectionName[] = ["east", "south", "west", "north"];
+const cTypes: CeremonyType[] = ["smudging", "talking_circle", "spirit_feeding", "opening", "closing"];
+const DIRECTION_ICONS: Record<DirectionName, string> = { east: "🌅", south: "🌞", west: "🌄", north: "❄️" };
+const PHASE_FOR_DIRECTION: Record<DirectionName, string> = { east: "opening", south: "council", west: "integration", north: "closure" };
+
+
 const dirVar = (d: string) => `var(--mw-${d})`;
 const dirInk = (d: string) => `var(--mw-${d}-ink)`;
 
@@ -64,15 +74,10 @@ function CeremoniesContent() {
     } else { toast.error("Could not save the ceremony — check the form and try again"); }
   }
 
-  const directions: DirectionName[] = ["east", "south", "west", "north"];
-  const cTypes: CeremonyType[] = ["smudging", "talking_circle", "spirit_feeding", "opening", "closing"];
-  const DIRECTION_ICONS: Record<DirectionName, string> = { east: "🌅", south: "🌞", west: "🌄", north: "❄️" };
-
-  const phaseMap: Record<DirectionName, string> = { east: "opening", south: "council", west: "integration", north: "closure" };
   const currentPhase = useMemo(() => {
     if (ceremonies.length === 0) return "opening";
     const latest = [...ceremonies].sort((a, b) => b.timestamp.localeCompare(a.timestamp))[0];
-    return phaseMap[latest.direction] ?? "opening";
+    return PHASE_FOR_DIRECTION[latest.direction] ?? "opening";
   }, [ceremonies]);
 
   const phaseFramings: Record<string, string> = {
