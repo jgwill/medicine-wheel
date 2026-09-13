@@ -79,20 +79,14 @@ package would have found it.
 **Detect this class of defect before publishing:**
 
 ```bash
-python3 - <<'PY'
-import json,re,os
-decl=set(json.load(open('package.json')).get('dependencies',{}))
-used=set()
-for root,_,files in os.walk('dist/cli'):
-    for f in files:
-        if f.endswith('.js'):
-            t=open(os.path.join(root,f)).read()
-            used|={m.group(1) for m in re.finditer(r'require\(["\'](@medicine-wheel/[^"\']+)["\']\)',t)}
-            used|={m.group(1) for m in re.finditer(r'from\s+["\'](@medicine-wheel/[^"\']+)["\']',t)}
-missing=sorted(u for u in used if '/'.join(u.split('/')[:2]) not in decl)
-print('MISSING from dependencies:', missing or 'none')
-PY
+npm run check:deps      # scripts/check-declared-deps.mjs — exit 1 on any undeclared import
 ```
+
+It scans the **source** of everything the root package ships (`app/`, `components/`, `hooks/`,
+`lib/`, `cli/`, plus `dist/cli` when built) and the `src/` of every workspace package, and fails
+if any `@medicine-wheel/*` import is not in that package's own `dependencies`. The earlier
+inline snippet looked only at `dist/cli` — blind to `app/` and `lib/`, which ship in the same
+tarball and import the suite just as freely. CI runs this in the verify job.
 
 ---
 
