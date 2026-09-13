@@ -15,11 +15,12 @@
  * Pure functions only. Persistence is the caller's concern — pass the
  * returned beat to storage-provider, data-store, or the MW server.
  */
-import type {
-  NarrativeBeat,
-  BeatOrigin,
-  MedicineWheelCycle,
-  DirectionName,
+import {
+  DIRECTION_ACTS,
+  type NarrativeBeat,
+  type BeatOrigin,
+  type MedicineWheelCycle,
+  type DirectionName,
 } from '@medicine-wheel/ontology-core';
 
 // ─── Drafts ───────────────────────────────────────────────────────
@@ -70,13 +71,17 @@ export interface CreateBeatOptions {
 
 // ─── Direction ↔ Act ──────────────────────────────────────────────
 
-/** The sunwise order: East opens, South grows, West reflects, North integrates. */
-export const ACT_FOR_DIRECTION: Record<DirectionName, number> = {
-  east: 1,
-  south: 2,
-  west: 3,
-  north: 4,
-};
+/**
+ * The sunwise order: East opens, South grows, West reflects, North integrates.
+ *
+ * One clock, not two. This used to be a local literal identical to
+ * `DIRECTION_ACTS` in ontology-core while `sequencer.ts`, in this same
+ * package, imported the ontology's copy. Two maps that agree today can be
+ * edited apart tomorrow; the engine now re-exports the ontology's constant so
+ * a beat's act and the sequencer's next act can never come from different
+ * tables.
+ */
+export const ACT_FOR_DIRECTION: Record<DirectionName, number> = DIRECTION_ACTS;
 
 /** The act a direction naturally belongs to. */
 export function actForDirection(direction: DirectionName): number {

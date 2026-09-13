@@ -6,7 +6,7 @@
  * Input is the minimal `ClusterableEvent` shape, so any source (transcript,
  * rushes, notes) flows through without a hard dependency on perception-layer.
  */
-import type { NarrativeBeat, DirectionName } from '@medicine-wheel/ontology-core';
+import { DIRECTION_ACTS, type NarrativeBeat, type DirectionName } from '@medicine-wheel/ontology-core';
 
 export type ClusterKind = 'shot-sequence' | 'sound-environment' | 'relational-moment';
 
@@ -49,12 +49,10 @@ const THEME_FOR_KIND: Record<ClusterKind, string> = {
 
 const CLUSTER_ORDER: ClusterKind[] = ['shot-sequence', 'sound-environment', 'relational-moment'];
 
-const ACT_FOR_DIRECTION: Record<DirectionName, number> = {
-  east: 1,
-  south: 2,
-  west: 3,
-  north: 4,
-};
+// The direction→act table is the ontology's, not this package's. A third local
+// copy lived here until 2026-09-13; see narrative-engine/beats.ts for why one
+// clock is kept.
+const ACT_FOR_DIRECTION: Record<DirectionName, number> = DIRECTION_ACTS;
 
 /** Group events into cinematic clusters, preserving stream order within each. */
 export function clusterEvents(events: ClusterableEvent[]): NarrativeCluster[] {
