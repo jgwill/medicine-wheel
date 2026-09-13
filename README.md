@@ -30,7 +30,14 @@ storage alongside its composable libraries.
     ├── @medicine-wheel/relational-query     ← Query, traversal & audit
     ├── @medicine-wheel/prompt-decomposition ← Intent extraction & PDE
     ├── @medicine-wheel/ui-components        ← React components
-    ├── @medicine-wheel/data-store           ← Shared data access
+    ├── @medicine-wheel/data-store           ← Shared data access (Redis)
+    ├── @medicine-wheel/data-store-postgres  ← PostgreSQL / Neon provider scaffold
+    ├── @medicine-wheel/storage-provider     ← Canonical persistence contract (JSONL ⇄ Neon)
+    ├── @medicine-wheel/infra                ← Hosts, tenants, services, port bindings as facets
+    ├── @medicine-wheel/perception-layer     ← Witness recordings as typed perceptual events
+    ├── @medicine-wheel/narrative-cluster    ← Events → clusters → beats → Film Edit Brief
+    ├── @medicine-wheel/ceremonial-diary     ← A participant's voice across the Five Phases
+    ├── @medicine-wheel/github-ceremony      ← GitHub webhooks as ceremony beads
     └── @medicine-wheel/session-reader       ← Session event data reader
 
 @medicine-wheel/creative-orientation      ← The question asked before the work
@@ -134,6 +141,41 @@ Session event reader — JSONL parsing, session summaries, analytics extraction,
 
 - **Dependencies:** None (Node.js built-ins only)
 
+### [@medicine-wheel/storage-provider](src/storage-provider)
+The canonical persistence contract. One `StorageProvider` interface with two first-class equals behind it — a JSONL file store for a project's `.mw/store/` and a Neon (Postgres) store — plus typed relational refusals and the capture, inquiry-weave and plan-perspective registries. The app, the MCP server and every package that persists go through this door.
+
+- **Dependencies:** `@medicine-wheel/ontology-core`, `@neondatabase/serverless`, `@upstash/redis`
+
+### [@medicine-wheel/data-store-postgres](src/data-store-postgres)
+Minimal `pg` scaffold — shared pool management and provider-ready storage entrypoints. Explicitly not a competing provider architecture; `storage-provider` owns the contract.
+
+- **Dependencies:** `@medicine-wheel/ontology-core`, `pg`
+
+### [@medicine-wheel/infra](src/infra)
+Typed infrastructure facets — hosts, tenants, services and port bindings — keyed by relational node id, with `detectPortConflicts` over declared ∪ observed state. Types plus one pure function: zero I/O, zero persistence. A running service is registered as a `knowledge` node carrying `metadata.kind: "service"`, never as a new node type.
+
+- **Dependencies:** `@medicine-wheel/ontology-core`, `zod`
+
+### [@medicine-wheel/perception-layer](src/perception-layer)
+Eyes and ears of agent-supported film production — witness a belt-device recording as typed perceptual events and seed a production knowledge graph.
+
+- **Dependencies:** `@medicine-wheel/ontology-core`
+
+### [@medicine-wheel/narrative-cluster](src/narrative-cluster)
+Narrative Cluster Processor — turn witnessed perceptual events or rushes into thematic clusters, direction-aligned narrative beats, and a Film Edit Brief with EDL markers.
+
+- **Dependencies:** `@medicine-wheel/ontology-core`
+
+### [@medicine-wheel/ceremonial-diary](src/ceremonial-diary)
+A participant's voice across the Five-Phase ceremonial methodology — intention, observation and reflection entries with pattern detection, statistics, markdown export, and optional projection into the chronicle wheel.
+
+- **Dependencies:** `@medicine-wheel/ontology-core`, `@medicine-wheel/storage-provider`
+
+### [@medicine-wheel/github-ceremony](src/github-ceremony)
+Witness GitHub webhook events (issues, pull requests, merges, commits) through a ceremonial lens and record them as relational ceremony beads. Pure, framework-free functions over a parsed payload and a storage provider.
+
+- **Dependencies:** `@medicine-wheel/ontology-core`, `@medicine-wheel/storage-provider`
+
 ### [@medicine-wheel/creative-orientation](src/creative-orientation)
 The orientation question, asked before the work: *is there a prior state you are restoring?* Yes — this is a fire, route to gap analysis. No — you are creating, route to structural tension. Reads the claim the caller supplies; advises where phrasing and situation disagree, and never refuses.
 
@@ -173,6 +215,13 @@ RISE framework specifications are in [`rispecs/`](rispecs/). Start with [`medici
 | graph-viz | [graph-viz.spec.md](rispecs/graph-viz.spec.md) |
 | relational-query | [relational-query.spec.md](rispecs/relational-query.spec.md) |
 | prompt-decomposition | [prompt-decomposition.spec.md](rispecs/prompt-decomposition.spec.md) |
+| storage-provider | [storage-provider.spec.md](rispecs/storage-provider.spec.md) |
+| data-store | [data-store.spec.md](rispecs/data-store.spec.md) |
+| data-store-postgres | [data-store-postgres.spec.md](rispecs/data-store-postgres.spec.md) |
+| perception-layer | [perception-layer.spec.md](rispecs/perception-layer.spec.md) |
+| narrative-cluster | [narrative-cluster.spec.md](rispecs/narrative-cluster.spec.md) |
+| session-reader | [session-reader.spec.md](rispecs/session-reader.spec.md) |
+| infra | [infrastructure-topology-ui.spec.md](rispecs/infrastructure-topology-ui.spec.md) |
 | ui-components | [ui-components.spec.md](rispecs/ui-components.spec.md) |
 | data-store | [data-store.spec.md](rispecs/data-store.spec.md) |
 | session-reader | [session-reader.spec.md](rispecs/session-reader.spec.md) |
