@@ -30,6 +30,8 @@ export async function POST(request: Request) {
       parent_beat_id: body.parent_beat_id,
       sub_beats: body.sub_beats,
       origin: body.origin,
+      speaker: body.speaker,
+      witnesses: Array.isArray(body.witnesses) ? body.witnesses : undefined,
     });
     // Warnings ride on the created beat rather than replacing it, so clients
     // that read the beat back by id keep working while advisory findings stop

@@ -5,7 +5,7 @@
  * Uses the shared Redis connection from ./connection.
  */
 
-import type { DirectionName, NodeType, CeremonyType } from '@medicine-wheel/ontology-core';
+import type { DirectionName, NodeType, CeremonyType, CeremonyLog } from '@medicine-wheel/ontology-core';
 import { getRedis } from './connection.js';
 
 // ── Domain Interfaces ──
@@ -32,16 +32,8 @@ export interface RelationalEdge {
   created_at: string;
 }
 
-export interface CeremonyLog {
-  id: string;
-  type: CeremonyType;
-  direction: DirectionName;
-  participants: string[];
-  medicines_used: string[];
-  intentions: string[];
-  timestamp: string;
-  research_context?: string;
-}
+/** One declaration: the ceremony record is `@medicine-wheel/ontology-core`'s. This package re-exports it (0.14.0; it used to redeclare a narrower copy). */
+export type { CeremonyLog };
 
 export interface AccountabilityData {
   wilson_score: number;

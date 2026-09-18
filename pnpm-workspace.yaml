@@ -3,9 +3,12 @@
 # kept alphabetical; npm does not, which is why package.json's copy is
 # topological. Adding a package means editing BOTH files.
 packages:
+  - mcp
   - src/brainstorming
   - src/ceremonial-diary
   - src/ceremony-protocol
+  - src/client
+  - src/community-identity
   - src/community-review
   - src/consent-lifecycle
   - src/creative-orientation
@@ -29,6 +32,5 @@ packages:
   - src/storage-provider
   - src/transformation-tracker
   - src/ui-components
-  - mcp
 allowBuilds:
   sharp: set this to true or false

@@ -1,0 +1,51 @@
+{
+  "name": "@medicine-wheel/community-identity",
+  "version": "0.13.0",
+  "description": "Who is in the circle: people as wheel nodes, roles with a permission map, circles and memberships as relations, invitations and self-issued credentials kept by the consumer — so a Medicine Wheel can tell two people apart.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "identity",
+    "roles",
+    "circles",
+    "talking-circle",
+    "invitations",
+    "relational-accountability"
+  ],
+  "author": "IAIP Collaborative - Shawinigan, QC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/community-identity"
+  },
+  "dependencies": {
+    "@medicine-wheel/ontology-core": "^0.13.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}

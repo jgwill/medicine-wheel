@@ -35,7 +35,9 @@ export type NodeType =
   | 'spirit'
   | 'ancestor'
   | 'future'
-  | 'knowledge';
+  | 'knowledge'
+  /** A circle of people who hold ceremony together (a talking circle, a story circle). Added 0.14.0. */
+  | 'circle';
 
 export interface RelationalNode {
   id: string;
@@ -204,6 +206,20 @@ export interface CeremonyLog {
   relations_honored?: string[];
   /** OCAP® governance for ceremony data */
   ocap?: OcapFlags;
+  /**
+   * Episode binding, typed (0.14.0). Before this the binding lived as a JSON
+   * string inside `research_context` (`{"episode_path","episode_number","source"}`),
+   * written by gmtermux and Miadi; readers still accept that form. `episode_path`
+   * is the chronicle directory name (`YYYY-MM-DD-episode-NNN-slug`).
+   */
+  episode_path?: string;
+  episode_number?: number;
+  /** Who or what opened the ceremony — e.g. 'gmtermux:3768', 'miadi:/api/ceremony/list', 'mcp'. */
+  source?: string;
+  /** For a `closing`: the id of the ceremony it closes. Before 0.14.0 this rode in `research_context`. */
+  closes?: string;
+  /** The circle (node of type `circle`) this ceremony is held in, when any. */
+  circle_id?: string;
 }
 
 // ── Narrative Types ─────────────────────────────────────────────────────────
@@ -227,6 +243,10 @@ export interface NarrativeBeat {
   sub_beats?: string[];
   /** How this beat entered the wheel — authored by hand, derived by a processor, or witnessed from an event stream. */
   origin?: BeatOrigin;
+  /** In a talking circle: the node id (or name) of the one who spoke this beat. Added 0.14.0. */
+  speaker?: string;
+  /** In a talking circle: node ids (or names) of those who witnessed this beat. Added 0.14.0. */
+  witnesses?: string[];
 }
 
 /** Provenance of a beat: who or what put it on the wheel. */

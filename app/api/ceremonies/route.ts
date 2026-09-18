@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { parseLimit } from "@/lib/api-paging";
 import { createProvider, detectProvider } from "@medicine-wheel/storage-provider";
-import { ceremonyBelongsToEpisode } from "@/lib/ceremony-response";
+import { ceremonyBelongsToEpisode, ceremonyEpisodePath } from "@/lib/ceremony-response";
+
+/** Episode directory names are `YYYY-MM-DD-episode-NNN-slug`; nothing else may bind. */
+const EPISODE_PATH = /^\d{4}-\d{2}-\d{2}-episode-\d{3,}-[a-z0-9-]+$/;
 
 export async function GET(request: Request) {
   try {
@@ -9,6 +12,8 @@ export async function GET(request: Request) {
     const direction = searchParams.get("direction");
     const type = searchParams.get("type");
     const episodePath = searchParams.get("episode_path");
+    const circleId = searchParams.get("circle_id");
+    const closes = searchParams.get("closes");
 
     const limit = parseLimit(searchParams.get("limit"));
     if (limit instanceof NextResponse) return limit;
@@ -41,6 +46,15 @@ export async function GET(request: Request) {
       );
     }
 
+    if (circleId) {
+      ceremonies = ceremonies.filter((c) => c.circle_id === circleId);
+    }
+
+    // `?closes=<opening id>` answers "is this ceremony closed, and by which record".
+    if (closes) {
+      ceremonies = ceremonies.filter((c) => c.closes === closes);
+    }
+
     const matched = ceremonies.length;
     if (limit !== null && ceremonies.length > limit) {
       ceremonies = ceremonies.slice(0, limit);
@@ -53,7 +67,7 @@ export async function GET(request: Request) {
       // `total` is the whole store, `matched` what the filters selected. When
       // count < matched the caller holds a page and can now see that it does.
       total,
-      ...(direction || type || episodePath ? { matched } : {}),
+      ...(direction || type || episodePath || circleId || closes ? { matched } : {}),
       truncated: ceremonies.length < matched,
     });
   } catch (error: unknown) {
@@ -66,7 +80,47 @@ export async function POST(request: Request) {
   try {
     const store = await createProvider();
     const body = await request.json();
-    
+
+    // Typed episode binding (0.14.0). A caller may still pass the legacy JSON
+    // string in `research_context`; it is lifted into the typed fields so every
+    // reader sees one shape. When both are given the typed fields win.
+    const legacy = ceremonyEpisodePath(body);
+    const episodePath: string | undefined =
+      typeof body.episode_path === "string" && body.episode_path ? body.episode_path : legacy;
+    if (episodePath !== undefined && !EPISODE_PATH.test(episodePath)) {
+      return NextResponse.json(
+        { error: `Invalid episode_path: ${episodePath}`, hint: "YYYY-MM-DD-episode-NNN-slug" },
+        { status: 400 },
+      );
+    }
+    const fromName = episodePath ? Number(episodePath.match(/-episode-(\d+)-/)?.[1]) : NaN;
+    const episodeNumber: number | undefined =
+      typeof body.episode_number === "number" ? body.episode_number : Number.isFinite(fromName) ? fromName : undefined;
+
+    if (body.closes !== undefined) {
+      if (typeof body.closes !== "string" || !body.closes) {
+        return NextResponse.json({ error: "closes must be a ceremony id" }, { status: 400 });
+      }
+      if (!(await store.getCeremony(body.closes))) {
+        return NextResponse.json(
+          { error: `Cannot close a ceremony that does not exist: ${body.closes}` },
+          { status: 404 },
+        );
+      }
+    }
+    if (body.circle_id !== undefined) {
+      if (typeof body.circle_id !== "string" || !body.circle_id) {
+        return NextResponse.json({ error: "circle_id must be a node id" }, { status: 400 });
+      }
+      const circle = await store.getNode(body.circle_id);
+      if (!circle) {
+        return NextResponse.json(
+          { error: `Cannot hold a ceremony in a circle that does not exist: ${body.circle_id}`, hint: "Create the circle node first on /nodes." },
+          { status: 404 },
+        );
+      }
+    }
+
     const ceremony = {
       id: body.id || crypto.randomUUID(),
       type: body.type,
@@ -74,10 +128,16 @@ export async function POST(request: Request) {
       participants: body.participants ?? [],
       medicines_used: body.medicines_used ?? [],
       intentions: body.intentions ?? [],
-      timestamp: new Date().toISOString(),
+      timestamp: typeof body.timestamp === "string" && body.timestamp ? body.timestamp : new Date().toISOString(),
       research_context: body.research_context,
+      ...(Array.isArray(body.relations_honored) ? { relations_honored: body.relations_honored } : {}),
+      ...(episodePath ? { episode_path: episodePath } : {}),
+      ...(episodeNumber !== undefined ? { episode_number: episodeNumber } : {}),
+      ...(typeof body.source === "string" && body.source ? { source: body.source } : {}),
+      ...(typeof body.closes === "string" ? { closes: body.closes } : {}),
+      ...(typeof body.circle_id === "string" ? { circle_id: body.circle_id } : {}),
     };
-    
+
     await store.logCeremony(ceremony);
     return NextResponse.json({ success: true, ceremony, provider: detectProvider() }, { status: 201 });
   } catch (error: unknown) {

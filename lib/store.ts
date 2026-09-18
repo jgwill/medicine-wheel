@@ -175,6 +175,8 @@ export function createBeat(
     cycle_id: data.cycle_id,
     parent_beat_id: data.parent_beat_id,
     origin: data.origin ?? existing?.origin ?? { producer: 'rest' },
+    ...(data.speaker !== undefined ? { speaker: data.speaker } : {}),
+    ...(data.witnesses !== undefined ? { witnesses: data.witnesses } : {}),
   };
 
   // `strictAct` turns an act that contradicts the direction into an error
@@ -332,3 +334,34 @@ export function seedDemoData() {
 
 // Auto-seed on import
 seedDemoData();
+
+// ── Talking-circle doors on beats (0.14.0) ──
+
+/** One beat by id, normalized like the collection reads. */
+export function getBeat(id: string): NarrativeBeat | undefined {
+  const raw = store.getBeat(id);
+  if (!raw) return undefined;
+  return extractBeats([raw])[0];
+}
+
+/**
+ * Add witnesses to a beat (a set: a name already present is not repeated) and,
+ * when given, name its speaker. Returns the stored beat, or undefined when
+ * there is no such beat. What was said is never rewritten here.
+ */
+export function witnessBeat(
+  id: string,
+  patch: { witnesses?: string[]; speaker?: string },
+): NarrativeBeat | undefined {
+  const raw = store.getBeat(id) as (NarrativeBeat & Record<string, unknown>) | undefined;
+  if (!raw) return undefined;
+  const witnesses = new Set<string>(Array.isArray(raw.witnesses) ? raw.witnesses : []);
+  for (const w of patch.witnesses ?? []) witnesses.add(w);
+  const next = {
+    ...raw,
+    ...(patch.speaker !== undefined ? { speaker: patch.speaker } : {}),
+    ...(witnesses.size > 0 ? { witnesses: [...witnesses] } : {}),
+  };
+  store.createBeat(next as any);
+  return extractBeats([next])[0];
+}

@@ -492,6 +492,7 @@ export class JsonlProvider implements StorageProvider {
   }
 
   private parseCeremony(ceremony: StoredCeremony): CeremonyLog {
+    const extra = ceremony as unknown as Record<string, unknown>;
     return {
       id: ceremony.id,
       type: ceremony.type,
@@ -501,6 +502,32 @@ export class JsonlProvider implements StorageProvider {
       intentions: Array.isArray(ceremony.intentions) ? ceremony.intentions : [],
       timestamp: ceremony.timestamp,
       research_context: ceremony.research_context,
+      // Fields added after the whitelist above was written (relations_honored,
+      // ocap; and in 0.14.0 the typed episode binding, closes, circle_id). A
+      // parser that rebuilds from a whitelist silently drops whatever the type
+      // learned later — measured 2026-09-18 when a ceremony written with
+      // episode_path read back without it.
+      ...(Array.isArray(extra.relations_honored)
+        ? { relations_honored: extra.relations_honored as string[] }
+        : {}),
+      ...(extra.ocap && typeof extra.ocap === 'object'
+        ? { ocap: extra.ocap as CeremonyLog['ocap'] }
+        : {}),
+      ...(typeof extra.episode_path === 'string'
+        ? { episode_path: extra.episode_path as string }
+        : {}),
+      ...(typeof extra.episode_number === 'number'
+        ? { episode_number: extra.episode_number as number }
+        : {}),
+      ...(typeof extra.source === 'string'
+        ? { source: extra.source as string }
+        : {}),
+      ...(typeof extra.closes === 'string'
+        ? { closes: extra.closes as string }
+        : {}),
+      ...(typeof extra.circle_id === 'string'
+        ? { circle_id: extra.circle_id as string }
+        : {}),
     };
   }
 }

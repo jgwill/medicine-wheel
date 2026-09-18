@@ -4,7 +4,7 @@
 -- Nodes table (relational entities)
 CREATE TABLE IF NOT EXISTS nodes (
   id TEXT PRIMARY KEY,
-  type TEXT NOT NULL CHECK (type IN ('human', 'land', 'spirit', 'ancestor', 'future', 'knowledge')),
+  type TEXT NOT NULL CHECK (type IN ('human', 'land', 'spirit', 'ancestor', 'future', 'knowledge', 'circle')),
   name TEXT NOT NULL,
   description TEXT DEFAULT '',
   direction TEXT CHECK (direction IN ('east', 'south', 'west', 'north', NULL)),

@@ -47,6 +47,10 @@ export interface BeatDraft {
   cycle_id?: string;
   parent_beat_id?: string;
   origin?: BeatOrigin;
+  /** Talking circle (0.14.0): the node id or name of who spoke this beat. */
+  speaker?: string;
+  /** Talking circle (0.14.0): node ids or names of those who witnessed it. */
+  witnesses?: string[];
 }
 
 export interface BeatDraftViolation {
@@ -216,6 +220,8 @@ export function createBeat(draft: BeatDraft, options: CreateBeatOptions = {}): N
   if (draft.cycle_id !== undefined) beat.cycle_id = draft.cycle_id;
   if (draft.parent_beat_id !== undefined) beat.parent_beat_id = draft.parent_beat_id;
   if (origin !== undefined) beat.origin = origin;
+  if (draft.speaker !== undefined) beat.speaker = draft.speaker;
+  if (draft.witnesses !== undefined) beat.witnesses = draft.witnesses;
 
   return beat;
 }

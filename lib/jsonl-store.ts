@@ -71,6 +71,9 @@ interface StoredBeat {
   parent_beat_id?: string;
   sub_beats?: string[];
   origin?: { producer: string; source_ref?: string; method?: string };
+  /** Talking circle (0.14.0): who spoke, who witnessed. */
+  speaker?: string;
+  witnesses?: string[];
 }
 
 interface StoredCycle {

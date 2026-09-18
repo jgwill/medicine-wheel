@@ -47,11 +47,22 @@ export function normalizeCeremonyLog(value: unknown): CeremonyLog | null {
     ...(typeof ceremony.research_context === "string"
       ? { research_context: ceremony.research_context }
       : {}),
+    ...(Array.isArray(ceremony.relations_honored)
+      ? { relations_honored: asStringArray(ceremony.relations_honored) }
+      : {}),
+    ...(typeof ceremony.episode_path === "string" ? { episode_path: ceremony.episode_path } : {}),
+    ...(typeof ceremony.episode_number === "number" ? { episode_number: ceremony.episode_number } : {}),
+    ...(typeof ceremony.source === "string" ? { source: ceremony.source } : {}),
+    ...(typeof ceremony.closes === "string" ? { closes: ceremony.closes } : {}),
+    ...(typeof ceremony.circle_id === "string" ? { circle_id: ceremony.circle_id } : {}),
   };
 }
 
 export function ceremonyEpisodePath(value: unknown): string | undefined {
   if (!value || typeof value !== "object") return undefined;
+  // Typed binding first (0.14.0), then the legacy JSON string in research_context.
+  const typed = (value as Record<string, unknown>).episode_path;
+  if (typeof typed === "string" && typed.length > 0) return typed;
   const researchContext = (value as Record<string, unknown>).research_context;
   if (typeof researchContext !== "string") return undefined;
 

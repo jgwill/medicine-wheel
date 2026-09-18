@@ -15,7 +15,7 @@ import { KINSHIP_EDGE_TYPES } from './kinship';
 export const DirectionNameSchema = z.enum(['east', 'south', 'west', 'north']);
 
 export const NodeTypeSchema = z.enum([
-  'human', 'land', 'spirit', 'ancestor', 'future', 'knowledge',
+  'human', 'land', 'spirit', 'ancestor', 'future', 'knowledge', 'circle',
 ]);
 
 export const CeremonyTypeSchema = z.enum([
@@ -185,6 +185,11 @@ export const CeremonyLogSchema = z.object({
   research_context: z.string().optional(),
   relations_honored: z.array(z.string()).optional(),
   ocap: OcapFlagsSchema.optional(),
+  episode_path: z.string().optional(),
+  episode_number: z.number().int().optional(),
+  source: z.string().optional(),
+  closes: z.string().optional(),
+  circle_id: z.string().optional(),
 });
 
 // ── Narrative Schemas ───────────────────────────────────────────────────────
@@ -210,6 +215,8 @@ export const NarrativeBeatSchema = z.object({
   parent_beat_id: z.string().optional(),
   sub_beats: z.array(z.string()).optional(),
   origin: BeatOriginSchema.optional(),
+  speaker: z.string().optional(),
+  witnesses: z.array(z.string()).optional(),
 });
 
 // ── Cycle Schemas ───────────────────────────────────────────────────────────

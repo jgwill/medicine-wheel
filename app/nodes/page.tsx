@@ -15,9 +15,9 @@ import { toast } from "sonner";
 // Storage returns description at the top level; legacy nodes carried it in metadata.
 type NodeRecord = RelationalNode & { description?: string };
 
-const NODE_TYPES: NodeType[] = ["human", "land", "spirit", "ancestor", "future", "knowledge"];
+const NODE_TYPES: NodeType[] = ["human", "land", "spirit", "ancestor", "future", "knowledge", "circle"];
 const DIRECTIONS: DirectionName[] = ["east", "south", "west", "north"];
-const NODE_TYPE_ICONS: Record<NodeType, string> = { human: "👤", land: "🌍", spirit: "✨", ancestor: "🪶", future: "🌱", knowledge: "📚" };
+const NODE_TYPE_ICONS: Record<NodeType, string> = { human: "👤", land: "🌍", spirit: "✨", ancestor: "🪶", future: "🌱", knowledge: "📚", circle: "⭕" };
 const DIRECTION_ICONS: Record<DirectionName, string> = { east: "🌅", south: "🌞", west: "🌄", north: "❄️" };
 
 function describeNode(node: NodeRecord): string {

@@ -1,0 +1,51 @@
+{
+  "name": "@medicine-wheel/client",
+  "version": "0.13.0",
+  "type": "module",
+  "description": "Typed HTTP client for a Medicine Wheel \u2014 nodes, edges, ceremonies, beats and the ceremonial diary \u2014 with the wheel's paging honesty carried through (count, total, truncated) and fail-fast errors that name the status.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "client",
+    "http",
+    "ceremony",
+    "talking-circle",
+    "relational-accountability"
+  ],
+  "author": "IAIP Collaborative - Shawinigan, QC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/client"
+  },
+  "dependencies": {
+    "@medicine-wheel/ontology-core": "^0.13.0",
+    "@medicine-wheel/storage-provider": "^0.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}

@@ -269,10 +269,14 @@ export class NeonProvider implements StorageProvider {
 
   async logCeremony(ceremony: CeremonyLog): Promise<void> {
     await this.db`
-      INSERT INTO ceremonies (id, type, direction, participants, medicines_used, intentions, timestamp, research_context)
+      INSERT INTO ceremonies (id, type, direction, participants, medicines_used, intentions, timestamp, research_context,
+                              relations_honored, episode_path, episode_number, source, closes, circle_id)
       VALUES (${ceremony.id}, ${ceremony.type}, ${ceremony.direction},
               ${JSON.stringify(ceremony.participants)}, ${JSON.stringify(ceremony.medicines_used)},
-              ${JSON.stringify(ceremony.intentions)}, ${ceremony.timestamp}, ${ceremony.research_context || null})
+              ${JSON.stringify(ceremony.intentions)}, ${ceremony.timestamp}, ${ceremony.research_context || null},
+              ${ceremony.relations_honored ? JSON.stringify(ceremony.relations_honored) : null},
+              ${ceremony.episode_path ?? null}, ${ceremony.episode_number ?? null}, ${ceremony.source ?? null},
+              ${ceremony.closes ?? null}, ${ceremony.circle_id ?? null})
       ON CONFLICT (id) DO UPDATE SET
         type = EXCLUDED.type,
         direction = EXCLUDED.direction,
@@ -280,7 +284,13 @@ export class NeonProvider implements StorageProvider {
         medicines_used = EXCLUDED.medicines_used,
         intentions = EXCLUDED.intentions,
         timestamp = EXCLUDED.timestamp,
-        research_context = EXCLUDED.research_context
+        research_context = EXCLUDED.research_context,
+        relations_honored = EXCLUDED.relations_honored,
+        episode_path = EXCLUDED.episode_path,
+        episode_number = EXCLUDED.episode_number,
+        source = EXCLUDED.source,
+        closes = EXCLUDED.closes,
+        circle_id = EXCLUDED.circle_id
     `;
   }
 
@@ -324,6 +334,12 @@ export class NeonProvider implements StorageProvider {
       intentions: parseJsonValue<string[]>(row.intentions, []),
       timestamp: toIsoString(row.timestamp),
       research_context: (row.research_context as string) || undefined,
+      ...(row.relations_honored ? { relations_honored: parseJsonValue<string[]>(row.relations_honored, []) } : {}),
+      ...(typeof row.episode_path === 'string' && row.episode_path ? { episode_path: row.episode_path } : {}),
+      ...(typeof row.episode_number === 'number' ? { episode_number: row.episode_number } : {}),
+      ...(typeof row.source === 'string' && row.source ? { source: row.source } : {}),
+      ...(typeof row.closes === 'string' && row.closes ? { closes: row.closes } : {}),
+      ...(typeof row.circle_id === 'string' && row.circle_id ? { circle_id: row.circle_id } : {}),
     };
   }
 
