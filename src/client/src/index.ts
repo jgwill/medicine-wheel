@@ -174,6 +174,8 @@ export interface MedicineWheelClient {
     get(id: string): Promise<RelationalNode | null>;
     create(input: NewNode): Promise<RelationalNode>;
     patch(id: string, patch: NodePatch): Promise<RelationalNode>;
+    /** Deletes a node. The wheel refuses (409) while relations still hold it; 404 is treated as already gone. */
+    remove(id: string): Promise<void>;
   };
   edges: {
     list(opts?: ListEdgesOptions): Promise<Paged<RelationalEdge>>;
@@ -329,6 +331,10 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
         const body = await json<{ node?: RelationalNode }>(res, 'refused the node patch');
         if (!body?.node?.id) throw new MedicineWheelClientError('wheel returned no node', 502, res.url);
         return body.node;
+      },
+      async remove(id) {
+        const res = await call(`/api/nodes/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!res.ok && res.status !== 404) await refused(res, 'refused the node removal');
       },
     },
 

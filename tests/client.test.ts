@@ -42,6 +42,20 @@ describe("@medicine-wheel/client", () => {
     expect(witnessed.witnesses).toEqual(["m"]);
   });
 
+  it("removes a node, treats 404 as already gone, and surfaces the wheel's 409 while relations hold it", async () => {
+    const wheel = createMedicineWheelClient({
+      baseUrl: "http://wheel",
+      fetch: fakeFetch({
+        "DELETE /api/nodes/free": () => ({ status: 200, body: { success: true, deleted: "free" } }),
+        "DELETE /api/nodes/gone": () => ({ status: 404, body: { error: "no" } }),
+        "DELETE /api/nodes/held": () => ({ status: 409, body: { error: "held by 2 relations", relation_count: 2 } }),
+      }),
+    });
+    await expect(wheel.nodes.remove("free")).resolves.toBeUndefined();
+    await expect(wheel.nodes.remove("gone")).resolves.toBeUndefined();
+    await expect(wheel.nodes.remove("held")).rejects.toMatchObject({ status: 409 });
+  });
+
   it("fails fast with the wheel's status and body on refusal, 502 when unreachable, 503 with no URL", async () => {
     const refusing = createMedicineWheelClient({
       baseUrl: "http://wheel",
