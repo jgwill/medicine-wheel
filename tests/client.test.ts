@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createMedicineWheelClient, MedicineWheelClientError, wheelUrlFromEnv } from "../src/client/src/index";
+import { closingOf, createMedicineWheelClient, episodeOf, MedicineWheelClientError, wheelUrlFromEnv } from "../src/client/src/index";
 
 function fakeFetch(routes: Record<string, (init?: RequestInit) => { status: number; body: unknown }>): typeof fetch {
   return (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -61,5 +61,14 @@ describe("@medicine-wheel/client", () => {
     expect(wheelUrlFromEnv({ MIADI_CHRONICLE_MW_URL: "http://a/", MW_API_URL: "http://b" })).toBe("http://a");
     expect(wheelUrlFromEnv({ MW_API_URL: "http://b/" })).toBe("http://b");
     expect(wheelUrlFromEnv({})).toBeNull();
+  });
+
+  it("reads the episode binding and the closing, typed first, legacy second", () => {
+    expect(episodeOf({ episode_path: "ep", episode_number: 3, source: "s" })).toEqual({ episode_path: "ep", episode_number: 3, source: "s" });
+    expect(episodeOf({ research_context: JSON.stringify({ episode_path: "old", episode_number: 1, source: "gm" }) })).toEqual({ episode_path: "old", episode_number: 1, source: "gm" });
+    expect(episodeOf({ research_context: "free text" })).toBeNull();
+    expect(closingOf({ type: "closing", closes: "abc" })).toBe("abc");
+    expect(closingOf({ type: "closing", research_context: "ceremony:1780507732459:f3u72" })).toBe("ceremony:1780507732459:f3u72");
+    expect(closingOf({ type: "opening", closes: "abc" })).toBeNull();
   });
 });

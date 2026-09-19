@@ -430,6 +430,40 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
   };
 }
 
+// ── readers every consumer needs ────────────────────────────────────────────
+
+/** The episode a ceremony is bound to: the typed field first (0.14.0), then the legacy JSON string in `research_context`. */
+export function episodeOf(ceremony: Pick<CeremonyLog, 'episode_path' | 'episode_number' | 'source' | 'research_context'>): { episode_path: string; episode_number?: number; source?: string } | null {
+  if (typeof ceremony.episode_path === 'string' && ceremony.episode_path) {
+    return {
+      episode_path: ceremony.episode_path,
+      ...(typeof ceremony.episode_number === 'number' ? { episode_number: ceremony.episode_number } : {}),
+      ...(typeof ceremony.source === 'string' ? { source: ceremony.source } : {}),
+    };
+  }
+  if (typeof ceremony.research_context !== 'string') return null;
+  try {
+    const parsed = JSON.parse(ceremony.research_context) as Record<string, unknown> | null;
+    const path = parsed?.episode_path ?? parsed?.episodePath;
+    if (typeof path !== 'string' || !path) return null;
+    return {
+      episode_path: path,
+      ...(typeof parsed?.episode_number === 'number' ? { episode_number: parsed.episode_number } : {}),
+      ...(typeof parsed?.source === 'string' ? { source: parsed.source } : {}),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** The opening a closing closes: the typed field first (0.14.0), then the MCP's convention of naming it in `research_context`. */
+export function closingOf(ceremony: Pick<CeremonyLog, 'type' | 'closes' | 'research_context'>): string | null {
+  if (ceremony.type !== 'closing') return null;
+  if (typeof ceremony.closes === 'string' && ceremony.closes) return ceremony.closes;
+  const rc = ceremony.research_context;
+  return typeof rc === 'string' && /^ceremony:\d+:[a-z0-9]+$/.test(rc.trim()) ? rc.trim() : null;
+}
+
 /** Read the wheel URL the way every Miadi tool does: `MIADI_CHRONICLE_MW_URL` first, then `MW_API_URL`. */
 export function wheelUrlFromEnv(env: Record<string, string | undefined> = process.env): string | null {
   const raw = env.MIADI_CHRONICLE_MW_URL ?? env.MW_API_URL ?? '';

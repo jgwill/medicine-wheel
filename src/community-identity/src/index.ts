@@ -18,3 +18,5 @@ export * from './people.js';
 export * from './circles.js';
 export * from './credentials.js';
 export * from './invitations.js';
+export * from './audit.js';
+export * from './config.js';
