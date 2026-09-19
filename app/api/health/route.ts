@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createProvider, detectProvider } from '@medicine-wheel/storage-provider';
+import { honchoProjectionStatus } from '@/lib/honcho-projection';
 
 export async function GET() {
   const providerType = detectProvider();
@@ -26,6 +27,9 @@ export async function GET() {
         nodes,
         ceremonies,
       },
+      // The river to Honcho: enabled when HONCHO_URL is set. A wheel that
+      // reports enabled projects every stored beat, ceremony and diary entry.
+      honcho: honchoProjectionStatus(),
       env: {
         MW_STORAGE_PROVIDER: process.env.MW_STORAGE_PROVIDER || 'not set',
         DATABASE_URL: process.env.DATABASE_URL ? 'configured' : 'not configured',

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { parseLimit } from "@/lib/api-paging";
 import { createProvider, detectProvider } from "@medicine-wheel/storage-provider";
 import { ceremonyBelongsToEpisode, ceremonyEpisodePath } from "@/lib/ceremony-response";
+import { projectCeremony } from "@medicine-wheel/honcho";
+import { projectAfterWrite } from "@/lib/honcho-projection";
 
 /** Episode directory names are `YYYY-MM-DD-episode-NNN-slug`; nothing else may bind. */
 const EPISODE_PATH = /^\d{4}-\d{2}-\d{2}-episode-\d{3,}-[a-z0-9-]+$/;
@@ -139,6 +141,9 @@ export async function POST(request: Request) {
     };
 
     await store.logCeremony(ceremony);
+    // The river: the stored ceremony leaves for Honcho in the background when
+    // HONCHO_URL is set. Never awaited.
+    projectAfterWrite(projectCeremony(ceremony), `ceremony ${ceremony.id}`);
     return NextResponse.json({ success: true, ceremony, provider: detectProvider() }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

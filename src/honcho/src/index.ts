@@ -191,7 +191,9 @@ const MAX_BATCH = 100;
 export function createHonchoClient(options: HonchoClientOptions): HonchoClient {
   const baseUrl = options.baseUrl.replace(/\/+$/, '');
   const workspace = options.workspace || DEFAULT_WORKSPACE;
-  const doFetch = options.fetch ?? globalThis.fetch;
+  // Resolved per call, not captured: a fetch swapped in later (a polyfill, a
+  // test stub) is honoured by a client built earlier.
+  const doFetch = (...args: Parameters<typeof fetch>) => (options.fetch ?? globalThis.fetch)(...args);
   const timeoutMs = options.timeoutMs ?? 30_000;
   const ws = `/v3/workspaces/${encodeURIComponent(workspace)}`;
 
@@ -373,6 +375,63 @@ export function projectCeremony(ceremony: CeremonyLog): Projection {
         type: ceremony.type,
         direction: ceremony.direction,
         ...(ceremony.source ? { source: ceremony.source } : {}),
+      },
+    }],
+  };
+}
+
+/**
+ * The shape of a ceremonial diary entry this package reads — structural, so
+ * `@medicine-wheel/storage-provider`'s `DiaryEntryRecord` satisfies it without
+ * this package depending on the provider.
+ */
+export interface DiaryEntryLike {
+  id: string;
+  timestamp: string;
+  /** The participant whose voice this entry carries. */
+  participant: string;
+  agent?: string;
+  phase: string;
+  entryType: string;
+  content: string;
+  metadata?: { ceremony_id?: unknown; tags?: unknown; [k: string]: unknown };
+  /** `chronicle:<episode-folder>` when the entry writes into an episode. */
+  chronicle?: string;
+}
+
+/** Where a diary entry lands: its ceremony, else its chronicle episode, else the wheel's standing session. */
+export function sessionIdForDiaryEntry(entry: Pick<DiaryEntryLike, 'metadata' | 'chronicle'>): string {
+  const ceremony = entry.metadata?.ceremony_id;
+  if (typeof ceremony === 'string' && ceremony) return honchoIdFor(ceremony);
+  if (entry.chronicle) return honchoIdFor(entry.chronicle);
+  return WHEEL_PEER;
+}
+
+/** A diary entry as one message in the participant's voice. */
+export function projectDiaryEntry(entry: DiaryEntryLike): Projection {
+  const [peerId, meta] = peerEntry(entry.participant);
+  const ceremony = entry.metadata?.ceremony_id;
+  const wheelSession = typeof ceremony === 'string' && ceremony ? ceremony : entry.chronicle ?? WHEEL_PEER;
+  const tags = Array.isArray(entry.metadata?.tags) ? (entry.metadata!.tags as unknown[]).map(String) : undefined;
+  return {
+    session_id: sessionIdForDiaryEntry(entry),
+    peers: { [peerId]: seat() },
+    peer_metadata: { [peerId]: meta },
+    session_metadata: {
+      wheel_kind: typeof ceremony === 'string' && ceremony ? 'ceremony' : entry.chronicle ? 'chronicle' : 'wheel',
+      wheel_id: wheelSession,
+    },
+    messages: [{
+      content: `[${entry.phase} · ${entry.entryType}] ${entry.content}` + list('Tags', tags),
+      peer_id: peerId,
+      created_at: entry.timestamp,
+      metadata: {
+        wheel_kind: 'diary',
+        wheel_id: entry.id,
+        phase: entry.phase,
+        entry_type: entry.entryType,
+        ...(entry.agent ? { agent: entry.agent } : {}),
+        ...(entry.chronicle ? { chronicle: entry.chronicle } : {}),
       },
     }],
   };
