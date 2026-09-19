@@ -1,0 +1,49 @@
+{
+  "name": "@medicine-wheel/honcho",
+  "version": "0.14.4",
+  "type": "module",
+  "description": "The wheel's projection into Honcho — beats and ceremonies become Honcho messages, a speaker's evolving representation is recalled, and a derived conclusion is written back as a knowledge node. The wheel stays canonical; Honcho holds what the history has come to mean.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "honcho",
+    "memory",
+    "projection",
+    "peer-representation"
+  ],
+  "author": "IAIP Collaborative - Shawinigan, QC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/honcho"
+  },
+  "dependencies": {
+    "@medicine-wheel/ontology-core": "^0.14.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}

@@ -34,6 +34,7 @@ storage alongside its composable libraries.
     ├── @medicine-wheel/data-store-postgres  ← PostgreSQL / Neon provider scaffold
     ├── @medicine-wheel/storage-provider     ← Canonical persistence contract (JSONL ⇄ Neon)
     ├── @medicine-wheel/infra                ← Hosts, tenants, services, port bindings as facets
+    ├── @medicine-wheel/honcho               ← The wheel's projection into Honcho, memory that reasons
     ├── @medicine-wheel/perception-layer     ← Witness recordings as typed perceptual events
     ├── @medicine-wheel/narrative-cluster    ← Events → clusters → beats → Film Edit Brief
     ├── @medicine-wheel/ceremonial-diary     ← A participant's voice across the Five Phases
@@ -155,6 +156,11 @@ Minimal `pg` scaffold — shared pool management and provider-ready storage entr
 Typed infrastructure facets — hosts, tenants, services and port bindings — keyed by relational node id, with `detectPortConflicts` over declared ∪ observed state. Types plus one pure function: zero I/O, zero persistence. A running service is registered as a `knowledge` node carrying `metadata.kind: "service"`, never as a new node type.
 
 - **Dependencies:** `@medicine-wheel/ontology-core`, `zod`
+
+### [@medicine-wheel/honcho](src/honcho)
+The wheel's projection into [Honcho](https://honcho.dev), memory that reasons. The wheel stays canonical; Honcho holds what the history has come to mean about each peer. A beat becomes a message from its speaker in the session of its ceremony, a speaker's evolving representation is recalled before they speak again, and a derived conclusion returns as a `knowledge` node carrying `metadata.kind: "memory_projection"` with its status and provenance. Zero dependencies, `/v3` only, configured by `HONCHO_URL`. Nothing is filtered here.
+
+- **Dependencies:** `@medicine-wheel/ontology-core`
 
 ### [@medicine-wheel/perception-layer](src/perception-layer)
 Eyes and ears of agent-supported film production — witness a belt-device recording as typed perceptual events and seed a production knowledge graph.

@@ -32,6 +32,7 @@
     "src/ceremony-protocol",
     "src/storage-provider",
     "src/client",
+    "src/honcho",
     "src/data-store",
     "src/data-store-postgres",
     "src/graph-viz",
