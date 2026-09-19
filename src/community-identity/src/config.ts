@@ -19,6 +19,8 @@ export interface CommunityConfig {
   registration: RegistrationMode;
   /** The role a newcomer receives. */
   default_role: Role;
+  /** Whether a newcomer may issue their own tokens from the start. Default off: an admin enables API access per person. */
+  default_api_access: boolean;
   /** Permissions granted beyond the role's default map, per role. */
   role_grants: Partial<Record<Role, Permission[]>>;
   /** Shown to everyone signed in, when set. */
@@ -30,6 +32,7 @@ export interface CommunityConfig {
 export const DEFAULT_CONFIG: CommunityConfig = {
   registration: 'invite_only',
   default_role: 'participant',
+  default_api_access: false,
   role_grants: {},
 };
 
@@ -50,6 +53,10 @@ export function validateConfigPatch(input: unknown): { patch: Partial<CommunityC
   if (o.default_role !== undefined) {
     if (isRole(o.default_role)) patch.default_role = o.default_role;
     else errors.push('default_role is not a role');
+  }
+  if (o.default_api_access !== undefined) {
+    if (typeof o.default_api_access === 'boolean') patch.default_api_access = o.default_api_access;
+    else errors.push('default_api_access must be true or false');
   }
   if (o.role_grants !== undefined) {
     if (!o.role_grants || typeof o.role_grants !== 'object') errors.push('role_grants must be an object');

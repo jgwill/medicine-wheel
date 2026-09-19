@@ -24,6 +24,8 @@ export interface Person {
   role: Role;
   /** A deactivated person keeps their node and history but cannot sign in. Default `active`. */
   status: PersonStatus;
+  /** May this person issue their own tokens? An admin turns it on (STPB's `api_access_enabled`). Default off. */
+  api_access: boolean;
   email?: string;
   direction?: DirectionName;
   created_at: string;
@@ -36,6 +38,7 @@ export const NewPersonSchema = z.object({
   role: z.string().refine(isRole, 'unknown role'),
   email: z.string().trim().email().optional(),
   direction: z.enum(['east', 'south', 'west', 'north']).optional(),
+  api_access: z.boolean().optional(),
 });
 
 export type NewPerson = z.infer<typeof NewPersonSchema>;
@@ -54,6 +57,7 @@ export function personNode(input: NewPerson, now = new Date().toISOString()): Re
     metadata: {
       kind: PERSON_KIND,
       role: input.role,
+      api_access: input.api_access === true,
       ...(input.email ? { email: input.email } : {}),
     },
     created_at: now,
@@ -71,6 +75,7 @@ export function personFromNode(node: RelationalNode | null | undefined): Person 
     name: node.name,
     role: meta.role,
     status: meta.status === 'deactivated' ? 'deactivated' : 'active',
+    api_access: meta.api_access === true,
     ...(typeof meta.email === 'string' ? { email: meta.email } : {}),
     ...(node.direction ? { direction: node.direction } : {}),
     created_at: node.created_at,
@@ -92,4 +97,9 @@ export function deactivatePatch(current: Record<string, unknown> = {}): Record<s
 export function reactivatePatch(current: Record<string, unknown> = {}): Record<string, unknown> {
   const { deactivated_at: _gone, ...rest } = current;
   return { ...rest, status: 'active' };
+}
+
+/** The metadata patch that grants or withdraws API access (the right to issue one's own tokens). */
+export function apiAccessPatch(enabled: boolean, current: Record<string, unknown> = {}): Record<string, unknown> {
+  return { ...current, api_access: enabled };
 }

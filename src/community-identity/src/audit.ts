@@ -19,6 +19,8 @@ export const AUDIT_ACTIONS = [
   'person.role_changed',
   'person.deactivated',
   'person.reactivated',
+  'person.api_access_enabled',
+  'person.api_access_disabled',
   'token.issued',
   'token.revoked',
   'circle.created',

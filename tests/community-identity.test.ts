@@ -153,4 +153,14 @@ describe("status, circle fields, audit and config (0.14.1)", () => {
     const cleared = await store.set({ site_notice: undefined }, "g");
     expect(cleared.site_notice).toBeUndefined();
   });
+  it("API access is off until granted; the config may grant it to newcomers", async () => {
+    const { personNode, personFromNode, apiAccessPatch, DEFAULT_CONFIG, validateConfigPatch } = await import("../src/community-identity/src/index");
+    const p = personNode({ name: "P", role: "participant" });
+    expect(personFromNode(p)!.api_access).toBe(false);
+    expect(personFromNode({ ...p, metadata: apiAccessPatch(true, p.metadata) })!.api_access).toBe(true);
+    expect(personFromNode(personNode({ name: "Q", role: "participant", api_access: true }))!.api_access).toBe(true);
+    expect(DEFAULT_CONFIG.default_api_access).toBe(false);
+    expect(validateConfigPatch({ default_api_access: true }).patch.default_api_access).toBe(true);
+    expect(validateConfigPatch({ default_api_access: "yes" }).errors.length).toBe(1);
+  });
 });
