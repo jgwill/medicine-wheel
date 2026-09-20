@@ -126,7 +126,7 @@ export async function POST(request: Request) {
     });
     // The river: the participant's voice leaves for Honcho in the background
     // when HONCHO_URL is set. Never awaited.
-    projectAfterWrite(projectDiaryEntry(entry), `diary entry ${entry.id}`);
+    projectAfterWrite(() => projectDiaryEntry(entry), `diary entry ${entry.id}`);
     return NextResponse.json({ success: true, entry, provider: detectProvider() }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

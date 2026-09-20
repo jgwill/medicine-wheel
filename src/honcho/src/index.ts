@@ -294,8 +294,17 @@ export function sessionIdForCeremony(ceremony: Pick<CeremonyLog, 'id'>): string 
   return honchoIdFor(ceremony.id);
 }
 
-function list(label: string, xs: string[] | undefined): string {
-  return xs && xs.length ? `\n${label}: ${xs.join(', ')}` : '';
+/**
+ * A labelled line for a list field, or nothing when it is empty.
+ *
+ * Tolerant of a non-array on purpose: these fields reach the wheel over REST,
+ * where `learnings: "one thing"` is a shape a caller can send and the store
+ * will keep. Projecting it as one item beats throwing on a record the wheel
+ * already holds.
+ */
+function list(label: string, xs: unknown): string {
+  const items = Array.isArray(xs) ? xs.map(String) : typeof xs === 'string' && xs ? [xs] : [];
+  return items.length ? `\n${label}: ${items.join(', ')}` : '';
 }
 
 /** A beat as one Honcho message from its speaker, witnessed by its witnesses. */

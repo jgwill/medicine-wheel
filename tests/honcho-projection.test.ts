@@ -104,6 +104,32 @@ describe("the river: wheel → Honcho on write", () => {
     expect(health.honcho).toEqual({ enabled: false });
   });
 
+  it("a projection that cannot even be shaped is reported, never raised at the writer", async () => {
+    // Paid for on 2026-09-19 against the real chronicle: an importer sent
+    // `learnings` as a string. The beat was created and written to disk, then
+    // `projectBeat` threw building the message — evaluated in the route's own
+    // argument list, outside the fire-and-forget boundary — and the caller was
+    // told 500 about a beat the wheel was holding. Shaping runs inside the
+    // boundary now, so no defect in it can reach the writer.
+    const { projectAfterWrite, awaitProjections } = await import("../lib/honcho-projection");
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(() => projectAfterWrite(() => { throw new Error("cannot shape this record"); }, "beat b-1")).not.toThrow();
+    await awaitProjections();
+    expect(errors).toHaveBeenCalledTimes(1);
+    expect(String(errors.mock.calls[0][0])).toContain("beat b-1");
+    expect(String(errors.mock.calls[0][0])).toContain("cannot shape this record");
+    expect(messagesSent()).toEqual([]);
+    errors.mockRestore();
+  });
+
+  it("a list field that arrives as a string is stored, answered 201, and projected as one item", async () => {
+    const { awaitProjections } = await import("../lib/honcho-projection");
+    const b = await post("narrative/beats", { direction: "south", title: "One learning", description: "A caller sent a bare string.", learnings: "small steps" as unknown as string[] });
+    expect(b.status).toBe(201);
+    await awaitProjections();
+    expect(messagesSent()[0].content).toContain("Learnings: small steps");
+  });
+
   it("a Honcho that is down changes nothing about the wheel's answer, and is reported once", async () => {
     stubHoncho({ down: true });
     const { awaitProjections } = await import("../lib/honcho-projection");

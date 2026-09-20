@@ -42,11 +42,19 @@ export function honchoProjectionStatus(): { enabled: boolean; url?: string; work
  * Fire-and-forget. Returns immediately; the projection runs in the background.
  * `label` names the record in the one line written when Honcho refuses or is
  * unreachable.
+ *
+ * The projection is built by `shape`, called *inside* the error boundary. It
+ * used to be built by the caller, in the route's own expression — so a record
+ * the projection could not shape (a `learnings` that arrived as a string, say)
+ * threw synchronously and turned an already-stored write into a 500 for the
+ * writer. The wheel's answer to its caller must not depend on the river, and
+ * that includes the part that reads the record.
  */
-export function projectAfterWrite(projection: Projection, label: string): void {
+export function projectAfterWrite(shape: () => Projection, label: string): void {
   const cfg = honchoFromEnv();
   if (!cfg) return;
-  const run = project(clientFor(cfg), projection)
+  const run = Promise.resolve()
+    .then(() => project(clientFor(cfg), shape()))
     .catch((error: unknown) => {
       const err = error as { message?: string; status?: number; body?: string };
       console.error(
