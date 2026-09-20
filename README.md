@@ -10,8 +10,25 @@
 
 ## News
 
-The suite now includes an interactive app, CLI, MCP server, and PostgreSQL/Neon
-storage alongside its composable libraries.
+31 published packages: the app, 29 libraries and the MCP server (85 tools over
+stdio and StreamableHTTP).
+
+Recently landed:
+
+- **`@medicine-wheel/client`** — one typed HTTP door to a running wheel, with
+  the wheel's paging honesty carried through to the caller.
+- **`@medicine-wheel/community-identity`** — who is in the circle: people,
+  roles, circles, memberships, invitations and self-issued credentials.
+- **`@medicine-wheel/honcho`** — the wheel's projection into
+  [Honcho](https://honcho.dev). Set `HONCHO_URL` and every stored beat,
+  ceremony and diary entry projects on write.
+- **A ceremony knows its episode, its circle and what it closes**, and a beat
+  knows who spoke and who witnessed.
+- **Read routes page honestly** — `count`, `total`, `matched`, `truncated`
+  instead of a silently cut list — and `GET /api/nodes/{id}/web` serves one
+  node's neighbourhood.
+- **An episodes surface and a lineage layout** in the app: the chronicle as a
+  spine you read left to right.
 
 
 ## Architecture
@@ -21,6 +38,7 @@ storage alongside its composable libraries.
     ├── @medicine-wheel/ceremony-protocol    ← Ceremony state & governance
     ├── @medicine-wheel/fire-keeper          ← Ceremony coordination agent
     ├── @medicine-wheel/community-review     ← Elder review & consensus
+    ├── @medicine-wheel/community-identity   ← People, roles, circles, memberships
     ├── @medicine-wheel/consent-lifecycle    ← Relational consent lifecycle
     ├── @medicine-wheel/narrative-engine     ← Beat sequencing & arc validation
     ├── @medicine-wheel/importance-unit      ← Relational unit of knowledge
@@ -30,6 +48,7 @@ storage alongside its composable libraries.
     ├── @medicine-wheel/relational-query     ← Query, traversal & audit
     ├── @medicine-wheel/prompt-decomposition ← Intent extraction & PDE
     ├── @medicine-wheel/ui-components        ← React components
+    ├── @medicine-wheel/client               ← Typed HTTP door to a running wheel
     ├── @medicine-wheel/data-store           ← Shared data access (Redis)
     ├── @medicine-wheel/data-store-postgres  ← PostgreSQL / Neon provider scaffold
     ├── @medicine-wheel/storage-provider     ← Canonical persistence contract (JSONL ⇄ Neon)
@@ -85,6 +104,11 @@ Community-based ceremonial review protocol — implements Wilson's validation th
 
 - **Dependencies:** `@medicine-wheel/ontology-core`, `@medicine-wheel/ceremony-protocol`, `zod`
 
+### [@medicine-wheel/community-identity](src/community-identity)
+Who is in the circle, so a wheel can tell two people apart. A person is a `human` node with `metadata.kind: "person"` and a role, a circle is a `circle` node, membership is a `member_of` edge. Roles run `participant → emerging_guide → ceremony_facilitator → firekeeper → admin`, with `story_keeper` parallel to firekeeper and `companion_ai` / `integration_ai` beside them, each carrying a permission map. Invitations, credentials and the audit trail stay with the consumer — hashed, never on the wheel.
+
+- **Dependencies:** `@medicine-wheel/ontology-core`, `zod`
+
 ### [@medicine-wheel/consent-lifecycle](src/consent-lifecycle)
 Ongoing relational consent lifecycle — consent as a living relational obligation with lifecycle tracking, renewal, renegotiation, withdrawal cascades, and community-level consent protocols.
 
@@ -131,6 +155,11 @@ React UI component library — `DirectionCard`, `BeatTimeline`, `NodeInspector`,
 
 - **Dependencies:** `@medicine-wheel/ontology-core`
 - **Peer:** `react`
+
+### [@medicine-wheel/client](src/client)
+The typed HTTP door to a running wheel — nodes, edges, ceremonies, beats and the ceremonial diary. The wheel's paging honesty (`count`, `total`, `matched`, `truncated`) is carried through to the caller, `limit: 'all'` asks for the whole store, and errors fail fast: an unreachable wheel throws with status 502, a refusal carries the wheel's status and body. No retry.
+
+- **Dependencies:** `@medicine-wheel/ontology-core`, `@medicine-wheel/storage-provider`
 
 ### [@medicine-wheel/data-store](src/data-store)
 Shared Redis data-access layer — connection management (Upstash, Vercel KV, local), Node/Edge/Ceremony/Accountability CRUD, session-ceremony linking, and generic Redis helpers.
@@ -206,36 +235,48 @@ Idea into committed design through approval gates a human holds — `explore →
 
 RISE framework specifications are in [`rispecs/`](rispecs/). Start with [`medicine-wheel.spec.md`](rispecs/medicine-wheel.spec.md) for the system overview.
 
-| Package | Spec |
+| Package / topic | Spec |
 |---------|------|
 | System Overview | [medicine-wheel.spec.md](rispecs/medicine-wheel.spec.md) |
 | ontology-core | [ontology-core.spec.md](rispecs/ontology-core.spec.md) |
 | ceremony-protocol | [ceremony-protocol.spec.md](rispecs/ceremony-protocol.spec.md) |
 | fire-keeper | [fire-keeper.spec.md](rispecs/fire-keeper.spec.md) |
 | community-review | [community-review.spec.md](rispecs/community-review.spec.md) |
+| community-identity | [community-identity.spec.md](rispecs/community-identity.spec.md) |
 | consent-lifecycle | [consent-lifecycle.spec.md](rispecs/consent-lifecycle.spec.md) |
-| narrative-engine | [narrative-engine.spec.md](rispecs/narrative-engine.spec.md) |
+| narrative-engine | [narrative-engine.spec.md](rispecs/narrative-engine.spec.md) · [narrative-beats-lifecycle.spec.md](rispecs/narrative-beats-lifecycle.spec.md) |
 | importance-unit | [importance-unit.spec.md](rispecs/importance-unit.spec.md) |
 | relational-index | [relational-index.spec.md](rispecs/relational-index.spec.md) |
 | transformation-tracker | [transformation-tracker.spec.md](rispecs/transformation-tracker.spec.md) |
 | graph-viz | [graph-viz.spec.md](rispecs/graph-viz.spec.md) |
-| relational-query | [relational-query.spec.md](rispecs/relational-query.spec.md) |
-| prompt-decomposition | [prompt-decomposition.spec.md](rispecs/prompt-decomposition.spec.md) |
-| storage-provider | [storage-provider.spec.md](rispecs/storage-provider.spec.md) |
+| relational-query | [relational-query.spec.md](rispecs/relational-query.spec.md) · [relational-web-package.spec.md](rispecs/relational-web-package.spec.md) |
+| prompt-decomposition | [prompt-decomposition.spec.md](rispecs/prompt-decomposition.spec.md) · [decomposition-strategies.spec.md](rispecs/decomposition-strategies.spec.md) |
+| ui-components | [ui-components.spec.md](rispecs/ui-components.spec.md) |
+| client | [client.spec.md](rispecs/client.spec.md) |
+| storage-provider | [storage-provider.spec.md](rispecs/storage-provider.spec.md) · [storage-provider-abstraction.spec.md](rispecs/storage-provider-abstraction.spec.md) |
 | data-store | [data-store.spec.md](rispecs/data-store.spec.md) |
 | data-store-postgres | [data-store-postgres.spec.md](rispecs/data-store-postgres.spec.md) |
-| perception-layer | [perception-layer.spec.md](rispecs/perception-layer.spec.md) |
-| narrative-cluster | [narrative-cluster.spec.md](rispecs/narrative-cluster.spec.md) |
 | session-reader | [session-reader.spec.md](rispecs/session-reader.spec.md) |
 | infra | [infrastructure-topology-ui.spec.md](rispecs/infrastructure-topology-ui.spec.md) |
-| ui-components | [ui-components.spec.md](rispecs/ui-components.spec.md) |
-| data-store | [data-store.spec.md](rispecs/data-store.spec.md) |
-| session-reader | [session-reader.spec.md](rispecs/session-reader.spec.md) |
+| perception-layer | [perception-layer.spec.md](rispecs/perception-layer.spec.md) |
+| narrative-cluster | [narrative-cluster.spec.md](rispecs/narrative-cluster.spec.md) |
+| captures & recordings | [capture-registry.spec.md](rispecs/capture-registry.spec.md) |
+| inquiry weaves | [inquiry-weave-registration.spec.md](rispecs/inquiry-weave-registration.spec.md) |
+| plans & insights | [plan-insight-perspective-registration.spec.md](rispecs/plan-insight-perspective-registration.spec.md) |
+| council & community | [council-record.spec.md](rispecs/council-record.spec.md) · [community-choice.spec.md](rispecs/community-choice.spec.md) |
+| reading & scope | [reading-layer.spec.md](rispecs/reading-layer.spec.md) · [workspace-scope-and-access.spec.md](rispecs/workspace-scope-and-access.spec.md) |
+| film production | [relational-production-protocol.spec.md](rispecs/relational-production-protocol.spec.md) · [film-production-upgrades.spec.md](rispecs/film-production-upgrades.spec.md) |
+| kinship & bridges | [kinship-graph.spec.md](rispecs/kinship-graph.spec.md) · [narrative-medicine-wheel-bridge.spec.md](rispecs/narrative-medicine-wheel-bridge.spec.md) · [article-publishing-pipeline.spec.md](rispecs/article-publishing-pipeline.spec.md) |
 
 ## LLM Integration
 
 - [`llms.txt`](llms.txt) — Quick navigation for LLMs
 - [`llms-full.txt`](llms-full.txt) — Exhaustive reference with code samples
+- [`CLAUDE.md`](CLAUDE.md) — Repo laws for agents: versioning, the topological
+  workspace order, what `mw skill run` does not do, and how a running service is
+  registered on the wheel
+- [`RELEASING.md`](RELEASING.md) — Publishing is not deploying. Publish, install
+  globally, run the installed binary, then bump
 
 ## Getting Started
 
@@ -272,10 +313,43 @@ mwsrv --docker -D /src/myapp
 mw status
 mw directions
 mw node list
+mw ceremony list
+mw beat list
+mw web <node-id> [depth]          # one node's neighbourhood
+mw chart list                     # structural tension charts
+mw validate wilson "<description>"  # validators (wilson, ocap, accountability, bridge)
+mw orient "<outcome>"             # the question asked before the work
 ```
 
-The `mw` CLI uses HTTP against the running server by default; MCP fallback is
-available via a local `MW_MCP_PATH`.
+The `mw` CLI uses HTTP against the running server by default (`MW_API_URL`,
+default `http://localhost:8040`); MCP fallback is available via a local
+`MW_MCP_PATH`. `mw skill view` and `mw skill install` work with the shipped
+skill definitions — `mw skill run` exits 3 by design, because the skills are
+documents and there is no runtime that executes them.
+
+### MCP server
+```bash
+# stdio — local JSONL store under .mw/store/
+npx @medicine-wheel/mcp
+
+# server-mediated store — the same relational state the app holds
+MW_API_URL=http://localhost:8040 npx @medicine-wheel/mcp
+```
+
+85 tools over stdio and StreamableHTTP (`POST /api/mcp` on the running app).
+
+### Honcho projection (optional)
+```bash
+HONCHO_URL=http://localhost:8133        # switches the river on
+HONCHO_WORKSPACE_ID=medicine-wheel      # default
+# HONCHO_API_KEY when Honcho asks for auth
+```
+
+With `HONCHO_URL` set, every stored beat, ceremony and diary entry projects into
+Honcho on write, in the background. `GET /api/health` reports `honcho.enabled`.
+A projection never delays the wheel's answer, and a Honcho that is down is a
+line on stderr, not an error to the writer. A running server holds its old
+build and its old environment — restart it for either to take effect.
 
 ## License
 

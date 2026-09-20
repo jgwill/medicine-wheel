@@ -6,7 +6,9 @@
 **Runtime:** Node.js
 **Validation:** Zod
 **UI:** React
-**License:** MIT
+**License:** Indigenous Knowledge Stewardship License (IKSL) v1.0, MIT derived
+**Status:** experimental alpha — see `ALPHA.md`; pin exact versions
+**Versioning:** the suite moves in lockstep on `0.x`; `@medicine-wheel/mcp` keeps its own MAJOR (`4.x`) and follows the suite's minor and patch
 
 ---
 
@@ -40,33 +42,54 @@
 26. [Package 24: creative-problem-solving](#package-24-creative-problem-solving)
 27. [Package 25: brainstorming](#package-25-brainstorming)
 28. [Package 26: infra](#package-26-infra)
-29. [MCP Server (@medicine-wheel/mcp)](#mcp-server-medicine-wheelmcp)
-30. [End-to-End Usage](#end-to-end-usage)
-31. [Specifications](#specifications)
+29. [Package 27: client](#package-27-client)
+30. [Package 28: community-identity](#package-28-community-identity)
+31. [Package 29: honcho](#package-29-honcho)
+32. [MCP Server (@medicine-wheel/mcp)](#mcp-server-medicine-wheelmcp)
+33. [End-to-End Usage](#end-to-end-usage)
+34. [Specifications](#specifications)
 
 ---
 
 ## Architecture Overview
 
 ```
-medicine-wheel-ontology-core          ← Foundation (everyone depends on this)
-    ├── medicine-wheel-ceremony-protocol    ← Ceremony state & governance
-    ├── medicine-wheel-fire-keeper          ← Ceremony coordination agent
-    ├── medicine-wheel-community-review     ← Elder review & consensus
-    ├── medicine-wheel-consent-lifecycle    ← Relational consent lifecycle
-    ├── medicine-wheel-narrative-engine     ← Beat sequencing & arc validation
-    ├── medicine-wheel-importance-unit      ← Relational unit of knowledge
-    ├── medicine-wheel-relational-index     ← Four-source epistemic indexing
-    ├── medicine-wheel-transformation-tracker ← Wilson validity tracking
-    ├── medicine-wheel-graph-viz            ← Circular layout & visualization
-    ├── medicine-wheel-relational-query     ← Query, traversal & audit
-    ├── medicine-wheel-prompt-decomposition ← Intent extraction & PDE
-    ├── medicine-wheel-ui-components        ← React components
-    ├── medicine-wheel-data-store           ← Shared Redis data access
-    └── medicine-wheel-session-reader       ← Session event data reader
+@medicine-wheel/ontology-core              ← Foundation (nearly everyone depends on this)
+    ├── @medicine-wheel/ceremony-protocol        ← Ceremony state & governance
+    ├── @medicine-wheel/fire-keeper              ← Ceremony coordination agent
+    ├── @medicine-wheel/community-review         ← Elder review & consensus
+    ├── @medicine-wheel/community-identity       ← People, roles, circles, memberships
+    ├── @medicine-wheel/consent-lifecycle        ← Relational consent lifecycle
+    ├── @medicine-wheel/narrative-engine         ← Beat sequencing & arc validation
+    ├── @medicine-wheel/importance-unit          ← Relational unit of knowledge
+    ├── @medicine-wheel/relational-index         ← Four-source epistemic indexing
+    ├── @medicine-wheel/transformation-tracker   ← Wilson validity tracking
+    ├── @medicine-wheel/graph-viz                ← Circular layout & visualization
+    ├── @medicine-wheel/relational-query         ← Query, traversal & audit
+    ├── @medicine-wheel/prompt-decomposition     ← Intent extraction & PDE
+    ├── @medicine-wheel/ui-components            ← React components
+    ├── @medicine-wheel/client                   ← Typed HTTP door to a running wheel
+    ├── @medicine-wheel/data-store               ← Shared Redis data access
+    ├── @medicine-wheel/data-store-postgres      ← Neon / Postgres provider scaffold
+    ├── @medicine-wheel/storage-provider         ← Persistence contract (JSONL ⇄ Neon)
+    ├── @medicine-wheel/infra                    ← Hosts, tenants, services, port bindings
+    ├── @medicine-wheel/honcho                   ← Projection into memory that reasons
+    ├── @medicine-wheel/perception-layer         ← Recordings as typed perceptual events
+    ├── @medicine-wheel/narrative-cluster        ← Events → clusters → beats → Film Edit Brief
+    ├── @medicine-wheel/ceremonial-diary         ← A participant's voice across Five Phases
+    ├── @medicine-wheel/github-ceremony          ← GitHub webhooks as ceremony beads
+    └── @medicine-wheel/session-reader           ← Session event data reader
+
+@medicine-wheel/creative-orientation          ← The question asked before the work
+    ├── @medicine-wheel/creative-problem-solving ← Signpost — re-exports the above
+    ├── @medicine-wheel/gap-analysis             ← The fire path
+    └── @medicine-wheel/brainstorming            ← Idea → design, through human gates
+
+@medicine-wheel/app                           ← Next.js visual layer + `mw` / `mwsrv` CLIs
+@medicine-wheel/mcp                           ← 85 tools, stdio + StreamableHTTP
 ```
 
-All packages compile to ES2022 with source maps and declaration files. No circular dependencies. Most packages use `@medicine-wheel/ontology-core` types as their shared vocabulary; the orientation family (`creative-orientation` and the three packages built on it) is the deliberate exception — it sits below the ontology so that the question asked before the work carries no dependency on the instruments it routes to. 26 packages total organized in conceptual layers: Orientation → Foundation → Ceremony → Relational Epistemology → Visualization/Query → UI → Infrastructure.
+All packages compile to ES2022 with source maps and declaration files. No circular dependencies. Most packages use `@medicine-wheel/ontology-core` types as their shared vocabulary; the orientation family (`creative-orientation` and the three packages built on it) is the deliberate exception — it sits below the ontology so that the question asked before the work carries no dependency on the instruments it routes to. 31 published packages: the app, 29 libraries and the MCP server, organized in conceptual layers: Orientation → Foundation → Ceremony → Community → Relational Epistemology → Visualization/Query → UI → Persistence → Infrastructure → Memory.
 
 ---
 
@@ -120,7 +143,7 @@ Four levels: `'open' | 'ceremony_required' | 'restricted' | 'sacred'`
 ## Package 1: ontology-core
 
 ```bash
-npm install medicine-wheel-ontology-core
+npm install @medicine-wheel/ontology-core
 ```
 
 ### Types (50+ interfaces)
@@ -139,7 +162,7 @@ import type {
   AccountabilityTracking,  // Wilson's three R's + alignment score
   ObligationCategory,      // 'human' | 'land' | 'spirit' | 'future'
   RelationalObligation,    // { category, obligations[] }
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 ```
 
 #### Ceremony & Narrative Types
@@ -154,7 +177,7 @@ import type {
   TensionPhase,       // 'germination' | 'assimilation' | 'completion'
   StructuralTensionChart, // { id, desired_outcome, current_reality, action_steps[], phase, ... }
   ActionStep,         // { id, title, description?, completed, direction?, due_date? }
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 ```
 
 #### RSIS Types
@@ -178,7 +201,7 @@ import type {
   DirectionDistribution,  // { east, south, west, north } (numbers)
   DirectionInfo,      // { name, emoji, focus, guidance }
   MedicineWheelView,  // Full UI model with suns, directions, reciprocity, kinship
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 ```
 
 ### RDF Vocabulary
@@ -198,7 +221,7 @@ import {
   prefixed,     // (ns, term) => 'mw:RelationalNode'
   expandIRI,    // (prefixedIRI) => full IRI
   compactIRI,   // (fullIRI) => prefixed form
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 // Usage
 MW.RelationalNode  // → 'https://schema.medicinewheel.dev/ontology#RelationalNode'
@@ -228,7 +251,7 @@ import {
   PERSON_ROLES,        // PersonRole[]
   RSIS_RELATION_TYPES, // RSISRelationType[]
   DIRECTION_INFO,      // Record<DirectionName, DirectionInfo>
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 ```
 
 ### Zod Schemas
@@ -250,7 +273,7 @@ import {
   StructuralTensionChartSchema,
   DirectionResponseSchema,
   // ... and more
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 
 // Usage
 const parsed = RelationalNodeSchema.parse(rawData);  // throws on invalid
@@ -263,7 +286,7 @@ import type {
   ValidatedOcapFlags,
   ValidatedNarrativeBeat,
   // ... etc
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 ```
 
 ### Semantic Query Helpers
@@ -304,7 +327,7 @@ import {
 
   // Completeness
   relationalCompleteness, // (nodeId, relations) => { total, categories, missing, ceremony_coverage }
-} from 'medicine-wheel-ontology-core';
+} from '@medicine-wheel/ontology-core';
 ```
 
 #### Usage Examples
@@ -338,7 +361,7 @@ if (completeness.missing_categories.length > 0) {
 ## Package 2: ceremony-protocol
 
 ```bash
-npm install medicine-wheel-ceremony-protocol
+npm install @medicine-wheel/ceremony-protocol
 ```
 
 ### API
@@ -353,8 +376,8 @@ import {
   checkCeremonyRequired,   // (filePath, config) => boolean
   getAccessLevel,          // (filePath, config) => GovernanceAccess
   formatGovernanceWarning, // (rule) => string
-} from 'medicine-wheel-ceremony-protocol';
-import type { CeremonyState } from 'medicine-wheel-ceremony-protocol';
+} from '@medicine-wheel/ceremony-protocol';
+import type { CeremonyState } from '@medicine-wheel/ceremony-protocol';
 ```
 
 ### CeremonyState Interface
@@ -421,7 +444,7 @@ const access = getAccessLevel('ceremony/smudging.md', config.governance!);
 ## Package 3: fire-keeper
 
 ```bash
-npm install medicine-wheel-fire-keeper
+npm install @medicine-wheel/fire-keeper
 ```
 
 The Fire Keeper is the ceremony coordination agent. It does not write code or produce artifacts directly — it receives, evaluates, routes, and gates the work of sub-agents through relational integrity checks.
@@ -429,8 +452,8 @@ The Fire Keeper is the ceremony coordination agent. It does not write code or pr
 ### Core Class: FireKeeper
 
 ```typescript
-import { FireKeeper, DEFAULT_GATES } from 'medicine-wheel-fire-keeper';
-import type { FireKeeperConfig, FireKeeperState } from 'medicine-wheel-fire-keeper';
+import { FireKeeper, DEFAULT_GATES } from '@medicine-wheel/fire-keeper';
+import type { FireKeeperConfig, FireKeeperState } from '@medicine-wheel/fire-keeper';
 
 const config: FireKeeperConfig = {
   trajectoryThreshold: 0.65,
@@ -460,7 +483,7 @@ import type {
   CeremonyStateExtended,    // Full ceremony state per inquiry
   FireKeeperConfig,         // { trajectoryThreshold, permissionTiers, gatingConditions, humanDecisionPoints }
   FireKeeperState,          // { active, ceremonies, currentTier, activeStopWorkOrders, lastUpdated }
-} from 'medicine-wheel-fire-keeper';
+} from '@medicine-wheel/fire-keeper';
 ```
 
 ### Message Types (A2A Protocol)
@@ -478,7 +501,7 @@ import type {
   CeremonyStateUpdateMessage,  // Ceremony state broadcast
   StopWorkOrderMessage,        // Emergency halt
   FireKeeperMessage,           // Union of all message types
-} from 'medicine-wheel-fire-keeper';
+} from '@medicine-wheel/fire-keeper';
 ```
 
 ### Gating
@@ -492,23 +515,23 @@ import {
   GATE_OCAP_COMPLIANCE,  // Pre-built: OCAP flags compliant
   GATE_CEREMONY_PHASE,   // Pre-built: ceremony in active phase
   DEFAULT_GATES,         // [GATE_WILSON_ALIGNMENT, GATE_OCAP_COMPLIANCE, GATE_CEREMONY_PHASE]
-} from 'medicine-wheel-fire-keeper';
-import type { GateEvaluationResult } from 'medicine-wheel-fire-keeper';
+} from '@medicine-wheel/fire-keeper';
+import type { GateEvaluationResult } from '@medicine-wheel/fire-keeper';
 // GateEvaluationResult: { allPassed, results: { condition, passed, required }[] }
 ```
 
 ### Decisions (Human-in-the-Loop)
 
 ```typescript
-import { humanNeeded, permissionEscalation, circleReview } from 'medicine-wheel-fire-keeper';
-import type { HumanDecisionResult, EscalationResult, CircleReviewResult } from 'medicine-wheel-fire-keeper';
+import { humanNeeded, permissionEscalation, circleReview } from '@medicine-wheel/fire-keeper';
+import type { HumanDecisionResult, EscalationResult, CircleReviewResult } from '@medicine-wheel/fire-keeper';
 ```
 
 ### Check-Back Protocol
 
 ```typescript
-import { relationalCheckBack } from 'medicine-wheel-fire-keeper';
-import type { CheckBackStep, CheckBackResult } from 'medicine-wheel-fire-keeper';
+import { relationalCheckBack } from '@medicine-wheel/fire-keeper';
+import type { CheckBackStep, CheckBackResult } from '@medicine-wheel/fire-keeper';
 
 // Four-step relational check-back before autonomous action:
 // 1. Does this action honor existing relations?
@@ -520,9 +543,9 @@ import type { CheckBackStep, CheckBackResult } from 'medicine-wheel-fire-keeper'
 ### Ceremony State & Trajectory
 
 ```typescript
-import { CeremonyStateManager, createCeremonyState } from 'medicine-wheel-fire-keeper';
-import { trajectoryConfidence, valueDivergenceDetect } from 'medicine-wheel-fire-keeper';
-import type { CompletionReadiness, DivergenceResult } from 'medicine-wheel-fire-keeper';
+import { CeremonyStateManager, createCeremonyState } from '@medicine-wheel/fire-keeper';
+import { trajectoryConfidence, valueDivergenceDetect } from '@medicine-wheel/fire-keeper';
+import type { CompletionReadiness, DivergenceResult } from '@medicine-wheel/fire-keeper';
 ```
 
 ### Permission Tiers
@@ -537,8 +560,8 @@ import type { CompletionReadiness, DivergenceResult } from 'medicine-wheel-fire-
 ### Usage Example
 
 ```typescript
-import { FireKeeper, DEFAULT_GATES } from 'medicine-wheel-fire-keeper';
-import type { FireKeeperConfig } from 'medicine-wheel-fire-keeper';
+import { FireKeeper, DEFAULT_GATES } from '@medicine-wheel/fire-keeper';
+import type { FireKeeperConfig } from '@medicine-wheel/fire-keeper';
 
 const config: FireKeeperConfig = {
   trajectoryThreshold: 0.65,
@@ -565,7 +588,7 @@ const result = keeper.evaluateImportance(
 ## Package 4: community-review
 
 ```bash
-npm install medicine-wheel-community-review
+npm install @medicine-wheel/community-review
 ```
 
 Wilson describes research validation through *community review* — Elders, knowledge keepers, and community members validate whether research honors relational accountability. This package implements that vision.
@@ -583,7 +606,7 @@ import type {
   ReviewOutcome,         // { type, consensus, voices[], wilsonCheck, elderBlessing?, conditions[], nextAction }
   WilsonCheck,           // { respectHonored, reciprocityPresent, responsibilityTaken }
   TalkingCircleEntry,    // { speakerId, role, direction?, voice, timestamp, inResponseTo? }
-} from 'medicine-wheel-community-review';
+} from '@medicine-wheel/community-review';
 ```
 
 ### Zod Schemas
@@ -599,7 +622,7 @@ import {
   WilsonCheckSchema,
   ReviewOutcomeSchema,
   ReviewCircleSchema,
-} from 'medicine-wheel-community-review';
+} from '@medicine-wheel/community-review';
 
 import type {
   ValidatedReviewer,
@@ -607,7 +630,7 @@ import type {
   ValidatedWilsonCheck,
   ValidatedReviewOutcome,
   ValidatedReviewCircle,
-} from 'medicine-wheel-community-review';
+} from '@medicine-wheel/community-review';
 ```
 
 ### Circle Management
@@ -619,7 +642,7 @@ import {
   submitForReview,     // (circle) => ReviewCircle (transitions to 'reviewing')
   closeCircle,         // (circle, outcome) => ReviewCircle (transitions to 'decided')
   circleStatus,        // (circle) => { status, reviewerCount, hasElder, wilsonAlignment }
-} from 'medicine-wheel-community-review';
+} from '@medicine-wheel/community-review';
 ```
 
 ### Elder Validation
@@ -629,7 +652,7 @@ import {
   requestElderValidation,  // (circle, elderId) => ReviewCircle
   elderGuidance,           // (circle) => guidance string
   elderBlessing,           // (circle, elderId, blessing) => ReviewCircle
-} from 'medicine-wheel-community-review';
+} from '@medicine-wheel/community-review';
 ```
 
 ### Consensus & Talking Circle
@@ -640,7 +663,7 @@ import {
   talkingCircle,         // (circle, entry) => ReviewCircle
   recordVoices,          // (circle) => voice summary
   resolveDisagreement,   // (circle, process) => ReviewCircle
-} from 'medicine-wheel-community-review';
+} from '@medicine-wheel/community-review';
 ```
 
 ### Accountability
@@ -651,7 +674,7 @@ import {
   reviewAgainstWilson,       // (circle) => WilsonCheck
   reviewAgainstOcap,         // (circle) => OCAP® compliance check
   relationalHealthReview,    // (circle) => relational health assessment
-} from 'medicine-wheel-community-review';
+} from '@medicine-wheel/community-review';
 ```
 
 ### Outcomes
@@ -662,7 +685,7 @@ import {
   requestDeepening,      // (circle, areas) => ReviewOutcome
   returnToCircle,        // (circle, reason) => ReviewOutcome
   ceremonialHold,        // (circle, reason) => ReviewOutcome
-} from 'medicine-wheel-community-review';
+} from '@medicine-wheel/community-review';
 ```
 
 ### Usage Example
@@ -677,7 +700,7 @@ import {
   seekConsensus,
   approveWithBlessings,
   closeCircle,
-} from 'medicine-wheel-community-review';
+} from '@medicine-wheel/community-review';
 
 // Create a review circle
 let circle = createReviewCircle('research-001', 'research');
@@ -725,7 +748,7 @@ circle = closeCircle(circle, outcome);
 ## Package 5: consent-lifecycle
 
 ```bash
-npm install medicine-wheel-consent-lifecycle
+npm install @medicine-wheel/consent-lifecycle
 ```
 
 Transforms consent from a boolean checkbox into a living relational obligation with lifecycle tracking, renewal, renegotiation, and community-level consent protocols. Wilson's relational accountability means consent is not an event — it's a *relationship*.
@@ -740,7 +763,7 @@ import type {
   ConsentCeremony,     // { type, timestamp, participants[], witnessedBy[], outcome, notes?, ceremonyId? }
   ConsentStateChange,  // { from, to, reason, timestamp, initiatedBy }
   ConsentCascade,      // { triggerId, affected[], action: 'expire' | 'review' | 'withdraw' | 'narrow' }
-} from 'medicine-wheel-consent-lifecycle';
+} from '@medicine-wheel/consent-lifecycle';
 ```
 
 ### Zod Schemas
@@ -753,7 +776,7 @@ import {
   ConsentStateChangeSchema,
   ConsentCascadeSchema,
   ConsentRecordSchema,
-} from 'medicine-wheel-consent-lifecycle';
+} from '@medicine-wheel/consent-lifecycle';
 
 import type {
   ValidatedConsentRecord,
@@ -761,7 +784,7 @@ import type {
   ValidatedConsentCeremony,
   ValidatedConsentStateChange,
   ValidatedConsentCascade,
-} from 'medicine-wheel-consent-lifecycle';
+} from '@medicine-wheel/consent-lifecycle';
 ```
 
 ### Lifecycle
@@ -773,8 +796,8 @@ import {
   renegotiateConsent,   // (record, newScope) => ConsentRecord (state → 'renegotiating')
   withdrawConsent,      // (record, reason) => ConsentRecord (state → 'withdrawn', terminal)
   checkConsentHealth,   // (record) => ConsentHealthResult
-} from 'medicine-wheel-consent-lifecycle';
-import type { ConsentHealthResult } from 'medicine-wheel-consent-lifecycle';
+} from '@medicine-wheel/consent-lifecycle';
+import type { ConsentHealthResult } from '@medicine-wheel/consent-lifecycle';
 ```
 
 ### Scope
@@ -785,8 +808,8 @@ import {
   narrowScope,     // (scope, restrictions) => ConsentScope
   widenScope,      // (scope, additions) => WidenScopeResult (requires re-consent)
   scopeIncludes,   // (scope, query) => ScopeCheckResult
-} from 'medicine-wheel-consent-lifecycle';
-import type { ScopeAdditions, WidenScopeResult, ScopeQuery, ScopeCheckResult } from 'medicine-wheel-consent-lifecycle';
+} from '@medicine-wheel/consent-lifecycle';
+import type { ScopeAdditions, WidenScopeResult, ScopeQuery, ScopeCheckResult } from '@medicine-wheel/consent-lifecycle';
 ```
 
 ### Ceremony
@@ -795,8 +818,8 @@ import type { ScopeAdditions, WidenScopeResult, ScopeQuery, ScopeCheckResult } f
 import {
   consentCeremony,          // (record, participants) => ConsentRecord
   consentRenewalCeremony,   // (record, participants) => ConsentRecord
-} from 'medicine-wheel-consent-lifecycle';
-import type { ConsentCeremonyOptions } from 'medicine-wheel-consent-lifecycle';
+} from '@medicine-wheel/consent-lifecycle';
+import type { ConsentCeremonyOptions } from '@medicine-wheel/consent-lifecycle';
 ```
 
 ### Community Consent
@@ -806,8 +829,8 @@ import {
   communityConsent,     // (community, scope) => ConsentRecord
   collectiveDecision,   // (voices) => ConsensusResult
   elderApproval,        // (elderId, record) => ConsentRecord
-} from 'medicine-wheel-consent-lifecycle';
-import type { CommunityInfo, CommunityVoice, ConsensusResult, ElderApprovalOptions } from 'medicine-wheel-consent-lifecycle';
+} from '@medicine-wheel/consent-lifecycle';
+import type { CommunityInfo, CommunityVoice, ConsensusResult, ElderApprovalOptions } from '@medicine-wheel/consent-lifecycle';
 ```
 
 ### Cascade
@@ -817,8 +840,8 @@ import {
   onWithdrawal,             // (record) => AffectedRelation[]
   propagateScopeChange,     // (record, newScope) => ScopeChangeResult
   findDependentRelations,   // (record, allRecords) => DependencyResult
-} from 'medicine-wheel-consent-lifecycle';
-import type { AffectedRelation, ScopeChangeResult, DependencyResult } from 'medicine-wheel-consent-lifecycle';
+} from '@medicine-wheel/consent-lifecycle';
+import type { AffectedRelation, ScopeChangeResult, DependencyResult } from '@medicine-wheel/consent-lifecycle';
 ```
 
 ### Alerts
@@ -829,8 +852,8 @@ import {
   renewalDue,          // (records) => RenewalDueResult
   scopeMismatch,       // (record, action) => ScopeMismatchResult
   healthCheck,         // (records) => BatchHealthResult
-} from 'medicine-wheel-consent-lifecycle';
-import type { StaleAlert, RenewalItem, RenewalDueResult, ScopeMismatchResult, BatchHealthResult } from 'medicine-wheel-consent-lifecycle';
+} from '@medicine-wheel/consent-lifecycle';
+import type { StaleAlert, RenewalItem, RenewalDueResult, ScopeMismatchResult, BatchHealthResult } from '@medicine-wheel/consent-lifecycle';
 ```
 
 ### Usage Example
@@ -844,7 +867,7 @@ import {
   consentCeremony,
   onWithdrawal,
   checkConsentHealth,
-} from 'medicine-wheel-consent-lifecycle';
+} from '@medicine-wheel/consent-lifecycle';
 
 // Define a consent scope
 const scope = defineScope(
@@ -889,7 +912,7 @@ const affected = onWithdrawal(consent);
 ## Package 6: narrative-engine
 
 ```bash
-npm install medicine-wheel-narrative-engine
+npm install @medicine-wheel/narrative-engine
 ```
 
 ### Sequencer
@@ -903,7 +926,7 @@ import {
   currentAct,        // (beats) => number
   suggestNextBeat,   // (beats) => { direction, act }
   spiralOrder,       // (beats) => NarrativeBeat[] sorted by spiral
-} from 'medicine-wheel-narrative-engine';
+} from '@medicine-wheel/narrative-engine';
 ```
 
 #### SequencerOptions
@@ -949,7 +972,7 @@ import {
   phaseToDirection,   // (phase) => DirectionName
   validateCadence,    // (beats, ceremonies, pattern?) => CadenceValidation
   detectTransitions,  // (beats) => { from, to, beatIndex }[]
-} from 'medicine-wheel-narrative-engine';
+} from '@medicine-wheel/narrative-engine';
 ```
 
 #### CadencePhase mapping
@@ -980,7 +1003,7 @@ import {
   computeCompleteness,  // (beats, ceremonies, relations) => ArcCompleteness
   validateArc,          // (beats, ceremonies, relations) => ArcValidationResult
   isArcComplete,        // (beats) => boolean (all 4 directions visited?)
-} from 'medicine-wheel-narrative-engine';
+} from '@medicine-wheel/narrative-engine';
 ```
 
 #### Completeness Scoring (weighted)
@@ -1027,7 +1050,7 @@ console.log(`OCAP: ${completeness.ocapCompliant}`);
 import {
   buildTimeline,  // (beats, options?) => TimelineData
   actStrip,       // (beats) => { act, direction, beats, hasCeremony }[]
-} from 'medicine-wheel-narrative-engine';
+} from '@medicine-wheel/narrative-engine';
 ```
 
 #### TimelineOptions
@@ -1063,7 +1086,7 @@ import {
   computeProgress,      // (cycle, beats, ceremonies, relations) => CycleProgress
   updateCycleMetadata,  // (cycle, beats, ceremonies, relations) => MedicineWheelCycle
   extractTransitions,   // (beats, ceremonies) => CycleTransition[]
-} from 'medicine-wheel-narrative-engine';
+} from '@medicine-wheel/narrative-engine';
 ```
 
 #### Usage
@@ -1093,7 +1116,7 @@ import {
   generateDirectionObservation,   // (distribution, recent) => string
   getCeremonyPhaseFraming,        // (phase: CeremonyPhase) => string
   describeSun,                    // (sun: SunName) => string
-} from 'medicine-wheel-narrative-engine';
+} from '@medicine-wheel/narrative-engine';
 ```
 
 ---
@@ -1101,7 +1124,7 @@ import {
 ## Package 7: importance-unit
 
 ```bash
-npm install medicine-wheel-importance-unit
+npm install @medicine-wheel/importance-unit
 ```
 
 The ImportanceUnit is the relational unit of knowledge in Wilson's epistemology — a relationally-accountable piece of meaning that carries epistemic weight, source dimensions, accountability links, and circle depth tracking. Not all knowledge is equal: dream-state and embodied knowledge may carry more epistemic authority than rational analysis.
@@ -1122,7 +1145,7 @@ import type {
   ImportanceUnit,           // { id, direction, epistemicWeight, source, accountabilityLinks[], circleDepth, content, ceremonyState?, axiologicalPillar?, inquiryRef?, meta }
   CreateUnitInput,          // { direction, source, summary, rawInput?, createdBy, axiologicalPillar?, inquiryRef?, accountabilityLinks?, traceId? }
   UpdateUnitInput,          // { direction?, summary?, axiologicalPillar?, inquiryRef? }
-} from 'medicine-wheel-importance-unit';
+} from '@medicine-wheel/importance-unit';
 ```
 
 ### Zod Schemas
@@ -1141,7 +1164,7 @@ import {
   ImportanceUnitSchema,
   CreateUnitInputSchema,
   UpdateUnitInputSchema,
-} from 'medicine-wheel-importance-unit';
+} from '@medicine-wheel/importance-unit';
 
 import type {
   ValidatedImportanceUnit,
@@ -1151,7 +1174,7 @@ import type {
   ValidatedCeremonyState,
   ValidatedCreateUnitInput,
   ValidatedUpdateUnitInput,
-} from 'medicine-wheel-importance-unit';
+} from '@medicine-wheel/importance-unit';
 ```
 
 ### Core CRUD
@@ -1162,7 +1185,7 @@ import {
   updateUnit,   // (unit, input: UpdateUnitInput) => ImportanceUnit
   circleBack,   // (unit, shift: string) => ImportanceUnit (increments circleDepth, records refinement)
   archive,      // (unit) => ImportanceUnit (marks as archived)
-} from 'medicine-wheel-importance-unit';
+} from '@medicine-wheel/importance-unit';
 ```
 
 ### Epistemic Weight
@@ -1173,7 +1196,7 @@ import {
   computeWeight,     // (source, circleDepth) => number (0–1)
   adjustForSource,   // (weight, source) => number
   adjustForDepth,    // (weight, circleDepth) => number (logarithmic scaling, never > 1.0)
-} from 'medicine-wheel-importance-unit';
+} from '@medicine-wheel/importance-unit';
 ```
 
 ### Accountability
@@ -1183,8 +1206,8 @@ import {
   linkAccountability,  // (unit, link: AccountabilityLink) => ImportanceUnit
   resolveLinks,        // (unit, allUnits) => resolved link details
   findGaps,            // (units) => AccountabilityGap[] (relationally isolated units)
-} from 'medicine-wheel-importance-unit';
-import type { AccountabilityGap } from 'medicine-wheel-importance-unit';
+} from '@medicine-wheel/importance-unit';
+import type { AccountabilityGap } from '@medicine-wheel/importance-unit';
 ```
 
 ### Circle / Spiral Tracking
@@ -1195,8 +1218,8 @@ import {
   recordRefinement,   // (unit, shift) => ImportanceUnit
   detectDeepening,    // (unit) => DeepeningAnalysis (genuine progress?)
   detectStagnation,   // (unit) => StagnationAnalysis (circling without progress?)
-} from 'medicine-wheel-importance-unit';
-import type { DeepeningAnalysis, StagnationAnalysis } from 'medicine-wheel-importance-unit';
+} from '@medicine-wheel/importance-unit';
+import type { DeepeningAnalysis, StagnationAnalysis } from '@medicine-wheel/importance-unit';
 ```
 
 ### Epistemic Weight Model
@@ -1216,7 +1239,7 @@ Weight increases with `circleDepth` using diminishing returns (logarithmic scali
 import {
   createUnit, circleBack, computeWeight, linkAccountability, findGaps, detectDeepening,
   type ImportanceUnit, type EpistemicSource,
-} from 'medicine-wheel-importance-unit';
+} from '@medicine-wheel/importance-unit';
 
 // Create a unit from dream-state knowing
 const unit = createUnit({
@@ -1251,7 +1274,7 @@ const analysis = detectDeepening(linked);
 ## Package 8: relational-index
 
 ```bash
-npm install medicine-wheel-relational-index
+npm install @medicine-wheel/relational-index
 ```
 
 Four-source epistemic dimensional indexing. Wilson's epistemology recognises multiple sources of knowing — Land, Dream, Code, and Vision each teach differently. This package enables querying, traversal, and cross-dimensional mapping across those epistemic sources.
@@ -1272,7 +1295,7 @@ import type {
   Refinement,             // { id, circle, depth, timestamp }
   RelationalPath,         // { nodes[], dimensions[], totalWeight, description }
   IndexHealth,            // { score, dimensionBalance, entryCount, convergenceCount, tensionCount, gapCount, recommendations[] }
-} from 'medicine-wheel-relational-index';
+} from '@medicine-wheel/relational-index';
 ```
 
 ### Index Manager
@@ -1283,7 +1306,7 @@ import {
   addEntry,           // (index, entry) => RelationalIndex
   removeEntry,        // (index, unitId) => RelationalIndex
   rebuildDimensions,  // (index) => RelationalIndex (recompute dimension aggregations)
-} from 'medicine-wheel-relational-index';
+} from '@medicine-wheel/relational-index';
 ```
 
 ### Query
@@ -1295,7 +1318,7 @@ import {
   queryByWeight,            // (index, minWeight, maxWeight?) => IndexEntry[]
   queryByDepth,             // (index, minDepth) => IndexEntry[]
   queryCrossDimensional,    // (index, sources[]) => IndexEntry[] (entries touching multiple sources)
-} from 'medicine-wheel-relational-index';
+} from '@medicine-wheel/relational-index';
 ```
 
 ### Dimensions
@@ -1307,7 +1330,7 @@ import {
   codeIndex,          // (index) => DimensionIndex
   visionIndex,        // (index) => DimensionIndex
   dimensionBalance,   // (index) => { land, dream, code, vision } (0–1 each, 1 = balanced)
-} from 'medicine-wheel-relational-index';
+} from '@medicine-wheel/relational-index';
 ```
 
 ### Cross-Dimensional
@@ -1318,7 +1341,7 @@ import {
   findConvergences,     // (index) => Convergence[]
   detectTensions,       // (index) => Tension[]
   coverageGaps,         // (index) => DimensionGap[]
-} from 'medicine-wheel-relational-index';
+} from '@medicine-wheel/relational-index';
 ```
 
 ### Spiral Depth
@@ -1329,7 +1352,7 @@ import {
   compareCircles,      // (index, circle1, circle2) => comparison
   detectDeepening,     // (index) => boolean (genuine progress across circles?)
   detectStagnation,    // (index) => boolean (circling without deepening?)
-} from 'medicine-wheel-relational-index';
+} from '@medicine-wheel/relational-index';
 ```
 
 ### Metrics
@@ -1339,7 +1362,7 @@ import {
   indexHealth,                       // (index) => IndexHealth
   metricsDimensionBalance,           // alias for balance check
   metricsCoverageGaps,               // alias for gap detection
-} from 'medicine-wheel-relational-index';
+} from '@medicine-wheel/relational-index';
 ```
 
 ### Usage Example
@@ -1348,7 +1371,7 @@ import {
 import {
   createIndex, addEntry, queryBySource, dimensionBalance,
   measureSpiralDepth, findConvergences, indexHealth,
-} from 'medicine-wheel-relational-index';
+} from '@medicine-wheel/relational-index';
 
 // Create an empty index
 let index = createIndex();
@@ -1400,7 +1423,7 @@ const health = indexHealth(index);
 ## Package 9: transformation-tracker
 
 ```bash
-npm install medicine-wheel-transformation-tracker
+npm install @medicine-wheel/transformation-tracker
 ```
 
 Research transformation tracking — Wilson's validity criterion: "If research doesn't change you, you haven't done it right." Tracks the transformative impact of research on researchers, communities, and relational networks.
@@ -1416,7 +1439,7 @@ import type {
   RelationalShift,      // { relationId, before: { strength, description }, after: { strength, description }, catalyst, direction, timestamp }
   ReciprocityEntry,     // { type: 'giving' | 'receiving', description, relatedTo, category, timestamp }
   WilsonValidity,       // { researcherTransformed, communityBenefited, relationsStrengthened, reciprocityBalanced, sevenGenerationsConsidered, overallValid, score, recommendations[] }
-} from 'medicine-wheel-transformation-tracker';
+} from '@medicine-wheel/transformation-tracker';
 ```
 
 ### Zod Schemas
@@ -1431,7 +1454,7 @@ import {
   ReciprocityEntrySchema,
   TransformationLogSchema,
   WilsonValiditySchema,
-} from 'medicine-wheel-transformation-tracker';
+} from '@medicine-wheel/transformation-tracker';
 
 import type {
   ValidatedTransformationLog,
@@ -1441,7 +1464,7 @@ import type {
   ValidatedRelationalShift,
   ValidatedReciprocityEntry,
   ValidatedWilsonValidity,
-} from 'medicine-wheel-transformation-tracker';
+} from '@medicine-wheel/transformation-tracker';
 ```
 
 ### Researcher Module
@@ -1452,8 +1475,8 @@ import {
   snapshotUnderstanding,   // (log, snapshot) => TransformationLog
   compareSnapshots,        // (before, after) => SnapshotComparison
   detectGrowth,            // (log) => GrowthSignal[] (analyze log for genuine growth)
-} from 'medicine-wheel-transformation-tracker';
-import type { SnapshotComparison, GrowthSignal } from 'medicine-wheel-transformation-tracker';
+} from '@medicine-wheel/transformation-tracker';
+import type { SnapshotComparison, GrowthSignal } from '@medicine-wheel/transformation-tracker';
 ```
 
 ### Community Module
@@ -1464,8 +1487,8 @@ import {
   reciprocityBalance,  // (log) => ReciprocityBalanceResult
   communityVoice,      // (log) => CommunityVoiceResult
   impactTimeline,      // (log) => TimelineEntry[]
-} from 'medicine-wheel-transformation-tracker';
-import type { ReciprocityBalanceResult, CommunityVoiceResult, TimelineEntry } from 'medicine-wheel-transformation-tracker';
+} from '@medicine-wheel/transformation-tracker';
+import type { ReciprocityBalanceResult, CommunityVoiceResult, TimelineEntry } from '@medicine-wheel/transformation-tracker';
 ```
 
 ### Relational Shift Module
@@ -1476,8 +1499,8 @@ import {
   beforeAfter,             // (log, relationId) => { before, after }
   strengthDelta,           // (log) => StrengthDeltaResult (aggregate relational strength changes)
   newRelationsFormed,      // (log) => NewRelationsResult
-} from 'medicine-wheel-transformation-tracker';
-import type { RelationalShiftSummary, StrengthDeltaResult, NewRelationDescriptor, NewRelationsResult } from 'medicine-wheel-transformation-tracker';
+} from '@medicine-wheel/transformation-tracker';
+import type { RelationalShiftSummary, StrengthDeltaResult, NewRelationDescriptor, NewRelationsResult } from '@medicine-wheel/transformation-tracker';
 ```
 
 ### Seven Generations Module
@@ -1487,8 +1510,8 @@ import {
   sevenGenScore,          // (log) => SevenGenResult (seven-generation sustainability score)
   futureImpact,           // (log) => FutureImpactAssessment
   sustainabilityCheck,    // (log) => SustainabilityResult
-} from 'medicine-wheel-transformation-tracker';
-import type { SevenGenResult, FutureImpactAssessment, SustainabilityResult } from 'medicine-wheel-transformation-tracker';
+} from '@medicine-wheel/transformation-tracker';
+import type { SevenGenResult, FutureImpactAssessment, SustainabilityResult } from '@medicine-wheel/transformation-tracker';
 ```
 
 ### Reciprocity Ledger Module
@@ -1499,8 +1522,8 @@ import {
   logReceiving,      // (log, entry) => TransformationLog
   balanceCheck,      // (log) => BalanceCheckResult
   reciprocityDebt,   // (log) => ReciprocityDebtResult (what needs to be given back?)
-} from 'medicine-wheel-transformation-tracker';
-import type { CategoryBalance, BalanceCheckResult, Debt, ReciprocityDebtResult } from 'medicine-wheel-transformation-tracker';
+} from '@medicine-wheel/transformation-tracker';
+import type { CategoryBalance, BalanceCheckResult, Debt, ReciprocityDebtResult } from '@medicine-wheel/transformation-tracker';
 ```
 
 ### Prompts Module
@@ -1510,14 +1533,14 @@ import {
   reflectionPrompts,         // (phase) => string[] (prompts for each ceremony phase)
   phaseTransitionPrompts,    // (from, to) => string[] (prompts for phase transitions)
   milestonePrompts,          // (milestone) => string[] (prompts at relational milestones)
-} from 'medicine-wheel-transformation-tracker';
-import type { RelationalMilestone } from 'medicine-wheel-transformation-tracker';
+} from '@medicine-wheel/transformation-tracker';
+import type { RelationalMilestone } from '@medicine-wheel/transformation-tracker';
 ```
 
 ### Wilson Validity Check — THE Function
 
 ```typescript
-import { wilsonValidityCheck } from 'medicine-wheel-transformation-tracker';
+import { wilsonValidityCheck } from '@medicine-wheel/transformation-tracker';
 
 // THE function: has the research transformed?
 // Evaluates five dimensions:
@@ -1539,7 +1562,7 @@ import {
   logCommunityImpact, logGiving, logReceiving, balanceCheck,
   trackRelationalChange, sevenGenScore, wilsonValidityCheck,
   type TransformationLog, type GrowthSnapshot,
-} from 'medicine-wheel-transformation-tracker';
+} from '@medicine-wheel/transformation-tracker';
 
 // Initialize a transformation log
 let log: TransformationLog = {
@@ -1603,14 +1626,14 @@ if (!validity.overallValid) {
 ## Package 10: graph-viz
 
 ```bash
-npm install medicine-wheel-graph-viz
+npm install @medicine-wheel/graph-viz
 ```
 
 ### React Component
 
 ```tsx
-import { MedicineWheelGraph } from 'medicine-wheel-graph-viz';
-import type { MedicineWheelGraphProps } from 'medicine-wheel-graph-viz';
+import { MedicineWheelGraph } from '@medicine-wheel/graph-viz';
+import type { MedicineWheelGraphProps } from '@medicine-wheel/graph-viz';
 
 <MedicineWheelGraph
   data={graphData}           // MWGraphData: { nodes, links }
@@ -1634,7 +1657,7 @@ import {
   quadrantArcPath,         // (cx, cy, outerR, innerR, startAngle, endAngle) => SVG path
   curvedLinkPath,          // (source, target) => SVG path string
   directionLabelPosition,  // (direction, config?) => { x, y }
-} from 'medicine-wheel-graph-viz';
+} from '@medicine-wheel/graph-viz';
 ```
 
 #### WheelLayoutConfig
@@ -1673,7 +1696,7 @@ import {
   edgesToGraphLinks,       // (edges: RelationalEdge[]) => MWGraphLink[]
   relationsToGraphLinks,   // (relations: Relation[]) => MWGraphLink[]
   buildGraphData,          // (nodes, edges: Edge[]|Relation[]) => MWGraphData
-} from 'medicine-wheel-graph-viz';
+} from '@medicine-wheel/graph-viz';
 ```
 
 #### Usage
@@ -1695,7 +1718,7 @@ import {
   toDirectionWheelData,       // (distribution, details) => DirectionWheelSegment[]
   toCeremonyTimelineData,     // (lineage) => TimelineEntry[]
   toMermaidDiagram,           // (hubs, relations) => string (Mermaid source)
-} from 'medicine-wheel-graph-viz';
+} from '@medicine-wheel/graph-viz';
 ```
 
 #### Mermaid Export
@@ -1714,7 +1737,7 @@ const mermaid = toMermaidDiagram(kinshipHubs, kinshipRelations);
 ## Package 11: relational-query
 
 ```bash
-npm install medicine-wheel-relational-query
+npm install @medicine-wheel/relational-query
 ```
 
 ### Query Builder
@@ -1729,7 +1752,7 @@ import {
   filterByRelation,     // (nodes, relations, opts) => nodes with matching relations
   relationCounts,       // (nodes, relations) => Map<string, number>
   filterByMinRelations, // (nodes, relations, min) => nodes with >= min relations
-} from 'medicine-wheel-relational-query';
+} from '@medicine-wheel/relational-query';
 ```
 
 #### Filter Types
@@ -1797,7 +1820,7 @@ import {
   traverse,       // (rootId, nodes, edges, relations, opts?) => TraversalResult
   shortestPath,   // (fromId, toId, nodes, edges) => TraversalPath | null
   neighborhood,   // (nodeId, nodes, edges, maxDepth?) => RelationalNode[]
-} from 'medicine-wheel-relational-query';
+} from '@medicine-wheel/relational-query';
 ```
 
 #### TraversalOptions
@@ -1843,7 +1866,7 @@ import {
   auditAccountability,       // (nodes, edges, relations) => AccountabilityReport
   isOcapCompliant,            // (relation) => boolean
   relationsNeedingAttention,  // (relations, threshold?) => Relation[]
-} from 'medicine-wheel-relational-query';
+} from '@medicine-wheel/relational-query';
 ```
 
 #### AccountabilityReport
@@ -1892,7 +1915,7 @@ import {
   queryAllInquiries,          // () => Cypher string
   formatReciprocityObservation,  // (flows) => string (invitational tone)
   formatDirectionObservation,    // (distribution) => string
-} from 'medicine-wheel-relational-query';
+} from '@medicine-wheel/relational-query';
 ```
 
 #### Usage
@@ -1913,14 +1936,14 @@ const obs = formatDirectionObservation({ east: 40, south: 30, west: 20, north: 1
 ## Package 12: prompt-decomposition
 
 ```bash
-npm install medicine-wheel-prompt-decomposition
+npm install @medicine-wheel/prompt-decomposition
 ```
 
 ### MedicineWheelDecomposer
 
 ```typescript
-import { MedicineWheelDecomposer } from 'medicine-wheel-prompt-decomposition';
-import type { OntologicalDecomposition, DecomposerOptions } from 'medicine-wheel-prompt-decomposition';
+import { MedicineWheelDecomposer } from '@medicine-wheel/prompt-decomposition';
+import type { OntologicalDecomposition, DecomposerOptions } from '@medicine-wheel/prompt-decomposition';
 
 const decomposer = new MedicineWheelDecomposer({
   extractImplicit: true,       // detect hedging language
@@ -1979,8 +2002,8 @@ The decomposer detects hedging language (lineage from mcp-pde):
 ### RelationalEnricher
 
 ```typescript
-import { RelationalEnricher } from 'medicine-wheel-prompt-decomposition';
-import type { RelationalGraph, EnrichmentResult } from 'medicine-wheel-prompt-decomposition';
+import { RelationalEnricher } from '@medicine-wheel/prompt-decomposition';
+import type { RelationalGraph, EnrichmentResult } from '@medicine-wheel/prompt-decomposition';
 
 const enricher = new RelationalEnricher();
 const graph: RelationalGraph = { nodes, edges, relations };
@@ -1999,7 +2022,7 @@ import {
   loadDecomposition,         // (workdir, id) => StoredDecomposition | null
   listDecompositions,        // (workdir) => StoredDecomposition[]
   decompositionToMarkdown,   // (result) => string
-} from 'medicine-wheel-prompt-decomposition';
+} from '@medicine-wheel/prompt-decomposition';
 
 // Save to .pde/ directory (JSON + Markdown)
 const stored = saveDecomposition('.', decomposition);
@@ -2020,7 +2043,7 @@ const md = decompositionToMarkdown(decomposition);
 ## Package 13: ui-components
 
 ```bash
-npm install medicine-wheel-ui-components
+npm install @medicine-wheel/ui-components
 ```
 
 ### DirectionCard
@@ -2028,8 +2051,8 @@ npm install medicine-wheel-ui-components
 Displays a direction with color, Ojibwe name, teachings, and current-direction highlighting.
 
 ```tsx
-import { DirectionCard } from 'medicine-wheel-ui-components';
-import type { DirectionCardProps } from 'medicine-wheel-ui-components';
+import { DirectionCard } from '@medicine-wheel/ui-components';
+import type { DirectionCardProps } from '@medicine-wheel/ui-components';
 
 <DirectionCard
   direction={directionObject}   // Direction type from ontology-core
@@ -2043,8 +2066,8 @@ import type { DirectionCardProps } from 'medicine-wheel-ui-components';
 Displays a sequence of narrative beats as a timeline strip.
 
 ```tsx
-import { BeatTimeline } from 'medicine-wheel-ui-components';
-import type { BeatTimelineProps } from 'medicine-wheel-ui-components';
+import { BeatTimeline } from '@medicine-wheel/ui-components';
+import type { BeatTimelineProps } from '@medicine-wheel/ui-components';
 
 <BeatTimeline
   beats={narrativeBeats}        // NarrativeBeat[]
@@ -2059,8 +2082,8 @@ import type { BeatTimelineProps } from 'medicine-wheel-ui-components';
 Detailed view of a relational node with its connections and obligations.
 
 ```tsx
-import { NodeInspector } from 'medicine-wheel-ui-components';
-import type { NodeInspectorProps } from 'medicine-wheel-ui-components';
+import { NodeInspector } from '@medicine-wheel/ui-components';
+import type { NodeInspectorProps } from '@medicine-wheel/ui-components';
 
 <NodeInspector
   node={selectedNode}           // RelationalNode
@@ -2074,8 +2097,8 @@ import type { NodeInspectorProps } from 'medicine-wheel-ui-components';
 Displays OCAP® compliance status for a relation.
 
 ```tsx
-import { OcapBadge } from 'medicine-wheel-ui-components';
-import type { OcapBadgeProps } from 'medicine-wheel-ui-components';
+import { OcapBadge } from '@medicine-wheel/ui-components';
+import type { OcapBadgeProps } from '@medicine-wheel/ui-components';
 
 <OcapBadge
   ocap={relation.ocap}         // OcapFlags
@@ -2088,8 +2111,8 @@ import type { OcapBadgeProps } from 'medicine-wheel-ui-components';
 Visual meter for Wilson's three R's alignment.
 
 ```tsx
-import { WilsonMeter } from 'medicine-wheel-ui-components';
-import type { WilsonMeterProps } from 'medicine-wheel-ui-components';
+import { WilsonMeter } from '@medicine-wheel/ui-components';
+import type { WilsonMeterProps } from '@medicine-wheel/ui-components';
 
 <WilsonMeter
   accountability={relation.accountability}  // AccountabilityTracking
@@ -2102,7 +2125,7 @@ import type { WilsonMeterProps } from 'medicine-wheel-ui-components';
 ## Package 14: data-store
 
 ```bash
-npm install medicine-wheel-data-store
+npm install @medicine-wheel/data-store
 ```
 
 ### Overview
@@ -2126,7 +2149,7 @@ Shared Redis data-access layer for the Medicine Wheel Developer Suite. Provides 
 ## Package 15: session-reader
 
 ```bash
-npm install medicine-wheel-session-reader
+npm install @medicine-wheel/session-reader
 ```
 
 ### Overview
@@ -2409,6 +2432,168 @@ Hosts, tenants, services, and port bindings are modelled as facets **keyed by re
 
 ---
 
+## Package 27: client
+
+```bash
+npm install @medicine-wheel/client
+```
+
+### Overview
+
+The typed HTTP door to a **running** wheel — nodes, edges, ceremonies, beats and the ceremonial diary, typed against `@medicine-wheel/ontology-core`. The wheel's paging honesty (`count`, `total`, `matched`, `truncated`) is carried through to the caller rather than flattened into an array, and errors fail fast: an unreachable wheel throws `MedicineWheelClientError` with status 502, a refusal carries the wheel's status and body. There is no retry. `limit: 'all'` asks for the whole store.
+
+Extracted in 0.14.0 from the MCP server's `http-store.ts` and Miadi's `lib/chronicle-wheel.ts`, so one door is maintained instead of three.
+
+### Exports
+
+-   `createMedicineWheelClient(options | url)` → `MedicineWheelClient` with `health()`, `nodes` (`list`, `get`, `create`, `patch`, `remove`), `edges` (`list`, `create`, `remove`), `ceremonies` (`list`, `get`, `create`), `beats` (`list`, `get`, `create`, `witness`), `diary` (`list`, `get`, `create`, `remove`)
+-   `wheelUrlFromEnv(env?)` — the wheel's URL from the environment, or `null`
+-   `episodeOf(ceremony)`, `closingOf(ceremony)` — a ceremony's episode and the ceremony it closes
+-   `MedicineWheelClientError`, `Paged<T>`, `Limit`, `ClientOptions`, `NewNode`, `NodePatch`, `NewEdge`, `NewCeremony`, `NewBeat`, `NewDiaryEntry`, and the `List*Options` filters
+
+### Usage
+
+```typescript
+import { createMedicineWheelClient, wheelUrlFromEnv } from '@medicine-wheel/client';
+
+const wheel = createMedicineWheelClient(wheelUrlFromEnv() ?? 'http://127.0.0.1:8040');
+
+const page = await wheel.ceremonies.list({ episode_path: '2026-09-17-episode-349', limit: 'all' });
+if (page.truncated) console.warn(`served ${page.count} of ${page.total}`);
+
+const opened = await wheel.ceremonies.create({
+  type: 'talking_circle', direction: 'east',
+  participants: [], medicines_used: [], intentions: ['hear the circle'],
+  circle_id: 'circle:ep349',
+});
+const turn = await wheel.beats.create({
+  direction: 'east', title: 'Guillaume speaks', description: '…',
+  ceremonies: [opened.id], speaker: 'node:human:guillaume',
+});
+await wheel.beats.witness(turn.id, { witnesses: ['node:human:mia'] });
+```
+
+### Dependencies
+
+-   `@medicine-wheel/ontology-core`
+-   `@medicine-wheel/storage-provider`
+
+Spec: `rispecs/client.spec.md`
+
+---
+
+## Package 28: community-identity
+
+```bash
+npm install @medicine-wheel/community-identity
+```
+
+### Overview
+
+Who is in the circle — so a wheel can tell two people apart. A person is a `human` node with `metadata.kind = 'person'` and a role; a circle is a `circle` node; membership is a `member_of` edge; a ceremony held in a circle carries `circle_id`. No new node type is introduced: the closed `NodeType` union from ontology-core is reused.
+
+Tokens and invitation codes are kept **by the consumer** — hashed, in JSONL or a store of its own — never on the wheel.
+
+Roles form a hierarchy: `participant → emerging_guide → ceremony_facilitator → firekeeper → admin`, with `story_keeper` parallel to firekeeper, plus `companion_ai` and `integration_ai`. A community config can grant permissions per role, and every identity action is recorded in an audit store.
+
+### Exports
+
+-   roles — `ROLES`, `PERMISSIONS`, `ROLE_HIERARCHY`, `ROLE_LABELS`, `ROLE_PERMISSIONS`, `hasPermission`, `hasRoleLevel`, `rolesAtOrAbove`, `isRole`
+-   people — `personNode`, `personFromNode`, `personNodeId`, `roleGrant`, `deactivatePatch`, `reactivatePatch`, `apiAccessPatch`, `NewPersonSchema`, `PERSON_KIND`, `Person`, `PersonStatus`
+-   circles — `circleNode`, `circleFromNode`, `membershipEdge`, `CIRCLE_KIND`, `MEMBER_OF`, `CircleType`, `CircleRole`, `Membership`, `NewCircleSchema`, `DEFAULT_CONTAINER`
+-   credentials — `mintToken`, `hashToken`, `JsonlCredentialStore`, `CredentialStore`, `publicCredential`, `TOKEN_PREFIX`
+-   invitations — `mintInvitationCode`, `invitationState`, `JsonlInvitationStore`, `InvitationStore`
+-   audit — `AUDIT_ACTIONS`, `JsonlAuditStore`, `AuditStore`, `AuditRecord`, `AuditQuery`, `AuditPage`
+-   config — `DEFAULT_CONFIG`, `CommunityConfig`, `RegistrationMode`, `permissionsFor`, `mayDo`, `validateConfigPatch`, `JsonConfigStore`
+
+### Usage
+
+```typescript
+import {
+  personNode, circleNode, membershipEdge, hasPermission,
+  JsonlCredentialStore, JsonlInvitationStore,
+} from '@medicine-wheel/community-identity';
+
+const person = personNode({ name: 'Guillaume', role: 'admin' });          // POST /api/nodes
+const circle = circleNode({ name: 'Ep349 circle', intention: '…', facilitator_id: person.id });
+const edge = membershipEdge(person.id, circle.id, 'facilitator');         // POST /api/edges
+
+hasPermission('ceremony_facilitator', 'invite_members');                  // true
+
+const creds = new JsonlCredentialStore('/srv/miadi/identity/credentials.jsonl');
+const { token } = await creds.issue(person.id, 'laptop');                 // shown once
+const who = await creds.verify(token);                                    // who is calling
+```
+
+### Dependencies
+
+-   `@medicine-wheel/ontology-core`
+-   `zod`
+
+Spec: `rispecs/community-identity.spec.md`
+
+---
+
+## Package 29: honcho
+
+```bash
+npm install @medicine-wheel/honcho
+```
+
+### Overview
+
+The wheel's projection into [Honcho](https://honcho.dev), memory that reasons. The wheel stays canonical — what was recorded, and how it relates. Honcho holds what the accumulated history has come to *mean* about each peer, and keeps revising it as new records arrive.
+
+Zero dependencies beyond `fetch`, `/v3` only. The part that carries weight is the wheel's own ontology — `projectBeat` / `projectCeremony` / `projectDiaryEntry` / `honchoIdFor` / `memoryProjectionNode` — which no vendor SDK has.
+
+**The river.** A server started with `HONCHO_URL` projects **every stored beat, ceremony and diary entry** the moment it is written, in the background. Nothing is filtered, nothing is called by an agent. A beat becomes a message from its speaker with its witnesses seated, in the session of its first ceremony; a ceremony becomes a message from the `medicine-wheel` peer. A projection never delays the wheel's answer, and a Honcho that is down is one line on stderr, never an error to the writer. `GET /api/health` reports `honcho: { enabled, url, workspace }`.
+
+Because the MCP server writes through those routes when `MW_API_URL` is set, records logged by an agent flow too.
+
+### Exports
+
+-   client — `createHonchoClient`, `HonchoClient`, `HonchoClientOptions`, `HonchoClientError`, `honchoFromEnv`, `HonchoConfig`, `DEFAULT_WORKSPACE`
+-   projection — `project`, `projectBeat`, `projectCeremony`, `projectDiaryEntry`, `Projection`, `Projected`, `WHEEL_PEER`
+-   sessions and ids — `sessionIdForBeat`, `sessionIdForCeremony`, `sessionIdForDiaryEntry`, `honchoIdFor`, `HONCHO_ID_PATTERN`
+-   back to the wheel — `memoryProjectionNode`, `MemoryProjection`, `MemoryProjectionNode`, `MemoryProjectionKind` (`pattern` | `summary` | `open_question` | `preference`), `MemoryProjectionStatus` (`inferred` | `confirmed` | `rejected`), `MEMORY_PROJECTION_KIND`
+
+### Configuration
+
+-   `HONCHO_URL` — switches the river on; unset means no projection at all
+-   `HONCHO_WORKSPACE_ID` — defaults to `medicine-wheel`; set it to share a workspace with another system
+-   `HONCHO_API_KEY` — sent when Honcho asks for auth
+
+### Usage
+
+```typescript
+import {
+  createHonchoClient, honchoFromEnv, honchoIdFor,
+  project, projectBeat, memoryProjectionNode,
+} from '@medicine-wheel/honcho';
+
+const honcho = createHonchoClient(honchoFromEnv() ?? {
+  baseUrl: 'http://localhost:8133', workspace: 'medicine-wheel',
+});
+
+await project(honcho, projectBeat(beat));                       // a beat, as its speaker
+
+const who = await honcho.peers.representation(honchoIdFor(beat.speaker!));
+const why = await honcho.peers.chat(honchoIdFor(beat.speaker!), 'What does this person return to?');
+
+const node = memoryProjectionNode({                             // a conclusion, back on the wheel
+  kind: 'pattern', status: 'inferred', peer: beat.speaker!,
+  content: why, derived_from: [beat.id],
+});
+```
+
+A derived conclusion returns as a `knowledge` node carrying `metadata.kind: "memory_projection"`, with its status and provenance — inference is never written back as fact.
+
+### Dependencies
+
+-   `@medicine-wheel/ontology-core`
+
+---
+
 ## MCP Server (@medicine-wheel/mcp)
 
 ```bash
@@ -2417,12 +2602,12 @@ npx @medicine-wheel/mcp        # stdio transport
 
 ### Overview
 
-The Model Context Protocol server exposes **74 tools** that let an agent conduct Indigenous-paradigm research through the Medicine Wheel — over two transports:
+The Model Context Protocol server exposes **85 tools** that let an agent conduct Indigenous-paradigm research through the Medicine Wheel — over two transports:
 
 -   **stdio** — default; persists to a local JSONL store under `.mw/store/`
 -   **StreamableHTTP** — `POST /api/mcp` on the running app, JSON-RPC 2.0 (`tools/list`, `tools/call`), dispatched against the same tool registry as stdio
 
-### Tool families (74 total)
+### Tool families (85 total)
 
 -   **Orientation** (3): `orient_before_solving`, `open_gap_analysis`, `check_emitted_outcome` — the question asked before an instrument is chosen. Registered first because list order is scan order, and the routing question belongs ahead of the tools it routes to
 -   **Four Directions** (13): East (3) vision/spirit/new-relation · South (3) growth/mentorship/embodied-data · West (3) reflection/emotional/strawberry-teaching · North (4) wisdom/elder-council/spirit-feeding/story-archiving
@@ -2433,6 +2618,8 @@ The Model Context Protocol server exposes **74 tools** that let an agent conduct
 -   **Inquiry Weaves** (3): relate artefacts and episodes, author episode-to-episode lineage edges, enumerate the chronicle catalog
 -   **Plan Perspectives** (3): read and register plan/insight perspectives across the relational web
 -   **Coordination** (3): `mw_fire_keeper_status`, `mw_relational_check_back`, `mw_enforce_gate`
+-   **Infrastructure** (7): `register_host`, `register_tenant`, `register_service`, `detect_port_conflicts`, `hold_metis`, `reconcile_infra_state`, `list_infra_topology` — a service is registered as a `knowledge` node carrying `metadata.kind: "service"`, never as a new node type
+-   **Honcho memory** (4): `honcho_status`, `honcho_project`, `honcho_recall`, `honcho_project_back`
 -   **Epistemic** (2), **Governance/Transformation** (3), **Reasoning Observability** (2)
 
 ### Server-mediated store (opt-in)
@@ -2441,11 +2628,21 @@ Set `MW_API_URL` to make the tools read and write the live relational state the 
 
 ### App REST API (consumed by the MCP HTTP store)
 
--   `GET/POST /api/nodes`, `/api/edges`, `/api/ceremonies`
--   `GET/POST /api/narrative/beats`, `/api/narrative/cycles`
+-   `GET/POST /api/nodes` · `GET/PATCH/DELETE /api/nodes/{id}` · `GET /api/nodes/{id}/web` (one node's neighbourhood, scoped and honest about what it withheld)
+-   `GET/POST/PATCH/DELETE /api/edges`
+-   `GET/POST /api/ceremonies` · `GET /api/ceremonies/{id}`
+-   `GET/POST /api/narrative/beats` · `GET/PATCH /api/narrative/beats/{id}` (witnessing) · `GET/POST /api/narrative/cycles`
 -   `GET/POST /api/charts`, `/api/mmots`
+-   `GET/POST /api/diary` · `GET/DELETE /api/diary/{id}`
+-   `GET/POST /api/captures` (alias `/api/recordings`), `/api/inquiry-weaves`, `/api/plan-perspectives`
 -   `GET /api/directions`, `/api/health`, `/api/resources`
 -   `GET/POST /api/mcp` — StreamableHTTP MCP endpoint
+
+Read routes page honestly: a response carries `count`, `total`, `matched` and `truncated` rather than silently cutting the list.
+
+### Honcho projection (opt-in)
+
+A server started with `HONCHO_URL` projects every stored beat, ceremony and diary entry into Honcho on write, in the background. `GET /api/health` reports `honcho.enabled`. See Package 29.
 
 ---
 
@@ -2454,12 +2651,12 @@ Set `MW_API_URL` to make the tools read and write the live relational state the 
 ### Complete Research Cycle
 
 ```typescript
-import { createCycle, computeProgress, validateArc, insertBeat, suggestNextBeat } from 'medicine-wheel-narrative-engine';
-import { MedicineWheelDecomposer, saveDecomposition } from 'medicine-wheel-prompt-decomposition';
-import { auditAccountability, traverse } from 'medicine-wheel-relational-query';
-import { checkGovernance, loadCeremonyState } from 'medicine-wheel-ceremony-protocol';
-import { buildGraphData } from 'medicine-wheel-graph-viz';
-import type { NarrativeBeat, CeremonyLog, Relation } from 'medicine-wheel-ontology-core';
+import { createCycle, computeProgress, validateArc, insertBeat, suggestNextBeat } from '@medicine-wheel/narrative-engine';
+import { MedicineWheelDecomposer, saveDecomposition } from '@medicine-wheel/prompt-decomposition';
+import { auditAccountability, traverse } from '@medicine-wheel/relational-query';
+import { checkGovernance, loadCeremonyState } from '@medicine-wheel/ceremony-protocol';
+import { buildGraphData } from '@medicine-wheel/graph-viz';
+import type { NarrativeBeat, CeremonyLog, Relation } from '@medicine-wheel/ontology-core';
 
 // 1. Initialize
 const cycle = createCycle('research-1', 'How does Indigenous ontology inform software design?');
@@ -2510,12 +2707,12 @@ const graphData = buildGraphData(nodes, edges);
 ### Fire Keeper Ceremony Coordination
 
 ```typescript
-import { FireKeeper, DEFAULT_GATES } from 'medicine-wheel-fire-keeper';
-import { createUnit, circleBack, computeWeight } from 'medicine-wheel-importance-unit';
-import { createReviewCircle, addReviewer, submitForReview, seekConsensus } from 'medicine-wheel-community-review';
-import { grantConsent, checkConsentHealth, defineScope } from 'medicine-wheel-consent-lifecycle';
-import { wilsonValidityCheck } from 'medicine-wheel-transformation-tracker';
-import { createIndex, addEntry, indexHealth } from 'medicine-wheel-relational-index';
+import { FireKeeper, DEFAULT_GATES } from '@medicine-wheel/fire-keeper';
+import { createUnit, circleBack, computeWeight } from '@medicine-wheel/importance-unit';
+import { createReviewCircle, addReviewer, submitForReview, seekConsensus } from '@medicine-wheel/community-review';
+import { grantConsent, checkConsentHealth, defineScope } from '@medicine-wheel/consent-lifecycle';
+import { wilsonValidityCheck } from '@medicine-wheel/transformation-tracker';
+import { createIndex, addEntry, indexHealth } from '@medicine-wheel/relational-index';
 
 // 1. Initialize the Fire Keeper
 const keeper = new FireKeeper({
@@ -2577,7 +2774,7 @@ console.log(`Index health: ${health.score}, recommendations: ${health.recommenda
 ### Governance-Aware Workflow
 
 ```typescript
-import { checkGovernance, checkCeremonyRequired, formatGovernanceWarning, getPhaseFraming, loadCeremonyState } from 'medicine-wheel-ceremony-protocol';
+import { checkGovernance, checkCeremonyRequired, formatGovernanceWarning, getPhaseFraming, loadCeremonyState } from '@medicine-wheel/ceremony-protocol';
 
 function beforeFileChange(filePath: string, config: RSISConfig) {
   const state = loadCeremonyState(config);
@@ -2610,18 +2807,36 @@ RISE framework specifications live in `rispecs/`:
 | `ceremony-protocol.spec.md` | Ceremony state, phases, governance |
 | `fire-keeper.spec.md` | Fire Keeper coordination agent, gating, decisions |
 | `community-review.spec.md` | Elder review circles, consensus, accountability |
+| `community-identity.spec.md` | People, roles, circles, memberships, credentials |
+| `community-choice.spec.md` | How a community chooses |
+| `council-record.spec.md` | What a council decided, and how it is held |
 | `consent-lifecycle.spec.md` | Consent as living obligation, lifecycle, cascade |
 | `narrative-engine.spec.md` | Sequencing, cadence, arc, timeline, cycle |
+| `narrative-beats-lifecycle.spec.md` | A beat from registration to witnessing |
 | `importance-unit.spec.md` | Epistemic weight, source dimensions, circle depth |
 | `relational-index.spec.md` | Four-source dimensional indexing, spiral depth |
 | `transformation-tracker.spec.md` | Wilson validity, seven generations, reciprocity |
 | `graph-viz.spec.md` | Layout engine, SVG, converters, RSIS viz |
 | `relational-query.spec.md` | Query, traversal, audit, Cypher |
+| `relational-web-package.spec.md` | The neighbourhood a caller receives, and what it withholds |
 | `prompt-decomposition.spec.md` | Decomposer, enricher, storage |
+| `decomposition-strategies.spec.md` | How a prompt is taken apart, and by which strategy |
 | `ui-components.spec.md` | React components |
+| `client.spec.md` | The typed HTTP door, paging honesty, fail-fast errors |
+| `storage-provider.spec.md` · `storage-provider-abstraction.spec.md` | The persistence contract and its abstraction |
 | `data-store.spec.md` | Redis data access, Node/Edge/Ceremony CRUD, session linking |
+| `data-store-postgres.spec.md` | Neon/Postgres provider scaffold |
 | `session-reader.spec.md` | Session event parsing, summaries, analytics |
+| `infrastructure-topology-ui.spec.md` | Hosts, tenants, services and port bindings as facets |
+| `capture-registry.spec.md` | Captures and recordings as relational records |
+| `inquiry-weave-registration.spec.md` | Relating artefacts, episodes and lineage |
+| `plan-insight-perspective-registration.spec.md` | Plans and insights as perspectives |
+| `reading-layer.spec.md` · `workspace-scope-and-access.spec.md` | What a reader is served, within which scope |
 | `perception-layer.spec.md` | Belt-device witnessing, typed perceptual events, production knowledge graph |
 | `narrative-cluster.spec.md` | Thematic clustering, narrative beats, Film Edit Brief (EDL markers) |
+| `relational-production-protocol.spec.md` · `film-production-upgrades.spec.md` | Film production held relationally |
+| `kinship-graph.spec.md` | Kinship as a graph |
+| `narrative-medicine-wheel-bridge.spec.md` | Bridge between the narrative platform and the wheel |
+| `article-publishing-pipeline.spec.md` | From written work to published article |
 
 Each spec is written in RISE format (Reverse-engineer → Intent-extract → Specify → Export) and is codebase-agnostic — another LLM can re-implement the full system from these specs alone.

@@ -1,13 +1,17 @@
 # Medicine Wheel
 
-> A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's, and OCAP® data sovereignty principles.
+> A TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's, and OCAP® data sovereignty principles.
 
 **Language:** TypeScript (ES2022, ESM)
-**License:** MIT
+**License:** Indigenous Knowledge Stewardship License (IKSL) v1.0, MIT derived
+**Status:** experimental alpha — see [ALPHA.md](ALPHA.md); pin exact versions
+**Versioning:** the suite moves in lockstep on `0.x`; `@medicine-wheel/mcp` keeps its own MAJOR (`4.x`) and follows the suite's minor and patch
 
 ## Packages
 
-- [app](.): Medicine Wheel app (`@medicine-wheel/app`) — the Next.js visual layer plus two CLIs: `mwsrv` (starts the server against a `.mw/store`, local or Docker) and `mw` (talks to the running server — status, directions, node/edge/ceremony ops); installs and runs without `@medicine-wheel/mcp`
+31 published packages: the app, 29 libraries, and the MCP server.
+
+- [app](.): Medicine Wheel app (`@medicine-wheel/app`) — the Next.js visual layer plus two CLIs: `mwsrv` (starts the server against a `.mw/store`, local or Docker) and `mw` (talks to the running server — status, orientation, directions, node/edge/ceremony/beat ops, charts, validators, skills); installs and runs without `@medicine-wheel/mcp`
 - [ontology-core](src/ontology-core): Foundational ontology layer for the Medicine Wheel Developer Suite — unified types, RDF vocabulary, Zod schemas, constants, semantic query helpers grounded in Indigenous relational ontology
 - [creative-orientation](src/creative-orientation): The orientation question, asked before the work — is there a prior state you are restoring? Yes routes to gap analysis (a fire); no routes to structural tension (a creating act). Holds the routing signals, not the instruments
 - [gap-analysis](src/gap-analysis): Problem-solving built properly for when something worked and stopped — evidenced baseline, observation, difference, verifiable elimination steps. The baseline requirement is what separates a fire from a creating act
@@ -16,6 +20,7 @@
 - [ceremony-protocol](src/ceremony-protocol): Ceremony lifecycle protocol — manages ceremony state, phase transitions, governance enforcement, and ceremonial review workflows
 - [fire-keeper](src/fire-keeper): Fire Keeper coordination agent — tends the ceremony fire, ensures relational integrity through gating conditions, and maintains Wilson alignment as an active agent
 - [community-review](src/community-review): Community-based ceremonial review protocol — implements Wilson's validation through Elder review circles, consensus-seeking, and relational accountability assessment
+- [community-identity](src/community-identity): Who is in the circle — a person is a `human` node with `metadata.kind: "person"` and a role, a circle is a `circle` node, membership is a `member_of` edge; roles carry a permission map, and tokens and invitation codes stay with the consumer, never on the wheel
 - [consent-lifecycle](src/consent-lifecycle): Ongoing relational consent lifecycle — consent as a living relational obligation with lifecycle tracking, renewal, renegotiation, and community-level consent protocols
 - [narrative-engine](src/narrative-engine): Beat sequencing, arc validation, cadence patterns, and timeline building for the Medicine Wheel Developer Suite
 - [importance-unit](src/importance-unit): ImportanceUnit — the relational unit of knowledge carrying epistemic weight, source dimensions (Land/Dream/Code/Vision), circle depth tracking, and accountability links grounded in Wilson's relational epistemology
@@ -25,35 +30,42 @@
 - [relational-query](src/relational-query): Query builder, graph traversal, and accountability audit for the Medicine Wheel relational web. Protocol-aware: respects ceremony boundaries and OCAP® compliance during traversal.
 - [prompt-decomposition](src/prompt-decomposition): Ontology-enriched prompt decomposition engine for the Medicine Wheel Developer Suite — intent extraction, relational dependency mapping, and ceremony-aware action stacking
 - [ui-components](src/ui-components): React UI components for the Medicine Wheel Developer Suite — direction cards, beat timelines, node inspectors, OCAP® badges, and Wilson alignment gauges.
+- [client](src/client): Typed HTTP door to a running wheel — nodes, edges, ceremonies, beats and the ceremonial diary, with the wheel's paging honesty (`count`, `total`, `matched`, `truncated`) carried through and fail-fast errors that name the status. No retry; `limit: 'all'` asks for the whole store
 - [data-store](src/data-store): Shared Redis data-access layer for the Medicine Wheel Developer Suite — connection management, Node/Edge/Ceremony CRUD, session-ceremony linking, and discovery helpers
 - [session-reader](src/session-reader): Session event reader for the Medicine Wheel Developer Suite — JSONL parsing, session summaries, analytics extraction, and search across agent session data
 - [storage-provider](src/storage-provider): Abstract storage layer — a unified provider interface over JSONL and Neon/Postgres backends (with a future Redis path), selected at runtime
 - [data-store-postgres](src/data-store-postgres): PostgreSQL/Neon provider scaffold — shared pool management and provider-ready storage entrypoints for cloud-backed persistence
 - [infra](src/infra): Typed infrastructure facets — hosts, tenants, services, and port bindings as facets keyed by relational node id, with port-conflict detection over declared ∪ observed state; built on ontology-core, reusing the closed `NodeType` union rather than widening it
+- [honcho](src/honcho): The wheel's projection into [Honcho](https://honcho.dev), memory that reasons. Beats, ceremonies and diary entries become messages from their speakers; a peer's evolving representation is recalled before they speak again; a derived conclusion returns as a `knowledge` node with `metadata.kind: "memory_projection"`. Zero dependencies, `/v3` only, switched on by `HONCHO_URL`
 - [ceremonial-diary](src/ceremonial-diary): Ceremonial Diary — a participant's voice across the Five-Phase ceremonial methodology; intention/observation/reflection entries with pattern detection, statistics, Markdown export, and optional projection into the chronicle wheel; persists via `@medicine-wheel/storage-provider`
 - [github-ceremony](src/github-ceremony): GitHub-ceremony processing — witness GitHub webhook events (issues, PRs, merges, commits) through a ceremonial lens and record them as relational ceremony beads; pure, framework-free functions over a `@medicine-wheel/storage-provider`
 - [perception-layer](src/perception-layer): Eyes & ears of agent-supported Indigenous film production — witness a belt-device recording / transcript as typed `PerceptualEvent`s and seed a production knowledge graph in ontology-core
 - [narrative-cluster](src/narrative-cluster): Narrative Cluster Processor — turn witnessed perceptual events / rushes into thematic clusters, narrative beats, and a Film Edit Brief (EDL markers); deterministic; consumes perception-layer output
-- [mcp](mcp): Medicine Wheel MCP Server (`@medicine-wheel/mcp`) — 74 tools across orientation, the ceremony lifecycle, relational CRUD, structural tension, narrative, Four-Directions guidance, inquiry-weaves, plan-perspectives, and validators; stdio + StreamableHTTP transports
+- [mcp](mcp): Medicine Wheel MCP Server (`@medicine-wheel/mcp`) — 85 tools across orientation, the ceremony lifecycle, relational CRUD, structural tension, narrative, Four-Directions guidance, inquiry-weaves, plan-perspectives, infrastructure, Honcho memory, and validators; stdio + StreamableHTTP transports
 
 ## MCP Server & HTTP API
 
-The `@medicine-wheel/mcp` package exposes 74 tools over two transports:
+The `@medicine-wheel/mcp` package exposes 85 tools over two transports:
 
 - **stdio** — `npx @medicine-wheel/mcp` (default; local JSONL store under `.mw/store/`)
 - **StreamableHTTP** — `POST /api/mcp` on the running app, JSON-RPC 2.0 with `tools/list` and `tools/call`
 
-Tool families: orientation (the routing question asked before any problem-solving — listed first because list order is scan order), ceremony lifecycle (open/close, fire-keeper status, relational check-back), relational CRUD (nodes, edges, relational web), structural tension (charts, action steps, MMOT), narrative (beats, cycles, arcs), Four-Directions guidance, inquiry-weaves, plan-perspectives, and validators (Wilson paradigm, OCAP® compliance, Two-Eyed Seeing bridge, accountability).
+Tool families: orientation (3 — the routing question asked before any problem-solving, listed first because list order is scan order), Four Directions (13), validators (4 — Wilson paradigm, OCAP® compliance, Two-Eyed Seeing bridge, accountability), integrations (11) and discovery (11) over nodes/edges/ceremonies/beats/cycles, structural tension (12 — charts, action steps, MMOT), ceremony lifecycle (4), epistemic (2), coordination (3 — fire-keeper status, relational check-back, gate enforcement), governance and transformation (3), reasoning observability (2), inquiry-weaves (3), plan-perspectives (3), infrastructure (7 — hosts, tenants, services, port conflicts, metis holds), and Honcho memory (4 — status, project, recall, project back).
 
 **Server-mediated store (opt-in):** set `MW_API_URL` so the MCP tools read and write the same relational state the server holds through its REST API instead of a local file. The default `MW_DATA_DIR` JSONL path is unchanged.
 
 The Next.js app surfaces that relational state as REST endpoints (also consumed by the MCP HTTP store):
 
 - `GET/POST /api/nodes`, `/api/edges`, `/api/ceremonies`
-- `GET/POST /api/narrative/beats`, `/api/narrative/cycles`
+- `GET/PATCH/DELETE /api/nodes/{id}`, `GET /api/nodes/{id}/web` (one node's neighbourhood), `GET /api/ceremonies/{id}`
+- `GET/POST /api/narrative/beats`, `GET/PATCH /api/narrative/beats/{id}`, `GET/POST /api/narrative/cycles`
 - `GET/POST /api/charts`, `/api/mmots`
+- `GET/POST /api/diary`, `GET/DELETE /api/diary/{id}`
+- `GET/POST /api/captures` (alias `/api/recordings`), `/api/inquiry-weaves`, `/api/plan-perspectives`
 - `GET /api/directions`, `/api/health`, `/api/resources`
 - `GET/POST /api/mcp` — StreamableHTTP MCP endpoint
+
+**Honcho projection (opt-in):** a server started with `HONCHO_URL` projects every stored beat, ceremony and diary entry into Honcho in the background, on write. `GET /api/health` reports `honcho.enabled`. A projection never delays the wheel's response, and a Honcho that is down is a line on stderr, not an error to the writer.
 
 ## Specifications (RISE Framework)
 
@@ -62,23 +74,41 @@ The Next.js app surfaces that relational state as REST endpoints (also consumed 
 - [ceremony-protocol](rispecs/ceremony-protocol.spec.md): Ceremony state, phases, governance
 - [fire-keeper](rispecs/fire-keeper.spec.md): Fire Keeper coordination agent, gating, decisions
 - [community-review](rispecs/community-review.spec.md): Elder review circles, consensus, accountability
+- [community-identity](rispecs/community-identity.spec.md): People, roles, circles, memberships, credentials
 - [consent-lifecycle](rispecs/consent-lifecycle.spec.md): Consent as living obligation, lifecycle, cascade
 - [narrative-engine](rispecs/narrative-engine.spec.md): Sequencing, cadence, arc, timeline, cycle
+- [narrative-beats-lifecycle](rispecs/narrative-beats-lifecycle.spec.md): A beat's life from registration to witnessing
 - [importance-unit](rispecs/importance-unit.spec.md): Epistemic weight, source dimensions, circle depth
 - [relational-index](rispecs/relational-index.spec.md): Four-source dimensional indexing, spiral depth
 - [transformation-tracker](rispecs/transformation-tracker.spec.md): Wilson validity, seven generations, reciprocity
 - [graph-viz](rispecs/graph-viz.spec.md): Layout engine, SVG paths, data converters
 - [relational-query](rispecs/relational-query.spec.md): Query, traversal, audit, Cypher
+- [relational-web-package](rispecs/relational-web-package.spec.md): The neighbourhood a caller receives, and what it withholds
 - [prompt-decomposition](rispecs/prompt-decomposition.spec.md): Decomposer, enricher, storage
+- [decomposition-strategies](rispecs/decomposition-strategies.spec.md): How a prompt is taken apart, and by which strategy
 - [ui-components](rispecs/ui-components.spec.md): React components
+- [client](rispecs/client.spec.md): The typed HTTP door, paging honesty, fail-fast errors
+- [storage-provider](rispecs/storage-provider.spec.md): The persistence contract, and [storage-provider-abstraction](rispecs/storage-provider-abstraction.spec.md)
 - [data-store](rispecs/data-store.spec.md): Redis data access, Node/Edge/Ceremony CRUD, session linking
+- [data-store-postgres](rispecs/data-store-postgres.spec.md): Neon/Postgres provider scaffold
 - [session-reader](rispecs/session-reader.spec.md): Session event parsing, summaries, analytics
+- [infrastructure-topology-ui](rispecs/infrastructure-topology-ui.spec.md): Hosts, services and port bindings as facets
+- [capture-registry](rispecs/capture-registry.spec.md): Captures and recordings as relational records
+- [inquiry-weave-registration](rispecs/inquiry-weave-registration.spec.md): Relating artefacts, episodes and lineage
+- [plan-insight-perspective-registration](rispecs/plan-insight-perspective-registration.spec.md): Plans and insights as perspectives
+- [council-record](rispecs/council-record.spec.md), [community-choice](rispecs/community-choice.spec.md): What a council decided, and how a community chooses
+- [reading-layer](rispecs/reading-layer.spec.md), [workspace-scope-and-access](rispecs/workspace-scope-and-access.spec.md): What a reader is served, and within which scope
 - [perception-layer](rispecs/perception-layer.spec.md): Belt-device witnessing, typed perceptual events, production knowledge graph
 - [narrative-cluster](rispecs/narrative-cluster.spec.md): Thematic clustering, narrative beats, Film Edit Brief (EDL markers)
+- [relational-production-protocol](rispecs/relational-production-protocol.spec.md), [film-production-upgrades](rispecs/film-production-upgrades.spec.md): Film production held relationally
+- [kinship-graph](rispecs/kinship-graph.spec.md), [narrative-medicine-wheel-bridge](rispecs/narrative-medicine-wheel-bridge.spec.md), [article-publishing-pipeline](rispecs/article-publishing-pipeline.spec.md)
 
 ## Documentation
 
 - [llms-full.txt](llms-full.txt): Exhaustive reference with code samples and full API
+- [ALPHA.md](ALPHA.md): What "experimental alpha" means for anyone depending on this
+- [RELEASING.md](RELEASING.md): Publishing is not deploying — publish, install globally, run the binary, then bump
+- [CLAUDE.md](CLAUDE.md): Repo laws for agents — versioning, topological workspaces, skills, infra registration
 - [rispecs/CLAUDE.md](rispecs/CLAUDE.md): Specification index
 - [llms/llms-rise-framework.txt](https://llms.jgwill.com/llms-rise-framework.txt): RISE methodology guide
 - [llms/llms-kinship-hub-system.md](https://llms.jgwill.com/llms-kinship-hub-system.md): Kinship hub protocol
@@ -90,6 +120,7 @@ The Next.js app surfaces that relational state as REST endpoints (also consumed 
 - **OCAP®**: Ownership, Control, Access, Possession — Indigenous data sovereignty
 - **Structural Tension**: Germination → Assimilation → Completion creative cycle
 - **Ceremonial Inquiry**: opening → council → integration → closure phase progression
+- **Orientation**: the question asked before an instrument is chosen — a named prior state is a fire (gap analysis); no prior state is a creating act (structural tension)
 
 ## Cross-Repository Links
 
