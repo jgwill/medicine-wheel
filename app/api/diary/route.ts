@@ -3,6 +3,8 @@ import { parseLimit } from "@/lib/api-paging";
 import { createProvider, detectProvider } from "@medicine-wheel/storage-provider";
 import type { DiaryEntryFilters, DiaryEntryRecord } from "@medicine-wheel/storage-provider";
 import { createDiaryEntry } from "@medicine-wheel/ceremonial-diary";
+import { projectDiaryEntry } from "@medicine-wheel/honcho";
+import { projectAfterWrite } from "@/lib/honcho-projection";
 
 /**
  * The ceremonial diary door (0.14.0).
@@ -122,6 +124,9 @@ export async function POST(request: Request) {
       ...(typeof body.agent === "string" && body.agent ? { agent: body.agent } : {}),
       ...(typeof body.chronicle === "string" && body.chronicle ? { chronicle: body.chronicle } : {}),
     });
+    // The river: the participant's voice leaves for Honcho in the background
+    // when HONCHO_URL is set. Never awaited.
+    projectAfterWrite(() => projectDiaryEntry(entry), `diary entry ${entry.id}`);
     return NextResponse.json({ success: true, entry, provider: detectProvider() }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

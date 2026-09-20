@@ -113,7 +113,9 @@ describe("GET /api/health — counts describe the store", () => {
 
     const body = await getJson(route.GET);
 
-    expect(Object.keys(body).sort()).toEqual(["counts", "env", "provider", "status"]);
+    // `honcho` joined with the Honcho river, `{ enabled }` at least. Additive — nothing a consumer read moved.
+    expect(Object.keys(body).sort()).toEqual(["counts", "env", "honcho", "provider", "status"]);
+    expect(body.honcho).toEqual({ enabled: false });
     expect(Object.keys(body.counts).sort()).toEqual(["ceremonies", "nodes"]);
     expect(body.provider).toBe("jsonl");
   });
