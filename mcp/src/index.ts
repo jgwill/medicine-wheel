@@ -15,6 +15,8 @@ import {
 import { allTools } from "./all-tools.js";
 import { resources } from "./resources/index.js";
 import { prompts } from "./prompts/index.js";
+import { getJsonlStore } from "./jsonl-store.js";
+import { missingRequired } from "./validate-args.js";
 
 // Single source of truth: derive name/version from package.json so the
 // serverInfo advertised over MCP never drifts from the published version.
@@ -50,8 +52,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const tool = allTools.find((t) => t.name === request.params.name);
   if (!tool) throw new Error(`Unknown tool: ${request.params.name}`);
 
+  const args = (request.params.arguments || {}) as Record<string, unknown>;
+  const missing = missingRequired(tool.inputSchema, args);
+  if (missing.length) {
+    return {
+      content: [{ type: "text", text: JSON.stringify({
+        status: "error",
+        error: `${tool.name} requires ${missing.join(", ")}`,
+        missing,
+      }, null, 2) }],
+      isError: true,
+    };
+  }
+
   try {
-    const result = await tool.handler(request.params.arguments || {});
+    const result = await tool.handler(args);
     return {
       content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
     };
@@ -98,7 +113,14 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 
 async function main() {
   console.error(`🌿 ${pkg.name} server v${pkg.version} initializing...`);
-  console.error("📂 Using JSONL file-backed store (.mw/store/)");
+  // `createStore` already named the backend it chose — an HTTP store prints the
+  // URL its writes leave for. A second, unconditional line claiming the local
+  // JSONL store contradicted it, and an operator who believed it thought writes
+  // were staying on disk while they were reaching a server. Say it once, here,
+  // and only when nothing else did.
+  if (!process.env.MW_API_URL?.trim()) {
+    console.error(`📂 Using JSONL file-backed store (${getJsonlStore().dataDir})`);
+  }
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Medicine Wheel MCP Server running on stdio");

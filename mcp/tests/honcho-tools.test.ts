@@ -155,4 +155,25 @@ describe('configured against a stubbed Honcho', () => {
     const ids = (listed.nodes ?? listed.items ?? []).map((n: any) => n.id);
     expect(ids).toContain(out.node_id);
   });
+
+  it("names the peer the same way honcho_recall does, and still answers to the old name", async () => {
+    // Two names for one concept is a trap a caller falls into once. Found on
+    // 2026-09-19 by falling into it: a call passing `peer` (recall's name) to
+    // honcho_project_back stored a node whose peer_id was the string
+    // "undefined", because nothing objected.
+    const byPeer = await call('honcho_project_back', { peer: 'node:human:2:ada', kind: 'summary', content: 'Opens in the east.' });
+    expect(byPeer.status).toBe('created');
+    expect(byPeer.node.metadata.peer_id).toBe('node-human-2-ada');
+    const byAlias = await call('honcho_project_back', { peer_id: 'node:human:2:ada', kind: 'summary', content: 'Opens in the east.' });
+    expect(byAlias.node.metadata.peer_id).toBe('node-human-2-ada');
+  });
+
+  it("refuses to store a conclusion about nobody", async () => {
+    const out = await call('honcho_project_back', { kind: 'pattern', content: 'A conclusion with no peer.' });
+    expect(out.status).toBe('error');
+    expect(out.message).toContain('peer');
+    const listed = await call('list_relational_nodes', { kind: 'memory_projection' });
+    const ids = (listed.nodes ?? listed.items ?? []).map((n: any) => n.id);
+    expect(ids.some((id: string) => id.includes('undefined'))).toBe(false);
+  });
 });

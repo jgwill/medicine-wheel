@@ -156,20 +156,28 @@ export const honchoTools: Tool[] = [
     inputSchema: {
       type: "object",
       properties: {
-        peer_id: { type: "string", description: "The Honcho peer (or wheel node id) the conclusion is about" },
+        // `peer` is the name honcho_recall uses. Both are accepted here because
+        // one concept under two names is a trap a caller falls into once and
+        // pays for silently.
+        peer: { type: "string", description: "The Honcho peer (or wheel node id) the conclusion is about. Same argument as honcho_recall's `peer`" },
+        peer_id: { type: "string", description: "Alias of `peer`, kept for callers written against the first release" },
         content: { type: "string", description: "The conclusion, in words" },
         kind: { type: "string", enum: ["pattern", "summary", "open_question", "preference"] },
         status: { type: "string", enum: ["inferred", "confirmed", "rejected"], description: "Default 'inferred'" },
         source_event_ids: { type: "array", items: { type: "string" }, description: "Wheel ids or Honcho message ids it rests on" },
         derived_by: { type: "string", description: "The model or agent that derived it" },
       },
-      required: ["peer_id", "content", "kind"],
+      required: ["content", "kind"],
     },
     handler: async (args) => {
+      const named = args.peer ?? args.peer_id;
+      if (typeof named !== "string" || !named.trim()) {
+        return { status: "error", message: "Name the peer the conclusion is about (`peer`, or its alias `peer_id`)." };
+      }
       try {
         const projection: MemoryProjection = {
           source: "honcho",
-          peerId: honchoIdFor(String(args.peer_id)),
+          peerId: honchoIdFor(named.trim()),
           content: String(args.content),
           kind: args.kind,
           status: args.status ?? "inferred",
