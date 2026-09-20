@@ -4,6 +4,8 @@ The wheel's projection into [Honcho](https://honcho.dev) — memory that reasons
 
 Zero dependencies beyond `fetch`, `/v3` only.
 
+The published `@honcho-ai/sdk` also speaks `/v3` and works against a 3.x server — verified on 2026-09-19 against the deployed 3.0.11, where a live `peer.chat` answered. An earlier note here claimed otherwise and was wrong. This package exists because the wheel's packages ship to npm (a vendor SDK here becomes a runtime dependency on all of them, for a river that only needs get-or-create and append), and because the part that carries weight is `projectBeat` / `projectCeremony` / `projectDiaryEntry` / `honchoIdFor` / `memoryProjectionNode` — the wheel's own ontology, which no SDK has.
+
 ## The river: automatic, on write
 
 A wheel server started with `HONCHO_URL` set projects **every stored beat, ceremony and diary entry** into Honcho the moment it is written, in the background. No agent in the loop, nothing to call, nothing filtered. The wheel's own answer to its caller is unchanged: a projection never delays a response, and a Honcho that is down is one line on stderr, never an error to the writer.

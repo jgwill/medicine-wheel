@@ -22,8 +22,20 @@
  * (`node:human:…`, `ceremony:…`). {@link honchoIdFor} is the deterministic
  * bridge, and the original wheel id always travels in metadata as `wheel_id`.
  *
- * Zero dependencies beyond `fetch`. Speaks `/v3` only — every published Honcho
- * SDK and MCP at the time of writing calls `/v2`, which a 3.x server 404s.
+ * Zero dependencies beyond `fetch`, and `/v3` only.
+ *
+ * An earlier version of this comment said the published `@honcho-ai/sdk` speaks
+ * `/v2` and a 3.x server 404s it. That was not true. Checked on 2026-09-19
+ * against the deployed 3.0.11: both 2.2.0 and 2.5.0 call `/v3/workspaces/...`,
+ * and a live `peer.chat` through the SDK answers. The SDK is a working option.
+ *
+ * What this package is for instead: the wheel's packages ship to npm, so a
+ * vendor SDK here is a runtime dependency on every one of them, for a river
+ * that needs get-or-create and append and nothing else. And the useful part is
+ * not the transport — it is {@link projectBeat}, {@link projectCeremony},
+ * {@link projectDiaryEntry}, {@link honchoIdFor} and
+ * {@link memoryProjectionNode}, which are the wheel's own ontology and have no
+ * equivalent in any SDK.
  */
 
 import type { CeremonyLog, NarrativeBeat, NodeType, DirectionName } from '@medicine-wheel/ontology-core';
