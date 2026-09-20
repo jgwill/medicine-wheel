@@ -25,6 +25,13 @@
  * An open attention item is NOT imported: an unanswered question is not a record
  * of anything said.
  *
+ * One honest arbitrariness, stated because it shapes where records land: the
+ * chronicle does not record which beat belongs to which ceremony, so an
+ * episode's beats name the ceremonies of their episode and `sessionIdForBeat`
+ * seats them with the first. An episode with no ceremony or one ceremony
+ * therefore lands whole in a single Honcho room, which is 131 of the 134
+ * folders; the three with several split across theirs.
+ *
  * Usage: MW_URL=http://127.0.0.1:8140 node scripts/dev/import-chronicle.mjs [--limit N] [--dry]
  */
 
