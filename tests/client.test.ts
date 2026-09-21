@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { closingOf, createMedicineWheelClient, episodeOf, MedicineWheelClientError, wheelUrlFromEnv } from "../src/client/src/index";
+import { circlesHeldIn, closingOf, createMedicineWheelClient, episodeNodeId, episodeOf, MedicineWheelClientError, wheelUrlFromEnv } from "../src/client/src/index";
 
 function fakeFetch(routes: Record<string, (init?: RequestInit) => { status: number; body: unknown }>): typeof fetch {
   return (async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -84,5 +84,42 @@ describe("@medicine-wheel/client", () => {
     expect(closingOf({ type: "closing", closes: "abc" })).toBe("abc");
     expect(closingOf({ type: "closing", research_context: "ceremony:1780507732459:f3u72" })).toBe("ceremony:1780507732459:f3u72");
     expect(closingOf({ type: "opening", closes: "abc" })).toBeNull();
+  });
+
+  it("reads what the wheel holds for an episode: its node, or null before registration, and every ceremony bound to it", async () => {
+    const ep = "2026-09-17-episode-349-a-circle-can-enter";
+    const wheel = createMedicineWheelClient({
+      baseUrl: "http://wheel",
+      fetch: fakeFetch({
+        [`GET /api/nodes/${encodeURIComponent(`chronicle:${ep}`)}`]: () => ({ status: 200, body: { node: { id: `chronicle:${ep}`, name: "Episode 349" } } }),
+        [`GET /api/ceremonies?episode_path=${ep}&limit=all`]: () => ({ status: 200, body: { ceremonies: [{ id: "c1" }, { id: "c2" }], count: 2, matched: 2, truncated: false } }),
+        "GET /api/nodes/chronicle%3Aunregistered": () => ({ status: 404, body: { error: "Node not found" } }),
+        "GET /api/ceremonies?episode_path=unregistered&limit=all": () => ({ status: 200, body: { ceremonies: [], count: 0, matched: 0, truncated: false } }),
+      }),
+    });
+    const held = await wheel.episodes.get(`chronicle:${ep}`);
+    expect(held).toMatchObject({ episode_path: ep, node_id: `chronicle:${ep}`, node: { name: "Episode 349" }, truncated: false });
+    expect(held.ceremonies.map((c) => c.id)).toEqual(["c1", "c2"]);
+    expect(await wheel.episodes.get("unregistered")).toEqual({ episode_path: "unregistered", node_id: "chronicle:unregistered", node: null, ceremonies: [], truncated: false });
+  });
+
+  it("names an episode's node id once, whichever form it is given in", () => {
+    expect(episodeNodeId("2026-07-30-episode-303-x")).toBe("chronicle:2026-07-30-episode-303-x");
+    expect(episodeNodeId(" chronicle:2026-07-30-episode-303-x ")).toBe("chronicle:2026-07-30-episode-303-x");
+  });
+
+  it("finds the circles ceremonies were held in, most recently active first, with closings folded into what they close", () => {
+    const circles = circlesHeldIn([
+      { id: "a1", type: "talking_circle", timestamp: "2026-09-18T10:00:00Z", circle_id: "circle:a" },
+      { id: "a2", type: "opening", timestamp: "2026-09-18T11:00:00Z", circle_id: "circle:a" },
+      { id: "x1", type: "closing", timestamp: "2026-09-18T12:00:00Z", circle_id: "circle:a", closes: "a1" },
+      { id: "ceremony:1:b1", type: "talking_circle", timestamp: "2026-09-19T09:00:00Z", circle_id: "circle:b" },
+      { id: "b2", type: "closing", timestamp: "2026-09-19T09:30:00Z", circle_id: "circle:b", research_context: "ceremony:1:b1" },
+      { id: "free", type: "opening", timestamp: "2026-09-20T00:00:00Z" },
+    ]);
+    expect(circles).toEqual([
+      { circle_id: "circle:b", ceremonies: 1, open: 0, last: "2026-09-19T09:30:00Z" },
+      { circle_id: "circle:a", ceremonies: 2, open: 1, last: "2026-09-18T12:00:00Z" },
+    ]);
   });
 });

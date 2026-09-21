@@ -154,6 +154,33 @@ export type NewDiaryEntry = Omit<DiaryEntryRecord, 'id' | 'timestamp' | 'metadat
   ceremony_id?: string;
 };
 
+// ── episodes ────────────────────────────────────────────────────────────────
+
+/** What the wheel holds for one chronicle episode. */
+export interface EpisodeOnTheWheel {
+  /** The episode folder name, e.g. `2026-09-17-episode-349-…`. */
+  episode_path: string;
+  /** `chronicle:<episode_path>`: the id the chronicle registers the episode under. */
+  node_id: string;
+  /** The episode's node, or null when the episode was never registered on this wheel. */
+  node: RelationalNode | null;
+  /** Every ceremony record bound to the episode by `episode_path`, closings included. */
+  ceremonies: CeremonyLog[];
+  /** True when the wheel held more ceremonies than the limit let through. */
+  truncated: boolean;
+}
+
+/** One circle a set of ceremonies was held in. */
+export interface CircleHeld {
+  circle_id: string;
+  /** Ceremonies held in the circle; a closing is not counted as one. */
+  ceremonies: number;
+  /** Of those, the ones no closing names yet. */
+  open: number;
+  /** The latest record's timestamp in this circle, opening or closing. */
+  last: string;
+}
+
 // ── client ──────────────────────────────────────────────────────────────────
 
 export interface ClientOptions {
@@ -199,6 +226,15 @@ export interface MedicineWheelClient {
     get(id: string): Promise<DiaryEntryRecord | null>;
     create(input: NewDiaryEntry): Promise<DiaryEntryRecord>;
     remove(id: string): Promise<void>;
+  };
+  episodes: {
+    /**
+     * The episode's registered node and the ceremonies bound to it, read in
+     * parallel. Accepts the folder name or the `chronicle:` node id. A missing
+     * node is `node: null`, not an error: an episode can hold ceremonies
+     * before it is registered. `limit` defaults to `'all'`.
+     */
+    get(episodePath: string, opts?: { limit?: Limit }): Promise<EpisodeOnTheWheel>;
   };
 }
 
@@ -300,6 +336,13 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
     return (body && typeof body === 'object' && key in body ? (body[key] as T) : (body as unknown as T)) ?? null;
   }
 
+  async function listCeremonies(o: ListCeremoniesOptions = {}): Promise<Paged<CeremonyLog>> {
+    const res = await call(
+      `/api/ceremonies${query({ direction: o.direction, type: o.type, episode_path: o.episode_path, circle_id: o.circle_id, closes: o.closes, limit: limitParam(o.limit) })}`,
+    );
+    return pageFrom<CeremonyLog>(await json(res, 'refused the ceremony list'), 'ceremonies');
+  }
+
   return {
     baseUrl: base,
 
@@ -356,12 +399,7 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
     },
 
     ceremonies: {
-      async list(o = {}) {
-        const res = await call(
-          `/api/ceremonies${query({ direction: o.direction, type: o.type, episode_path: o.episode_path, circle_id: o.circle_id, closes: o.closes, limit: limitParam(o.limit) })}`,
-        );
-        return pageFrom<CeremonyLog>(await json(res, 'refused the ceremony list'), 'ceremonies');
-      },
+      list: listCeremonies,
       async get(id) {
         return getOrNull<CeremonyLog>(`/api/ceremonies/${encodeURIComponent(id)}`, 'ceremony', 'refused the ceremony read');
       },
@@ -433,6 +471,18 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
         if (!res.ok && res.status !== 404) await refused(res, 'refused the diary removal');
       },
     },
+
+    episodes: {
+      async get(episodePath, o = {}) {
+        const node_id = episodeNodeId(episodePath);
+        const episode_path = node_id.slice('chronicle:'.length);
+        const [node, page] = await Promise.all([
+          getOrNull<RelationalNode>(`/api/nodes/${encodeURIComponent(node_id)}`, 'node', 'refused the node read'),
+          listCeremonies({ episode_path, limit: o.limit ?? 'all' }),
+        ]);
+        return { episode_path, node_id, node, ceremonies: page.items, truncated: page.truncated };
+      },
+    },
   };
 }
 
@@ -468,6 +518,39 @@ export function closingOf(ceremony: Pick<CeremonyLog, 'type' | 'closes' | 'resea
   if (typeof ceremony.closes === 'string' && ceremony.closes) return ceremony.closes;
   const rc = ceremony.research_context;
   return typeof rc === 'string' && /^ceremony:\d+:[a-z0-9]+$/.test(rc.trim()) ? rc.trim() : null;
+}
+
+/** The chronicle node id of an episode folder: `chronicle:<folder>`. An id already in that form is returned as is. */
+export function episodeNodeId(episodePath: string): string {
+  const path = episodePath.trim();
+  return path.startsWith('chronicle:') ? path : `chronicle:${path}`;
+}
+
+/**
+ * The circles a list of ceremony records was held in, the most recently
+ * active first. Closings fold into the ceremonies they close: a ceremony is
+ * open until a closing names it. Records without a `circle_id` are skipped.
+ */
+export function circlesHeldIn(
+  records: readonly Pick<CeremonyLog, 'id' | 'type' | 'timestamp' | 'circle_id' | 'closes' | 'research_context'>[],
+): CircleHeld[] {
+  const closed = new Set<string>();
+  for (const r of records) {
+    const opening = closingOf(r);
+    if (opening) closed.add(opening);
+  }
+  const held = new Map<string, CircleHeld>();
+  for (const r of records) {
+    if (!r.circle_id) continue;
+    const circle = held.get(r.circle_id) ?? { circle_id: r.circle_id, ceremonies: 0, open: 0, last: '' };
+    if (r.type !== 'closing') {
+      circle.ceremonies += 1;
+      if (!closed.has(r.id)) circle.open += 1;
+    }
+    if ((r.timestamp ?? '') > circle.last) circle.last = r.timestamp;
+    held.set(r.circle_id, circle);
+  }
+  return [...held.values()].sort((a, b) => b.last.localeCompare(a.last) || a.circle_id.localeCompare(b.circle_id));
 }
 
 /** Read the wheel URL the way every Miadi tool does: `MIADI_CHRONICLE_MW_URL` first, then `MW_API_URL`. */

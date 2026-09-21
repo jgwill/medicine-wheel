@@ -1,6 +1,6 @@
 # @medicine-wheel/community-identity
 
-Who is in the circle. A person is a `human` node on the wheel with `metadata.kind = 'person'` and a `role`; a circle is a `circle` node; membership is a `member_of` edge; ceremonies held in a circle carry `circle_id`. Tokens and invitation codes are kept by the consumer (hashed, jsonl or your own store), never on the wheel.
+Who is in the circle. A person is a `human` node on the wheel with `metadata.kind = 'person'` and a `role`; a circle is a `circle` node; membership is a `member_of` edge; ceremonies held in a circle carry `circle_id`; a circle opened for a chronicle episode carries the episode folder name in `episode_path`, the binding a ceremony carries too. Tokens and invitation codes are kept by the consumer (hashed, jsonl or your own store), never on the wheel.
 
 Roles and the permission map are copied from STPB (`lib/types/roles.ts`): `participant → emerging_guide → ceremony_facilitator → firekeeper → admin`, with `story_keeper` parallel to firekeeper, plus `companion_ai` and `integration_ai`.
 

@@ -123,6 +123,19 @@ describe("status, circle fields, audit and config (0.14.1)", () => {
     expect(after.container.private_by_default).toBe(true);
     expect(() => CirclePatchSchema.parse({ nope: 1 })).toThrow();
   });
+  it("a circle opened for an episode carries its folder name, and a patch binds or releases it", async () => {
+    const { circleNode, circleFromNode, circleNodePatch, CirclePatchSchema, NewCircleSchema } = await import("../src/community-identity/src/index");
+    const ep = "2026-07-30-episode-303-state-diagrams-as-the-design-surface";
+    const input = NewCircleSchema.parse({ name: "Diagrams", intention: "draw together", facilitator_id: "g", episode_path: ` ${ep} ` });
+    const c = circleNode(input);
+    expect(c.metadata!.episode_path).toBe(ep);
+    expect(circleFromNode(c)!.episode_path).toBe(ep);
+    expect(circleFromNode(circleNode({ name: "Free", intention: "i", facilitator_id: "g" }))!.episode_path).toBeUndefined();
+    const released = circleFromNode({ ...c, metadata: circleNodePatch(c, CirclePatchSchema.parse({ episode_path: null })).metadata })!;
+    expect(released.episode_path).toBeUndefined();
+    const rebound = circleFromNode({ ...c, metadata: circleNodePatch(c, CirclePatchSchema.parse({ episode_path: "2026-09-17-episode-349-x" })).metadata })!;
+    expect(rebound.episode_path).toBe("2026-09-17-episode-349-x");
+  });
   it("the audit store appends, queries newest first with filters, and counts since", async () => {
     const { JsonlAuditStore } = await import("../src/community-identity/src/index");
     const store = new JsonlAuditStore(path.join(tempDir, "audit.jsonl"));

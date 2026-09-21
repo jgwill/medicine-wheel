@@ -12,6 +12,19 @@ const turn = await wheel.beats.create({ direction: 'east', title: 'Guillaume spe
 await wheel.beats.witness(turn.id, { witnesses: ['node:human:…'] });
 ```
 
+One chronicle episode, read whole: its registered node (`null` before registration, not an error) and every ceremony bound to it, closings included. `circlesHeldIn` names the circles those ceremonies were held in, most recently active first, with how many are still open.
+
+```ts
+import { circlesHeldIn, episodeNodeId } from '@medicine-wheel/client';
+
+const ep = await wheel.episodes.get('2026-09-17-episode-349-…');   // or 'chronicle:2026-09-17-…'
+ep.node_id;                  // 'chronicle:2026-09-17-episode-349-…' — episodeNodeId() spells it
+ep.node === null;            // true when the episode was never registered on this wheel
+circlesHeldIn(ep.ceremonies); // [{ circle_id, ceremonies, open, last }, …]
+```
+
+A consumer that filters ceremonies per reader passes only the visible ones to `circlesHeldIn`, so a circle is never named to someone who cannot read what it held.
+
 No retry: an unreachable wheel throws `MedicineWheelClientError` with status 502; a refusal carries the wheel's status and body. `limit: 'all'` asks for the whole store.
 
 Extracted in 0.14.0 from the MCP's `http-store.ts` and Miadi's `lib/chronicle-wheel.ts` (jgwill/Miadi#647). Spec: `rispecs/client.spec.md`.

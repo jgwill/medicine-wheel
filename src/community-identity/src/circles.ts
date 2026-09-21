@@ -6,7 +6,10 @@
  * mapped onto the wheel: the circle is a node, each member is an edge
  * `member_of` from the person to the circle, the facilitator is the edge whose
  * obligations name `facilitate`. Ceremonies held in the circle carry its id
- * in `circle_id` (ontology-core 0.14.0).
+ * in `circle_id` (ontology-core 0.14.0). A circle opened for a chronicle
+ * episode carries the episode's folder name in `episode_path` (0.15.1), the
+ * same typed binding a ceremony carries, so the episode can name the circles
+ * gathered for it before any of them has held a ceremony.
  */
 
 import type { DirectionName, RelationalEdge, RelationalNode } from '@medicine-wheel/ontology-core';
@@ -49,6 +52,8 @@ export interface Circle {
   /** An inactive circle keeps its members and history; no ceremony is opened in it. */
   active: boolean;
   container: CircleContainer;
+  /** The chronicle episode this circle was opened for (its folder name), when it was opened for one. */
+  episode_path?: string;
   created_at: string;
   updated_at: string;
 }
@@ -69,6 +74,7 @@ export const NewCircleSchema = z.object({
       hide_engagement_metrics: z.boolean().optional(),
     })
     .optional(),
+  episode_path: z.string().trim().min(1).optional(),
 });
 
 export type NewCircle = z.infer<typeof NewCircleSchema>;
@@ -92,6 +98,7 @@ export function circleNode(input: NewCircle, now = new Date().toISOString()): Re
       is_public: input.is_public ?? false,
       active: true,
       container: { ...DEFAULT_CONTAINER, ...(input.container ?? {}) },
+      ...(input.episode_path ? { episode_path: input.episode_path } : {}),
     },
     created_at: now,
     updated_at: now,
@@ -114,6 +121,7 @@ export function circleFromNode(node: RelationalNode | null | undefined): Circle 
     is_public: meta.is_public === true,
     active: meta.active !== false,
     container: { ...DEFAULT_CONTAINER, ...container },
+    ...(typeof meta.episode_path === 'string' && meta.episode_path ? { episode_path: meta.episode_path } : {}),
     created_at: node.created_at,
     updated_at: node.updated_at,
   };
@@ -184,6 +192,8 @@ export const CirclePatchSchema = z
         hide_engagement_metrics: z.boolean().optional(),
       })
       .optional(),
+    /** Bind the circle to an episode, or `null` to release it from one. */
+    episode_path: z.string().trim().min(1).nullable().optional(),
   })
   .strict();
 
@@ -199,6 +209,10 @@ export function circleNodePatch(node: RelationalNode, patch: CirclePatch): { nam
     else meta.capacity = patch.capacity;
   }
   if (patch.circle_type !== undefined) meta.circle_type = patch.circle_type;
+  if (patch.episode_path !== undefined) {
+    if (patch.episode_path === null) delete meta.episode_path;
+    else meta.episode_path = patch.episode_path;
+  }
   if (patch.is_public !== undefined) meta.is_public = patch.is_public;
   if (patch.active !== undefined) {
     meta.active = patch.active;
