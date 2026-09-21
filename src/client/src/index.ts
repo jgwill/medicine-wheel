@@ -474,8 +474,10 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
 
     episodes: {
       async get(episodePath, o = {}) {
-        const node_id = episodeNodeId(episodePath);
-        const episode_path = node_id.slice('chronicle:'.length);
+        const episode_path = episodeFolder(episodePath);
+        // An empty path would drop the filter and read every ceremony on the wheel as this episode's.
+        if (!episode_path) throw new MedicineWheelClientError('episodes.get needs an episode folder name', 400, base);
+        const node_id = `chronicle:${episode_path}`;
         const [node, page] = await Promise.all([
           getOrNull<RelationalNode>(`/api/nodes/${encodeURIComponent(node_id)}`, 'node', 'refused the node read'),
           listCeremonies({ episode_path, limit: o.limit ?? 'all' }),
@@ -520,10 +522,18 @@ export function closingOf(ceremony: Pick<CeremonyLog, 'type' | 'closes' | 'resea
   return typeof rc === 'string' && /^ceremony:\d+:[a-z0-9]+$/.test(rc.trim()) ? rc.trim() : null;
 }
 
-/** The chronicle node id of an episode folder: `chronicle:<folder>`. An id already in that form is returned as is. */
+/** The folder name inside a reference: whitespace and any `chronicle:` prefixes removed. */
+function episodeFolder(ref: string): string {
+  let path = ref.trim();
+  while (path.startsWith('chronicle:')) path = path.slice('chronicle:'.length).trim();
+  return path;
+}
+
+/** The chronicle node id of an episode folder: `chronicle:<folder>`. An id already in that form is returned as is. Throws on an empty name. */
 export function episodeNodeId(episodePath: string): string {
-  const path = episodePath.trim();
-  return path.startsWith('chronicle:') ? path : `chronicle:${path}`;
+  const path = episodeFolder(episodePath);
+  if (!path) throw new TypeError('episodeNodeId needs an episode folder name');
+  return `chronicle:${path}`;
 }
 
 /**

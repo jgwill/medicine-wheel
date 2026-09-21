@@ -106,6 +106,19 @@ describe("@medicine-wheel/client", () => {
   it("names an episode's node id once, whichever form it is given in", () => {
     expect(episodeNodeId("2026-07-30-episode-303-x")).toBe("chronicle:2026-07-30-episode-303-x");
     expect(episodeNodeId(" chronicle:2026-07-30-episode-303-x ")).toBe("chronicle:2026-07-30-episode-303-x");
+    expect(episodeNodeId("chronicle: 2026-07-30-episode-303-x")).toBe("chronicle:2026-07-30-episode-303-x");
+    expect(episodeNodeId("chronicle:chronicle:2026-07-30-episode-303-x")).toBe("chronicle:2026-07-30-episode-303-x");
+    expect(() => episodeNodeId("  ")).toThrow();
+    expect(() => episodeNodeId("chronicle:")).toThrow();
+  });
+
+  it("refuses an empty episode instead of reading every ceremony on the wheel as its own", async () => {
+    let asked = 0;
+    const wheel = createMedicineWheelClient({ baseUrl: "http://wheel", fetch: (async () => { asked += 1; return new Response("{}", { status: 200 }); }) as typeof fetch });
+    for (const ref of ["", "   ", "chronicle:", "chronicle: "]) {
+      await expect(wheel.episodes.get(ref)).rejects.toMatchObject({ status: 400 });
+    }
+    expect(asked).toBe(0);
   });
 
   it("finds the circles ceremonies were held in, most recently active first, with closings folded into what they close", () => {
