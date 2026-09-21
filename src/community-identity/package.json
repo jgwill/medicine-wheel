@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/community-identity",
-  "version": "0.15.1",
+  "version": "0.15.2",
   "description": "Who is in the circle: people as wheel nodes, roles with a permission map, circles and memberships as relations, invitations and self-issued credentials kept by the consumer — so a Medicine Wheel can tell two people apart.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -41,7 +41,7 @@
     "directory": "src/community-identity"
   },
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.15.1",
+    "@medicine-wheel/ontology-core": "^0.15.2",
     "zod": "^3.23.0"
   },
   "devDependencies": {
