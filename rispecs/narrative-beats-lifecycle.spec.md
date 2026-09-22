@@ -678,7 +678,7 @@ before the first real corpus lands is a migration that never has to be written.
 
 ### Sibling systems
 
-- `coaia-narrative` 0.14.0 at `/a/src/coaia-narrative` — the reference implementation for chart-bound beats, multi-universe perspectives, sub-beat telescoping, and the Wampum Belt as a non-linear mnemonic grid running parallel to the linear sequence. No issue reference; learned from, not depended on.
+- `coaia-narrative` 0.14.0 at `/a/src/coaia-narrative` — the reference implementation for chart-bound beats, multiple perspectives, sub-beat telescoping, and the Wampum Belt as a non-linear mnemonic grid running parallel to the linear sequence. No issue reference; learned from, not depended on.
 - `rispecs/narrative-engine.spec.md` — the reader-side spec this document extends with an authoring side.
 - `rispecs/narrative-cluster.spec.md` — the film-domain producer.
 - `rispecs/ontology-core.spec.md` — where `NarrativeBeat`, `BeatOrigin`, and `MedicineWheelCycle` live.

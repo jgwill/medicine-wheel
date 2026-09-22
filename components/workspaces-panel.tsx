@@ -16,7 +16,7 @@ export type Workspace = {
 
 export const WORKSPACES: Workspace[] = [
   { id: "medicine-wheel", name: "Medicine Wheel",  direction: "east",  color: "var(--mw-east)", status: "active", repo: "jgwill/medicine-wheel",         blurb: "Relational ontology + Four Directions web app" },
-  { id: "iaip",           name: "IAIP Platform",   direction: "south", color: "var(--mw-south)", status: "active", repo: "jgwill/iaip",                   blurb: "Three Universes multi-agent orchestration" },
+  { id: "iaip",           name: "IAIP Platform",   direction: "south", color: "var(--mw-south)", status: "active", repo: "jgwill/iaip",                   blurb: "Three-perspective multi-agent orchestration" },
   { id: "stc",            name: "STC Workspaces",  direction: "west",  color: "var(--mw-west)", status: "active", repo: "jgwill/stcraft",                blurb: "Structural tension charts across repos" },
   { id: "tushell",        name: "Tushell Magic Land", direction: "north", color: "var(--mw-north)", status: "idle", repo: "jgwill/tushellplatform",        blurb: "Child-friendly knowledge platform" },
   { id: "articles",       name: "Articles",        direction: "east",  color: "var(--mw-node-ancestor)", status: "idle",   repo: "jgwill/medicine-wheel#articles", blurb: "Narrative-technical research" },
