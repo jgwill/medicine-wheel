@@ -47,6 +47,12 @@ interface StoredCeremony {
   intentions: string[];
   timestamp: string;
   research_context?: string;
+  relations_honored?: string[];
+  episode_path?: string;
+  episode_number?: number;
+  circle_id?: string;
+  closes?: string;
+  source?: string;
 }
 
 interface StoredBeat {

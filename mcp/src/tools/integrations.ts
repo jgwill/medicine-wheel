@@ -7,6 +7,7 @@
 
 import type { Tool } from "../types.js";
 import { store } from "../store.js";
+import { bindingProperties, ceremonyBinding } from "../ceremony-binding.js";
 import {
   HostFacetSchema,
   TenantFacetSchema,
@@ -425,6 +426,7 @@ export const integrationTools: Tool[] = [
           type: "string",
           description: "Research context (optional)",
         },
+        ...bindingProperties,
         relations_honored: {
           type: "array",
           items: { type: "string" },
@@ -435,6 +437,7 @@ export const integrationTools: Tool[] = [
     },
     handler: async (args) => {
       try {
+        const binding = ceremonyBinding(args);
         const ceremonyId = `ceremony:${Date.now()}:${Math.random().toString(36).substring(7)}`;
 
         const ceremonyLog = {
@@ -446,6 +449,9 @@ export const integrationTools: Tool[] = [
           intentions: args.intentions,
           timestamp: new Date().toISOString(),
           research_context: args.research_context,
+          ...(Array.isArray(args.relations_honored) ? { relations_honored: args.relations_honored } : {}),
+          ...binding,
+          source: "mcp:log_ceremony_with_memory",
         };
 
         await store.logCeremony(ceremonyLog);

@@ -9,6 +9,7 @@
 import { INFRA_ENTITY_BINDING, INFRA_ENTITY_KINDS } from "@medicine-wheel/ontology-core";
 import type { Tool } from "../types.js";
 import { store } from "../store.js";
+import { bindingProperties, ceremonyBinding } from "../ceremony-binding.js";
 
 const DIRECTION_MAP: Record<
   string,
@@ -48,7 +49,7 @@ export const ceremonyLifecycleTools: Tool[] = [
   {
     name: "mw_ceremony_open",
     description:
-      "Open a new ceremony in the medicine wheel. Creates an opening ceremony record with intention, direction, participants, and medicines. Returns the ceremony ID for use in subsequent lifecycle calls. Fire Keeper agents use this to begin relational research-as-ceremony.",
+      "Open a new ceremony in the medicine wheel. Creates a ceremony record (an opening unless `type` says otherwise) with intention, direction, participants, and medicines, bound to an episode by `episode_path` and to a circle by `circle_id` when given. Returns the ceremony ID for use in subsequent lifecycle calls. A talking circle held by people, with seats, turns and an episode note, is opened through Miadi's POST /api/circles/<id>/ceremonies instead.",
     inputSchema: {
       type: "object",
       properties: {
@@ -56,6 +57,12 @@ export const ceremonyLifecycleTools: Tool[] = [
           type: "string",
           description: "The intention or purpose for this ceremony",
         },
+        type: {
+          type: "string",
+          enum: ["opening", "talking_circle", "smudging", "spirit_feeding"],
+          description: "Kind of ceremony (default: opening)",
+        },
+        ...bindingProperties,
         direction: {
           type: "string",
           enum: ["east", "south", "west", "north"],
@@ -91,26 +98,32 @@ export const ceremonyLifecycleTools: Tool[] = [
           medicines = [],
           inquiryRef,
           cycleId,
+          type = "opening",
         } = args;
+        const binding = ceremonyBinding(args);
 
         const ceremonyId = `ceremony:${Date.now()}:${Math.random().toString(36).slice(2, 7)}`;
 
         await store.logCeremony({
           id: ceremonyId,
-          type: "opening",
+          type,
           direction,
           participants,
           medicines_used: medicines,
           intentions: [intention],
           timestamp: new Date().toISOString(),
           research_context: inquiryRef || cycleId ? JSON.stringify({ inquiryRef, cycleId }) : undefined,
+          ...binding,
+          source: "mcp:mw_ceremony_open",
         });
 
         return {
           ceremony_id: ceremonyId,
           status: "opened",
+          type,
           direction,
           intention,
+          ...binding,
           ...(inquiryRef && { inquiryRef }),
           ...(cycleId && { cycleId }),
         };
@@ -171,7 +184,10 @@ export const ceremonyLifecycleTools: Tool[] = [
           medicines_used: opening.medicines_used,
           intentions,
           timestamp: new Date().toISOString(),
-          research_context: ceremony_id,
+          closes: ceremony_id,
+          ...(opening.episode_path ? { episode_path: opening.episode_path } : {}),
+          ...(opening.circle_id ? { circle_id: opening.circle_id } : {}),
+          source: "mcp:mw_ceremony_close",
         });
 
         return {
