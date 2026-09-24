@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/honcho",
-  "version": "0.15.4",
+  "version": "0.15.5",
   "type": "module",
   "description": "The wheel's projection into Honcho — beats and ceremonies become Honcho messages, a speaker's evolving representation is recalled, and a derived conclusion is written back as a knowledge node. The wheel stays canonical; Honcho holds what the history has come to mean.",
   "main": "dist/index.js",
@@ -40,7 +40,7 @@
     "directory": "src/honcho"
   },
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.15.4"
+    "@medicine-wheel/ontology-core": "^0.15.5"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
