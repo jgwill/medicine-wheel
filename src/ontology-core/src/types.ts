@@ -220,6 +220,11 @@ export interface CeremonyLog {
   closes?: string;
   /** The circle (node of type `circle`) this ceremony is held in, when any. */
   circle_id?: string;
+  /**
+   * The node this ceremony is held about, when it gathers around something: a
+   * review (`review:<uuid>`), a knowledge node, any node. Added 0.15.5 (#146).
+   */
+  subject_id?: string;
 }
 
 // ── Narrative Types ─────────────────────────────────────────────────────────

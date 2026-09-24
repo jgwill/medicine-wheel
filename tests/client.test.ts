@@ -26,6 +26,17 @@ describe("@medicine-wheel/client", () => {
     expect(wheel.baseUrl).toBe("http://wheel");
   });
 
+  it("passes subject_id to the ceremony list (0.15.5, #146)", async () => {
+    const wheel = createMedicineWheelClient({
+      baseUrl: "http://wheel",
+      fetch: fakeFetch({
+        "GET /api/ceremonies?subject_id=review%3Aabc": () => ({ status: 200, body: { ceremonies: [{ id: "c1", subject_id: "review:abc" }], count: 1, matched: 1, truncated: false } }),
+      }),
+    });
+    const page = await wheel.ceremonies.list({ subject_id: "review:abc" });
+    expect(page.items.map((c) => c.subject_id)).toEqual(["review:abc"]);
+  });
+
   it("returns null on 404 for a read, and the minted record on create", async () => {
     const wheel = createMedicineWheelClient({
       baseUrl: "http://wheel",

@@ -528,6 +528,9 @@ export class JsonlProvider implements StorageProvider {
       ...(typeof extra.circle_id === 'string'
         ? { circle_id: extra.circle_id as string }
         : {}),
+      ...(typeof extra.subject_id === 'string'
+        ? { subject_id: extra.subject_id as string }
+        : {}),
     };
   }
 }

@@ -16,6 +16,7 @@ export async function GET(request: Request) {
     const episodePath = searchParams.get("episode_path");
     const circleId = searchParams.get("circle_id");
     const closes = searchParams.get("closes");
+    const subjectId = searchParams.get("subject_id");
 
     const limit = parseLimit(searchParams.get("limit"));
     if (limit instanceof NextResponse) return limit;
@@ -57,6 +58,11 @@ export async function GET(request: Request) {
       ceremonies = ceremonies.filter((c) => c.closes === closes);
     }
 
+    // `?subject_id=<node id>` answers "which ceremonies gathered around this node" (#146).
+    if (subjectId) {
+      ceremonies = ceremonies.filter((c) => c.subject_id === subjectId);
+    }
+
     const matched = ceremonies.length;
     if (limit !== null && ceremonies.length > limit) {
       ceremonies = ceremonies.slice(0, limit);
@@ -69,7 +75,7 @@ export async function GET(request: Request) {
       // `total` is the whole store, `matched` what the filters selected. When
       // count < matched the caller holds a page and can now see that it does.
       total,
-      ...(direction || type || episodePath || circleId || closes ? { matched } : {}),
+      ...(direction || type || episodePath || circleId || closes || subjectId ? { matched } : {}),
       truncated: ceremonies.length < matched,
     });
   } catch (error: unknown) {
@@ -123,6 +129,18 @@ export async function POST(request: Request) {
       }
     }
 
+    if (body.subject_id !== undefined) {
+      if (typeof body.subject_id !== "string" || !body.subject_id) {
+        return NextResponse.json({ error: "subject_id must be a node id" }, { status: 400 });
+      }
+      if (!(await store.getNode(body.subject_id))) {
+        return NextResponse.json(
+          { error: `Cannot hold a ceremony about a node that does not exist: ${body.subject_id}`, hint: "Create the node first on /nodes." },
+          { status: 404 },
+        );
+      }
+    }
+
     const ceremony = {
       id: body.id || crypto.randomUUID(),
       type: body.type,
@@ -138,6 +156,7 @@ export async function POST(request: Request) {
       ...(typeof body.source === "string" && body.source ? { source: body.source } : {}),
       ...(typeof body.closes === "string" ? { closes: body.closes } : {}),
       ...(typeof body.circle_id === "string" ? { circle_id: body.circle_id } : {}),
+      ...(typeof body.subject_id === "string" ? { subject_id: body.subject_id } : {}),
     };
 
     await store.logCeremony(ceremony);

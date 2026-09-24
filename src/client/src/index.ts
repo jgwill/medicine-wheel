@@ -115,6 +115,8 @@ export interface ListCeremoniesOptions {
   circle_id?: string;
   /** The opening id: answers "which record closes this ceremony". */
   closes?: string;
+  /** The node id: answers "which ceremonies gathered around this node" (0.15.5). */
+  subject_id?: string;
   limit?: Limit;
 }
 
@@ -338,7 +340,7 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
 
   async function listCeremonies(o: ListCeremoniesOptions = {}): Promise<Paged<CeremonyLog>> {
     const res = await call(
-      `/api/ceremonies${query({ direction: o.direction, type: o.type, episode_path: o.episode_path, circle_id: o.circle_id, closes: o.closes, limit: limitParam(o.limit) })}`,
+      `/api/ceremonies${query({ direction: o.direction, type: o.type, episode_path: o.episode_path, circle_id: o.circle_id, closes: o.closes, subject_id: o.subject_id, limit: limitParam(o.limit) })}`,
     );
     return pageFrom<CeremonyLog>(await json(res, 'refused the ceremony list'), 'ceremonies');
   }

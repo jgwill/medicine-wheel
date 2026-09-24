@@ -190,6 +190,7 @@ export const CeremonyLogSchema = z.object({
   source: z.string().optional(),
   closes: z.string().optional(),
   circle_id: z.string().optional(),
+  subject_id: z.string().optional(),
 });
 
 // ── Narrative Schemas ───────────────────────────────────────────────────────

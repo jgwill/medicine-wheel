@@ -92,4 +92,27 @@ describe("ceremonies: typed episode binding, closing and circle (0.14.0)", () =>
     const list = await (await get(`?circle_id=circle:1`)).json();
     expect(list.matched).toBe(1);
   });
+
+  it("a ceremony names the node it is held about in `subject_id`, found by ?subject_id= (0.15.5, #146)", async () => {
+    const REVIEW = "review:1e1ba57a-9e30-41ea-8126-5735c3f344bd";
+    const refused = await post({ type: "talking_circle", direction: "east", intentions: ["x"], subject_id: REVIEW });
+    expect(refused.status).toBe(404);
+    expect((await post({ type: "talking_circle", direction: "east", subject_id: 7 })).status).toBe(400);
+
+    const { createProvider } = await import("../src/storage-provider/src/index");
+    const store = await createProvider();
+    const now = new Date().toISOString();
+    await store.createNode({ id: REVIEW, name: "Review — x", type: "knowledge", metadata: { kind: "miadi_review" }, created_at: now, updated_at: now } as any);
+    const held = await post({ type: "talking_circle", direction: "east", intentions: ["discuss the review"], episode_path: EP, subject_id: REVIEW });
+    expect(held.status).toBe(201);
+    const { ceremony } = await held.json();
+    expect(ceremony.subject_id).toBe(REVIEW);
+    await post({ type: "talking_circle", direction: "east", intentions: ["another"] });
+
+    // Read back through a fresh provider: the JSONL whitelist keeps the field.
+    const list = await (await get(`?subject_id=${encodeURIComponent(REVIEW)}`)).json();
+    expect(list.matched).toBe(1);
+    expect(list.ceremonies[0].id).toBe(ceremony.id);
+    expect(list.ceremonies[0].subject_id).toBe(REVIEW);
+  });
 });
