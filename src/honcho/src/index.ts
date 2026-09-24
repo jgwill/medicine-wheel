@@ -373,7 +373,9 @@ export function projectCeremony(ceremony: CeremonyLog): Projection {
     list('Medicines', ceremony.medicines_used) +
     list('Relations honored', ceremony.relations_honored) +
     (ceremony.research_context ? `\nContext: ${ceremony.research_context}` : '') +
-    (ceremony.episode_path ? `\nEpisode: ${ceremony.episode_path}` : '');
+    (ceremony.episode_path ? `\nEpisode: ${ceremony.episode_path}` : '') +
+    (ceremony.circle_id ? `\nCircle: ${ceremony.circle_id}` : '') +
+    (ceremony.subject_id ? `\nAbout: ${ceremony.subject_id}` : '');
   return {
     session_id: sessionIdForCeremony(ceremony),
     peers,
@@ -385,6 +387,8 @@ export function projectCeremony(ceremony: CeremonyLog): Projection {
       direction: ceremony.direction,
       ...(ceremony.episode_path ? { episode_path: ceremony.episode_path } : {}),
       ...(ceremony.episode_number !== undefined ? { episode_number: ceremony.episode_number } : {}),
+      ...(ceremony.circle_id ? { circle_id: ceremony.circle_id } : {}),
+      ...(ceremony.subject_id ? { subject_id: ceremony.subject_id } : {}),
     },
     messages: [{
       content,

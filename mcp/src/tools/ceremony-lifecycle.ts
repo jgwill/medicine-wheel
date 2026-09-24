@@ -187,6 +187,7 @@ export const ceremonyLifecycleTools: Tool[] = [
           closes: ceremony_id,
           ...(opening.episode_path ? { episode_path: opening.episode_path } : {}),
           ...(opening.circle_id ? { circle_id: opening.circle_id } : {}),
+          ...(opening.subject_id ? { subject_id: opening.subject_id } : {}),
           source: "mcp:mw_ceremony_close",
         });
 

@@ -65,6 +65,7 @@ interface StoredCeremony {
   episode_path?: string;
   episode_number?: number;
   circle_id?: string;
+  subject_id?: string;
   closes?: string;
   source?: string;
 }

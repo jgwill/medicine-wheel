@@ -524,6 +524,10 @@ export class NeonProvider implements StorageProvider {
     return filterAndOrderDiaryEntries(records, filters);
   }
 
+  async deleteCeremony(id: string): Promise<void> {
+    await this.db`DELETE FROM ceremonies WHERE id = ${id}`;
+  }
+
   async deleteDiaryEntry(id: string): Promise<void> {
     await this.db`DELETE FROM diary_entries WHERE id = ${id}`;
   }

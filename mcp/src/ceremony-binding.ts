@@ -1,8 +1,9 @@
 /**
  * The typed binding a ceremony carries since 0.14.0: the episode it belongs
- * to, the circle it is held in. The server's POST /api/ceremonies validates
- * the same fields; checking here refuses a bad value before any write, on the
- * JSONL store too. jgwill/medicine-wheel#144.
+ * to, the circle it is held in, and since 0.15.6 the node it is held about.
+ * The server's POST /api/ceremonies validates the same fields; checking here
+ * refuses a bad value before any write, on the JSONL store too.
+ * jgwill/medicine-wheel#144, #146.
  */
 
 /** Episode directory names are `YYYY-MM-DD-episode-NNN-slug`, as the server checks. */
@@ -12,10 +13,11 @@ export interface CeremonyBinding {
   episode_path?: string;
   episode_number?: number;
   circle_id?: string;
+  subject_id?: string;
 }
 
-/** Read `episode_path` and `circle_id` from tool arguments. Throws on a malformed value. */
-export function ceremonyBinding(args: { episode_path?: unknown; circle_id?: unknown }): CeremonyBinding {
+/** Read `episode_path`, `circle_id` and `subject_id` from tool arguments. Throws on a malformed value. */
+export function ceremonyBinding(args: { episode_path?: unknown; circle_id?: unknown; subject_id?: unknown }): CeremonyBinding {
   const binding: CeremonyBinding = {};
   if (args.episode_path !== undefined && args.episode_path !== '') {
     if (typeof args.episode_path !== 'string' || !EPISODE_PATH.test(args.episode_path)) {
@@ -28,6 +30,10 @@ export function ceremonyBinding(args: { episode_path?: unknown; circle_id?: unkn
     if (typeof args.circle_id !== 'string') throw new Error('circle_id must be a circle node id');
     binding.circle_id = args.circle_id;
   }
+  if (args.subject_id !== undefined && args.subject_id !== '') {
+    if (typeof args.subject_id !== 'string') throw new Error('subject_id must be a node id');
+    binding.subject_id = args.subject_id;
+  }
   return binding;
 }
 
@@ -39,5 +45,9 @@ export const bindingProperties = {
   circle_id: {
     type: 'string',
     description: 'Node id of the circle the ceremony is held in, e.g. circle:1789740793835:nktr8r (optional)',
+  },
+  subject_id: {
+    type: 'string',
+    description: 'Node id of what the ceremony is held about, e.g. review:<uuid> for a Miadi review (optional; the wheel refuses a node it does not hold)',
   },
 } as const;

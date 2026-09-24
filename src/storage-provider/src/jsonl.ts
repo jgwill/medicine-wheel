@@ -321,6 +321,12 @@ export class JsonlProvider implements StorageProvider {
     return countJsonl(this.ceremoniesFile);
   }
 
+  async deleteCeremony(id: string): Promise<void> {
+    await withWriteLock(this.ceremoniesFile, () => {
+      writeJsonl(this.ceremoniesFile, this.readCeremonies().filter((record) => record.id !== id));
+    });
+  }
+
   async registerInquiryWeave(record: WeaveRecord): Promise<void> {
     await this.upsertById(this.inquiryWeavesFile, record);
   }

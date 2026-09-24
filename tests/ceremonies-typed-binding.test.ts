@@ -115,4 +115,24 @@ describe("ceremonies: typed episode binding, closing and circle (0.14.0)", () =>
     expect(list.ceremonies[0].id).toBe(ceremony.id);
     expect(list.ceremonies[0].subject_id).toBe(REVIEW);
   });
+
+  it("DELETE removes a ceremony nobody entered and refuses one a closing holds (0.15.6, #146)", async () => {
+    const { DELETE } = await import("../app/api/ceremonies/[id]/route");
+    const del = (id: string) => DELETE(new Request(`http://wheel/api/ceremonies/${id}`, { method: "DELETE" }), { params: Promise.resolve({ id }) });
+
+    const stray = await (await post({ type: "opening", direction: "east", intentions: ["Test ceremony opening"] })).json();
+    const held = await (await post({ type: "talking_circle", direction: "east", intentions: ["held"] })).json();
+    await post({ type: "closing", direction: "east", closes: held.ceremony.id });
+
+    const refused = await del(held.ceremony.id);
+    expect(refused.status).toBe(409);
+    expect((await refused.json()).holders).toMatchObject({ closings: 1 });
+
+    const removed = await del(stray.ceremony.id);
+    expect(removed.status).toBe(200);
+    expect((await del(stray.ceremony.id)).status).toBe(404);
+    const all = await (await get("?limit=all")).json();
+    expect(all.ceremonies.map((c: { id: string }) => c.id)).not.toContain(stray.ceremony.id);
+    expect(all.ceremonies.map((c: { id: string }) => c.id)).toContain(held.ceremony.id);
+  });
 });

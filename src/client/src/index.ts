@@ -215,6 +215,8 @@ export interface MedicineWheelClient {
     list(opts?: ListCeremoniesOptions): Promise<Paged<CeremonyLog>>;
     get(id: string): Promise<CeremonyLog | null>;
     create(input: NewCeremony): Promise<CeremonyLog>;
+    /** Removes a ceremony nobody entered. The wheel refuses (409) while a closing, a turn or a diary entry holds it; 404 is treated as already gone. */
+    remove(id: string): Promise<void>;
   };
   beats: {
     list(opts?: ListBeatsOptions): Promise<Paged<NarrativeBeat>>;
@@ -410,6 +412,10 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
         const body = await json<{ ceremony?: CeremonyLog }>(res, 'refused the ceremony');
         if (!body?.ceremony?.id) throw new MedicineWheelClientError('wheel returned no ceremony', 502, res.url);
         return body.ceremony;
+      },
+      async remove(id) {
+        const res = await call(`/api/ceremonies/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        if (!res.ok && res.status !== 404) await refused(res, 'refused the ceremony removal');
       },
     },
 

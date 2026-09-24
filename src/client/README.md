@@ -23,7 +23,7 @@ ep.node === null;            // true when the episode was never registered on th
 circlesHeldIn(ep.ceremonies); // [{ circle_id, ceremonies, open, last }, …]
 ```
 
-A ceremony gathered around something names that node in `subject_id` (0.15.5): a review's talking circle carries `subject_id: 'review:<uuid>'`, and `wheel.ceremonies.list({ subject_id: 'review:<uuid>' })` finds it from the review. The wheel refuses a `subject_id` whose node does not exist.
+A ceremony gathered around something names that node in `subject_id` (0.15.5): a review's talking circle carries `subject_id: 'review:<uuid>'`, and `wheel.ceremonies.list({ subject_id: 'review:<uuid>' })` finds it from the review. The wheel refuses a `subject_id` whose node does not exist. `wheel.ceremonies.remove(id)` (0.15.6) removes a ceremony nobody entered; the wheel refuses (409) while a closing, a turn or a diary entry holds it.
 
 A consumer that filters ceremonies per reader passes only the visible ones to `circlesHeldIn`, so a circle is never named to someone who cannot read what it held.
 

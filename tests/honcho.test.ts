@@ -100,6 +100,16 @@ describe("projection", () => {
     expect(p.messages[0].content).toContain("Ceremony: talking_circle (east)");
     expect(p.messages[0].content).toContain("Intentions: hold the practice");
   });
+
+  it("a ceremony's circle and subject travel into Honcho (0.15.6, #146)", () => {
+    const p = projectCeremony({
+      id: "c-review", type: "talking_circle", direction: "east", participants: [], medicines_used: [], intentions: ["discuss"],
+      timestamp: "2026-09-24T10:58:00Z", episode_path: "2026-08-31-episode-344-x", circle_id: "circle:1:a", subject_id: "review:abc",
+    } as CeremonyLog);
+    expect(p.session_metadata).toMatchObject({ circle_id: "circle:1:a", subject_id: "review:abc" });
+    expect(p.messages[0].content).toContain("Circle: circle:1:a");
+    expect(p.messages[0].content).toContain("About: review:abc");
+  });
 });
 
 describe("client + project", () => {

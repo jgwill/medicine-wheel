@@ -423,6 +423,8 @@ export interface StorageProvider {
   getAllCeremonies(limit?: number): Promise<CeremonyLog[]>;
   /** Cardinality of the whole ceremony collection — see `countNodes()`. */
   countCeremonies(): Promise<number>;
+  /** Removes one ceremony record. The route refuses while a closing, a beat or a diary entry names it. */
+  deleteCeremony(id: string): Promise<void>;
 
   // Inquiry Weave Operations
   registerInquiryWeave(record: WeaveRecord): Promise<void>;

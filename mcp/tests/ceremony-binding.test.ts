@@ -58,6 +58,17 @@ describe('jgwill/medicine-wheel#144 — ceremony binding through the MCP', () =>
     expect(closing).toMatchObject({ type: 'closing', closes: opened.ceremony_id, episode_path: EPISODE, circle_id: CIRCLE });
   });
 
+  it('mw_ceremony_open and close carry subject_id, the node the ceremony is held about (0.15.6, #146)', async () => {
+    const SUBJECT = 'review:1e1ba57a-9e30-41ea-8126-5735c3f344bd';
+    const opened = await findTool('mw_ceremony_open').handler({ intention: 'Discuss the review', type: 'talking_circle', episode_path: EPISODE, subject_id: SUBJECT });
+    expect(opened.status).toBe('opened');
+    expect(await store.getCeremony(opened.ceremony_id)).toMatchObject({ subject_id: SUBJECT, episode_path: EPISODE });
+    const closed = await findTool('mw_ceremony_close').handler({ ceremony_id: opened.ceremony_id });
+    expect(await store.getCeremony(closed.closing_id)).toMatchObject({ closes: opened.ceremony_id, subject_id: SUBJECT });
+    const refused = await findTool('mw_ceremony_open').handler({ intention: 'x', subject_id: 42 });
+    expect(refused.status).toBe('error');
+  });
+
   it('log_ceremony_with_memory stores the binding and the relations honoured', async () => {
     const logged = await findTool('log_ceremony_with_memory').handler({
       type: 'talking_circle',
