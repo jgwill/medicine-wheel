@@ -97,6 +97,28 @@ describe("invitations (the door into a circle)", () => {
     expect(await store.accept(revoked.code, "x")).toEqual({ ok: false, reason: "revoked" });
     expect(await store.listForCircle("circle:1")).toHaveLength(3);
   });
+
+  it("a code minted without an expiry lives DEFAULT_INVITATION_TTL_HOURS; the address stays out of the public view", async () => {
+    const { DEFAULT_INVITATION_TTL_HOURS, publicInvitation } = await import("../src/community-identity/src/index");
+    const store = new JsonlInvitationStore(path.join(tempDir, "invites-ttl.jsonl"));
+    const before = Date.now();
+    const inv = await store.create({ circle_id: "circle:1", invited_by: "g", intended_for: "Jane", intended_email: " Jane@Example.org " });
+    expect(DEFAULT_INVITATION_TTL_HOURS).toBe(96);
+    const ttl = Date.parse(inv.expires_at!) - before;
+    expect(ttl).toBeGreaterThanOrEqual(96 * 3600_000 - 1000);
+    expect(ttl).toBeLessThanOrEqual(96 * 3600_000 + 1000);
+    expect(inv.intended_email).toBe("jane@example.org");
+    expect(invitationState(inv, before + 97 * 3600_000)).toBe("expired");
+
+    const view = publicInvitation(inv, { circle_name: "Fire circle", invited_by_name: "G" });
+    expect(view).toEqual({ code: inv.code, role: "member", state: "open", circle_name: "Fire circle", invited_by_name: "G", intended_for: "Jane", expires_at: inv.expires_at, has_email: true });
+    expect(JSON.stringify(view)).not.toContain("example.org");
+    expect(view).not.toHaveProperty("accepted_by");
+
+    const explicit = await store.create({ circle_id: "circle:1", invited_by: "g", expires_at: "2030-01-01T00:00:00.000Z" });
+    expect(explicit.expires_at).toBe("2030-01-01T00:00:00.000Z");
+    expect(publicInvitation(explicit, { circle_name: "C" }).has_email).toBe(false);
+  });
 });
 
 describe("status, circle fields, audit and config (0.14.1)", () => {

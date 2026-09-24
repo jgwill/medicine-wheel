@@ -19,8 +19,10 @@ export interface InvitationRecord {
   circle_id: string;
   invited_by: string;
   role: CircleRole;
-  /** A name or email the invitation was meant for; informational. */
+  /** The name the invitation was meant for; informational. */
   intended_for?: string;
+  /** The address the code was sent to. Never part of the public view. */
+  intended_email?: string;
   created_at: string;
   expires_at?: string;
   max_uses: number;
@@ -28,8 +30,22 @@ export interface InvitationRecord {
   revoked_at?: string;
 }
 
+export interface InvitationInput {
+  circle_id: string;
+  invited_by: string;
+  role?: CircleRole;
+  intended_for?: string;
+  intended_email?: string;
+  /** ISO date. Without it the code lives DEFAULT_INVITATION_TTL_HOURS. */
+  expires_at?: string;
+  max_uses?: number;
+}
+
+/** How long a code stays open when its minter names no expiry. */
+export const DEFAULT_INVITATION_TTL_HOURS = 96;
+
 export interface InvitationStore {
-  create(input: { circle_id: string; invited_by: string; role?: CircleRole; intended_for?: string; expires_at?: string; max_uses?: number }): Promise<InvitationRecord>;
+  create(input: InvitationInput): Promise<InvitationRecord>;
   get(code: string): Promise<InvitationRecord | null>;
   listForCircle(circle_id: string): Promise<InvitationRecord[]>;
   /** Record an acceptance. Returns the record, or a reason it could not be accepted. */
@@ -53,6 +69,32 @@ export function invitationState(record: InvitationRecord, now = Date.now()): 'op
   return 'open';
 }
 
+/** What a code holder may see before registering: no address, no acceptances. */
+export interface PublicInvitation {
+  code: string;
+  role: CircleRole;
+  state: ReturnType<typeof invitationState>;
+  circle_name: string;
+  invited_by_name?: string;
+  intended_for?: string;
+  expires_at?: string;
+  /** True when the invitation names an address the registration may take. */
+  has_email: boolean;
+}
+
+export function publicInvitation(record: InvitationRecord, names: { circle_name: string; invited_by_name?: string }, now = Date.now()): PublicInvitation {
+  return {
+    code: record.code,
+    role: record.role,
+    state: invitationState(record, now),
+    circle_name: names.circle_name,
+    ...(names.invited_by_name ? { invited_by_name: names.invited_by_name } : {}),
+    ...(record.intended_for ? { intended_for: record.intended_for } : {}),
+    ...(record.expires_at ? { expires_at: record.expires_at } : {}),
+    has_email: Boolean(record.intended_email),
+  };
+}
+
 export class JsonlInvitationStore implements InvitationStore {
   constructor(private readonly file: string) {}
 
@@ -69,15 +111,17 @@ export class JsonlInvitationStore implements InvitationStore {
     writeFileSync(this.file, records.map((r) => JSON.stringify(r)).join('\n') + (records.length ? '\n' : ''));
   }
 
-  async create(input: { circle_id: string; invited_by: string; role?: CircleRole; intended_for?: string; expires_at?: string; max_uses?: number }): Promise<InvitationRecord> {
+  async create(input: InvitationInput): Promise<InvitationRecord> {
+    const now = Date.now();
     const record: InvitationRecord = {
       code: mintInvitationCode(),
       circle_id: input.circle_id,
       invited_by: input.invited_by,
       role: input.role ?? 'member',
       ...(input.intended_for ? { intended_for: input.intended_for } : {}),
-      created_at: new Date().toISOString(),
-      ...(input.expires_at ? { expires_at: input.expires_at } : {}),
+      ...(input.intended_email ? { intended_email: input.intended_email.trim().toLowerCase() } : {}),
+      created_at: new Date(now).toISOString(),
+      expires_at: input.expires_at ?? new Date(now + DEFAULT_INVITATION_TTL_HOURS * 3600_000).toISOString(),
       max_uses: input.max_uses && input.max_uses > 0 ? input.max_uses : 1,
       accepted_by: [],
     };
