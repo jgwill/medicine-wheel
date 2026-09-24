@@ -23,5 +23,10 @@ export default defineConfig({
   test: {
     include: ['mcp/tests/**/*.test.ts', 'tests/**/*.test.ts'],
     testTimeout: 15000,
+    // The MCP store writes over HTTP whenever MW_API_URL is set (mcp/src/store.ts).
+    // A shell that exports it for daily work turned `npx vitest run` into writes
+    // on the live chronicle wheel: six test ceremonies on 2026-09-24 (#146).
+    // Tests use the local JSONL store, whatever the shell says.
+    env: { MW_API_URL: '' },
   },
 });
