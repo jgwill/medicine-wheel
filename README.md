@@ -348,7 +348,10 @@ HONCHO_WORKSPACE_ID=medicine-wheel      # default
 With `HONCHO_URL` set, every stored beat, ceremony and diary entry projects into
 Honcho on write, in the background. `GET /api/health` reports `honcho.enabled`.
 A projection never delays the wheel's answer, and a Honcho that is down is a
-line on stderr, not an error to the writer. A running server holds its old
+line on stderr, not an error to the writer. The record is not lost: its
+reference waits in `honcho-pending.jsonl` beside the store and is sent again on
+start, every five minutes, and after any projection that gets through —
+`honcho.pending` counts what waits. A running server holds its old
 build and its old environment — restart it for either to take effect.
 
 ## License

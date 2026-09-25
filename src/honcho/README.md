@@ -16,7 +16,20 @@ POST /api/narrative/beats   → one message from the speaker, witnesses seated, 
 POST /api/diary             → one message in the participant's voice, in the ceremony's (or episode's) session
 ```
 
-`GET /api/health` reports it: `"honcho": { "enabled": true, "url": …, "workspace": … }`, or `{ "enabled": false }`.
+`GET /api/health` reports it: `"honcho": { "enabled": true, "url": …, "workspace": …, "pending": 0 }`, or `{ "enabled": false }`.
+
+### When Honcho is away
+
+A record Honcho cannot take — unreachable, timed out, or failing on its own side (5xx, 408, 429) — is not dropped. Its reference `{ kind, id }` goes onto a pending ledger beside the wheel's store, and the wheel sends it again when the server starts, every five minutes, and right after any projection that gets through. Only the reference waits; the words stay in the wheel and are read again when the record finally leaves. A pass stops at the first sign Honcho is still away. A 4xx refusal is reported and not queued: Honcho would refuse the same record the same way. A queued record the wheel no longer holds is dropped with one line.
+
+```
+GET  /api/honcho/pending                                   → what waits, oldest first
+POST /api/honcho/pending  {"kind":"beat","id":"…"}         → queue a record lost before the ledger existed
+POST /api/honcho/pending  {"refs":[{"kind":"ceremony","id":"…"}, …]}
+POST /api/honcho/pending  {"refs":[]}                      → only start a pass now
+```
+
+Kinds are `beat`, `ceremony` and `diary`. The ids of records lost before the ledger existed are in the server log, on the lines `[honcho] projection of <kind> <id> … failed`.
 
 The MCP server writes through these routes when `MW_API_URL` is set, so beats and ceremonies logged by an agent flow too. Honcho's deriver then reasons over each session in the background and the peer representations grow on their own.
 
@@ -74,6 +87,8 @@ Through MCP: `honcho_status`, `honcho_project` (a beat or ceremony by id), `honc
 | `HONCHO_URL` | The Honcho API. Unset: the river is off and the tools answer `unconfigured` |
 | `HONCHO_WORKSPACE_ID` | Workspace; default `medicine-wheel` |
 | `HONCHO_API_KEY` | Bearer token; unset for a self-hosted instance with auth off |
+| `HONCHO_PENDING_FILE` | The pending ledger; default `honcho-pending.jsonl` in the wheel's data directory (`MW_DATA_DIR`) |
+| `HONCHO_RETRY_INTERVAL_MS` | How often waiting records are sent again; default `300000` (five minutes) |
 
 ## Ids and sessions
 

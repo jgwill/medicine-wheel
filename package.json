@@ -14,6 +14,7 @@
     "public/**/*",
     "dist/cli/**/*",
     "next.config.mjs",
+    "instrumentation.ts",
     "next-env.d.ts",
     "postcss.config.mjs",
     "tsconfig.json",

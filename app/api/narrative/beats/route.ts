@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     });
     // The river: a stored beat leaves for Honcho in the background when
     // HONCHO_URL is set. Never awaited — the wheel answers on its own clock.
-    projectAfterWrite(() => projectBeat(beat), `beat ${beat.id}`);
+    projectAfterWrite({ kind: "beat", id: beat.id }, () => projectBeat(beat));
     // Warnings ride on the created beat rather than replacing it, so clients
     // that read the beat back by id keep working while advisory findings stop
     // being computed-and-discarded.

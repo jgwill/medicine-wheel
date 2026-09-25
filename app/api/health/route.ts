@@ -28,7 +28,8 @@ export async function GET() {
         ceremonies,
       },
       // The river to Honcho: enabled when HONCHO_URL is set. A wheel that
-      // reports enabled projects every stored beat, ceremony and diary entry.
+      // reports enabled projects every stored beat, ceremony and diary entry;
+      // `pending` counts those still waiting for Honcho to take them (#147).
       honcho: honchoProjectionStatus(),
       env: {
         MW_STORAGE_PROVIDER: process.env.MW_STORAGE_PROVIDER || 'not set',

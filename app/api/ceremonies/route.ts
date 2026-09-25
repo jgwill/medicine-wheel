@@ -162,7 +162,7 @@ export async function POST(request: Request) {
     await store.logCeremony(ceremony);
     // The river: the stored ceremony leaves for Honcho in the background when
     // HONCHO_URL is set. Never awaited.
-    projectAfterWrite(() => projectCeremony(ceremony), `ceremony ${ceremony.id}`);
+    projectAfterWrite({ kind: "ceremony", id: ceremony.id }, () => projectCeremony(ceremony));
     return NextResponse.json({ success: true, ceremony, provider: detectProvider() }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
