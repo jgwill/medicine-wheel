@@ -212,13 +212,17 @@ export interface HonchoClient {
   /**
    * Whether the server confines chat and representation to `filters.session_id`.
    * Read from the server's own OpenAPI schema, not its version string, and
-   * remembered once known. An unreachable server answers false without being
-   * remembered.
+   * remembered for five minutes, so a server rolled back to one that cannot
+   * confine is noticed within that window. An unreachable server answers false
+   * without being remembered.
    */
   supportsSessionFilters(): Promise<boolean>;
 }
 
 const MAX_BATCH = 100;
+
+/** How long `supportsSessionFilters` trusts what it read. */
+export const SESSION_FILTERS_TTL_MS = 5 * 60_000;
 
 export function createHonchoClient(options: HonchoClientOptions): HonchoClient {
   const baseUrl = options.baseUrl.replace(/\/+$/, '');
@@ -253,7 +257,7 @@ export function createHonchoClient(options: HonchoClientOptions): HonchoClient {
 
   const items = <T>(page: { items?: T[] } | T[] | undefined): T[] => Array.isArray(page) ? page : page?.items ?? [];
 
-  let sessionFilters: boolean | undefined;
+  let sessionFilters: { confined: boolean; at: number } | undefined;
 
   return {
     baseUrl,
@@ -287,15 +291,15 @@ export function createHonchoClient(options: HonchoClientOptions): HonchoClient {
     },
     search: async (query, opts = {}) => items(await call<HonchoStoredMessage[] | { items?: HonchoStoredMessage[] }>('POST', `${ws}/search`, { query, limit: opts.limit ?? 10, ...(opts.filters ? { filters: opts.filters } : {}) })),
     supportsSessionFilters: async () => {
-      if (sessionFilters !== undefined) return sessionFilters;
+      if (sessionFilters && Date.now() - sessionFilters.at < SESSION_FILTERS_TTL_MS) return sessionFilters.confined;
       let schema: { components?: { schemas?: Record<string, { properties?: Record<string, unknown> }> } };
       try {
         schema = await call('GET', '/openapi.json');
       } catch {
         return false;
       }
-      sessionFilters = Boolean(schema?.components?.schemas?.DialecticOptions?.properties?.filters);
-      return sessionFilters;
+      sessionFilters = { confined: Boolean(schema?.components?.schemas?.DialecticOptions?.properties?.filters), at: Date.now() };
+      return sessionFilters.confined;
     },
   };
 }

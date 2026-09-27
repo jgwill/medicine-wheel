@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   HonchoClientError,
+  SESSION_FILTERS_TTL_MS,
   WHEEL_PEER,
   askWithin,
   createHonchoClient,
@@ -235,6 +236,26 @@ describe("askWithin (#148)", () => {
     expect(await honcho.supportsSessionFilters()).toBe(true);
     expect(await honcho.supportsSessionFilters()).toBe(true);
     expect(hits.filter((h) => h.path === "/openapi.json")).toHaveLength(1);
+  });
+
+  it("notices within five minutes a server rolled back to one that cannot confine", async () => {
+    let confined = true;
+    const hits: Hit[] = [];
+    const honcho = createHonchoClient({ baseUrl: "http://honcho", workspace: "w", fetch: fakeFetch({
+      "GET /openapi.json": () => ({ status: 200, body: schema(confined) }),
+    }, hits) });
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+    try {
+      expect(await honcho.supportsSessionFilters()).toBe(true);
+      confined = false;
+      now.mockReturnValue(1_000_000 + SESSION_FILTERS_TTL_MS - 1);
+      expect(await honcho.supportsSessionFilters()).toBe(true);
+      now.mockReturnValue(1_000_000 + SESSION_FILTERS_TTL_MS);
+      expect(await honcho.supportsSessionFilters()).toBe(false);
+      expect(hits.filter((h) => h.path === "/openapi.json")).toHaveLength(2);
+    } finally {
+      now.mockRestore();
+    }
   });
 });
 
