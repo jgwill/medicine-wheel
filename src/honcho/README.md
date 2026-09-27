@@ -80,6 +80,24 @@ await wheel.nodes.create(node); // @medicine-wheel/client
 
 Through MCP: `honcho_status`, `honcho_project` (a beat or ceremony by id), `honcho_recall` (representation, or a question), `honcho_project_back` (a memory projection into the wheel).
 
+## Asking within sessions
+
+A ceremony and everything said in it share one session, so "this ceremony", "this circle" and "every circle I sit in" are each a list of sessions. `askWithin` answers from those sessions and nothing else:
+
+```ts
+import { askWithin, sessionIdForCeremony } from '@medicine-wheel/honcho';
+
+const out = await askWithin(honcho, {
+  query: 'What is still unresolved?',
+  sessions: circleCeremonies.map(sessionIdForCeremony),   // the caller decides who may read what
+});
+// out.mode === 'dialectic': out.answer is Honcho's reasoning over those sessions, out.messages the closest turns
+// out.mode === 'search':    the server cannot confine its reasoning; out.messages are the closest turns only
+// out.mode === 'empty':     no session was allowed; nothing was asked
+```
+
+Honcho confines its dialectic to `filters: { session_id }` from **3.0.12**. Before that, both `session_id` and `filters` are accepted and ignored by the dialectic, which then answers from every session in the workspace: asked about one test ceremony on 3.0.11, it listed intentions from other circles (#148). Message search honours a session filter on every version. `honcho.supportsSessionFilters()` reads the server's OpenAPI schema to tell the two apart, and `askWithin` never asks the dialectic of a server that cannot confine it. `peers.chat` and `peers.representation` take the same `filters` for callers that manage this themselves.
+
 ## Configuration
 
 | Variable | Meaning |

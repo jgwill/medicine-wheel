@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   HonchoClientError,
   WHEEL_PEER,
+  askWithin,
   createHonchoClient,
   honchoFromEnv,
   honchoIdFor,
@@ -178,6 +179,62 @@ describe("client + project", () => {
     const dead = createHonchoClient({ baseUrl: "http://honcho", workspace: "w", fetch: (async () => { throw new Error("ECONNREFUSED"); }) as typeof fetch });
     await expect(dead.health()).rejects.toBeInstanceOf(HonchoClientError);
     await expect(dead.health()).rejects.toMatchObject({ status: 502 });
+  });
+});
+
+describe("askWithin (#148)", () => {
+  const schema = (withFilters: boolean) => ({
+    components: { schemas: { DialecticOptions: { properties: { query: {}, session_id: {}, ...(withFilters ? { filters: {} } : {}) } } } },
+  });
+  const found = [{ id: "m1", session_id: "s1", peer_id: "gui", content: "a turn" }];
+
+  it("on a server that confines reasoning, the dialectic answers from the allowed sessions only, and search returns beside it", async () => {
+    const hits: Hit[] = [];
+    const honcho = createHonchoClient({ baseUrl: "http://honcho", workspace: "w", fetch: fakeFetch({
+      "GET /openapi.json": () => ({ status: 200, body: schema(true) }),
+      "POST /v3/workspaces/w/search": () => ({ status: 200, body: found }),
+      [`POST /v3/workspaces/w/peers/${WHEEL_PEER}/chat`]: () => ({ status: 200, body: { content: "They agreed to meet weekly." } }),
+    }, hits) });
+    const out = await askWithin(honcho, { query: "what was agreed?", sessions: ["s1", "s2", "s1", ""] });
+    expect(out).toMatchObject({ mode: "dialectic", answer: "They agreed to meet weekly.", sessions: ["s1", "s2"] });
+    expect(out.messages).toEqual(found);
+    const chat = hits.find((h) => h.path.endsWith("/chat"))!;
+    expect(chat.body).toMatchObject({ query: "what was agreed?", reasoning_level: "low", filters: { session_id: { in: ["s1", "s2"] } } });
+    expect(chat.body.session_id).toBeUndefined();
+    expect(hits.find((h) => h.path === "/v3/workspaces/w/search")!.body.filters).toEqual({ session_id: { in: ["s1", "s2"] } });
+  });
+
+  it("on an older server the dialectic is never asked: it would answer from every circle, so only search runs", async () => {
+    const hits: Hit[] = [];
+    const honcho = createHonchoClient({ baseUrl: "http://honcho", workspace: "w", fetch: fakeFetch({
+      "GET /openapi.json": () => ({ status: 200, body: schema(false) }),
+      "POST /v3/workspaces/w/search": () => ({ status: 200, body: found }),
+    }, hits) });
+    const out = await askWithin(honcho, { query: "what was agreed?", sessions: ["s1"] });
+    expect(out).toEqual({ mode: "search", messages: found, sessions: ["s1"] });
+    expect(hits.some((h) => h.path.endsWith("/chat"))).toBe(false);
+  });
+
+  it("with no allowed session nothing is asked at all", async () => {
+    const hits: Hit[] = [];
+    const honcho = createHonchoClient({ baseUrl: "http://honcho", workspace: "w", fetch: fakeFetch({}, hits) });
+    expect(await askWithin(honcho, { query: "anything?", sessions: [] })).toEqual({ mode: "empty", messages: [], sessions: [] });
+    expect(hits).toEqual([]);
+  });
+
+  it("remembers what the server supports, but not an unreachable server", async () => {
+    let up = false;
+    const hits: Hit[] = [];
+    const routes = { "GET /openapi.json": () => ({ status: 200, body: schema(true) }) };
+    const honcho = createHonchoClient({ baseUrl: "http://honcho", workspace: "w", fetch: (async (input: any, init?: RequestInit) => {
+      if (!up) throw new Error("ECONNREFUSED");
+      return fakeFetch(routes, hits)(input, init);
+    }) as typeof fetch });
+    expect(await honcho.supportsSessionFilters()).toBe(false);
+    up = true;
+    expect(await honcho.supportsSessionFilters()).toBe(true);
+    expect(await honcho.supportsSessionFilters()).toBe(true);
+    expect(hits.filter((h) => h.path === "/openapi.json")).toHaveLength(1);
   });
 });
 

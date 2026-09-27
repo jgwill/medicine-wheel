@@ -146,12 +146,24 @@ export interface SessionContext {
   peer_card?: string[] | null;
 }
 
+/**
+ * The sessions an answer may draw on. Honcho 3.0.12 and later confine recall
+ * (conclusions and messages) to them, and an empty list recalls nothing. An
+ * older server accepts the field and answers from the whole workspace, and so
+ * does `session_id` alone on any server before 3.0.12: see
+ * `supportsSessionFilters`.
+ */
+export interface SessionFilters {
+  session_id: string | string[] | { in: string[] };
+}
+
 export interface RepresentationOptions {
   /** Read what `peer` understands about this other peer, instead of Honcho's global view. */
   target?: string;
   session_id?: string;
   search_query?: string;
   max_conclusions?: number;
+  filters?: SessionFilters;
 }
 
 export interface ChatOptions {
@@ -159,6 +171,7 @@ export interface ChatOptions {
   target?: string;
   /** `minimal` | `low` | `medium` | `high` | `max` — pick the lowest that answers. */
   reasoning_level?: string;
+  filters?: SessionFilters;
 }
 
 // ── client ──────────────────────────────────────────────────────────────────
@@ -196,6 +209,13 @@ export interface HonchoClient {
   };
   /** Semantic search across the workspace's messages. */
   search(query: string, opts?: { limit?: number; filters?: Record<string, unknown> }): Promise<HonchoStoredMessage[]>;
+  /**
+   * Whether the server confines chat and representation to `filters.session_id`.
+   * Read from the server's own OpenAPI schema, not its version string, and
+   * remembered once known. An unreachable server answers false without being
+   * remembered.
+   */
+  supportsSessionFilters(): Promise<boolean>;
 }
 
 const MAX_BATCH = 100;
@@ -233,6 +253,8 @@ export function createHonchoClient(options: HonchoClientOptions): HonchoClient {
 
   const items = <T>(page: { items?: T[] } | T[] | undefined): T[] => Array.isArray(page) ? page : page?.items ?? [];
 
+  let sessionFilters: boolean | undefined;
+
   return {
     baseUrl,
     workspace,
@@ -264,7 +286,70 @@ export function createHonchoClient(options: HonchoClientOptions): HonchoClient {
       context: (id, opts = {}) => call('GET', `${ws}/sessions/${encodeURIComponent(id)}/context`, undefined, { peer_target: opts.peer_target, tokens: opts.tokens, summary: opts.summary }),
     },
     search: async (query, opts = {}) => items(await call<HonchoStoredMessage[] | { items?: HonchoStoredMessage[] }>('POST', `${ws}/search`, { query, limit: opts.limit ?? 10, ...(opts.filters ? { filters: opts.filters } : {}) })),
+    supportsSessionFilters: async () => {
+      if (sessionFilters !== undefined) return sessionFilters;
+      let schema: { components?: { schemas?: Record<string, { properties?: Record<string, unknown> }> } };
+      try {
+        schema = await call('GET', '/openapi.json');
+      } catch {
+        return false;
+      }
+      sessionFilters = Boolean(schema?.components?.schemas?.DialecticOptions?.properties?.filters);
+      return sessionFilters;
+    },
   };
+}
+
+// ── recall within sessions ──────────────────────────────────────────────────
+
+/** What `askWithin` could say from the sessions it was allowed. */
+export interface ScopedAnswer {
+  /**
+   * `dialectic`: Honcho reasoned over the allowed sessions only.
+   * `search`: the server cannot confine its reasoning, so no reasoning was asked
+   * for, and `messages` are the allowed sessions' messages closest to the question.
+   * `empty`: no session was allowed, and nothing was asked.
+   */
+  mode: 'dialectic' | 'search' | 'empty';
+  /** The dialectic's answer. Present in `dialectic` mode only. */
+  answer?: string;
+  /** Messages from the allowed sessions closest to the question, in both modes. */
+  messages: HonchoStoredMessage[];
+  /** The sessions the answer was allowed to draw on, deduplicated. */
+  sessions: string[];
+}
+
+export interface AskWithinOptions {
+  query: string;
+  /** Honcho session ids the answer may draw on. Nothing outside them is read. */
+  sessions: string[];
+  /** The peer whose memory is asked. Default: the wheel, seated in every ceremony. */
+  peer?: string;
+  reasoning_level?: string;
+  /** How many closest messages to return. Default 12. */
+  limit?: number;
+}
+
+/**
+ * Ask the wheel's memory a question, drawing only on the given sessions.
+ *
+ * On a server that confines reasoning (Honcho 3.0.12+), the dialectic answers
+ * and the closest messages come back beside it. On an older one, `session_id`
+ * and `filters` are ignored by the dialectic and it would answer from every
+ * circle in the workspace, so only message search runs: search honours a
+ * session filter on every version.
+ */
+export async function askWithin(client: HonchoClient, opts: AskWithinOptions): Promise<ScopedAnswer> {
+  const sessions = [...new Set(opts.sessions.filter(Boolean))];
+  if (sessions.length === 0) return { mode: 'empty', messages: [], sessions };
+  const filters = { session_id: { in: sessions } };
+  const [confined, messages] = await Promise.all([
+    client.supportsSessionFilters(),
+    client.search(opts.query, { limit: opts.limit ?? 12, filters }),
+  ]);
+  if (!confined) return { mode: 'search', messages, sessions };
+  const answer = await client.peers.chat(opts.peer ?? WHEEL_PEER, opts.query, { reasoning_level: opts.reasoning_level ?? 'low', filters });
+  return { mode: 'dialectic', answer, messages, sessions };
 }
 
 // ── projection: wheel → Honcho ──────────────────────────────────────────────
