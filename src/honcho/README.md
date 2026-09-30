@@ -80,6 +80,16 @@ await wheel.nodes.create(node); // @medicine-wheel/client
 
 Through MCP: `honcho_status`, `honcho_project` (a beat or ceremony by id), `honcho_recall` (representation, or a question), `honcho_project_back` (a memory projection into the wheel).
 
+## Behind the wheel's memory
+
+Callers no longer ask Honcho themselves: they ask the wheel (`@medicine-wheel/memory`, `/api/memory`, the `memory_*` MCP tools), and the wheel asks Honcho. `honchoMemoryProvider(client)` is the provider it uses:
+
+- every question is kept inside the Honcho sessions of the reach (`sessionsForReach`: one per ceremony, plus the chronicle session of each episode named)
+- every message comes back as the wheel record it was projected from (`metadata.wheel_id`, `wheel_kind`), its speaker as a wheel id, or with `outside_wheel: true` when it carries no wheel record
+- a Honcho before 3.0.12 is asked for search only, with a note saying why
+
+The `honcho_*` MCP tools remain for one release for existing callers.
+
 ## Asking within sessions
 
 A ceremony and everything said in it share one session, so "this ceremony", "this circle" and "every circle I sit in" are each a list of sessions. `askWithin` answers from those sessions and nothing else:

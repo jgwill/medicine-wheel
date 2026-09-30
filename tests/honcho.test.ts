@@ -5,6 +5,8 @@ import {
   WHEEL_PEER,
   askWithin,
   createHonchoClient,
+  honchoMemoryProvider,
+  sessionsForReach,
   honchoFromEnv,
   honchoIdFor,
   memoryProjectionNode,
@@ -256,6 +258,57 @@ describe("askWithin (#148)", () => {
     } finally {
       now.mockRestore();
     }
+  });
+});
+
+describe("honchoMemoryProvider (#149 W5)", () => {
+  const reach = { scope: { circle_id: "circle:a" }, ceremonies: ["ceremony:1:a", "2e72f4cd"], episodes: ["2026-09-30-episode-360-memory"] };
+  const schema = (withFilters: boolean) => ({ components: { schemas: { DialecticOptions: { properties: withFilters ? { filters: {} } : {} } } } });
+  const messages = [
+    { id: "m1", session_id: "ceremony-1-a", peer_id: "node-human-1-mia", content: "[east] Mia speaks\nThe lantern is teal.", created_at: "2026-09-30T10:00:00Z", metadata: { wheel_kind: "beat", wheel_id: "beat:1" } },
+    { id: "m2", session_id: "release-061", peer_id: "mia-eury", content: "Written into Honcho directly.", metadata: {} },
+  ];
+  const routes = (confined: boolean) => ({
+    "GET /openapi.json": () => ({ status: 200, body: schema(confined) }),
+    "GET /health": () => ({ status: 200, body: { status: "ok" } }),
+    "POST /v3/workspaces/w/search": () => ({ status: 200, body: messages }),
+    "POST /v3/workspaces/w/peers/list": () => ({ status: 200, body: { items: [{ id: "node-human-1-mia", metadata: { wheel_id: "node:human:1:mia" } }] } }),
+    "POST /v3/workspaces/w/peers/medicine-wheel/chat": () => ({ status: 200, body: { content: "The lantern is teal." } }),
+    "POST /v3/workspaces/w/peers/node-human-1-mia/representation": () => ({ status: 200, body: { representation: "Mia paints lanterns." } }),
+  });
+
+  it("covers one session per ceremony and the chronicle sessions of each episode", () => {
+    expect(sessionsForReach(reach)).toEqual(["ceremony-1-a", "2e72f4cd", "chronicle-2026-09-30-episode-360-memory", "2026-09-30-episode-360-memory"]);
+  });
+
+  it("answers within the reach and returns every message as the wheel record it came from, or outside the wheel", async () => {
+    const hits: Hit[] = [];
+    const provider = honchoMemoryProvider(createHonchoClient({ baseUrl: "http://honcho", workspace: "w", fetch: fakeFetch(routes(true), hits) }));
+    const out = await provider.ask({ query: "What colour is the lantern?", reach });
+    expect(out).toMatchObject({ provider: "honcho", mode: "dialectic", answer: "The lantern is teal." });
+    expect(out.sources[0]).toEqual({ provider: "honcho", wheel_kind: "beat", wheel_id: "beat:1", ceremony_id: "ceremony:1:a", speaker: "node:human:1:mia", excerpt: "[east] Mia speaks The lantern is teal.", at: "2026-09-30T10:00:00Z" });
+    expect(out.sources[1]).toMatchObject({ provider: "honcho", wheel_kind: "message", wheel_id: "m2", speaker: "mia-eury", outside_wheel: true });
+    const chat = hits.find((h) => h.path.endsWith("/chat"))!;
+    expect(chat.body.filters).toEqual({ session_id: { in: sessionsForReach(reach) } });
+  });
+
+  it("asks an older Honcho for search only, and says so", async () => {
+    const hits: Hit[] = [];
+    const provider = honchoMemoryProvider(createHonchoClient({ baseUrl: "http://honcho", workspace: "w", fetch: fakeFetch(routes(false), hits) }));
+    const out = await provider.ask({ query: "What colour is the lantern?", reach });
+    expect(out.mode).toBe("search");
+    expect(out.note).toContain("3.0.12");
+    expect(hits.some((h) => h.path.endsWith("/chat"))).toBe(false);
+    expect(await provider.status()).toMatchObject({ provider: "honcho", enabled: true, confined: false });
+  });
+
+  it("about reads one person within the reach, and searches only what they said", async () => {
+    const hits: Hit[] = [];
+    const provider = honchoMemoryProvider(createHonchoClient({ baseUrl: "http://honcho", workspace: "w", fetch: fakeFetch(routes(true), hits) }));
+    const out = await provider.about!({ query: "", reach, about: "node:human:1:mia" });
+    expect(out).toMatchObject({ mode: "dialectic", answer: "Mia paints lanterns." });
+    expect(hits.find((h) => h.path.endsWith("/representation"))!.body).toEqual({ filters: { session_id: { in: sessionsForReach(reach) } } });
+    expect(hits.find((h) => h.path === "/v3/workspaces/w/search")!.body.filters).toEqual({ session_id: { in: sessionsForReach(reach) }, peer_id: "node-human-1-mia" });
   });
 });
 

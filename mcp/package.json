@@ -46,6 +46,7 @@
     "@medicine-wheel/honcho": "^0.15.9",
     "@medicine-wheel/importance-unit": "^0.15.9",
     "@medicine-wheel/infra": "^0.15.9",
+    "@medicine-wheel/memory": "^0.15.9",
     "@medicine-wheel/narrative-engine": "^0.15.9",
     "@medicine-wheel/ontology-core": "^0.15.9",
     "@medicine-wheel/prompt-decomposition": "^0.15.9",

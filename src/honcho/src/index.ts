@@ -39,6 +39,7 @@
  */
 
 import type { CeremonyLog, NarrativeBeat, NodeType, DirectionName } from '@medicine-wheel/ontology-core';
+import { excerptAround, type MemoryProvider, type MemoryQuestion, type MemorySource, type ProviderAnswer, type Reach } from '@medicine-wheel/memory';
 
 export type { CeremonyLog, NarrativeBeat };
 
@@ -625,5 +626,119 @@ export function memoryProjectionNode(p: MemoryProjection, id?: string): MemoryPr
     },
     created_at: now,
     updated_at: now,
+  };
+}
+
+// ── the provider: Honcho behind @medicine-wheel/memory ──────────────────────
+
+/**
+ * The Honcho sessions a reach covers: one per ceremony (a ceremony and
+ * everything said in it share a session), and the chronicle sessions of the
+ * episodes it names, where diary entries kept against an episode land.
+ */
+export function sessionsForReach(reach: Pick<Reach, 'ceremonies' | 'episodes'>): string[] {
+  return [
+    ...new Set([
+      ...reach.ceremonies.map((id) => honchoIdFor(id)),
+      ...reach.episodes.flatMap((path) => [honchoIdFor(`chronicle:${path}`), honchoIdFor(path)]),
+    ]),
+  ];
+}
+
+/**
+ * Honcho as a memory provider: every question is confined to the Honcho
+ * sessions of the reach, and every message comes back as the wheel record it
+ * was projected from (`metadata.wheel_id`), or marked `outside_wheel` when it
+ * carries none. A server that cannot confine its reasoning (before 3.0.12) is
+ * asked for search only. jgwill/medicine-wheel#149
+ */
+export function honchoMemoryProvider(client: HonchoClient): MemoryProvider {
+  const name = 'honcho';
+
+  /** Honcho peer ids back to the wheel ids they were projected from. */
+  async function wheelIdsOf(peerIds: string[]): Promise<Record<string, string>> {
+    const ids = [...new Set(peerIds)].filter(Boolean);
+    if (ids.length === 0) return {};
+    try {
+      const peers = await client.peers.list({ filters: { id: { in: ids } }, size: 100 });
+      const out: Record<string, string> = {};
+      for (const p of peers) {
+        const wheelId = p.metadata?.wheel_id;
+        if (typeof wheelId === 'string' && wheelId) out[p.id] = wheelId;
+      }
+      return out;
+    } catch {
+      return {};
+    }
+  }
+
+  async function sourcesOf(messages: HonchoStoredMessage[], reach: Reach): Promise<MemorySource[]> {
+    const ceremonyOf = new Map(reach.ceremonies.map((id) => [honchoIdFor(id), id]));
+    const wheelIds = await wheelIdsOf(messages.map((m) => m.peer_id));
+    return messages.map((m) => {
+      const wheelId = m.metadata?.wheel_id;
+      const outside = typeof wheelId !== 'string' || !wheelId;
+      const kind = m.metadata?.wheel_kind;
+      const ceremony = ceremonyOf.get(m.session_id);
+      return {
+        provider: name,
+        wheel_kind: outside ? 'message' : typeof kind === 'string' && kind ? kind : 'record',
+        wheel_id: outside ? m.id : (wheelId as string),
+        ...(ceremony ? { ceremony_id: ceremony } : {}),
+        speaker: wheelIds[m.peer_id] ?? m.peer_id,
+        excerpt: excerptAround(m.content, []),
+        ...(m.created_at ? { at: m.created_at } : {}),
+        ...(outside ? { outside_wheel: true } : {}),
+      };
+    });
+  }
+
+  const within = (reach: Reach) => ({ session_id: { in: sessionsForReach(reach) } });
+
+  async function search(q: MemoryQuestion, extra: Record<string, unknown> = {}): Promise<ProviderAnswer> {
+    const messages = await client.search(q.query || 'what was said', { limit: q.limit ?? 12, filters: { ...within(q.reach), ...extra } });
+    return { provider: name, mode: 'search', sources: await sourcesOf(messages, q.reach) };
+  }
+
+  return {
+    name,
+    async status() {
+      try {
+        await client.health();
+        return { provider: name, enabled: true, confined: await client.supportsSessionFilters(), detail: { url: client.baseUrl, workspace: client.workspace } };
+      } catch (error) {
+        return { provider: name, enabled: false, detail: { url: client.baseUrl, workspace: client.workspace }, error: error instanceof Error ? error.message : String(error) };
+      }
+    },
+    async ask(q) {
+      const out = await askWithin(client, {
+        query: q.query,
+        sessions: sessionsForReach(q.reach),
+        peer: q.peer,
+        reasoning_level: q.reasoning_level,
+        limit: q.limit,
+      });
+      const sources = await sourcesOf(out.messages, q.reach);
+      if (out.mode === 'dialectic') return { provider: name, mode: 'dialectic', answer: out.answer ?? '', sources };
+      return {
+        provider: name,
+        mode: 'search',
+        sources,
+        ...(out.mode === 'search' ? { note: 'This Honcho cannot keep its reasoning inside the reach (it needs 3.0.12 or later), so it was not asked to reason.' } : {}),
+      };
+    },
+    search: (q) => search(q),
+    async about(q) {
+      const peer = honchoIdFor(q.about);
+      const found = await search({ ...q, query: q.query || 'what they said and wrote' }, { peer_id: peer });
+      if (!(await client.supportsSessionFilters())) {
+        return { ...found, note: 'This Honcho cannot keep its reasoning inside the reach, so only what this person said is returned.' };
+      }
+      const filters = within(q.reach);
+      const answer = q.query.trim()
+        ? await client.peers.chat(peer, q.query, { filters, reasoning_level: q.reasoning_level ?? 'low' })
+        : await client.peers.representation(peer, { filters });
+      return { provider: name, mode: 'dialectic', answer, sources: found.sources };
+    },
   };
 }

@@ -24,6 +24,7 @@ import { inquiryWeaveTools } from "./tools/inquiry-weaves.js";
 import { planPerspectiveTools } from "./tools/plan-perspectives.js";
 import { infrastructureTools } from "./tools/infrastructure.js";
 import { honchoTools } from "./tools/honcho.js";
+import { memoryTools } from "./tools/memory.js";
 
 // Orientation first: list order is scan order, and the routing question
 // belongs before the instruments it routes to.
@@ -45,5 +46,6 @@ export const allTools: Tool[] = [
   ...inquiryWeaveTools,
   ...planPerspectiveTools,
   ...infrastructureTools,
+  ...memoryTools,
   ...honchoTools,
 ];

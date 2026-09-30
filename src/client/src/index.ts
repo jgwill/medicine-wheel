@@ -29,6 +29,7 @@ import type {
   RelationalNode,
 } from '@medicine-wheel/ontology-core';
 import type { DiaryEntryRecord } from '@medicine-wheel/storage-provider';
+import type { AboutInput, AskInput, MemoryAnswer, MemoryProviderStatus, SearchInput } from '@medicine-wheel/memory';
 
 export type { CeremonyLog, CeremonyType, DirectionName, NarrativeBeat, NodeType, RelationalEdge, RelationalNode, DiaryEntryRecord };
 
@@ -231,6 +232,17 @@ export interface MedicineWheelClient {
     create(input: NewDiaryEntry): Promise<DiaryEntryRecord>;
     remove(id: string): Promise<void>;
   };
+  /**
+   * The wheel's memory (0.16.0, jgwill/medicine-wheel#149). The wheel confines
+   * every answer to the ceremonies the scope reaches; who may name which scope
+   * stays with the caller.
+   */
+  memory: {
+    status(): Promise<{ providers: MemoryProviderStatus[]; river?: Record<string, unknown> }>;
+    ask(input: AskInput): Promise<MemoryAnswer>;
+    search(input: SearchInput): Promise<MemoryAnswer>;
+    about(input: AboutInput): Promise<MemoryAnswer>;
+  };
   episodes: {
     /**
      * The episode's registered node and the ceremonies bound to it, read in
@@ -294,7 +306,10 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
   }
   const timeoutMs = opts.timeoutMs ?? 10_000;
 
-  async function call(path: string, init?: RequestInit): Promise<Response> {
+  /** A memory question waits on a provider's reasoning: seconds, sometimes tens of them. */
+  const memoryTimeoutMs = Math.max(timeoutMs, 90_000);
+
+  async function call(path: string, init?: RequestInit, waitMs: number = timeoutMs): Promise<Response> {
     const url = `${base}${path}`;
     const headers: Record<string, string> = { ...(opts.headers ?? {}) };
     if (init?.body !== undefined) headers['Content-Type'] = 'application/json';
@@ -303,7 +318,7 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
         ...init,
         headers: { ...headers, ...((init?.headers as Record<string, string>) ?? {}) },
         cache: 'no-store',
-        signal: AbortSignal.timeout(timeoutMs),
+        signal: AbortSignal.timeout(waitMs),
       } as RequestInit);
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
@@ -477,6 +492,21 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
       async remove(id) {
         const res = await call(`/api/diary/${encodeURIComponent(id)}`, { method: 'DELETE' });
         if (!res.ok && res.status !== 404) await refused(res, 'refused the diary removal');
+      },
+    },
+
+    memory: {
+      async status() {
+        return json(await call('/api/memory'), 'refused the memory status');
+      },
+      async ask(input) {
+        return json(await call('/api/memory/ask', { method: 'POST', body: JSON.stringify(input) }, memoryTimeoutMs), 'refused the memory question');
+      },
+      async search(input) {
+        return json(await call('/api/memory/search', { method: 'POST', body: JSON.stringify(input) }, memoryTimeoutMs), 'refused the memory search');
+      },
+      async about(input) {
+        return json(await call('/api/memory/about', { method: 'POST', body: JSON.stringify(input) }, memoryTimeoutMs), 'refused the memory reading');
       },
     },
 

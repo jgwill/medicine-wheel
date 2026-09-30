@@ -41,6 +41,7 @@
     "directory": "src/client"
   },
   "dependencies": {
+    "@medicine-wheel/memory": "^0.15.9",
     "@medicine-wheel/ontology-core": "^0.15.9",
     "@medicine-wheel/storage-provider": "^0.15.9"
   },

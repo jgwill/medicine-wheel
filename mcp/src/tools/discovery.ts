@@ -141,6 +141,9 @@ export const discoveryTools: Tool[] = [
           enum: ["smudging", "talking_circle", "spirit_feeding", "opening", "closing"],
           description: "Filter by ceremony type (optional)",
         },
+        subject_id: { type: "string", description: "Ceremonies held about this node (a review, a PDE), as REST's ?subject_id" },
+        circle_id: { type: "string", description: "Ceremonies held in this circle, as REST's ?circle_id" },
+        episode_path: { type: "string", description: "Ceremonies bound to this chronicle episode, as REST's ?episode_path" },
         limit: {
           type: "number",
           description: "Maximum ceremonies to return (default: 50)",
@@ -151,7 +154,7 @@ export const discoveryTools: Tool[] = [
     },
     handler: async (args) => {
       try {
-        const { direction, type, limit = 50 } = args;
+        const { direction, type, subject_id, circle_id, episode_path, limit = 50 } = args;
 
         // Filters combine. The if/else-if this replaces picked ONE: asking for
         // `{ direction: "east", type: "closing" }` sent only the direction and
@@ -159,9 +162,19 @@ export const discoveryTools: Tool[] = [
         // `filters` as though it had been applied. Same shadowing that
         // list_relational_nodes had already removed, in the tool beside it.
         const filtering = Boolean(direction || type);
-        const ceremonies = filtering
+        const read = filtering
           ? await store.getCeremoniesFiltered({ direction, type })
           : await store.getAllCeremonies(Number.MAX_SAFE_INTEGER);
+        // The same three filters REST takes, so an agent can see what a memory scope covers (#149, W7).
+        const episodeOf = (c: any): string | undefined => {
+          if (typeof c.episode_path === "string" && c.episode_path) return c.episode_path;
+          try { const p = JSON.parse(c.research_context ?? ""); return p?.episode_path ?? p?.episodePath; } catch { return undefined; }
+        };
+        const ceremonies = read.filter((c: any) =>
+          (!subject_id || c.subject_id === subject_id) &&
+          (!circle_id || c.circle_id === circle_id) &&
+          (!episode_path || episodeOf(c) === episode_path),
+        );
 
         const sorted = ceremonies.slice(0, limit);
 
@@ -172,7 +185,7 @@ export const discoveryTools: Tool[] = [
           // window that looked like one.
           total_available: ceremonies.length,
           truncated: sorted.length < ceremonies.length,
-          filters: { direction, type, limit },
+          filters: { direction, type, subject_id, circle_id, episode_path, limit },
           ceremonies: sorted,
           teaching: "Research is ceremony. Each logged ceremony is a witness to relational practice.",
         };

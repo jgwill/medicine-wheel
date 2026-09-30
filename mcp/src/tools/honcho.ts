@@ -54,6 +54,7 @@ export const honchoTools: Tool[] = [
   {
     name: "honcho_status",
     description:
+      "Kept one release for existing callers: use memory_status, which asks the wheel server and needs only MW_API_URL. " +
       "Is Honcho reachable, and where. Reports the configured URL and workspace and Honcho's /health. " +
       "Honcho is the wheel's memory that reasons: the wheel keeps what was recorded; Honcho keeps what " +
       "it has come to mean about each peer, revised as new beats and ceremonies are projected.",
@@ -71,6 +72,7 @@ export const honchoTools: Tool[] = [
   {
     name: "honcho_project",
     description:
+      "Kept one release for existing callers: use memory_resend, which asks the wheel server and needs only MW_API_URL. " +
       "Project a wheel record into Honcho: a beat becomes one message from its speaker (witnesses seated) " +
       "in the session of its ceremony; a ceremony log becomes one message from the wheel in its own session, " +
       "every participant seated. Peers, session and workspace are created if missing; ids are mapped with " +
@@ -113,6 +115,7 @@ export const honchoTools: Tool[] = [
   {
     name: "honcho_recall",
     description:
+      "Kept one release for existing callers: use memory_about or memory_ask, which asks the wheel server and needs only MW_API_URL. " +
       "What Honcho has come to understand about a peer. Give a wheel node id or name (mapped with honchoIdFor) " +
       "or a Honcho peer id. Without a question: the representation, a fast read. With a question: the " +
       "dialectic answers from accumulated memory — seconds, not milliseconds, so ask when a read will not do. " +
@@ -184,6 +187,7 @@ export const honchoTools: Tool[] = [
   {
     name: "honcho_project_back",
     description:
+      "Kept one release for existing callers: use memory_conclude, which asks the wheel server and needs only MW_API_URL. " +
       "Return a conclusion derived in Honcho to the wheel as a `knowledge` node with metadata.kind " +
       "'memory_projection' — the peer, the source event ids, the status (inferred | confirmed | rejected), " +
       "when and by whom it was derived. The wheel stays inspectable: a derived pattern is never stored as a bare fact.",

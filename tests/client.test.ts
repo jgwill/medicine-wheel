@@ -12,6 +12,29 @@ function fakeFetch(routes: Record<string, (init?: RequestInit) => { status: numb
   }) as typeof fetch;
 }
 
+describe("@medicine-wheel/client memory (#149)", () => {
+  it("asks, searches and reads about a person through /api/memory, and reports a refusal", async () => {
+    const seen: { key: string; body: unknown }[] = [];
+    const answer = { provider: "honcho", mode: "dialectic", answer: "Teal.", sources: [], reach: { scope: {}, ceremonies: ["c1"], episodes: [] } };
+    const wheel = createMedicineWheelClient({
+      baseUrl: "http://wheel",
+      fetch: (async (input: RequestInfo | URL, init?: RequestInit) => {
+        const key = `${(init?.method ?? "GET").toUpperCase()} ${new URL(String(input)).pathname}`;
+        seen.push({ key, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+        if (key === "GET /api/memory") return new Response(JSON.stringify({ providers: [{ provider: "wheel", enabled: true }] }), { status: 200 });
+        if (key === "POST /api/memory/about") return new Response(JSON.stringify({ error: "person is required" }), { status: 400 });
+        return new Response(JSON.stringify(answer), { status: 200 });
+      }) as typeof fetch,
+    });
+    expect(await wheel.memory.ask({ question: "What colour?", scope: { circle_id: "circle:a" } })).toEqual(answer);
+    expect(await wheel.memory.search({ query: "teal", scope: { ceremonies: ["c1"] } })).toEqual(answer);
+    expect((await wheel.memory.status()).providers[0].provider).toBe("wheel");
+    await expect(wheel.memory.about({ person: "", scope: { circle_id: "circle:a" } })).rejects.toMatchObject({ status: 400 });
+    expect(seen.map((s) => s.key)).toEqual(["POST /api/memory/ask", "POST /api/memory/search", "GET /api/memory", "POST /api/memory/about"]);
+    expect(seen[0].body).toEqual({ question: "What colour?", scope: { circle_id: "circle:a" } });
+  });
+});
+
 describe("@medicine-wheel/client", () => {
   it("carries the paging honesty through a ceremony list", async () => {
     const wheel = createMedicineWheelClient({

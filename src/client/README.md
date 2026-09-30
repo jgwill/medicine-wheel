@@ -25,6 +25,22 @@ circlesHeldIn(ep.ceremonies); // [{ circle_id, ceremonies, open, last }, …]
 
 A ceremony gathered around something names that node in `subject_id` (0.15.5): a review's talking circle carries `subject_id: 'review:<uuid>'`, and `wheel.ceremonies.list({ subject_id: 'review:<uuid>' })` finds it from the review. The wheel refuses a `subject_id` whose node does not exist. `wheel.ceremonies.remove(id)` (0.15.6) removes a ceremony nobody entered; the wheel refuses (409) while a closing, a turn or a diary entry holds it.
 
+The wheel's memory (0.16.0) is asked through the wheel, never through its provider:
+
+```ts
+const answer = await wheel.memory.ask({
+  question: 'What is still unresolved?',
+  scope: { ceremonies: ceremoniesThisPersonMayRead },   // or subject_id, circle_id, episode_path, participant
+});
+answer.mode;      // 'dialectic' | 'search' | 'matched' | 'empty'
+answer.sources;   // wheel records: { provider, wheel_kind, wheel_id, ceremony_id, speaker_name, excerpt, at }
+await wheel.memory.search({ query: 'lantern', scope: { circle_id: 'circle:…' } });
+await wheel.memory.about({ person: 'node:human:…', scope: { participant: 'node:human:…' } });
+await wheel.memory.status();
+```
+
+The wheel keeps an answer inside the scope; deciding which scope a reader may name stays with the caller. Memory calls wait up to 90 seconds, since a provider's reasoning takes seconds. Shapes: `@medicine-wheel/memory`.
+
 A consumer that filters ceremonies per reader passes only the visible ones to `circlesHeldIn`, so a circle is never named to someone who cannot read what it held.
 
 No retry: an unreachable wheel throws `MedicineWheelClientError` with status 502; a refusal carries the wheel's status and body. `limit: 'all'` asks for the whole store.
