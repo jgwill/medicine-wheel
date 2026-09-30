@@ -20,6 +20,8 @@ let dataDir: string;
 let tools: Map<string, (args: any) => Promise<any>>;
 type Hit = { method: string; path: string; body?: any };
 let hits: Hit[] = [];
+/** Whether the stubbed Honcho says it confines chat to `filters.session_id` (3.0.12+). */
+let confines = true;
 
 const call = (name: string, args: any = {}) => {
   const handler = tools.get(name);
@@ -35,6 +37,8 @@ function stubHoncho(): void {
     hits.push({ method, path: u.pathname + u.search, body });
     const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { 'content-type': 'application/json' } });
     if (u.pathname === '/health') return json({ status: 'ok' });
+    if (u.pathname === '/openapi.json') return json({ components: { schemas: { DialecticOptions: { properties: confines ? { query: {}, filters: {} } : { query: {} } } } } });
+    if (u.pathname.endsWith('/search')) return json([{ id: 's1', session_id: 'ceremony-1-tc', peer_id: 'node-human-1-gui', content: 'A daily practice is hard to hold.', metadata: { wheel_kind: 'beat', wheel_id: 'beat:1' } }]);
     if (u.pathname.endsWith('/messages')) return json(body.messages.map((m: any, i: number) => ({ id: `m${i}`, ...m })), 201);
     if (u.pathname.endsWith('/representation')) return json({ representation: u.pathname.includes('/ghost/') ? '' : 'sensitive to workflow complexity' });
     if (u.pathname.endsWith('/chat')) return json({ content: 'Keep it small.' });
@@ -136,9 +140,34 @@ describe('configured against a stubbed Honcho', () => {
     expect(empty.representation).toBe('');
     expect(empty.note).toContain('not observed');
     hits = [];
+    const whole = await call('honcho_recall', { peer: 'node:human:1:gui', question: 'what persists?' });
+    expect(whole.answer).toBe('Keep it small.');
+    expect(hits.find(h => h.path.endsWith('/chat'))!.body.filters).toBeUndefined();
+  });
+
+  it('keeps an answer asked within a session inside that session, through filters (#149, F1)', async () => {
+    confines = true;
+    hits = [];
     const ask = await call('honcho_recall', { peer: 'node:human:1:gui', question: 'what persists?', session_id: 'ceremony:1:tc', reasoning_level: 'minimal' });
-    expect(ask.answer).toBe('Keep it small.');
-    expect(hits[0].body).toMatchObject({ query: 'what persists?', session_id: 'ceremony-1-tc', reasoning_level: 'minimal' });
+    expect(ask).toMatchObject({ status: 'ok', session_id: 'ceremony-1-tc', answer: 'Keep it small.' });
+    expect(ask.sources).toEqual([{ wheel_kind: 'beat', wheel_id: 'beat:1', peer: 'node-human-1-gui', excerpt: 'A daily practice is hard to hold.' }]);
+    const chat = hits.find(h => h.path.endsWith('/chat'))!;
+    expect(chat.body).toMatchObject({ query: 'what persists?', reasoning_level: 'minimal', filters: { session_id: { in: ['ceremony-1-tc'] } } });
+    expect(chat.body.session_id).toBeUndefined();
+    const rep = await call('honcho_recall', { peer: 'node:human:1:gui', session_id: 'ceremony:1:tc' });
+    expect(rep.status).toBe('ok');
+    expect(hits.filter(h => h.path.endsWith('/representation')).pop()!.body).toEqual({ filters: { session_id: { in: ['ceremony-1-tc'] } } });
+  });
+
+  it('refuses a session-bound question on a Honcho that cannot confine it, and asks nothing', async () => {
+    // The tool builds a fresh client per call, which reads /openapi.json again, so flipping the stub is enough.
+    confines = false;
+    hits = [];
+    const out = await call('honcho_recall', { peer: 'node:human:1:gui', question: 'what persists?', session_id: 'ceremony:1:tc' });
+    expect(out.status).toBe('refused');
+    expect(out.message).toContain('3.0.12');
+    expect(hits.some(h => h.path.endsWith('/chat') || h.path.endsWith('/representation'))).toBe(false);
+    confines = true;
   });
 
   it('projects a conclusion back as a knowledge node the wheel can read, kind memory_projection', async () => {

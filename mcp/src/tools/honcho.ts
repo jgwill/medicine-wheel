@@ -15,6 +15,7 @@
 import type { Tool } from "../types.js";
 import { store } from "../store.js";
 import {
+  askWithin,
   createHonchoClient,
   honchoFromEnv,
   honchoIdFor,
@@ -114,7 +115,9 @@ export const honchoTools: Tool[] = [
     description:
       "What Honcho has come to understand about a peer. Give a wheel node id or name (mapped with honchoIdFor) " +
       "or a Honcho peer id. Without a question: the representation, a fast read. With a question: the " +
-      "dialectic answers from accumulated memory — seconds, not milliseconds, so ask when a read will not do.",
+      "dialectic answers from accumulated memory — seconds, not milliseconds, so ask when a read will not do. " +
+      "With session_id the answer is kept inside that one session: a Honcho that cannot confine it (before 3.0.12) " +
+      "is not asked, and the tool says so, because it would answer from every circle.",
     inputSchema: {
       type: "object",
       properties: {
@@ -131,11 +134,42 @@ export const honchoTools: Tool[] = [
       const peer = honchoIdFor(String(args.peer));
       const session_id = args.session_id ? honchoIdFor(String(args.session_id)) : undefined;
       try {
+        // A session is a boundary, not a hint. Honcho keeps an answer inside it
+        // only through `filters`; `session_id` alone let the dialectic answer from
+        // other circles (jgwill/medicine-wheel#149, F1).
+        if (session_id) {
+          if (!(await c.supportsSessionFilters())) {
+            return {
+              status: "refused",
+              peer,
+              session_id,
+              message: "This Honcho cannot keep an answer inside one session (it needs 3.0.12 or later), and asked anyway it would answer from every circle. Ask without session_id for the peer as a whole, or upgrade Honcho.",
+            };
+          }
+          if (args.question) {
+            const out = await askWithin(c, { query: String(args.question), sessions: [session_id], peer, reasoning_level: args.reasoning_level });
+            return {
+              status: "ok",
+              peer,
+              session_id,
+              question: args.question,
+              answer: out.answer ?? "",
+              sources: out.messages.map((m) => ({
+                wheel_kind: m.metadata?.wheel_kind,
+                wheel_id: m.metadata?.wheel_id,
+                peer: m.peer_id,
+                excerpt: m.content.slice(0, 280),
+              })),
+            };
+          }
+          const representation = await c.peers.representation(peer, { filters: { session_id: { in: [session_id] } } });
+          return { status: "ok", peer, session_id, representation };
+        }
         if (args.question) {
-          const answer = await c.peers.chat(peer, String(args.question), { session_id, reasoning_level: args.reasoning_level });
+          const answer = await c.peers.chat(peer, String(args.question), { reasoning_level: args.reasoning_level });
           return { status: "ok", peer, question: args.question, answer };
         }
-        const representation = await c.peers.representation(peer, { session_id });
+        const representation = await c.peers.representation(peer);
         return {
           status: "ok",
           peer,
