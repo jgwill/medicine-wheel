@@ -47,6 +47,8 @@ interface StoredEdge {
   ceremony_honored: boolean;
   ceremony_id?: string;
   obligations: string[];
+  /** Why the two are related, in the words of whoever wove the relation. */
+  description?: string;
   /** Annotation carried by the relation itself — e.g. which port a `binds-port` claims. */
   metadata?: Record<string, unknown>;
   created_at: string;

@@ -107,6 +107,8 @@ export interface NewEdge {
   strength?: number;
   ceremony_honored?: boolean;
   obligations?: string[];
+  /** Why the two are related, in the words of whoever weaves the relation. */
+  description?: string;
 }
 
 export interface ListCeremoniesOptions {

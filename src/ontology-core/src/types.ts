@@ -59,6 +59,8 @@ export interface RelationalEdge {
   strength: number;
   ceremony_honored: boolean;
   obligations: string[];
+  /** Why the two are related, in the words of whoever wove the relation. */
+  description?: string;
   created_at: string;
 }
 

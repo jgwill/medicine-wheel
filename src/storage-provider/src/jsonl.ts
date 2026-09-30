@@ -58,6 +58,7 @@ interface StoredEdge {
   ceremony_id?: string;
   last_ceremony?: string;
   obligations?: string[];
+  description?: string;
   created_at: string;
 }
 
@@ -259,6 +260,7 @@ export class JsonlProvider implements StorageProvider {
           ? { ceremony_honored: patch.ceremony_honored }
           : {}),
         ...(patch.obligations !== undefined ? { obligations: patch.obligations } : {}),
+        ...(patch.description !== undefined ? { description: patch.description } : {}),
       };
 
       edges[index] = next;
@@ -493,6 +495,7 @@ export class JsonlProvider implements StorageProvider {
       ceremony_honored: Boolean(edge.ceremony_honored),
       last_ceremony: edge.last_ceremony ?? edge.ceremony_id,
       obligations: Array.isArray(edge.obligations) ? edge.obligations : [],
+      ...(typeof edge.description === 'string' && edge.description ? { description: edge.description } : {}),
       created_at: edge.created_at,
     };
   }

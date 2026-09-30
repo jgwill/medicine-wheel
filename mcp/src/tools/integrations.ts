@@ -172,12 +172,16 @@ export const integrationTools: Tool[] = [
           items: { type: "string" },
           description: "Relational obligations for this connection",
         },
+        description: {
+          type: "string",
+          description: "Why the two are related, in your words — what a person reads to understand this relation",
+        },
       },
       required: ["from_node_id", "to_node_id", "relationship_type"],
     },
     handler: async (args) => {
       try {
-        const { from_node_id, to_node_id, relationship_type, strength = 0.5, obligations = [] } = args;
+        const { from_node_id, to_node_id, relationship_type, strength = 0.5, obligations = [], description } = args;
 
         const edge = {
           from_id: from_node_id,
@@ -186,6 +190,7 @@ export const integrationTools: Tool[] = [
           strength,
           ceremony_honored: false,
           obligations,
+          ...(typeof description === "string" && description.trim() ? { description: description.trim() } : {}),
           created_at: new Date().toISOString(),
         };
 

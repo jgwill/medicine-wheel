@@ -188,6 +188,30 @@ describe("updateEdge", () => {
   });
 });
 
+describe("edge description (jgwill/medicine-wheel#150)", () => {
+  it("keeps the words a relation was woven with, through create and read", async () => {
+    await provider.createEdge(edge({ description: "Sarah carries the teachings the youth circle asked for" }));
+
+    expect((await provider.getEdge("elder-1", "youth-1"))?.description).toBe(
+      "Sarah carries the teachings the youth circle asked for",
+    );
+    expect((await provider.getAllEdges())[0].description).toBe(
+      "Sarah carries the teachings the youth circle asked for",
+    );
+  });
+
+  it("writes a description onto a relation that had none, and keeps the rest", async () => {
+    await provider.createEdge(edge());
+    expect((await provider.getEdge("elder-1", "youth-1"))?.description).toBeUndefined();
+
+    const updated = await provider.updateEdge("elder-1", "youth-1", { description: "the youth circle asked" });
+
+    expect(updated.description).toBe("the youth circle asked");
+    expect(updated.relationship_type).toBe("mentorship");
+    expect((await provider.getEdge("elder-1", "youth-1"))?.description).toBe("the youth circle asked");
+  });
+});
+
 describe("deleteEdge", () => {
   it("removes exactly the identified relation", async () => {
     await provider.createEdge(edge());

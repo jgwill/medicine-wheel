@@ -17,6 +17,7 @@ const EdgeCreateSchema = z.object({
   strength: z.number().min(0).max(1).optional(),
   ceremony_honored: z.boolean().optional(),
   obligations: z.array(z.string()).optional(),
+  description: z.string().trim().max(2000).optional(),
 });
 
 const EdgePatchSchema = z
@@ -25,11 +26,12 @@ const EdgePatchSchema = z
     strength: z.number().min(0).max(1).optional(),
     ceremony_honored: z.boolean().optional(),
     obligations: z.array(z.string()).optional(),
+    description: z.string().trim().max(2000).optional(),
   })
   .strict()
   .refine((patch) => Object.keys(patch).length > 0, {
     message:
-      "Provide at least one field to change: relationship_type, strength, ceremony_honored, or obligations.",
+      "Provide at least one field to change: relationship_type, strength, ceremony_honored, obligations, or description.",
   });
 
 /**
@@ -167,6 +169,7 @@ export async function POST(request: Request) {
       strength: parsed.data.strength ?? 0.5,
       ceremony_honored: parsed.data.ceremony_honored ?? false,
       obligations: parsed.data.obligations ?? [],
+      ...(parsed.data.description ? { description: parsed.data.description } : {}),
       created_at: new Date().toISOString(),
     };
 

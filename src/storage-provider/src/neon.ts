@@ -170,15 +170,17 @@ export class NeonProvider implements StorageProvider {
 
   async createEdge(edge: RelationalEdge): Promise<void> {
     await this.db`
-      INSERT INTO edges (from_id, to_id, relationship_type, strength, ceremony_honored, last_ceremony, obligations, created_at)
+      INSERT INTO edges (from_id, to_id, relationship_type, strength, ceremony_honored, last_ceremony, obligations, description, created_at)
       VALUES (${edge.from_id}, ${edge.to_id}, ${edge.relationship_type}, ${edge.strength},
-              ${edge.ceremony_honored}, ${edge.last_ceremony || null}, ${JSON.stringify(edge.obligations)}, ${edge.created_at})
+              ${edge.ceremony_honored}, ${edge.last_ceremony || null}, ${JSON.stringify(edge.obligations)},
+              ${edge.description || null}, ${edge.created_at})
       ON CONFLICT (from_id, to_id) DO UPDATE SET
         relationship_type = EXCLUDED.relationship_type,
         strength = EXCLUDED.strength,
         ceremony_honored = EXCLUDED.ceremony_honored,
         last_ceremony = EXCLUDED.last_ceremony,
-        obligations = EXCLUDED.obligations
+        obligations = EXCLUDED.obligations,
+        description = EXCLUDED.description
     `;
   }
 
@@ -230,6 +232,7 @@ export class NeonProvider implements StorageProvider {
         ? { ceremony_honored: patch.ceremony_honored }
         : {}),
       ...(patch.obligations !== undefined ? { obligations: patch.obligations } : {}),
+      ...(patch.description !== undefined ? { description: patch.description } : {}),
     };
 
     await this.db`
@@ -237,7 +240,8 @@ export class NeonProvider implements StorageProvider {
         relationship_type = ${next.relationship_type},
         strength = ${next.strength},
         ceremony_honored = ${next.ceremony_honored},
-        obligations = ${JSON.stringify(next.obligations)}
+        obligations = ${JSON.stringify(next.obligations)},
+        description = ${next.description || null}
       WHERE from_id = ${fromId} AND to_id = ${toId}
     `;
 
@@ -261,6 +265,7 @@ export class NeonProvider implements StorageProvider {
       ceremony_honored: row.ceremony_honored as boolean,
       last_ceremony: (row.last_ceremony as string) || undefined,
       obligations: parseJsonValue<string[]>(row.obligations, []),
+      ...(typeof row.description === 'string' && row.description ? { description: row.description } : {}),
       created_at: toIsoString(row.created_at),
     };
   }

@@ -29,6 +29,8 @@ export interface RelationalEdge {
   ceremony_honored: boolean;
   last_ceremony?: string;
   obligations: string[];
+  /** Why the two are related, in the words of whoever wove the relation. */
+  description?: string;
   created_at: string;
 }
 
@@ -159,6 +161,7 @@ export async function createEdge(edge: RelationalEdge): Promise<void> {
     ceremony_honored: edge.ceremony_honored ? '1' : '0',
     last_ceremony: edge.last_ceremony || '',
     obligations: JSON.stringify(edge.obligations),
+    description: edge.description || '',
     created_at: edge.created_at,
   });
   await redis.sAdd(`edges:from:${edge.from_id}`, edge.to_id);
@@ -174,6 +177,7 @@ function parseEdgeHash(data: Record<string, string>): RelationalEdge {
     ceremony_honored: data.ceremony_honored === '1',
     last_ceremony: data.last_ceremony || undefined,
     obligations: JSON.parse(data.obligations || '[]'),
+    ...(data.description ? { description: data.description } : {}),
     created_at: data.created_at,
   };
 }

@@ -42,6 +42,7 @@ export interface EdgePatch {
   strength?: number;
   ceremony_honored?: boolean;
   obligations?: string[];
+  description?: string;
 }
 
 // ── Typed Errors ──

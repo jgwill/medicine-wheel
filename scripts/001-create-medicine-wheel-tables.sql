@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS edges (
   ceremony_honored BOOLEAN DEFAULT FALSE,
   last_ceremony TEXT,
   obligations JSONB DEFAULT '[]',
+  description TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   PRIMARY KEY (from_id, to_id)
 );
