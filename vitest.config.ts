@@ -27,6 +27,11 @@ export default defineConfig({
     // A shell that exports it for daily work turned `npx vitest run` into writes
     // on the live chronicle wheel: six test ceremonies on 2026-09-24 (#146).
     // Tests use the local JSONL store, whatever the shell says.
-    env: { MW_API_URL: '' },
+    //
+    // The same holds for Honcho: with HONCHO_URL exported, every route test that
+    // stores a ceremony or a beat projected it into the live workspace through the
+    // river. Five test ceremonies landed there on 2026-09-30 (#149) and were
+    // removed. Tests that need Honcho set it themselves against a stub.
+    env: { MW_API_URL: '', HONCHO_URL: '', HONCHO_WORKSPACE_ID: '', HONCHO_API_KEY: '' },
   },
 });
