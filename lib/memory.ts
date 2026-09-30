@@ -20,6 +20,7 @@ import {
 } from '@medicine-wheel/memory';
 import { WHEEL_PEER, createHonchoClient, honchoFromEnv, honchoMemoryProvider } from '@medicine-wheel/honcho';
 import { createProvider } from '@medicine-wheel/storage-provider';
+import { speakerKindOf } from '@medicine-wheel/community-identity';
 import { getAllBeats } from '@/lib/store';
 import { ceremonyEpisodePath } from '@/lib/ceremony-response';
 
@@ -112,6 +113,22 @@ export function wheelForMemory(): MemoryWheel {
           }
           const node = await store.getNode(id).catch(() => null);
           if (node?.name) out[id] = node.name;
+        }),
+      );
+      return out;
+    },
+
+    async kinds(ids) {
+      const store = await createProvider();
+      const out: Record<string, 'person' | 'agent' | 'wheel'> = {};
+      await Promise.all(
+        ids.map(async (id) => {
+          if (id === WHEEL_PEER) {
+            out[id] = 'wheel';
+            return;
+          }
+          const kind = speakerKindOf(await store.getNode(id).catch(() => null));
+          if (kind) out[id] = kind;
         }),
       );
       return out;

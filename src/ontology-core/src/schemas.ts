@@ -15,7 +15,7 @@ import { KINSHIP_EDGE_TYPES } from './kinship';
 export const DirectionNameSchema = z.enum(['east', 'south', 'west', 'north']);
 
 export const NodeTypeSchema = z.enum([
-  'human', 'land', 'spirit', 'ancestor', 'future', 'knowledge', 'circle',
+  'human', 'land', 'spirit', 'ancestor', 'future', 'knowledge', 'circle', 'agent',
 ]);
 
 export const CeremonyTypeSchema = z.enum([

@@ -18,12 +18,45 @@ import {
   publicCredential,
   roleGrant,
   rolesAtOrAbove,
+  speakerKindOf,
   TOKEN_PREFIX,
 } from "../src/community-identity/src/index";
+import { NodeTypeSchema, NODE_TYPES } from "../src/ontology-core/src/index";
 
 let tempDir: string;
 beforeEach(() => { tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "mw-identity-")); });
 afterEach(() => { fs.rmSync(tempDir, { recursive: true, force: true }); });
+
+describe("a seat held by an agent (0.17.0, #152)", () => {
+  it("the ontology holds agents as their own type", () => {
+    expect(NodeTypeSchema.parse("agent")).toBe("agent");
+    expect(NODE_TYPES).toContain("agent");
+  });
+
+  it("an agent's seat is an agent node; a person's is human; both read back as seat-holders", () => {
+    const mia = personNode({ name: "Mia", role: "ceremony_facilitator", agent: true });
+    expect(mia.type).toBe("agent");
+    expect(mia.id).toMatch(/^node:agent:\d+:[a-z0-9]+$/);
+    expect(personFromNode(mia)).toMatchObject({ name: "Mia", role: "ceremony_facilitator", being: "agent" });
+    const guillaume = personNode({ name: "Guillaume", role: "admin" });
+    expect(guillaume.type).toBe("human");
+    expect(personFromNode(guillaume)?.being).toBe("human");
+  });
+
+  it("a node re-typed to agent keeps its id and is still the same seat", () => {
+    const before = personNode({ name: "Miette", role: "participant" });
+    const after = { ...before, type: "agent" as const };
+    expect(personFromNode(after)).toMatchObject({ id: before.id, name: "Miette", being: "agent" });
+  });
+
+  it("says whose words they are: an agent, a person, or an AI role on a human node recorded before the revision", () => {
+    expect(speakerKindOf(personNode({ name: "Mia", role: "ceremony_facilitator", agent: true }))).toBe("agent");
+    expect(speakerKindOf(personNode({ name: "Guillaume", role: "admin" }))).toBe("person");
+    expect(speakerKindOf(personNode({ name: "Ava", role: "companion_ai" }))).toBe("agent");
+    expect(speakerKindOf({ id: "k", name: "k", type: "knowledge", metadata: {}, created_at: "", updated_at: "" })).toBeUndefined();
+    expect(speakerKindOf(null)).toBeUndefined();
+  });
+});
 
 describe("roles", () => {
   it("copies STPB's permission map and hierarchy", () => {

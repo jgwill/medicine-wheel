@@ -58,6 +58,9 @@ export interface Reach {
  */
 export type MemoryMode = 'dialectic' | 'search' | 'matched' | 'empty';
 
+/** Whose words a source holds. */
+export type SpeakerKind = 'person' | 'agent' | 'wheel';
+
 /** One thing an answer rests on. */
 export interface MemorySource {
   /** Who produced this source: `wheel` for the records match, or a provider's name. */
@@ -72,6 +75,12 @@ export interface MemorySource {
   speaker?: string;
   /** The speaker's name, resolved by the wheel. */
   speaker_name?: string;
+  /**
+   * Whose words these are: `person` (a human), `agent` (software holding a seat),
+   * or `wheel` (the wheel's own record of a ceremony). Resolved by the wheel from
+   * the speaker's node (jgwill/medicine-wheel#152). Absent when unknown.
+   */
+  speaker_kind?: SpeakerKind;
   /** The words, shortened around what matched. Wheel person ids are replaced with names. */
   excerpt: string;
   /** When it was recorded. */
@@ -279,6 +288,8 @@ export interface MemoryWheel {
   records(reach: Reach): Promise<MemoryRecord[]>;
   /** Names for wheel ids (people, the wheel itself). Unknown ids are left out. */
   names(ids: string[]): Promise<Record<string, string>>;
+  /** Whose words each speaker id stands for. Unknown ids are left out. Optional: without it no source carries `speaker_kind`. */
+  kinds?(ids: string[]): Promise<Record<string, SpeakerKind>>;
 }
 
 export interface AskInput {
@@ -303,8 +314,8 @@ export interface AboutInput {
   limit?: number;
 }
 
-/** Wheel person ids as they appear in projected text, e.g. `node:human:1789710466321:95nnhl`. */
-const PERSON_ID = /node:human:[0-9]+:[a-z0-9]+/g;
+/** Seat-holder ids as they appear in projected text, e.g. `node:human:1789710466321:95nnhl`, `node:agent:…`. */
+const PERSON_ID = /node:(?:human|agent):[0-9]+:[a-z0-9]+/g;
 
 export interface Memory {
   reach(scope: MemoryScope): Promise<Reach>;
@@ -342,7 +353,11 @@ export function createMemory(opts: { wheel: MemoryWheel; providers?: MemoryProvi
     }
     for (const m of answer.answer?.match(PERSON_ID) ?? []) ids.add(m);
     if (ids.size === 0) return answer;
-    const names = await wheel.names([...ids]).catch(() => ({} as Record<string, string>));
+    const speakers = [...new Set(answer.sources.map((s) => s.speaker).filter((s): s is string => Boolean(s)))];
+    const [names, kinds] = await Promise.all([
+      wheel.names([...ids]).catch(() => ({} as Record<string, string>)),
+      wheel.kinds && speakers.length ? wheel.kinds(speakers).catch(() => ({} as Record<string, SpeakerKind>)) : Promise.resolve({} as Record<string, SpeakerKind>),
+    ]);
     const swap = (text: string) => text.replace(PERSON_ID, (id) => names[id] ?? id);
     return {
       ...answer,
@@ -351,6 +366,7 @@ export function createMemory(opts: { wheel: MemoryWheel; providers?: MemoryProvi
         ...s,
         excerpt: swap(s.excerpt),
         ...(s.speaker && names[s.speaker] ? { speaker_name: names[s.speaker] } : {}),
+        ...(s.speaker && kinds[s.speaker] ? { speaker_kind: kinds[s.speaker] } : {}),
       })),
     };
   }

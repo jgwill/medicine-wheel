@@ -39,7 +39,7 @@ export const integrationTools: Tool[] = [
         },
         type: {
           type: "string",
-          enum: ["human", "land", "spirit", "ancestor", "future", "knowledge"],
+          enum: ["human", "land", "spirit", "ancestor", "future", "knowledge", "circle", "agent"],
           description: "Type of relational node",
         },
         description: {

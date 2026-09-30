@@ -37,7 +37,13 @@ export type NodeType =
   | 'future'
   | 'knowledge'
   /** A circle of people who hold ceremony together (a talking circle, a story circle). Added 0.14.0. */
-  | 'circle';
+  | 'circle'
+  /**
+   * A being that holds a seat through software and speaks in ceremony, accountable
+   * to the people it serves: Mia, Miette, a companion. Not a person and not an
+   * object. Added 0.17.0 by ontology revision (jgwill/medicine-wheel#152).
+   */
+  | 'agent';
 
 export interface RelationalNode {
   id: string;

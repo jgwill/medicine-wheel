@@ -19,7 +19,7 @@ export const discoveryTools: Tool[] = [
       properties: {
         type: {
           type: "string",
-          enum: ["human", "land", "spirit", "ancestor", "future", "knowledge"],
+          enum: ["human", "land", "spirit", "ancestor", "future", "knowledge", "circle", "agent"],
           description: "Filter by node type (optional)",
         },
         direction: {
@@ -414,7 +414,7 @@ export const discoveryTools: Tool[] = [
         },
         type: {
           type: "string",
-          enum: ["human", "land", "spirit", "ancestor", "future", "knowledge"],
+          enum: ["human", "land", "spirit", "ancestor", "future", "knowledge", "circle", "agent"],
           description: "Filter by node type (optional)",
         },
         direction: {

@@ -96,6 +96,10 @@ function wheel(): MemoryWheel & { asked: string[] } {
       return records.filter((r) => r.ceremony_id && reach.ceremonies.includes(r.ceremony_id));
     },
     names: async (ids) => Object.fromEntries(ids.flatMap((id) => (id === "node:human:1:mia" ? [[id, "Mia"]] : id === "node:human:2:gui" ? [[id, "Guillaume"]] : []))),
+    kinds: async (ids) => {
+      const known: Record<string, "person" | "agent" | "wheel"> = { "node:human:1:mia": "agent", "node:human:2:gui": "person", "medicine-wheel": "wheel" };
+      return Object.fromEntries(ids.filter((id) => known[id]).map((id) => [id, known[id]]));
+    },
   };
 }
 
@@ -126,6 +130,15 @@ describe("createMemory (#149 W1, W5, W12)", () => {
     expect(out.mode).toBe("dialectic");
     expect(out.reach.ceremonies.sort()).toEqual(["c-circle-a", "c-circle-a-close", "c-circle-about-pde"]);
     expect(out.sources.map((s) => [s.provider, s.wheel_id])).toEqual([["stub", "beat:1"], ["wheel", "diary:1"]]);
+  });
+
+  it("says whose words each source holds, from the wheel (#152)", async () => {
+    const out = await createMemory({ wheel: wheel() }).search({ query: "lantern colour participants", scope: { circle_id: "circle:a" } });
+    const kinds = Object.fromEntries(out.sources.map((s) => [s.wheel_id, s.speaker_kind]));
+    expect(kinds).toEqual({ "diary:1": "person", "beat:1": "agent", "c-circle-a": "wheel" });
+    const { kinds: _drop, ...without } = wheel();
+    const bare = await createMemory({ wheel: without as MemoryWheel }).search({ query: "lantern", scope: { circle_id: "circle:a" } });
+    expect(bare.sources.every((s) => s.speaker_kind === undefined)).toBe(true);
   });
 
   it("names people in the answer, the excerpts and the speakers", async () => {

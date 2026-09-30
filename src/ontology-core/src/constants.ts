@@ -76,6 +76,7 @@ export const NODE_TYPE_COLORS: Record<NodeType, string> = {
   future: '#5a9ec6',
   knowledge: '#d4b844',
   circle: '#c65a8e',
+  agent: '#6b7a8f',
 };
 
 // ── Ceremony Icons ──────────────────────────────────────────────────────────
@@ -97,7 +98,7 @@ export const DIRECTION_MAP: Record<DirectionName, Direction> = Object.fromEntrie
 export const DIRECTION_NAMES: readonly DirectionName[] = ['east', 'south', 'west', 'north'] as const;
 
 export const NODE_TYPES: readonly NodeType[] = [
-  'human', 'land', 'spirit', 'ancestor', 'future', 'knowledge', 'circle'
+  'human', 'land', 'spirit', 'ancestor', 'future', 'knowledge', 'circle', 'agent'
 ] as const;
 
 export const CEREMONY_TYPES: readonly CeremonyType[] = [

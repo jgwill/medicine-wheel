@@ -109,7 +109,7 @@ export async function getNodesByDirection(direction: DirectionName): Promise<Rel
 
 export async function getAllNodes(limit = 100): Promise<RelationalNode[]> {
   const nodes: RelationalNode[] = [];
-  const types: NodeType[] = ['human', 'land', 'spirit', 'ancestor', 'future', 'knowledge'];
+  const types: NodeType[] = ['human', 'land', 'spirit', 'ancestor', 'future', 'knowledge', 'circle', 'agent'];
   for (const type of types) {
     const typeNodes = await getNodesByType(type);
     nodes.push(...typeNodes);

@@ -1,5 +1,9 @@
 /**
- * A person is a node on the wheel of type `human` whose metadata says so.
+ * A person is a seat-holder: a node on the wheel of type `human`, or of type
+ * `agent` when software holds the seat (ontology revision 0.17.0,
+ * jgwill/medicine-wheel#152), whose metadata says so. "Person" names the seat,
+ * not what holds it: `being` says that, and the role says only what the seat
+ * may do.
  *
  * The wheel had `human` nodes long before this package (participants in
  * ceremonies were written as `node:human:<ts>:<rand>`); what it could not do
@@ -17,11 +21,19 @@ export const PERSON_KIND = 'person' as const;
 
 export type PersonStatus = 'active' | 'deactivated';
 
+/** What holds a seat: a human being, or an agent (software speaking in ceremony). */
+export type Being = 'human' | 'agent';
+
+/** Roles that only an AI account holds. An agent recorded as `human` before 0.17.0 is still recognised by them. */
+export const AI_ROLES: readonly Role[] = ['companion_ai', 'integration_ai'];
+
 export interface Person {
   /** The node id on the wheel. */
   id: string;
   name: string;
   role: Role;
+  /** What holds the seat, read from the node type. */
+  being: Being;
   /** A deactivated person keeps their node and history but cannot sign in. Default `active`. */
   status: PersonStatus;
   /** May this person issue their own tokens? An admin turns it on (STPB's `api_access_enabled`). Default off. */
@@ -39,20 +51,22 @@ export const NewPersonSchema = z.object({
   email: z.string().trim().email().optional(),
   direction: z.enum(['east', 'south', 'west', 'north']).optional(),
   api_access: z.boolean().optional(),
+  /** Software holds this seat: the node is created as an `agent`. */
+  agent: z.boolean().optional(),
 });
 
 export type NewPerson = z.infer<typeof NewPersonSchema>;
 
-export function personNodeId(): string {
-  return `node:human:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+export function personNodeId(being: Being = 'human'): string {
+  return `node:${being}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
 }
 
 /** The node to create on the wheel for a new person. */
 export function personNode(input: NewPerson, now = new Date().toISOString()): RelationalNode {
   return {
-    id: input.id ?? personNodeId(),
+    id: input.id ?? personNodeId(input.agent ? 'agent' : 'human'),
     name: input.name,
-    type: 'human',
+    type: input.agent ? 'agent' : 'human',
     ...(input.direction ? { direction: input.direction } : {}),
     metadata: {
       kind: PERSON_KIND,
@@ -67,13 +81,14 @@ export function personNode(input: NewPerson, now = new Date().toISOString()): Re
 
 /** Read a person back from a node; null when the node is a human that this package does not govern. */
 export function personFromNode(node: RelationalNode | null | undefined): Person | null {
-  if (!node || node.type !== 'human') return null;
+  if (!node || (node.type !== 'human' && node.type !== 'agent')) return null;
   const meta = node.metadata ?? {};
   if (meta.kind !== PERSON_KIND || !isRole(meta.role)) return null;
   return {
     id: node.id,
     name: node.name,
     role: meta.role,
+    being: node.type === 'agent' ? 'agent' : 'human',
     status: meta.status === 'deactivated' ? 'deactivated' : 'active',
     api_access: meta.api_access === true,
     ...(typeof meta.email === 'string' ? { email: meta.email } : {}),
@@ -102,4 +117,17 @@ export function reactivatePatch(current: Record<string, unknown> = {}): Record<s
 /** The metadata patch that grants or withdraws API access (the right to issue one's own tokens). */
 export function apiAccessPatch(enabled: boolean, current: Record<string, unknown> = {}): Record<string, unknown> {
   return { ...current, api_access: enabled };
+}
+
+/**
+ * Whose words these are, from the node that spoke them: `agent` for an agent
+ * node, or for a `human` node holding an AI role (recorded before 0.17.0);
+ * `person` for any other `human` node; undefined for anything else.
+ */
+export function speakerKindOf(node: RelationalNode | null | undefined): 'person' | 'agent' | undefined {
+  if (!node) return undefined;
+  if (node.type === 'agent') return 'agent';
+  if (node.type !== 'human') return undefined;
+  const role = node.metadata?.role;
+  return typeof role === 'string' && (AI_ROLES as readonly string[]).includes(role) ? 'agent' : 'person';
 }

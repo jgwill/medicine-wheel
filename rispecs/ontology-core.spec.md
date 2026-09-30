@@ -58,7 +58,9 @@ type NodeType =
   | 'spirit'
   | 'ancestor'
   | 'future'
-  | 'knowledge';
+  | 'knowledge'
+  | 'circle'   // revision of 2026-09-18 (0.14.0)
+  | 'agent';   // revision of 2026-09-30 (0.17.0), jgwill/medicine-wheel#152
 
 interface RelationalNode {
   id: string;
@@ -71,7 +73,12 @@ interface RelationalNode {
 }
 ```
 
-The six-value `NodeType` union is intentionally closed. New application domains normally ride these nodes through a typed `metadata.kind` discriminator rather than widening the union.
+The `NodeType` union is intentionally closed. New application domains normally ride these nodes through a typed `metadata.kind` discriminator rather than widening the union. It has been widened twice, each time by an explicit revision naming a being no existing type could hold without distorting it.
+
+### Revisions
+
+- **`circle` (2026-09-18, 0.14.0).** A circle of people who hold ceremony together. It is a relation between people rather than one of them, and it holds membership edges and ceremonies.
+- **`agent` (2026-09-30, 0.17.0, jgwill/medicine-wheel#152).** A being that holds a seat through software and speaks in ceremony, accountable to the people it serves (Mia, Miette, a companion). Before this revision an agent could hold a seat only as a `human` node, so the wheel recorded every seat-holder as a human, and nothing downstream could tell a person's word from an agent's. No existing type could hold an agent: `knowledge` would make a seat-holder an object, and `spirit`, `ancestor` and `future` name other relations. Guillaume, 2026-09-30: "just Guillaume on the wheel is human". A seat-holder (`metadata.kind: "person"` with a role, `@medicine-wheel/community-identity`) is a `human` or an `agent` node. The role says what the seat may do, never what holds it. Ids minted before the revision keep their `node:human:` prefix, since ids are never rewritten.
 
 ---
 
@@ -387,7 +394,7 @@ Medicine Wheel domain namespaces include `mw:`, `cer:`, `ocap:`, `rel:`, `ids:`,
 
 ## Quality Criteria
 
-- The six-value `NodeType` union remains the foundational node ontology unless an explicit ontology revision changes it.
+- The `NodeType` union (eight values since the `agent` revision) remains the foundational node ontology unless an explicit ontology revision changes it.
 - New domain kinds prefer additive discriminators and typed bindings over casual union expansion.
 - `Relation` preserves obligations, OCAP governance, accountability, and optional authorization context.
 - Governed kinship names coexist with the backward-compatible free-string relationship field.

@@ -93,6 +93,7 @@
   "dependencies": {
     "@medicine-wheel/ceremonial-diary": "^0.16.1",
     "@medicine-wheel/ceremony-protocol": "^0.16.1",
+    "@medicine-wheel/community-identity": "^0.16.1",
     "@medicine-wheel/community-review": "^0.16.1",
     "@medicine-wheel/consent-lifecycle": "^0.16.1",
     "@medicine-wheel/creative-orientation": "^0.16.1",
@@ -102,9 +103,9 @@
     "@medicine-wheel/github-ceremony": "^0.16.1",
     "@medicine-wheel/graph-viz": "^0.16.1",
     "@medicine-wheel/honcho": "^0.16.1",
-    "@medicine-wheel/memory": "^0.16.1",
     "@medicine-wheel/importance-unit": "^0.16.1",
     "@medicine-wheel/mcp": "^4.16.1",
+    "@medicine-wheel/memory": "^0.16.1",
     "@medicine-wheel/narrative-cluster": "^0.16.1",
     "@medicine-wheel/narrative-engine": "^0.16.1",
     "@medicine-wheel/ontology-core": "^0.16.1",

@@ -122,6 +122,18 @@ function localWheel(): MemoryWheel {
       }
       return out;
     },
+    async kinds(ids) {
+      // The same reading as community-identity's speakerKindOf (#152).
+      const out: Record<string, "person" | "agent" | "wheel"> = {};
+      for (const id of ids) {
+        if (id === WHEEL_PEER) { out[id] = "wheel"; continue; }
+        const node: any = await store.getNode(id);
+        if (!node) continue;
+        if (node.type === "agent") out[id] = "agent";
+        else if (node.type === "human") out[id] = ["companion_ai", "integration_ai"].includes(node.metadata?.role) ? "agent" : "person";
+      }
+      return out;
+    },
   };
 }
 

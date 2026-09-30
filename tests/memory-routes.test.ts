@@ -34,7 +34,8 @@ beforeAll(async () => {
   const beats = await import("../app/api/narrative/beats/route");
   const diary = await import("../app/api/diary/route");
 
-  const person = await post(nodes, { id: "node:human:1:mia", name: "Mia", type: "human" });
+  const person = await post(nodes, { id: "node:human:1:mia", name: "Mia", type: "agent", metadata: { kind: "person", role: "ceremony_facilitator" } });
+  await post(nodes, { id: "node:human:2:gui", name: "Guillaume", type: "human", metadata: { kind: "person", role: "admin" } });
   expect(person.status).toBeLessThan(300);
   await post(nodes, { id: "pde:root-1", name: "PDE root-1", type: "knowledge" });
   await post(nodes, { id: "circle:a", name: "Circle A", type: "circle" });
@@ -87,7 +88,7 @@ describe("/api/memory (#149)", () => {
     expect(kinds).toContainEqual(["diary", ids.diary]);
     expect(body.sources.every((s: any) => [ids.circleCeremony, ids.closing].includes(s.ceremony_id))).toBe(true);
     const turn = body.sources.find((s: any) => s.wheel_id === ids.beat);
-    expect(turn).toMatchObject({ provider: "wheel", speaker: "node:human:1:mia", speaker_name: "Mia" });
+    expect(turn).toMatchObject({ provider: "wheel", speaker: "node:human:1:mia", speaker_name: "Mia", speaker_kind: "agent" });
   });
 
   it("a PDE's scope with its own ceremony excluded is empty until a circle is held about it", async () => {

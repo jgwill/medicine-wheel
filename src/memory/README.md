@@ -32,6 +32,7 @@ interface MemorySource {
   ceremony_id?: string;
   speaker?: string;                // a wheel id
   speaker_name?: string;
+  speaker_kind?: 'person' | 'agent' | 'wheel';  // whose words: a human, an agent holding a seat, the wheel's own record
   excerpt: string;                 // person ids replaced with names
   at?: string;
   outside_wheel?: boolean;
