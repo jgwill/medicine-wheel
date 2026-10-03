@@ -10,7 +10,7 @@
 - Ancestors:
   - Indigenous relational ontology — relationships as first-class beings
   - Robert Fritz's structural tension methodology
-  - Shawn Wilson's research methodology (respect, reciprocity, responsibility)
+  - Shawn Wilson's research paradigm, *Research Is Ceremony* (2008): relational accountability, with respect, reciprocity and responsibility (p. 99)
 - Descendants:
   - Every package in the Medicine Wheel ecosystem depends on ontology-core
 - Siblings:

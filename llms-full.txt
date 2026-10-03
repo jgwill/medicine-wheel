@@ -1,6 +1,6 @@
 # Medicine Wheel — Complete LLM Reference
 
-> A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's (Respect, Reciprocity, Responsibility), and OCAP® data sovereignty principles.
+> A comprehensive TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, the respect, reciprocity and responsibility of Shawn Wilson's relational accountability (*Research Is Ceremony*, 2008, p. 99), and OCAP® data sovereignty principles.
 
 **Language:** TypeScript (ES2022, ESM, strict mode)
 **Runtime:** Node.js
@@ -106,7 +106,9 @@ All packages compile to ES2022 with source maps and declaration files. No circul
 
 Each direction has associated medicines, teachings, and practices (see `DIRECTIONS` constant).
 
-### Wilson's Three R's
+### Respect, Reciprocity, Responsibility
+
+Wilson (2008) names respect, reciprocity and responsibility as features of relational accountability (ch. 4; p. 99). He credits the label "three R's" to Cora Weber-Pillwax, whose set, as he quotes it, is Respect, Reciprocity and Relationality (p. 58). The 0–1 scores below are this library's construct, not Wilson's.
 
 Every `Relation` carries an `AccountabilityTracking` object:
 - **Respect** (0–1): Honoring dignity and sovereignty
@@ -159,7 +161,7 @@ import type {
   RelationalEdge,    // { id, from_id, to_id, relationship_type, strength, ceremony_honored, obligations }
   Relation,          // First-class relation with ceremony_context, obligations, ocap, accountability
   OcapFlags,         // Ownership, Control, Access, Possession
-  AccountabilityTracking,  // Wilson's three R's + alignment score
+  AccountabilityTracking,  // respect, reciprocity, responsibility + alignment score
   ObligationCategory,      // 'human' | 'land' | 'spirit' | 'future'
   RelationalObligation,    // { category, obligations[] }
 } from '@medicine-wheel/ontology-core';
@@ -2108,7 +2110,7 @@ import type { OcapBadgeProps } from '@medicine-wheel/ui-components';
 
 ### WilsonMeter
 
-Visual meter for Wilson's three R's alignment.
+Visual meter for the alignment score over respect, reciprocity and responsibility.
 
 ```tsx
 import { WilsonMeter } from '@medicine-wheel/ui-components';

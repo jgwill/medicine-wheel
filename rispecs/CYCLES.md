@@ -172,7 +172,7 @@ A research cycle follows the Four Directions, with each direction representing a
 - Spirit feeding ceremonies (`type: 'spirit_feeding'`) honor ancestors and past teachings
 - Structural tension charts track the gap between desired outcome and current reality
 - Narrative beats weave insights into coherent story
-- `wilson_alignment` score reflects how well the cycle honors the Three R's
+- `wilson_alignment` score reflects how well the cycle honors respect, reciprocity and responsibility
 
 **Transition trigger:** When integration is complete, synthesis artifacts exist, and the story is coherent → advance to North.
 
@@ -200,7 +200,7 @@ The `wilson_alignment` field (0–1) tracks how well the cycle honors Wilson's (
 | 0.6 – 0.8 | Good alignment | Regular ceremony, rich relational web, reciprocity evident |
 | 0.8 – 1.0 | Strong alignment | Full ceremonial engagement, all relations honored, community verification |
 
-### Three R's in Cycle Context
+### Respect, Reciprocity, Responsibility in Cycle Context
 
 | Principle | Cycle Manifestation |
 |-----------|-------------------|
@@ -359,6 +359,6 @@ Additional examples are available in `rispecs/demo/CYCLES.md`.
 - ✅ Creative Orientation: Enables ceremonial inquiry journeys, not just project tracking
 - ✅ Structural Dynamics: Resolves tension between project management and ceremonial inquiry via layered specification
 - ✅ Implementation Sufficient: Complete type definitions, tool coverage matrix, CRUD gap analysis, and lifecycle documentation
-- ✅ Wilson Alignment: Three R's mapped to cycle fields with alignment scoring
+- ✅ Wilson Alignment: Respect, reciprocity and responsibility mapped to cycle fields with alignment scoring
 - ✅ OCAP® Compliant: Seven generations archiving with Elder approval, community verification, and consent levels
 - ✅ Advancing Pattern: Circular inquiry model with direction-specific progression and narrative arc

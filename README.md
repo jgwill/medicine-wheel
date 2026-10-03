@@ -1,6 +1,6 @@
 # Medicine Wheel
 
-> An experimental TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's (Respect, Reciprocity, Responsibility), and OCAP® data sovereignty principles.
+> An experimental TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, the respect, reciprocity and responsibility of Shawn Wilson's relational accountability (*Research Is Ceremony*, 2008, p. 99), and OCAP® data sovereignty principles.
 
 > [!WARNING]
 > **Experimental alpha.** APIs change between patch versions, packages appear and

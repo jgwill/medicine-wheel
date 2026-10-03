@@ -15,7 +15,7 @@ Users create **community-validated knowledge systems** where:
 - Artifacts are reviewed by circles of community members, not individual experts
 - Elder validation provides authoritative blessing grounded in relational accountability
 - Talking circles ensure all voices and directions are heard before decisions
-- Wilson's three R's (Respect, Reciprocity, Responsibility) are explicitly checked
+- Respect, reciprocity and responsibility (Wilson 2008, ch. 4; p. 99) are explicitly checked
 - OCAP® compliance is assessed as part of every review
 
 ---

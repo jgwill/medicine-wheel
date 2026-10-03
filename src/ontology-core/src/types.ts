@@ -106,7 +106,7 @@ export interface OcapFlags {
 }
 
 export interface AccountabilityTracking {
-  /** Wilson's three R's scores (0–1) */
+  /** Respect, reciprocity and responsibility, after Wilson (2008, ch. 4; p. 99). The 0–1 scale is this library's. */
   respect: number;
   reciprocity: number;
   responsibility: number;

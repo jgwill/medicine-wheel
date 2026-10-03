@@ -74,7 +74,7 @@ interface Relation {
   ceremony_context?: { ... };  // Ceremony linkage
   obligations: RelationalObligation[];
   ocap: OcapFlags;             // OCAP® governance
-  accountability: AccountabilityTracking; // Wilson's 3 R's
+  accountability: AccountabilityTracking; // respect, reciprocity, responsibility (Wilson 2008, p. 99)
   context?: RelationContext;   // who authorized it, in which circle it holds
 }
 ```
@@ -111,7 +111,7 @@ Every relation carries `OcapFlags` (Ownership, Control, Access, Possession) — 
 
 ### Wilson Alignment
 
-Shawn Wilson's three R's (Respect, Reciprocity, Responsibility) are tracked per relation and aggregated across cycles. Use `computeWilsonAlignment()` and `findAccountabilityGaps()` to monitor relational health.
+Respect, reciprocity and responsibility, which Shawn Wilson names as features of relational accountability (*Research Is Ceremony*, 2008, ch. 4; p. 99), are tracked per relation and aggregated across cycles. The 0–1 scores and their aggregation are this library's construct, not Wilson's. Use `computeWilsonAlignment()` and `findAccountabilityGaps()` to monitor relational health.
 
 ### RDF Interop Adapter (optional)
 

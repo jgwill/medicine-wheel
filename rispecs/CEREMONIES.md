@@ -142,7 +142,7 @@ Ceremonies conducted within a research cycle are archived with the cycle via `ar
 
 ## Wilson Alignment
 
-Wilson's (2008) Three R's — **Respect, Reciprocity, Responsibility** — are embedded in the ceremony data model:
+Respect, reciprocity and responsibility, which Wilson (2008, ch. 4; p. 99) names as features of relational accountability, are mapped onto the ceremony data model below. He credits the label "three R's" to Cora Weber-Pillwax, whose set, as he quotes it, is Respect, Reciprocity and Relationality (p. 58). The mapping is ours:
 
 | Principle | How It Manifests |
 |-----------|-----------------|
@@ -150,7 +150,7 @@ Wilson's (2008) Three R's — **Respect, Reciprocity, Responsibility** — are e
 | **Reciprocity** | `intentions` — what the ceremony gives back to the relational web. `relations_honored` — explicitly marking which relationships were tended. |
 | **Responsibility** | `ceremony_honored` flag on edges — tracking whether relational obligations have been met through ceremony. Persistent records mean the community can review ceremonial history. |
 
-Wilson's core insight — "once you are in relationship, you are responsible for that relationship's wellbeing" — is operationalized through the `ceremony_honored` boolean on relational edges. Edges begin as `ceremony_honored: false` and are updated when a ceremony explicitly honors the relationship.
+The principle "once you are in relationship, you are responsible for that relationship's wellbeing" (often credited to Wilson; no page found; the closest is "answerable to all your relations", Wilson 2001, quoted in Wilson 2008, p. 57) is operationalized through the `ceremony_honored` boolean on relational edges. Edges begin as `ceremony_honored: false` and are updated when a ceremony explicitly honors the relationship.
 
 ---
 
@@ -260,5 +260,5 @@ Additional examples are available in `rispecs/demo/CEREMONIES.md`.
 - ✅ Creative Orientation: Enables ceremony as relational memory, not just event logging
 - ✅ Structural Dynamics: Resolves tension between record-keeping and living practice via specification layering
 - ✅ Implementation Sufficient: Complete type definitions, tool coverage matrix, and CRUD gap analysis
-- ✅ Wilson Alignment: Three R's mapped to data model fields
+- ✅ Wilson Alignment: Respect, reciprocity and responsibility mapped to data model fields
 - ✅ OCAP® Compliant: Community ownership, local possession, consent-level access control

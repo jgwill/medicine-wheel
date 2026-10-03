@@ -186,7 +186,9 @@ North  — integration, reflection, wisdom
 
 Different packages may apply direction at different altitudes. Ceremonial teaching constants and working-session guidance are related vocabularies, not interchangeable fields.
 
-### Wilson's Three R's
+### Respect, Reciprocity, Responsibility
+
+Wilson (2008) names respect, reciprocity and responsibility as features of relational accountability (ch. 4; p. 99). He credits the label "three R's" to Cora Weber-Pillwax, whose set, as he quotes it, is Respect, Reciprocity and Relationality (p. 58). Kirkness and Barnhardt's Four R's (1991) are Respect, Relevance, Reciprocity and Responsibility.
 
 - Respect
 - Reciprocity

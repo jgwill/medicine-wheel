@@ -118,7 +118,7 @@ export interface Reviewer {
 
 // ── Review Outcome ──────────────────────────────────────────────────────────
 
-/** Wilson's three R's check for the review */
+/** Respect, reciprocity and responsibility check (after Wilson 2008, p. 99) */
 export interface WilsonCheck {
   /** Was respect honored throughout the review? */
   respectHonored: boolean;
@@ -139,7 +139,7 @@ export interface ReviewOutcome {
   consensus: boolean;
   /** All voices that contributed to the decision */
   voices: TalkingCircleEntry[];
-  /** Wilson's three R's assessment */
+  /** Respect, reciprocity and responsibility assessment (after Wilson 2008, p. 99) */
   wilsonCheck: WilsonCheck;
   /** Elder's blessing statement */
   elderBlessing?: string;

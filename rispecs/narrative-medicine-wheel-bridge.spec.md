@@ -144,7 +144,7 @@ Validates internal narrative consistency — throughline consistency, domain ali
 
 ### Arc Completeness & Dynamics (`dynamics.ts`)
 
-Tracks opposing narrative forces (Knowledge vs Ignorance, Trust vs Test, Change vs Inertia) and assesses act-level analysis, climax convergence, and arc completeness gaps. These dynamics could map to Wilson's three R's tensions and enrich structural tension charts with narrative force analysis.
+Tracks opposing narrative forces (Knowledge vs Ignorance, Trust vs Test, Change vs Inertia) and assesses act-level analysis, climax convergence, and arc completeness gaps. These dynamics could map to tensions among respect, reciprocity and responsibility and enrich structural tension charts with narrative force analysis.
 
 ### Integration Pattern
 

@@ -109,7 +109,8 @@ export function traverseRelationalWeb(
 
 /**
  * Compute Wilson alignment score for a single accountability tracking object.
- * Wilson's three R's (Respect, Reciprocity, Responsibility) are averaged.
+ * Respect, reciprocity and responsibility (after Wilson 2008, p. 99) are averaged;
+ * the average is this library's construct, not Wilson's.
  */
 export function computeWilsonAlignment(
   accountability: AccountabilityTracking

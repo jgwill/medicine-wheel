@@ -1,6 +1,6 @@
 # Medicine Wheel
 
-> A TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Wilson's three R's, and OCAP® data sovereignty principles.
+> A TypeScript framework for relational healing, ceremonial inquiry, and Indigenous-aligned software development — grounded in the Four Directions, Shawn Wilson's relational accountability (respect, reciprocity, responsibility), and OCAP® data sovereignty principles.
 
 **Language:** TypeScript (ES2022, ESM)
 **License:** Indigenous Knowledge Stewardship License (IKSL) v1.0, MIT derived
@@ -116,7 +116,7 @@ The Next.js app surfaces that relational state as REST endpoints (also consumed 
 ## Key Concepts
 
 - **Four Directions**: East (vision/Waabinong), South (growth/Zhaawanong), West (reflection/Epangishmok), North (wisdom/Kiiwedinong)
-- **Wilson's Three R's**: Respect, Reciprocity, Responsibility — scored 0–1 per relation
+- **Respect, reciprocity, responsibility** (Wilson 2008, ch. 4; p. 99): scored 0–1 per relation; the scores are this library's construct
 - **OCAP®**: Ownership, Control, Access, Possession — Indigenous data sovereignty
 - **Structural Tension**: Germination → Assimilation → Completion creative cycle
 - **Ceremonial Inquiry**: opening → council → integration → closure phase progression
