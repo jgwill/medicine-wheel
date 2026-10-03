@@ -122,6 +122,18 @@ export {
   DIRECTION_INFO,
 } from './constants';
 
+// ── Direction vocabularies (named, none default; #113, #125) ────────────────
+export {
+  DIRECTION_VOCABULARIES,
+  DIRECTION_VOCABULARY_IDS,
+  directionMeaning,
+} from './direction-vocabularies';
+export type {
+  DirectionVocabulary,
+  DirectionVocabularyId,
+  DirectionVocabularyProvenance,
+} from './direction-vocabularies';
+
 // ── Infrastructure entity binding (additive — no NodeType was widened) ──────
 export { INFRA_ENTITY_BINDING, INFRA_ENTITY_KINDS } from './types';
 
