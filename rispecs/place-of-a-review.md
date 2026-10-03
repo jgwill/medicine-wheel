@@ -5,7 +5,7 @@
 **Version:** 0.2.0 (draft for Guillaume's review)
 **Document ID:** rispec-place-of-a-review-v0
 **Last Updated:** 2026-10-03
-**Changed in 0.2:** Wilson's own statement about a review (pp. 43–44) replaces "Wilson never speaks of reviews"; the review and its community; the review as a turn of a cycle; directions named by the teaching they come from; the three R's, cited correctly; small implementation steps.
+**Changed in 0.2:** Wilson's own statement about a review (pp. 43–44) and Cora's return to the community (p. 125) replaces "Wilson never speaks of reviews"; the review and its community; the review as a turn of a cycle; directions named by the teaching they come from; the three R's, cited correctly; small implementation steps.
 
 ---
 
@@ -33,11 +33,13 @@ Chapter 3 of *Research Is Ceremony* is Wilson's own literature review, and he sa
 And around it:
 - **Hearing yourself is analysis.** Rewatching videos of his own talks helped his ideas become "more firmly anchored or internalized" (p. 131).
 - **Analysis builds relationships.** Ask "how the analysis of these ideas will help to further build relationships" (p. 119); "the strings between the knots" make the net work (p. 120).
+- **Presentation is continuing relationships, and it ends by going back.** "So the presentation or knowledge transfer is again all about continuing healthy relationships" (p. 125). Cora: after the writing, "it means going back to the community, talking to those people to say, 'Okay, this is what I thought. And out of all this, this is my thinking…'" (p. 125).
 - **Give it back.** Credibility comes from continuous feedback with all participants (p. 121). The record Wilson reviews shows the opposite: results "seldom if ever explained to those who have been studied" (p. 48).
+- **Name the teller.** Wilson's co-researchers did not want anonymity, because a story "would lose its power without knowledge of the teller" (p. 130).
 - **Show how you came to it.** "some system of showing how we came to our final product" (p. 123).
 - **Not a score.** "value judgements lose their meaning"; what matters is "fulfilling a role and obligations in the research relationship" (p. 77, cited through Wulff 2010). The method "refuses a single category or any other formula" (Hermes, p. 53).
 
-The pages are indexed privately in `miadisabelle/Etuaptmumk-RSM` → `sources/wilson-2008-research-is-ceremony/` (`INDEX.md`, `GUIDANCE.md`). Pages 77 and 99 were checked through the book's text and secondary citations, not yet against photos.
+The pages are indexed privately in `miadisabelle/Etuaptmumk-RSM` → `sources/wilson-2008-research-is-ceremony/` (`INDEX.md`, `GUIDANCE.md`). Pages 43–58 and 108–132 are held as photos; pages 77 and 99 were checked through the book's text and secondary citations only.
 
 ---
 
@@ -84,7 +86,7 @@ Under the life-cycle teachings, the same internal review would rest in the **Wes
 
 ## A Review and Its Community
 
-1. **A review is unfinished until it is given back.** The circle held about a review (`subject_id`) is where it is given back. Its responses become the review's next versions, named: who spoke, and when (p. 121; naming per knowledge, pp. 114–116).
+1. **A review is unfinished until it is given back.** After the writing comes going back to the community (Cora, p. 125). The circle held about a review (`subject_id`) is where it is given back. Its responses become the review's next versions, named: who spoke, and when (p. 121; naming per knowledge, pp. 114–116).
 2. **The community can steer it.** The community decides what is researched and has direct access to decisions (Cora and Lewis, p. 110). The circle can change a review, hold it ("Let's sleep on it", p. 113), return it, or deepen it. `community-review` already has these outcomes: `ceremonialHold`, `returnToCircle`, `requestDeepening`.
 3. **It builds on; it does not judge.** A review in Wilson's sense situates and builds on someone's work (pp. 43–44). Step 2 of the review service corrects *our generated text*, never the maker of the video.
 4. **Who the community is.** People in the circle, and the seats (`agent` nodes, 0.17.0) that speak and are accountable to the people they serve. Seats do not stand in for the community.
