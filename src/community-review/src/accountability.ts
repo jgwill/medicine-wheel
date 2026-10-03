@@ -49,26 +49,28 @@ export function reviewAgainstWilson(circle: ReviewCircle): {
 } {
   const observations: string[] = [];
 
-  // Respect: Are all directions and roles represented?
+  // Directions represented (recorded as `respectHonored`). In Wilson, respect is
+  // listening intently, not insisting your idea prevails (2008, p. 58).
   const directions = new Set(
     circle.reviewers.filter((r) => r.direction).map((r) => r.direction),
   );
   const respectHonored = directions.size >= 2 && circle.reviewers.length >= 2;
   if (!respectHonored) {
-    observations.push('Respect: Not all perspectives are represented in the circle');
+    observations.push('Directions represented: fewer than two directions, or fewer than two reviewers, are in the circle');
   }
 
-  // Reciprocity: Has the artifact given back to the community?
+  // Voices heard (recorded as `reciprocityPresent`). In Wilson, reciprocity is the
+  // work giving back to those it came from (pp. 121, 125); this does not check that.
   const hasElderVoice = circle.talkingCircleLog.some((e) => e.role === 'elder');
   const hasCommunityVoice = circle.talkingCircleLog.some(
     (e) => e.role === 'community-member' || e.role === 'youth',
   );
   const reciprocityPresent = hasElderVoice || hasCommunityVoice;
   if (!reciprocityPresent) {
-    observations.push('Reciprocity: Elder or community voices have not been heard');
+    observations.push('Voices heard: no Elder or community voice is in the talking circle log yet');
   }
 
-  // Responsibility: Has accountability been explicitly stated?
+  // Accountability stated (recorded as `responsibilityTaken`).
   const reviewersWithAccountability = circle.reviewers.filter(
     (r) => r.accountableTo.length > 0,
   );
@@ -76,7 +78,7 @@ export function reviewAgainstWilson(circle: ReviewCircle): {
     reviewersWithAccountability.length === circle.reviewers.length &&
     circle.reviewers.length > 0;
   if (!responsibilityTaken) {
-    observations.push('Responsibility: Not all reviewers have stated their accountability');
+    observations.push('Accountability stated: not every reviewer has said whom they are accountable to');
   }
 
   const wilsonCheck: WilsonCheck = {
@@ -89,7 +91,7 @@ export function reviewAgainstWilson(circle: ReviewCircle): {
   const score = trueCount / 3;
 
   if (observations.length === 0) {
-    observations.push("Wilson's three R's are honored in this review circle");
+    observations.push('Directions represented, voices heard and accountability stated in this circle. (These checks are this package\'s reading; the people in the relationship judge relational accountability.)');
   }
 
   return { wilsonCheck, score, observations };
