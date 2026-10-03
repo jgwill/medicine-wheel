@@ -2,7 +2,8 @@
  * @medicine-wheel/relational-index — Types
  *
  * Core type definitions for four-source epistemic dimensional indexing.
- * Wilson's epistemology recognises multiple sources of knowing:
+ * Wilson (2008) recognises knowing through the senses and beyond them (p. 111).
+ * The four sources below are this suite's naming, not Wilson's:
  *   Land — embodied, place-based knowledge
  *   Dream — intuitive, liminal, visionary knowledge
  *   Code — implementation, algorithmic, structural knowledge
@@ -12,7 +13,7 @@ import type { DirectionName } from '@medicine-wheel/ontology-core';
 
 // ── Epistemic Sources ───────────────────────────────────────────
 
-/** The four epistemic sources from Wilson's framework */
+/** This suite's four epistemic sources (not named by Wilson) */
 export type EpistemicSource = 'land' | 'dream' | 'code' | 'vision';
 
 // ── Index Entry ─────────────────────────────────────────────────

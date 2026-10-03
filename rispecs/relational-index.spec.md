@@ -1,6 +1,6 @@
 # relational-index — RISE Specification
 
-> Four-source dimensional indexing — implements relational indexing across Wilson's four epistemic source dimensions (Land, Dream, Code, Vision) for querying, retrieval, and cross-dimensional mapping of ImportanceUnits and knowledge artifacts.
+> Four-source dimensional indexing — implements relational indexing across this suite's four epistemic source dimensions (Land, Dream, Code, Vision; our naming, after Wilson's recognition of more than one way of knowing, 2008, p. 111) for querying, retrieval, and cross-dimensional mapping of ImportanceUnits and knowledge artifacts.
 
 **Version:** 0.1.0  
 **Package:** `@medicine-wheel/relational-index`  
@@ -22,7 +22,7 @@ Users create **multi-dimensional knowledge indexes** where:
 
 ## Creative Intent
 
-**What this enables:** Wilson's epistemology recognizes multiple sources of knowing. Land teaches differently than dreams; code embodies differently than vision. A relational index that traverses across these dimensions enables the holistic knowing Wilson describes — where understanding comes from the *relationship* between dimensions, not from any single source.
+**What this enables:** Wilson (2008) recognizes knowing through the senses and beyond them (p. 111); this suite names four sources. Land teaches differently than dreams; code embodies differently than vision. A relational index that traverses across these dimensions enables the holistic knowing Wilson describes — where understanding comes from the *relationship* between dimensions, not from any single source.
 
 **Structural Tension:** Between mono-dimensional indexing (flat keyword search, single taxonomy) and multi-dimensional relational indexing (knowledge exists in relational space across epistemological dimensions). The relational-index resolves this by creating per-dimension indexes with cross-dimensional mapping that reveals convergences and tensions.
 
@@ -221,7 +221,7 @@ coverageGaps(index)
 
 ## Wilson Alignment
 
-Wilson's epistemology recognizes multiple sources of knowing:
+Wilson recognizes knowing through the senses and beyond them (2008, p. 111). This suite names four sources (the names are ours):
 - **Land** teaches through seasons, place, embodied experience
 - **Dream** teaches through vision, intuition, liminal states
 - **Code** teaches through structure, logic, pattern

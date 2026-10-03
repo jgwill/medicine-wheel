@@ -1,7 +1,7 @@
 /**
  * Dimensions — epistemic dimension views and balance analysis.
  *
- * Provides focused views into each of Wilson's four epistemic sources
+ * Provides focused views into each of this suite's four epistemic sources (Land, Dream, Code, Vision)
  * and measures the balance across all dimensions.
  */
 import type { RelationalIndex, DimensionIndex, EpistemicSource } from './types.js';

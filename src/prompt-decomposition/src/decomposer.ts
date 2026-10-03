@@ -636,8 +636,8 @@ const EPISTEMIC_KEYWORDS: Record<EpistemicSourceHint, string[]> = {
 /**
  * Heuristic classification of epistemic source from language patterns.
  *
- * Scans text for keywords associated with each of Wilson's four
- * epistemic sources and returns the best match. Returns 'unknown'
+ * Scans text for keywords associated with each of this suite's four
+ * epistemic sources (Land, Dream, Code, Vision) and returns the best match. Returns 'unknown'
  * when no clear signal is present.
  *
  * - **land**: mentions of place, territory, walking, embodied experience

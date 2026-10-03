@@ -23,7 +23,7 @@ import type {
 
 // ── Epistemic Source Hints ───────────────────────────────────────────────────
 
-/** Epistemic source hint following Wilson's four ways of knowing */
+/** Epistemic source hint, in this suite's four sources (Land, Dream, Code, Vision; not named by Wilson) */
 export type EpistemicSourceHint = 'land' | 'dream' | 'code' | 'vision' | 'unknown';
 
 // ── Core PDE Types (compatible with ava-langchain-prompt-decomposition) ─────

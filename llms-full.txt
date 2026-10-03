@@ -1279,7 +1279,7 @@ const analysis = detectDeepening(linked);
 npm install @medicine-wheel/relational-index
 ```
 
-Four-source epistemic dimensional indexing. Wilson's epistemology recognises multiple sources of knowing — Land, Dream, Code, and Vision each teach differently. This package enables querying, traversal, and cross-dimensional mapping across those epistemic sources.
+Four-source epistemic dimensional indexing. Wilson (2008) recognises knowing through the senses and beyond them (p. 111); this suite names four sources — Land, Dream, Code, and Vision — that each teach differently (the names are ours). This package enables querying, traversal, and cross-dimensional mapping across those epistemic sources.
 
 ### Types
 

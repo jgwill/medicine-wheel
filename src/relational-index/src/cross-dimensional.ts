@@ -1,8 +1,9 @@
 /**
  * Cross-Dimensional Analysis — mapping relationships between epistemic sources.
  *
- * Wilson's epistemology holds that Land, Dream, Code, and Vision each
- * teach differently. This module finds where those ways of knowing
+ * In this suite's naming, Land, Dream, Code, and Vision each teach
+ * differently (after Wilson 2008, p. 111, who recognises knowing beyond
+ * the senses; the four names are ours). This module finds where those ways of knowing
  * converge, where they are in tension, and where coverage is lacking.
  */
 import type {

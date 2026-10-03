@@ -3,7 +3,7 @@
  *
  * Four-source epistemic dimensional indexing for the Medicine Wheel
  * Developer Suite. Enables querying, traversal, and cross-dimensional
- * mapping across Wilson's four epistemic sources: Land, Dream, Code, Vision.
+ * mapping across this suite's four epistemic sources (Land, Dream, Code, Vision).
  */
 
 // Types

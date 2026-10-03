@@ -8,7 +8,7 @@ Four-source epistemic dimensional indexing for the **Medicine Wheel Developer Su
 > move in lockstep — pin exact versions. See
 > [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
 
-Wilson's epistemology recognises multiple sources of knowing — Land, Dream, Code, and Vision each teach differently. This package enables querying, traversal, and cross-dimensional mapping across those epistemic sources.
+Wilson (2008) recognises knowing through the senses and beyond them (p. 111). This package names four sources — Land, Dream, Code, and Vision — that each teach differently; the four names are this suite's, not Wilson's. This package enables querying, traversal, and cross-dimensional mapping across those epistemic sources.
 
 ## Installation
 
@@ -69,7 +69,7 @@ const health = indexHealth(withLand);
 
 ## Wilson Alignment
 
-This package implements the epistemic sophistication Wilson's framework demands:
+This package's four sources (our naming, after Wilson's recognition of more than one way of knowing, p. 111):
 
 - **Land**: Embodied, place-based knowledge — walking the territory
 - **Dream**: Intuitive, liminal knowledge — vision and dreaming
