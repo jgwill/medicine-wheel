@@ -2,7 +2,8 @@
  * @medicine-wheel/ceremony-protocol — Relational Production Protocol
  *
  * A ceremony-style protocol for entering and closing creative production
- * sessions (Research is Ceremony — Renaud thread). Production stages map onto
+ * sessions (Renaud thread: Wilson's Research Is Ceremony, 2008, applied to
+ * film as the conversation with Nicolas Renaud shaped it). Production stages map onto
  * the existing CeremonyPhase machinery, so a production session is a first-class
  * ceremony rather than an ad-hoc run. Closure is gated: ceremony cannot be
  * skipped.

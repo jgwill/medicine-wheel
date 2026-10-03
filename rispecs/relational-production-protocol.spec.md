@@ -69,7 +69,7 @@ interface ProductionSession {
 
 - **Ceremony cannot be skipped** — closure is gated on honored stages.
 - **Reuse, don't fork** — maps onto existing `CeremonyPhase`, no parallel phase system.
-- **Renaud thread** — Research is Ceremony made operational for film.
+- **Renaud thread** — Wilson's *Research Is Ceremony* (2008) made operational for film, as the conversation with Nicolas Renaud shaped it.
 
 ## Quality Criteria
 

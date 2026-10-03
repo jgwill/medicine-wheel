@@ -231,7 +231,7 @@ export function enforceCeremonyGate(
   return { blocked: false };
 }
 
-// ── Relational Production Protocol (Renaud thread — Research is Ceremony) ──────
+// ── Relational Production Protocol (Renaud thread — Wilson's Research Is Ceremony) ──
 export type {
   ProductionStage,
   ProductionProtocolStep,

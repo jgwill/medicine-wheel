@@ -12,7 +12,7 @@ This package receives the output of `@medicine-wheel/perception-layer` and gives
 
 ## Why it exists
 
-Episode 066 named a film-production path where agents help transform raw material into story without erasing relationship. Episode 067 sharpened the distinction between the Jerry thread of runtime observability and the Nicolas Renaud thread of Research is Ceremony. This package sits between perception and editing: it clusters witnessed events while preserving relational moments as first-class material.
+Episode 066 named a film-production path where agents help transform raw material into story without erasing relationship. Episode 067 sharpened the distinction between the Jerry thread of runtime observability and the Nicolas Renaud thread, which applies Shawn Wilson's *Research Is Ceremony* (2008) to film as the conversation with Nicolas shaped it. This package sits between perception and editing: it clusters witnessed events while preserving relational moments as first-class material.
 
 ## Install
 

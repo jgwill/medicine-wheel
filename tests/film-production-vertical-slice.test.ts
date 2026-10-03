@@ -9,7 +9,7 @@
  *
  * Two relationship threads stay legible:
  *   Jerry  = runtime observability / storyteller quality gate / event accountability
- *   Renaud = Research is Ceremony / film as knowledge-generation / relational witnessing
+ *   Renaud = film as knowledge-generation / relational witnessing, applying Wilson's Research Is Ceremony
  *
  * New packages are imported from their built `dist/` (self-contained — the type
  * imports inside them are erased, so no @medicine-wheel runtime resolution is

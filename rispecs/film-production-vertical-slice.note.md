@@ -27,7 +27,7 @@ transcript → perception ingest → narrative cluster → edit brief
 ## Two threads, kept legible
 
 - **Jerry — runtime observability / quality / event accountability:** the eyes-and-ears ingest, the production graph, and the storyteller gate that rejects voiceless output.
-- **Nicolas Renaud — Research is Ceremony / film as knowledge-generation / relational witnessing:** the participant recorded as `witnessed-by`, the relational-moment cluster (knowledge from relationship), and the staged production ceremony.
+- **Nicolas Renaud — film as knowledge-generation / relational witnessing, applying Wilson's *Research Is Ceremony* (2008):** the participant recorded as `witnessed-by`, the relational-moment cluster (knowledge from relationship), and the staged production ceremony.
 
 ## Sample EDL (first marker)
 
