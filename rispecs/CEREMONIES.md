@@ -25,7 +25,7 @@ Users create **ceremony-aware relational memory** where:
 
 **Structural Tension:** Between ceremony as *event logging* (a timestamped record of what happened) and ceremony as *living relational practice* (an ongoing obligation to maintain and honor relationships). The logging tools capture the event; the relational web, consent lifecycle, and fire keeper specifications maintain the living practice. This specification documents the data layer — the ceremony-protocol, fire-keeper, and community-review specifications document the governance and relational layers.
 
-Wilson (2008) warns that ceremony without a keeper degrades into mere process. The `StoredCeremony` type is intentionally minimal — it records *that* ceremony occurred, not *how* to conduct one. Protocol and governance live in `ceremony-protocol.spec.md` and `fire-keeper.spec.md`.
+A design principle of this suite, not a sentence found in Wilson (2008): ceremony without a keeper degrades into mere process. (Wilson does describe ceremony as the preparation long before the event, p. 61, and as setting the stage properly, p. 69.) The `StoredCeremony` type is intentionally minimal — it records *that* ceremony occurred, not *how* to conduct one. Protocol and governance live in `ceremony-protocol.spec.md` and `fire-keeper.spec.md`.
 
 ---
 

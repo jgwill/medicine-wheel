@@ -12,7 +12,7 @@ The Fire Keeper tends the ceremony fire, ensures relational integrity through ga
 
 ## Purpose
 
-Wilson's ceremony requires a keeper. Without one, ceremony degrades into process. The Fire Keeper embodies relational accountability as an active agent that:
+This package holds that a ceremony needs a keeper, and that without one it degrades into process. That is our design principle, not a sentence from Wilson; Wilson (2008) does describe ceremony as preparation and setting the stage properly (pp. 61, 69). The Fire Keeper embodies relational accountability as an active agent that:
 
 - **Evaluates** incoming ImportanceUnits against gating conditions
 - **Gates** work through relational check-back protocol

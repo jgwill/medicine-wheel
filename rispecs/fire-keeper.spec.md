@@ -23,7 +23,7 @@ Users create **actively-governed ceremony spaces** where:
 
 ## Creative Intent
 
-**What this enables:** Wilson's ceremony requires a keeper. Without one, ceremony degrades into process. The fire keeper makes relational accountability *active* rather than *passive* — it can pause work, escalate decisions to humans, and ensure ceremony is a transformative space rather than a procedural checklist.
+**What this enables:** In this suite's design, a ceremony needs a keeper; without one, it degrades into process. (Our principle; no page in Wilson says it. He describes ceremony as preparation and setting the stage properly, pp. 61, 69.) The fire keeper makes relational accountability *active* rather than *passive* — it can pause work, escalate decisions to humans, and ensure ceremony is a transformative space rather than a procedural checklist.
 
 **Structural Tension:** Between autonomous agent execution (efficiency, speed, parallel work) and relational accountability (ceremony, gating, human agency, Elder authority). The fire-keeper resolves this by acting as the living boundary between machine efficiency and ceremonial integrity.
 
@@ -259,7 +259,7 @@ interface FireKeeperMessage {
 
 ## Wilson Alignment
 
-Wilson's ceremony requires a keeper — the fire keeper makes relational accountability active:
+In this suite's design a ceremony needs a keeper, and the fire keeper makes relational accountability active:
 - **Gating:** Work cannot proceed until relational conditions are met
 - **Trajectory:** The inquiry's Wilson alignment is continuously monitored
 - **Human agency:** Value conflicts and permission escalations surface to humans
