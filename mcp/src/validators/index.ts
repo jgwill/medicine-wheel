@@ -505,11 +505,10 @@ export const validators: Tool[] = [
             : "WEAK ALIGNMENT",
         },
         key_concepts: {
-          relational_accountability: "Once in relationship, responsible for its wellbeing",
-          research_as_ceremony: "Sacred act of building & maintaining relationships",
-          wetiko_disease: "Colonial illness of greed/disconnection; cure = laughter, willpower, relational repair",
-          spiritual_crash: "When spirit and action misaligned; resolved through ceremony and congruence",
-          natural_law: "Living in right relationship with all relations",
+          relational_accountability: "Answerable to all your relations when doing research (Wilson 2001, quoted in Wilson 2008, p. 57)",
+          research_as_ceremony: "A ceremony for improving your relationship with an idea (Wilson 2008, p. 110)",
+          giving_back: "Continuous feedback with participants (p. 121); going back to the community after the writing (p. 125)",
+          source: "medicine-wheel://wilson/framework",
         },
         recommendations: hasRelational && hasCeremony && hasAccountability ? [
           "Strong alignment with Wilson's paradigm",
