@@ -609,7 +609,7 @@ describe('create_relational_node — the validated facet escape hatch', () => {
       facet_kind: 'service', facet: { unit: 'u', scope: 'user', ownedBy: 'o', ports: [] },
     });
     expect(result.status).toBe('error');
-    expect(result.message).toContain('closed at six');
+    expect(result.message).toContain('closed at eight');
   });
 
   it('refuses a facet with no declared kind', async () => {

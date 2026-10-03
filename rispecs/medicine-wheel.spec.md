@@ -28,7 +28,7 @@ The current release line contains:
 - a canonical `storage-provider` abstraction with JSONL and Neon implementations;
 - newer domain layers for infrastructure, creative orientation, narrative clustering, perception, ceremonial diary, GitHub ceremony, and discovery/orientation;
 - registry families for inquiry weaves, plan perspectives, diary entries, ceremony events, and captures;
-- a closed six-kind ontology extended through typed domain discriminators rather than uncontrolled node-type expansion.
+- a closed ontology (six foundational kinds plus `circle` and `agent`) extended through typed domain discriminators rather than uncontrolled node-type expansion.
 
 The system specification must therefore describe the architecture that exists now, not preserve an earlier package count as doctrine.
 
@@ -99,7 +99,7 @@ Workspace order is dependency-sensitive. The architecture is better read as laye
 
 `ontology-core` is the shared relational grammar.
 
-The top-level `NodeType` union remains six values: human, land, spirit, ancestor, future, knowledge. Domain-specific kinds such as production, infrastructure, and academic entities ride existing nodes through typed discriminators and bindings.
+The top-level `NodeType` union has eight values: six foundational kinds (human, land, spirit, ancestor, future, knowledge), plus `circle` (0.14.0) and `agent` (0.17.0), each added by ontology revision. Domain-specific kinds such as production, infrastructure, and academic entities ride existing nodes through typed discriminators and bindings.
 
 Relations remain first-class and can carry obligations, OCAP governance, Wilson accountability, ceremony context, authorization context, and governed kinship names.
 
@@ -211,7 +211,7 @@ Creative advancement is represented through a desired outcome held together with
 ### Scenario: A new domain enters without widening the ontology
 
 **Desired Outcome:** Represent a new class of beings in a specialized domain.  
-**Current Reality:** The six core node kinds do not name that domain directly.  
+**Current Reality:** The core node kinds do not name that domain directly.  
 **Natural Progression:** Define a typed domain discriminator and binding onto existing node kinds; add specialized facets or relations outside the foundational enum.  
 **Resolution:** The domain becomes first-class enough to validate and query while the core ontology remains stable.
 

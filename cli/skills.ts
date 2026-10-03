@@ -565,7 +565,7 @@ mw_get_direction      { node_id }            # service → West, tenant → Sout
   \`detectPortConflicts\`, \`preconditionGuard\`, \`readyService\`, \`reconcile\`
 - \`@medicine-wheel/ontology-core\` — \`part-of\`, \`ordered-after\`, \`binds-port\` in
   the governed \`KINSHIP_EDGE_TYPES\`; \`INFRA_ENTITY_BINDING\` for which closed
-  \`NodeType\` each kind rides. The union stays closed at six
+  \`NodeType\` each kind rides. The union stays closed at eight
 - Persistence: JSONL, or the server API when \`MW_API_URL\` is set
 
 ## What this skill does NOT do

@@ -54,7 +54,7 @@ The current baseline repair establishes these boundaries:
 - root suite and workspace line: `0.6.3`;
 - MCP line: `4.6.3`;
 - root topology: 27 ordered workspaces plus the root app;
-- `ontology-core`: closed six-value `NodeType`, governed kinship edges, relation authorization context, consent state, narrative provenance/telescoping, epistemic/axiological dimensions, and additive production/infra/academic kinds;
+- `ontology-core`: closed `NodeType` (six values at this 2026-08-19 baseline; eight since `circle` 0.14.0 and `agent` 0.17.0), governed kinship edges, relation authorization context, consent state, narrative provenance/telescoping, epistemic/axiological dimensions, and additive production/infra/academic kinds;
 - `storage-provider`: canonical JSONL + Neon contract; Redis is a named but unimplemented canonical backend;
 - `data-store`: Redis-specific package, not the owner of JSONL/provider parity;
 - `capture-registry`: capture vocabulary is canonical; `/api/recordings` is a deprecated compatibility alias, not evidence that capture naming is stale.

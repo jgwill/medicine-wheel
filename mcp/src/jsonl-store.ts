@@ -526,8 +526,8 @@ export class JsonlStore {
 
   /**
    * Every supplied filter narrows (AND); an absent one does not constrain.
-   * `kind` and `parent_id` read `metadata`, which is where the closed six-value
-   * `type` enum forced every artifact kind and containment link to live.
+   * `kind` and `parent_id` read `metadata`, which is where the closed
+   * `type` enum (six values then, eight since 0.17.0) forced every artifact kind and containment link to live.
    *
    * @see mcp/src/http-store.ts — the server-backed twin, which pushes the same
    *   filters into the `/api/nodes` query string rather than filtering locally

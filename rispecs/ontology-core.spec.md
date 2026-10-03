@@ -28,7 +28,7 @@ Users create **relationally accountable software systems** through one shared on
 
 **Current pressure:** every new domain naturally wants its own entity classes and bespoke schema, while an over-expanded core enum would make the ontology brittle and force every consumer to change.
 
-**Natural resolution:** keep `NodeType` closed at six foundational kinds, then express domain-specific kinds through typed `metadata.kind` discriminators and specialized relation/facet contracts. Relations remain first-class and may additionally reference a governed kinship edge.
+**Natural resolution:** keep `NodeType` closed (six foundational kinds, widened only by ontology revision: `circle` 0.14.0, `agent` 0.17.0), then express domain-specific kinds through typed `metadata.kind` discriminators and specialized relation/facet contracts. Relations remain first-class and may additionally reference a governed kinship edge.
 
 ---
 

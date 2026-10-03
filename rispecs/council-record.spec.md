@@ -90,7 +90,7 @@ live and tested** — `chronicle_root → chronicle_episode → structured_plan`
 `?parent_id=chronicle:ep-300` returning the grandchild
 (`tests/node-kind-query.test.ts:233-281`). `[one lane]`
 
-`NodeType` stays closed at six (`src/ontology-core/src/types.ts:32-38`); new kinds ride on
+`NodeType` stays closed at eight (`src/ontology-core/src/types.ts:32-46`; six foundational kinds plus `circle` and `agent`); new kinds ride on
 `knowledge` nodes with a `metadata.kind` discriminator, per this repo's `CLAUDE.md`. No
 runtime consumer of `metadata.kind` breaks on a new value — every one is a narrow equality
 test that already tolerates unknowns. `[one lane]`
@@ -239,7 +239,7 @@ projection with provenance and never becomes the author or source of truth.
 
 A council record and its contributions persist as `knowledge` nodes carrying a
 `metadata.kind` discriminator and `metadata.parent_id`, per this repo's `CLAUDE.md` rule
-that `NodeType` stays closed at six. Contributors may themselves be `human` nodes. No
+that `NodeType` stays closed (at eight since 0.17.0). Contributors may themselves be `human` nodes. No
 `NodeType` change is required. `[one lane]`
 
 Three-level containment is already proven live (`tests/node-kind-query.test.ts:233-281`).
@@ -744,7 +744,7 @@ Where the capability lives, and whether it is a package at all, stays open below
 | §Current Reality, §3.1 | `rispecs/community-review.spec.md` | The unanimity rule and the suite's refusal of credentialed authority |
 | §1.2 storage | `tests/node-kind-query.test.ts`, `app/api/nodes/route.ts` | The `?kind=` / `?parent_id=` surface shipped in 0.5.9 (`2e5a54a`, merged `15d4cf3`) |
 | §Current Reality | `rispecs/ceremony-protocol.spec.md` | Describes non-blocking behaviour its package does not have |
-| §1.2 discriminator rule | `CLAUDE.md` | *"new kinds ride on existing `knowledge` nodes carrying a `metadata.kind` discriminator"* — `NodeType` stays closed at six |
+| §1.2 discriminator rule | `CLAUDE.md` | *"new kinds ride on existing `knowledge` nodes carrying a `metadata.kind` discriminator"* — `NodeType` stays closed (at eight since 0.17.0) |
 
 ---
 

@@ -573,7 +573,8 @@ export interface ProductionRelation extends Relation {
 // can hold — `land`, `human`, `knowledge`. They are NOT new NodeTypes. They ride
 // existing nodes carrying a `metadata.kind: InfraEntityKind` discriminator, and
 // their machine specifics live in the typed facets of `@medicine-wheel/infra`,
-// keyed by node id. The NodeType union stays closed at six.
+// keyed by node id. The NodeType union stays closed at eight (six foundational
+// kinds plus circle and agent).
 
 /** Discriminator for infrastructure entities riding on existing nodes. */
 export type InfraEntityKind = 'host' | 'tenant' | 'service';

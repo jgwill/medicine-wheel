@@ -93,7 +93,7 @@ export const integrationTools: Tool[] = [
               status: "error",
               message:
                 `A ${facet_kind} facet rides a '${expected.nodeType}' node, not '${type}'. The NodeType ` +
-                `union is closed at six and infrastructure reuses it rather than widening it.`,
+                `union is closed at eight and infrastructure reuses it rather than widening it.`,
             };
           }
           const schema =

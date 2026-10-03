@@ -1236,7 +1236,7 @@ export const infrastructureTools: Tool[] = [
             };
           }),
           teaching:
-            "Host, tenant, service — land, human, knowledge. The same six node types that hold a ceremony hold a machine.",
+            "Host, tenant, service — land, human, knowledge. The same node types that hold a ceremony hold a machine.",
         };
       } catch (error) {
         return errorOf(error, "list infrastructure topology");

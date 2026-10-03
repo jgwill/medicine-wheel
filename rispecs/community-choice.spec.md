@@ -140,7 +140,7 @@ What the type takes from 1–3 is not their text but their **provenance** —
    orphans every receipt already written.
 4. **Is a `ChoiceSet` a wheel node?** `mw_register_review` was proposed so a
    review becomes a `knowledge` node with `metadata.kind`. A `ChoiceSet` could
-   follow, or stay a record. The `NodeType` union stays closed at six either way.
+   follow, or stay a record. The `NodeType` union stays closed either way (at eight since 0.17.0).
 5. **`community-review` issue #105** proposes binding consensus to a PR
    lifecycle. Same verb "choose", opposite authority. Siblings over the same
    storage — and both need the missing MCP verbs that leave a circle stuck in

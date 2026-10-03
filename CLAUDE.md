@@ -55,7 +55,9 @@ A service is **not** a new `NodeType`. `src/ontology-core/src/types.ts` states t
 new kinds ride on existing `knowledge` nodes carrying a `metadata.kind` discriminator, and
 `ServiceFacet.nodeId` is already annotated to point at one. Register a running service as
 a `knowledge` node with `metadata.kind: "service"` and its facet fields in metadata. The
-`NodeType` union is closed at six and stays closed.
+`NodeType` union is closed at eight (six foundational kinds plus `circle`, 0.14.0, and
+`agent`, 0.17.0) and stays closed. Each widening was an ontology revision with its own issue,
+not a convenience.
 
 `@medicine-wheel/infra` is types plus one pure function (`detectPortConflicts`) — zero
 I/O, zero persistence. It describes shapes; it does not store them.
