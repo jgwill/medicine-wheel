@@ -22,7 +22,7 @@ Users create **epistemically-weighted knowledge systems** where:
 
 ## Creative Intent
 
-**What this enables:** A knowledge system where not all knowledge is flat. Dream-state and embodied knowledge carry higher epistemic authority per Wilson's framework. Knowledge deepens through circular revisitation — the system tracks how meaning shifts between the 3rd and 4th circling.
+**What this enables:** A knowledge system where not all knowledge is flat. Dream-state and embodied knowledge carry higher epistemic authority in this package's design (a ranking that is ours, not Wilson's; see Wilson Alignment). Knowledge deepens through circular revisitation — the system tracks how meaning shifts between the 3rd and 4th circling.
 
 **Structural Tension:** Between Western epistemology (all knowledge is equal if peer-reviewed) and Indigenous epistemology (knowledge has relational weight depending on source, ceremony context, and circle depth). The importance-unit resolves this through explicit epistemic weighting and source dimension tracking.
 
@@ -184,7 +184,7 @@ GatingConditionStatusSchema
 
 ## Wilson Alignment
 
-Wilson's epistemology holds that knowledge has relational weight:
+Wilson's epistemology is relational (2008, pp. 56–57, 127). The weights below are this package's design, not his: he holds empirical knowledge crucial but not the only way of knowing (p. 58) and needs both empirical and other forms (p. 111), ranking none above the others.
 - **Dream-state knowledge** starts at 0.85+ epistemic weight
 - **Land-based knowledge** carries embodied authority
 - **Circle depth** — knowledge that has been revisited many times carries more weight

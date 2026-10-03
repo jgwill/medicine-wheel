@@ -2,9 +2,11 @@
  * @medicine-wheel/importance-unit — Epistemic Weight Computation
  *
  * Computes epistemic weight for ImportanceUnits based on their
- * source dimension and circle depth. In Wilson's epistemology,
- * not all knowledge is equal — dream-state and embodied knowledge
- * carry more epistemic authority than rational analysis.
+ * source dimension and circle depth. This package weights dream-state
+ * and embodied knowledge above rational analysis.
+ * That ranking is this package's design, not Wilson's: he holds empirical knowledge
+ * crucial but not the only way of knowing (2008, p. 58) and needs both empirical
+ * and other forms (p. 111), ranking none above the others.
  *
  * Base weights:
  * - dream: 0.85 (liminal/spirit-state knowing has highest authority)

@@ -120,7 +120,7 @@ Beat sequencing, cadence validation, arc completeness scoring, timeline building
 - **Dependencies:** `@medicine-wheel/ontology-core`
 
 ### [@medicine-wheel/importance-unit](src/importance-unit)
-ImportanceUnit — the relational unit of knowledge in Wilson's epistemology. Carries epistemic weight, source dimensions (Land/Dream/Code/Vision), circle depth tracking, and accountability links. Dream-state knowledge starts at 0.85+ weight; rational-filtered inputs start lower.
+ImportanceUnit — this suite's relational unit of knowledge, after Wilson's relational epistemology. Carries epistemic weight, source dimensions (Land/Dream/Code/Vision), circle depth tracking, and accountability links. Dream-state knowledge starts at 0.85+ weight; rational-filtered inputs start lower.
 
 - **Dependencies:** `@medicine-wheel/ontology-core`, `zod`
 
