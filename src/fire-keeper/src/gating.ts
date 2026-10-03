@@ -96,14 +96,20 @@ export function resolveHold(
 // ── Default Gates ───────────────────────────────────────────────────────────
 
 /**
- * Wilson alignment threshold gate.
- * Blocks when Wilson alignment score drops below the configured threshold.
+ * Trajectory confidence gate.
+ * Blocks when the keeper's trajectory confidence (how settled the ceremony's
+ * direction trajectory is) drops below 0.65. The value arrives in
+ * `context.wilsonAlignment` for compatibility; it is not a measure of Wilson's
+ * relational accountability, and Wilson describes no score (#155).
  */
-export const GATE_WILSON_ALIGNMENT: GatingCondition = createGate(
-  'Wilson alignment above threshold',
+export const GATE_TRAJECTORY_CONFIDENCE: GatingCondition = createGate(
+  'Trajectory confidence above threshold',
   (context) => (context.wilsonAlignment ?? 0) >= 0.65,
   true,
 );
+
+/** @deprecated Measures trajectory confidence; use GATE_TRAJECTORY_CONFIDENCE (#155). */
+export const GATE_WILSON_ALIGNMENT: GatingCondition = GATE_TRAJECTORY_CONFIDENCE;
 
 /**
  * OCAP compliance gate.
@@ -127,7 +133,7 @@ export const GATE_CEREMONY_PHASE: GatingCondition = createGate(
 
 /** All default gating conditions */
 export const DEFAULT_GATES: GatingCondition[] = [
-  GATE_WILSON_ALIGNMENT,
+  GATE_TRAJECTORY_CONFIDENCE,
   GATE_OCAP_COMPLIANCE,
   GATE_CEREMONY_PHASE,
 ];

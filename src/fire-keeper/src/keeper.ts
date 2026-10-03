@@ -248,8 +248,9 @@ export class FireKeeper {
   }
 
   /**
-   * Verify Wilson alignment across the current ceremony.
-   * Checks trajectory confidence, gating conditions, and relational milestones.
+   * Check the current ceremony's alignment: trajectory confidence, gating
+   * conditions, and relational milestones. (Formerly described as Wilson
+   * alignment; it measures trajectory, not Wilson's relational accountability, #155.)
    * @param inquiryRef - Reference to the inquiry
    */
   checkRelationalAlignment(inquiryRef: string): RelationalAlignmentResult {
@@ -315,6 +316,7 @@ export class FireKeeper {
     };
   }
 
+  /** Trajectory confidence, carried in `wilsonAlignment` for compatibility (#155). */
   private estimateWilsonAlignment(inquiryRef: string): number {
     const ceremony = this.state.ceremonies[inquiryRef];
     if (!ceremony) return 0;
