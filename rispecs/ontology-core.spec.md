@@ -40,12 +40,19 @@ type DirectionName = 'east' | 'south' | 'west' | 'north';
 
 `Direction` carries ceremonial teaching data including Ojibwe name, season, color, life stage, medicines, teachings, and practices.
 
-Two directional vocabularies exist at different altitudes:
+Directional vocabularies exist at different altitudes, and they disagree: the life-cycle teachings place reflection in the west, the RSIS focus labels place it in the north (#113). `DIRECTION_VOCABULARIES` names each one, and none is the default:
 
-- `DIRECTIONS` / `DIRECTION_MAP` carry ceremonial and teaching information.
-- `DIRECTION_INFO` carries working-session focus and guidance.
+| Vocabulary id | Source in the suite | West | North |
+|---|---|---|---|
+| `life-cycle-teachings` | `DIRECTIONS` | Fall: Reflection, Truth, Introspection, Emotional processing | Winter: Wisdom, Completion, Ancestral knowledge, Generosity |
+| `rsis-focus` | `DIRECTION_INFO` | Implementation, creation, manifestation | Reflection, integration, wisdom |
+| `ceremony-phases` | `CEREMONY_PHASES` | integration | closure |
+| `narrative-cadence` | narrative-engine `directionToPhase` | integrating | closing |
+| `decomposition` | prompt-decomposition | Validation | Action |
 
-They are related but not interchangeable.
+Every entry's provenance is `unattributed`: no source, tradition or steward is recorded in this repository. Recording one is a knowledge holder's decision (#113, #125).
+
+**Rule for consumers and agents:** name the vocabulary you mean, `directionMeaning('rsis-focus', 'north')`, and do not write your own direction strings. A new vocabulary is added here, with its provenance, before any package uses it.
 
 ---
 

@@ -105,6 +105,20 @@ relation.context = {
 };
 ```
 
+### Direction Vocabularies
+
+The suite describes the four directions in several ways that disagree (for example, reflection is west in the life-cycle teachings and north in the RSIS focus labels). `DIRECTION_VOCABULARIES` names each one, says where it is used, and records its provenance. None is the default: name the one you mean.
+
+```typescript
+import { directionMeaning, DIRECTION_VOCABULARIES } from '@medicine-wheel/ontology-core';
+
+directionMeaning('rsis-focus', 'north');            // 'Reflection, integration, wisdom'
+directionMeaning('life-cycle-teachings', 'west');   // 'Fall: Reflection, Truth, Introspection, Emotional processing'
+DIRECTION_VOCABULARIES['narrative-cadence'].phases; // { east: 'opening', south: 'deepening', west: 'integrating', north: 'closing' }
+```
+
+All five are `unattributed` until a knowledge holder records a source (jgwill/medicine-wheel#113, #125).
+
 ### OCAP® Governance
 
 Every relation carries `OcapFlags` (Ownership, Control, Access, Possession) — the First Nations principles of data sovereignty.
