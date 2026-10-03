@@ -195,9 +195,9 @@ The `ceremonyGuidance` field in decomposition results includes `opening_practice
 
 **Verdict: Well-conceived, partially realized.**
 
-Wilson's structural tension (Germination → Assimilation → Completion) maps to the system's spec as:
+Robert Fritz's creative cycle (Germination → Assimilation → Completion; *The Path of Least Resistance*, 1989), which this suite types as `TensionPhase`, maps to the system's spec as follows. (An earlier version of this note credited the cycle to Wilson; it is Fritz's.)
 
-| Wilson phase | System mapping | Implementation |
+| Fritz phase | System mapping | Implementation |
 |---|---|---|
 | **Germination** — Vision + honest current reality | East direction + prompt decomposition | ✅ Strong. `createCycle()` captures the research question. `decompose()` surfaces the current reality (neglected directions, ambiguities, implicit intents). Balance scoring gives honest assessment. |
 | **Assimilation** — Building momentum through ritualized action | South + West + cadence progression | ⚠️ Partial. Beat accumulation and cadence validation create momentum. Ceremony requirements at transitions ritualize the process. But there's no momentum *feeling* — no acceleration, no building energy, no deepening engagement. |
