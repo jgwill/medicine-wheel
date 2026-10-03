@@ -39,7 +39,9 @@ export type AccountabilityLinkType =
 // ── Axiological Pillars ─────────────────────────────────────────────────────
 
 /**
- * Wilson's four pillars of a research paradigm.
+ * Wilson's four elements of a research paradigm (ontology, epistemology,
+ * methodology, axiology), drawn as a circle, each informing the others
+ * (Research Is Ceremony, 2008, ch. 4; p. 108).
  * Every ImportanceUnit addresses at least one pillar.
  */
 export type AxiologicalPillar = 'ontology' | 'epistemology' | 'methodology' | 'axiology';
@@ -162,7 +164,7 @@ export interface ImportanceUnit {
   content: ImportanceUnitContent;
   /** Ceremonial progression through the four directions */
   ceremonyState?: CeremonyState;
-  /** Which of Wilson's four pillars this unit primarily addresses */
+  /** Which of Wilson's four paradigm elements this unit primarily addresses */
   axiologicalPillar?: AxiologicalPillar;
   /** Reference to the parent inquiry */
   inquiryRef?: string;
@@ -187,7 +189,7 @@ export interface CreateUnitInput {
   rawInput?: string;
   /** Agent or person creating this unit */
   createdBy: string;
-  /** Which of Wilson's four pillars this unit addresses */
+  /** Which of Wilson's four paradigm elements this unit addresses */
   axiologicalPillar?: AxiologicalPillar;
   /** Reference to the parent inquiry */
   inquiryRef?: string;

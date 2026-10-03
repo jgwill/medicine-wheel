@@ -249,7 +249,7 @@ type EpistemicSource = 'land' | 'dream' | 'code' | 'vision';
 type AxiologicalPillar = 'ontology' | 'epistemology' | 'methodology' | 'axiology';
 ```
 
-These types give other packages a shared vocabulary for the relational origin of knowledge and Wilson's four research-paradigm pillars.
+These types give other packages a shared vocabulary for the relational origin of knowledge and Wilson's four research-paradigm elements (ontology, epistemology, methodology, axiology), which he draws as a circle, each informing the others (2008, p. 108). The type name `AxiologicalPillar` is kept for compatibility.
 
 ---
 

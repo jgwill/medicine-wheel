@@ -477,7 +477,9 @@ export type EpistemicSource = 'land' | 'dream' | 'code' | 'vision';
 // ── Axiological Pillars ─────────────────────────────────────────────────────
 
 /**
- * Wilson's four pillars of a research paradigm.
+ * Wilson's four elements of a research paradigm (ontology, epistemology,
+ * methodology, axiology), drawn as a circle, each informing the others
+ * (Research Is Ceremony, 2008, ch. 4; p. 108).
  * Every piece of knowledge addresses at least one pillar.
  */
 export type AxiologicalPillar = 'ontology' | 'epistemology' | 'methodology' | 'axiology';
