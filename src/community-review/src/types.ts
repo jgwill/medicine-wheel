@@ -1,9 +1,10 @@
 /**
  * @medicine-wheel/community-review — Type Definitions
  *
- * Types for community-based ceremonial review — Wilson's validation
- * through community rather than peer review. Elders, knowledge keepers,
- * and community members validate relational accountability.
+ * Types for community-based ceremonial review: credibility through
+ * community rather than peer review (after Wilson 2008, pp. 121, 125, 131).
+ * Elders, knowledge keepers and community members take part as each
+ * community's protocol decides; the Elder step is this package's design.
  */
 
 import type {
@@ -130,7 +131,7 @@ export interface WilsonCheck {
 
 /**
  * The outcome of a community review — consensus, voices,
- * Wilson alignment check, and Elder blessing.
+ * alignment check, and Elder blessing (this package's design).
  */
 export interface ReviewOutcome {
   /** Type of outcome */

@@ -1,6 +1,6 @@
 # @medicine-wheel/community-review
 
-> Community-based ceremonial review protocol — implements Wilson's validation through Elder review circles, consensus-seeking, and relational accountability assessment.
+> Community-based ceremonial review protocol — review circles, consensus-seeking and relational accountability assessment, after the community-grounded credibility Wilson describes (*Research Is Ceremony*, 2008, pp. 121, 125, 131). Its Elder validation step is the package's own design.
 
 > [!WARNING]
 > **Experimental alpha.** Part of the Medicine Wheel Developer Suite, which is
@@ -12,7 +12,7 @@ Part of the [Medicine Wheel Developer Suite](https://github.com/jgwill/medicine-
 
 ## Overview
 
-Wilson describes research validation not through peer review but through *community review* — Elders, knowledge keepers, and community members validate whether research honors relational accountability. This package implements that vision.
+Wilson (2008) grounds the credibility of research in relationships, not in peer review: continuous feedback with all participants, who check the analysis and hear each other (p. 121); going back to the community after the writing (Cora, p. 125); co-researchers confirming the work (p. 131). He describes no Elder blessing or Elder review circle as a validation step. This package holds that community-grounded credibility; its Elder validation step is its own design, and whether and how an Elder takes part follows each community's protocol.
 
 ## Core Concepts
 

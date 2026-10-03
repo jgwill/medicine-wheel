@@ -1,6 +1,6 @@
 # community-review — RISE Specification
 
-> Community-based ceremonial review protocol — implements Wilson's validation through Elder review circles, consensus-seeking, talking circle process, and relational accountability assessment.
+> Community-based ceremonial review protocol — talking circles, review circles, consensus-seeking and relational accountability assessment, after the community-grounded credibility Wilson describes (*Research Is Ceremony*, 2008, pp. 121, 125, 131). Its Elder validation step is the package's own design.
 
 **Version:** 0.1.0  
 **Package:** `@medicine-wheel/community-review`  
@@ -221,7 +221,9 @@ ReviewOutcomeSchema, ReviewCircleSchema
 
 ## Wilson Alignment
 
-Wilson describes research validation not through peer review but through *community review*:
+Wilson (2008) grounds the credibility of research in relationships, not in peer review: continuous feedback with all participants, who check the analysis and hear each other (p. 121); going back to the community after the writing (Cora, p. 125); co-researchers confirming the work (p. 131). He describes no Elder blessing or Elder review circle as a validation step. This package holds that community-grounded credibility; its Elder validation step is its own design, and whether and how an Elder takes part follows each community's protocol.
+
+This package checks:
 - **Respect:** All directions and roles are represented in the circle
 - **Reciprocity:** Elder and community voices ensure mutual benefit
 - **Responsibility:** Every reviewer explicitly states who they are accountable to

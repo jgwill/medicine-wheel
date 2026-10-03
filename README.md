@@ -100,7 +100,7 @@ Fire Keeper coordination agent — tends the ceremony fire, ensures relational i
 - **Dependencies:** `@medicine-wheel/ontology-core`, `@medicine-wheel/ceremony-protocol`
 
 ### [@medicine-wheel/community-review](src/community-review)
-Community-based ceremonial review protocol — implements Wilson's validation through Elder review circles, consensus-seeking, talking circle protocol, and relational accountability assessment.
+Community-based ceremonial review protocol — talking circle protocol, review circles, consensus-seeking and relational accountability assessment, after the community-grounded credibility Wilson describes (*Research Is Ceremony*, 2008, pp. 121, 125, 131). Its Elder validation step is the package's own design.
 
 - **Dependencies:** `@medicine-wheel/ontology-core`, `@medicine-wheel/ceremony-protocol`, `zod`
 

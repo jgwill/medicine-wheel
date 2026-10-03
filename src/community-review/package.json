@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/community-review",
   "version": "0.17.1",
-  "description": "Community-based ceremonial review protocol for Medicine Wheel — implements Wilson's validation through Elder review circles, consensus, and relational accountability",
+  "description": "Community-based ceremonial review protocol for Medicine Wheel — review circles, consensus and relational accountability, after the community-grounded credibility Wilson describes; the Elder step is the package's own design",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

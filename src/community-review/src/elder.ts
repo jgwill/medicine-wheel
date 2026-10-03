@@ -1,9 +1,11 @@
 /**
  * @medicine-wheel/community-review — Elder Validation
  *
- * Wilson describes research validation not through peer review
- * but through community review — Elders validate whether research
- * honors relational accountability.
+ * Elder validation is this package's design. Wilson (2008) grounds
+ * credibility in continuous feedback with participants (p. 121), going
+ * back to the community (p. 125) and co-researchers confirming the work
+ * (p. 131); he describes no Elder validation step. Whether and how an
+ * Elder takes part follows the community's own protocol.
  */
 
 import type { ReviewCircle, TalkingCircleEntry } from './types.js';

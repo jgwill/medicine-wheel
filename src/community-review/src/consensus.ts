@@ -2,8 +2,9 @@
  * @medicine-wheel/community-review — Consensus & Talking Circle
  *
  * Manages the talking circle process and consensus-seeking.
- * In Wilson's framework, validation comes through community
- * consensus, not individual expert judgment.
+ * Wilson (2008) grounds credibility in continuous feedback with all
+ * participants (p. 121) rather than in individual expert judgment.
+ * Consensus-seeking is this package's way of holding that.
  */
 
 import type {

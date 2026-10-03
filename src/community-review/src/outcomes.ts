@@ -10,7 +10,8 @@ import { reviewAgainstWilson } from './accountability.js';
 
 /**
  * Approve the artifact with blessings.
- * Requires Elder blessing and Wilson alignment.
+ * Requires an Elder blessing and an alignment score (this package's
+ * design; Wilson describes no blessing step).
  */
 export function approveWithBlessings(
   circle: ReviewCircle,
