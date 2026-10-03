@@ -117,6 +117,7 @@
     "@medicine-wheel/storage-provider": "^0.17.0",
     "@medicine-wheel/transformation-tracker": "^0.17.0",
     "@medicine-wheel/ui-components": "^0.17.0",
+    "@miadi/episode-vessel": "^0.2.1",
     "@neondatabase/serverless": "^0.10.0",
     "@xyflow/react": "^12.3.0",
     "clsx": "^2.1.1",

@@ -1,13 +1,19 @@
 "use client";
 
 /**
- * One episode: what it is, what it still holds open, and what it touches.
+ * One episode: what it is, what it holds, what it still holds open, and what
+ * it touches.
  *
- * The three panels answer the three things the graph could not. What this is,
- * from the node itself. What is open, from `?kind=attention&parent_id=<id>` —
- * a query the API has always accepted and no page ever sent. What it relates to,
- * from `/api/nodes/[id]/web`, which walks the traversal that shipped in
- * `relational-query` and went unimported.
+ * What this is, from the node itself, with the episodes before and after it in
+ * the chronicle. What it holds, from its folder — read-only, through the rules
+ * `@miadi/episode-vessel` states for every surface that opens one (see
+ * `components/episode-files-panel.tsx`). What was said and gathered for it —
+ * ceremonies, diary, inquiry weaves, plan perspectives, captures — from routes
+ * that filtered by episode long before any page asked them
+ * (`components/episode-holdings.tsx`). What is open, from
+ * `?kind=attention&parent_id=<id>`. What it relates to, from
+ * `/api/nodes/[id]/web`, which walks the traversal that shipped in
+ * `relational-query` and went unimported. Ref jgwill/medicine-wheel#153.
  *
  * The relations panel is where the wheel's current honesty shows. 101 of 106
  * containment links live only in `metadata.parent_id` and were never written as
@@ -21,6 +27,8 @@ import { useCallback, useEffect, useState } from "react";
 import { use } from "react";
 import Link from "next/link";
 import type { RelationalNode, RelationalEdge } from "@/lib/types";
+import { EpisodeFilesPanel } from "@/components/episode-files-panel";
+import { EpisodeHoldings } from "@/components/episode-holdings";
 
 // `description` lives on the store's node, not on ontology-core's — the same
 // widening `app/nodes/page.tsx` declares as `NodeRecord`. Named EpisodeNode
@@ -42,6 +50,46 @@ function metaString(node: EpisodeNode | null, key: string): string | null {
   return typeof value === "string" && value ? value : null;
 }
 
+/**
+ * Where an episode sits in the chronicle: its folder's date, then its number —
+ * the order the folders keep on disk. Not `created_at`, which records when the
+ * wheel learned of an episode, and not the number alone, which the chronicle
+ * does not hand out in date order (episode 1000 follows episode 550 by two days).
+ */
+function chronicleKey(node: EpisodeNode): string {
+  const match = (episodeFolderOf(node) ?? "").match(/^(\d{4}-\d{2}-\d{2})-episode-(\d+)/i);
+  return match ? `${match[1]}-${match[2].padStart(6, "0")}` : (node.created_at ?? "");
+}
+
+/**
+ * The episode's folder name — what the wheel's other records file it under.
+ *
+ * From the id when it is `chronicle:<folder>`. A few early episodes were
+ * registered under other ids (`node:knowledge:…`, a bare uuid); their node
+ * still carries the artefact reference, so the folder comes from
+ * `metadata.relative_path` when `metadata.root` names the chronicle.
+ */
+function episodeFolderOf(node: EpisodeNode): string | null {
+  if (node.id.startsWith("chronicle:")) return node.id.slice("chronicle:".length) || null;
+  const relative = metaString(node, "relative_path");
+  if (metaString(node, "root") !== "MIADI_CHRONICLE_ROOT" || !relative) return null;
+  const folder = relative.split("/")[0];
+  return folder && folder !== relative ? folder : null;
+}
+
+function EpisodeLink({ node, label }: { node: EpisodeNode | null; label: string }) {
+  if (!node) return <span />;
+  return (
+    <Link
+      href={`/episodes/${encodeURIComponent(node.id)}`}
+      className="text-xs text-muted-foreground hover:underline min-w-0 truncate"
+      title={node.name}
+    >
+      {label} {node.name}
+    </Link>
+  );
+}
+
 export default function EpisodePage({ params }: { params: Promise<{ id: string }> }) {
   const { id: rawId } = use(params);
   const id = decodeURIComponent(rawId);
@@ -49,6 +97,8 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
   const [episode, setEpisode] = useState<EpisodeNode | null>(null);
   const [attention, setAttention] = useState<EpisodeNode[]>([]);
   const [web, setWeb] = useState<{ nodes: EpisodeNode[]; edges: RelationalEdge[] } | null>(null);
+  const [before, setBefore] = useState<EpisodeNode | null>(null);
+  const [after, setAfter] = useState<EpisodeNode | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,6 +116,11 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
       const all: EpisodeNode[] = (await nodeRes.json()).nodes ?? [];
       const found = all.find((n) => n.id === id) ?? null;
       setEpisode(found);
+
+      const ordered = [...all].sort((a, b) => chronicleKey(a).localeCompare(chronicleKey(b)));
+      const at = ordered.findIndex((n) => n.id === id);
+      setBefore(at > 0 ? ordered[at - 1] : null);
+      setAfter(at >= 0 && at < ordered.length - 1 ? ordered[at + 1] : null);
 
       setAttention(attentionRes.ok ? ((await attentionRes.json()).nodes ?? []) : []);
 
@@ -85,6 +140,7 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
   }, [load]);
 
   const parentId = metaString(episode, "parent_id");
+  const folder = episode ? episodeFolderOf(episode) : null;
   const neighbours = (web?.nodes ?? []).filter((n) => n.id !== id);
   const parentHasEdge = Boolean(parentId && neighbours.some((n) => n.id === parentId));
 
@@ -117,7 +173,7 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
         </Link>
         <p className="mt-4 text-sm text-muted-foreground">
           No episode node with id <code className="font-mono">{id}</code>. The wheel answered and
-          does not hold it — 102 of 185 episode folders on disk have no node yet.
+          does not hold it: an episode folder can exist before it is registered on the wheel.
         </p>
       </div>
     );
@@ -139,7 +195,15 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
         </div>
         <p className="font-mono text-xs text-muted-foreground mt-1 break-all">{episode.id}</p>
         {episode.description && <p className="text-sm mt-3">{episode.description}</p>}
+        {(before || after) && (
+          <nav className="flex justify-between gap-4 mt-3" aria-label="Neighbouring episodes">
+            <EpisodeLink node={before} label="←" />
+            <EpisodeLink node={after} label="→" />
+          </nav>
+        )}
       </div>
+
+      {folder && <EpisodeFilesPanel episodeId={`chronicle:${folder}`} />}
 
       <section>
         <h2 className="text-sm font-semibold mb-2">
@@ -163,6 +227,8 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
         )}
       </section>
 
+      {folder && <EpisodeHoldings episodeId={`chronicle:${folder}`} episodePath={folder} />}
+
       <section>
         <h2 className="text-sm font-semibold mb-2">
           Relations {neighbours.length > 0 && `(${neighbours.length})`}
@@ -172,8 +238,7 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
           <p className="mb-2 text-xs text-muted-foreground border rounded-lg p-3 bg-card">
             This episode records a parent in <code>metadata.parent_id</code> (
             <code className="break-all">{parentId}</code>) that was never written as a relation, so
-            it does not appear below and the graph cannot draw it. 101 of 106 containment links in
-            this wheel are in that state.
+            it does not appear below and the graph cannot draw it.
           </p>
         )}
 
