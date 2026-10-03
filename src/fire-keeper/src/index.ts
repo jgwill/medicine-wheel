@@ -57,6 +57,7 @@ export {
   evaluateGates,
   createGate,
   resolveHold,
+  GATE_TRAJECTORY_CONFIDENCE,
   GATE_WILSON_ALIGNMENT,
   GATE_OCAP_COMPLIANCE,
   GATE_CEREMONY_PHASE,
