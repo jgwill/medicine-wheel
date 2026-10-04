@@ -2,9 +2,10 @@
 
 > Where a review stands in the Medicine Wheel, what it is to its community, how it turns a cycle, and which repository holds which part. Drafted 2026-10-03 during screenwalks on grounding the Concordia proposal in Wilson (2008). Everything below is a proposal; nothing is implemented.
 
-**Version:** 0.6.0 (draft for Guillaume's review)
+**Version:** 0.6.1 (draft for Guillaume's review)
 **Document ID:** rispec-place-of-a-review-v0
 **Last Updated:** 2026-10-04
+**Changed in 0.6.1:** chapter 5: a review circle opens with who each person is to the work (p. 84) and speaks in talking story (p. 93).
 **Changed in 0.6:** the end of the book (pp. 133–136): a review offers connections, not conclusions for others; a summary ranks ideas, a tension the review service holds; review changes the reviewer too; the book is not a manual of techniques.
 **Changed in 0.5.1:** p. 99: a review is a definition of a recording and loses its context alone (Tafoya's Principle of Uncertainty), so the `reviews` relation keeps them together; summaries keep rough transitions.
 **Changed in 0.5:** chapter 4 read (pp. 70–81): the teller checks a retelling (p. 71); the review steps as relations are the method, not bookkeeping (p. 79); a review circle asks Wilson's six questions (p. 77) instead of scoring; the three R's on p. 77.
@@ -109,6 +110,7 @@ Under the life-cycle teachings, the same internal review would rest in the **Wes
 8. **Connections, not conclusions.** As a teller, Wilson's role "is not to draw conclusions for another or to make an argument" but to share information and make connections (p. 133). A review offers its relations (fields, related reviews, internal uses) and leaves the conclusions to the people who read it.
 9. **A summary ranks ideas.** Restating earlier messages "would require me to judge certain ideas as more important than others", and summarizing is "a real problem" in this discourse pattern (p. 133). The review service summarizes; it holds the tension by saying a summary is a selection, linking back to the recording (p. 99), and not telling anyone what to learn.
 10. **Review changes the reviewer.** "while supervision, examination and review changes my work it also changes me", and the people who directed the change belong in the writing (p. 136). `revised-after` names who changed a review, and the circle's own changes are part of the record.
+11. **Introductions and talking story.** A circle opens with who each person is to the work: "Getting to know their relationships to other people or space is an appropriate way of finding out about them" (p. 84). It speaks in talking story: each adds on to the last, "though you may disagree, you are not disagreeable", and a third person finds a point "that meets both views" (Peter, p. 93; with `council-record` §3).
 
 ---
 

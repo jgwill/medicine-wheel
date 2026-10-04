@@ -119,12 +119,13 @@ export const resources: Resource[] = [
     content: {
       citation: "Wilson, Shawn (2008). Research Is Ceremony: Indigenous Research Methods. Fernwood Publishing.",
       pages_note: "Page numbers are the 2008 print edition. Quotes are kept short; read the book for the full text.",
-      core_principle: "Research is a ceremony for improving your relationship with an idea (Stan Wilson, quoted p. 110). 'Research isn't just like a ceremony, it is a ceremony' (p. 124).",
+      core_principle: "Research is a ceremony for improving your relationship with an idea (Stan Wilson, quoted p. 110). 'Research isn't just like a ceremony, it is a ceremony' (p. 124). In the book the sentence is first Lewis Cardinal's: 'research is a ceremony' (p. 89).",
       paradigm: "Ontology, epistemology, methodology and axiology, drawn as a circle: inseparable, each blending into the next, the whole greater than the sum of its parts (p. 70; again p. 108). In one paragraph: the ontology and epistemology are a process of relationships that form a mutual reality; the axiology and methodology maintain accountability to these relationships (pp. 70-71).",
       medicine_wheel_note: "Wilson warns that a dogmatic reading of the medicine wheel, in which only one understanding of what each quadrant stands for is 'right', undermines those who use the circle as a theoretical paradigm. All parts of the circle are equal; no part can claim superiority over the rest (p. 70).",
       ontology: {
         definition: "Nature of reality",
-        indigenous_view: "Relationships do not merely shape reality, they are reality (foreword, p. 7). Reality is 'not an object but a process of relationships' (p. 73); each thing is a knot where relationships come together (p. 76).",
+        indigenous_view: "Relationships do not merely shape reality, they are reality (foreword, p. 7). Reality is 'not an object but a process of relationships' (p. 73); each thing is a knot where relationships come together (p. 76). 'Knowledge itself is held in the relationships and connections formed with the environment that surrounds us' (p. 87).",
+        relations: "The chapter 'Relationality' is organized by four relations: with people (p. 84), with the environment/land (p. 86), with the cosmos (p. 89), with ideas (p. 91). Ancestors and future generations: Stan Wilson (p. 80); 'our ancestors ARE part of us' (p. 96). The space between people, and between people and environment, is sacred; ceremony brings them into the same space (p. 87).",
       },
       epistemology: {
         definition: "How we know what we know",
@@ -164,7 +165,9 @@ export const resources: Resource[] = [
         relational_accountability_in_action: "The methodology needs to be based in a community context (be relational) and has to demonstrate respect, reciprocity and responsibility (be accountable as it is put into action) (p. 99).",
         storyteller_role: "The teller's role 'is not to draw conclusions for another or to make an argument' but to share information and make connections; restating or summarizing judges some ideas as more important than others (p. 133). 'For the storyteller to explain too much is not honouring you as the listener' (p. 135).",
         not_a_manual: "The book 'is not intended to impose conclusions on other people or to be a manual of techniques for their research'; 'models do not work outside of specific contexts'; it is one version of a paradigm, a foundation and not a ceiling (p. 136). Communities develop their own guidelines and protocols (p. 136).",
-        transformation: "'If research doesn't change you as a person, then you haven't done it right' is a lesson Wilson reiterates from his co-researchers; he cannot find who shared it, and they all use it as a slogan (p. 135).",
+        transformation: "'If research doesn't change you as a person, then you aren't doing it right', as 'one friend stated' at the 2002 Indigenous Scholars Conference (p. 83). Wilson reiterates it as a great lesson whose sharer he cannot find; the co-researchers all use it as a slogan (p. 135).",
+        egalitarianism: "'Hierarchy in belief systems, social structure and thought are totally foreign to this way of viewing the world'; egalitarianism and inclusiveness are 'the epistemologically inevitable' (p. 92). In talking story, 'though you may disagree, you are not disagreeable', and a third person finds 'some mediating point that meets both views' (Peter, p. 93).",
+        deeds_not_paper: "'You are recognized by your deeds within the Indigenous world. Not by what you say on paper: what you have done' (Lewis Cardinal, p. 91).",
         context_and_definition: "Terry Tafoya's Principle of Uncertainty, as Wilson uses it: an idea's context and its definition cannot be known at the same time; holding both is the essence of relationality (p. 99). A summary is a definition: keep its source beside it.",
         whole_as_analysis: "A conversation is a cumulative analysis and 'cannot be easily taken apart'; verbatim transcripts look jumpy because non-verbal communication is lost, and Wilson keeps the rough transitions (p. 99).",
       },

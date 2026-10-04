@@ -234,7 +234,7 @@ wilsonValidityCheck(log)
 
 ## Built on Wilson
 
-This package reads the lesson Wilson reiterates on p. 135, a co-researcher's slogan whose author he cannot find, as a **validity check** across five dimensions of its own:
+This package reads the lesson Wilson quotes from "one friend" (p. 83) and reiterates on p. 135, a slogan whose author he cannot find, as a **validity check** across five dimensions of its own:
 - **Transformation:** Has the researcher been genuinely changed?
 - **Community benefit:** Has the community received meaningful benefit?
 - **Relational strengthening:** Are relationships stronger after the research?

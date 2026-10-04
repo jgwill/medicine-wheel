@@ -510,7 +510,7 @@ export const validators: Tool[] = [
           giving_back: "Continuous feedback with participants (p. 121); going back to the community after the writing (p. 125)",
           source: "medicine-wheel://wilson/framework",
         },
-        note: "This check matches keywords in a description: the suite's own heuristic, not a judgement Wilson makes. His book 'is not intended to impose conclusions on other people or to be a manual of techniques for their research' (Wilson 2008, p. 136).",
+        note: "This check matches keywords in a description: the suite's own heuristic, not a judgement Wilson makes. His book 'is not intended to impose conclusions on other people or to be a manual of techniques for their research' (Wilson 2008, p. 136); and in the Indigenous world 'you are recognized by your deeds… Not by what you say on paper' (Lewis Cardinal, p. 91). Read the relations actually made, or ask people (#65).",
         recommendations: hasRelational && hasCeremony && hasAccountability ? [
           "The keywords of relational framing, ceremony and accountability are present",
           "Ask the people involved Wilson's six questions (p. 77; medicine-wheel://wilson/framework, researcher_questions)",

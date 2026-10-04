@@ -12,6 +12,11 @@
  * circle into four quadrants and say what the east stands for, which is
  * okay, but arguing that only one's own understanding of the medicine wheel
  * is the "right" one undermines those who use the circle as a paradigm.
+ * Lewis Cardinal (p. 92): the circle is a foundation many peoples share, a
+ * canvas, and the colours on it are each culture, "That's why the Blackfeet
+ * and the Cree are not the same." And the directions belong to a land: a
+ * newcomer to a territory is first told "That is East" (Betty, p. 88). A
+ * vocabulary's provenance can name the territory it was taught in.
  *
  * Provenance is `unattributed` for every entry: no source, tradition or
  * steward is recorded for any of them in this repository. Changing that is a

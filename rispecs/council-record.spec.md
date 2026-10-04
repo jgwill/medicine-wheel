@@ -395,6 +395,8 @@ AdvanceWithDivergence
   decided_at
 ```
 
+Talking story already holds a third way (Wilson 2008, pp. 92–93). Peter: you "add on or hook on to the previous speaker. And though you may disagree, you are not disagreeable"; a third person, reading the difference, finds "some mediating point that meets both views". Stan: "each person's piece of talk does not stand alone." Advance-with-divergence records that practice; the mediating point is offered by a person in the circle, never computed (§3.2).
+
 `revisit_when` is what keeps an advance from becoming a burial. A disagreement carried
 forward with no return condition is one that was quietly overruled and given a gentler
 name. Stating the conditions turns it into something the circle can actually come back to:
@@ -744,6 +746,7 @@ Where the capability lives, and whether it is a package at all, stays open below
 | §Current Reality, §3.1 | `rispecs/community-review.spec.md` | The unanimity rule and the suite's refusal of credentialed authority |
 | §1.2 storage | `tests/node-kind-query.test.ts`, `app/api/nodes/route.ts` | The `?kind=` / `?parent_id=` surface shipped in 0.5.9 (`2e5a54a`, merged `15d4cf3`) |
 | §Current Reality | `rispecs/ceremony-protocol.spec.md` | Describes non-blocking behaviour its package does not have |
+| §3 | Wilson (2008), *Research Is Ceremony*, pp. 92–93 | Talking story: adding on, disagreeing without being disagreeable, a third person's mediating point |
 | §1.2 discriminator rule | `CLAUDE.md` | *"new kinds ride on existing `knowledge` nodes carrying a `metadata.kind` discriminator"* — `NodeType` stays closed (at eight since 0.17.0) |
 
 ---
