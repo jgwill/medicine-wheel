@@ -95,7 +95,7 @@ Ceremony lifecycle protocol — manages ceremony state, four-phase transitions (
 - **Dependencies:** `@medicine-wheel/ontology-core`
 
 ### [@medicine-wheel/fire-keeper](src/fire-keeper)
-Fire Keeper coordination agent — tends the ceremony fire, ensures relational integrity through gating conditions, permission tier escalation, and maintains Wilson alignment as an active agent that evaluates, gates, routes, and escalates.
+Fire Keeper coordination agent — tends the ceremony fire through gating conditions (consent, ceremony phase, trajectory confidence), permission tier escalation, and human decision points; it evaluates, gates, routes, and escalates. It does not measure relational accountability; people judge that (#155).
 
 - **Dependencies:** `@medicine-wheel/ontology-core`, `@medicine-wheel/ceremony-protocol`
 

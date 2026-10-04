@@ -1,5 +1,14 @@
 # Research: Ontological Alignment — Wilson × Medicine Wheel Packages
 
+> **Corrections, 2026-10-04 (jgwill/medicine-wheel#154, #155).** This report is a dated analysis; its readings of Wilson are kept as written except where marked. Checked against the pages since:
+> - The "six domains of relation" are ours, built on Wilson's list (2001, quoted in 2008, p. 56).
+> - "If research doesn't change you…" is Wilson's line (2008, p. 135, through Wulff 2010); reading it as a validity criterion is ours.
+> - "Once you are in relationship, you are responsible for that relationship's wellbeing" has no page found; it is not quoted as Wilson's.
+> - Germination, assimilation and completion are Robert Fritz's creative cycle.
+> - Any score or ranking in Wilson's name is ours: he does not judge any paradigm "as being better or worse than another" (p. 35).
+>
+> Where this report says "Wilson's X" about one of these, read "ours, after Wilson".
+
 > **Scope:** Ontological alignment only — how data models and type systems embody Wilson's relational ontology. Epistemology, axiology, and methodology are handled by other research agents.
 >
 > **Packages Analyzed:** `ontology-core`, `data-store`, `relational-query`
@@ -14,7 +23,7 @@
 - **A critical structural gap persists between ontology-core and data-store:** the rich `Relation` type exists in the type system but has *no persistence path*. The data-store only stores `RelationalEdge` (simple edges), meaning the full relational ontology evaporates at the storage boundary. This is the single most urgent architectural deficiency.
 - **Ceremony-bounded traversal in relational-query is ontologically profound.** The ability to halt graph traversal at unhonored ceremony boundaries (`respectCeremonyBoundaries: true`) and restrict paths to OCAP-compliant relations (`ocapOnly: true`) means the system enforces Wilson's principle that knowledge requires relational protocol — not just models it.
 - **The model remains fundamentally node-centric despite relational aspirations.** Nodes have primary identity (IDs, storage keys, lookup functions); relations derive identity from the nodes they connect (`from_id`/`to_id`, Redis key `edge:{from}:{to}`). Wilson's ontology demands the inverse: reality *is* the relationships, and entities emerge from relational webs.
-- **Wilson's six relation types are partially mapped but structurally incomplete.** The `NodeType` taxonomy (`human | land | spirit | ancestor | future | knowledge`) covers five of Wilson's six relation domains (people, land/environment, ancestors, future generations, ideas/knowledge) but conflates "cosmos" with "spirit" and cannot model multi-party or relation-to-relation connections.
+- **The six relation domains (ours, built on Wilson's list, p. 56) are partially mapped but structurally incomplete.** The `NodeType` taxonomy (`human | land | spirit | ancestor | future | knowledge`) covers five of the six relation domains (people, land/environment, ancestors, future generations, ideas/knowledge) but conflates "cosmos" with "spirit" and cannot model multi-party or relation-to-relation connections.
 
 ---
 
@@ -75,7 +84,7 @@ This dual type system means any function accepting `RelationalEdge` can silently
 
 #### NodeType Taxonomy vs. Wilson's Six Relations
 
-Wilson identifies six domains of relation: (1) people, (2) land/environment, (3) cosmos, (4) ideas, (5) ancestors, (6) future generations. The `NodeType` (`types.ts`, line 39–45) maps:
+Six domains of relation, ours, built on Wilson's list (Wilson 2001, quoted in 2008, p. 56: a relationship with all of creation, the cosmos, animals, plants, the earth): (1) people, (2) land/environment, (3) cosmos, (4) ideas, (5) ancestors, (6) future generations. The `NodeType` (`types.ts`, line 39–45) maps:
 
 | Wilson's Domain | NodeType | Alignment |
 |----------------|----------|-----------|
