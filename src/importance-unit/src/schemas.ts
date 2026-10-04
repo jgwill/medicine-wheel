@@ -74,6 +74,7 @@ export const ImportanceUnitSchema = z.object({
   id: z.string(),
   direction: DirectionNameSchema,
   epistemicWeight: z.number().min(0).max(1),
+  weightProfile: z.enum(['equal', 'dream-first']).optional(),
   source: EpistemicSourceSchema,
   accountabilityLinks: z.array(AccountabilityLinkSchema),
   circleDepth: z.number().int().min(1),

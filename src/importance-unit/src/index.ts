@@ -12,6 +12,7 @@
 // ── Types ───────────────────────────────────────────────────────────────────
 export type {
   EpistemicSource,
+  WeightProfileId,
   AccountabilityLinkType,
   AxiologicalPillar,
   AccountabilityLink,
@@ -61,8 +62,13 @@ export {
 } from './unit.js';
 
 // ── Epistemic Weight ────────────────────────────────────────────────────────
+export type { WeightProfile } from './epistemic-weight.js';
 export {
   BASE_WEIGHTS,
+  WEIGHT_PROFILES,
+  DEFAULT_WEIGHT_PROFILE,
+  LEGACY_WEIGHT_PROFILE,
+  profileOf,
   computeWeight,
   adjustForSource,
   adjustForDepth,

@@ -22,6 +22,9 @@ import type { DirectionName } from '@medicine-wheel/ontology-core';
  */
 export type EpistemicSource = 'land' | 'dream' | 'code' | 'vision';
 
+/** Named weight profiles (see `WEIGHT_PROFILES`). */
+export type WeightProfileId = 'equal' | 'dream-first';
+
 // ── Accountability Link Types ───────────────────────────────────────────────
 
 /**
@@ -139,21 +142,26 @@ export interface ImportanceUnitMeta {
 // ── ImportanceUnit ──────────────────────────────────────────────────────────
 
 /**
- * A relationally-accountable piece of meaning — the fundamental unit
- * of knowledge in Wilson's relational epistemology.
+ * A relationally-accountable piece of meaning: this package's unit of
+ * knowledge, built after Wilson's relational accountability.
  *
  * Not a flat data object. Each unit carries epistemic weight,
  * source dimensions, accountability links, and circle depth tracking.
- * Dream-state knowledge starts at 0.85+ weight; rational-filtered
- * inputs start lower. Weight increases with circleDepth.
+ * Every source starts at the same weight by default (profile `equal`, #155);
+ * weight increases with circleDepth.
  */
 export interface ImportanceUnit {
   /** Unique identifier for this importance unit */
   id: string;
   /** Medicine Wheel quadrant alignment */
   direction: DirectionName;
-  /** Epistemic authority (0.0–1.0). Dream-state starts at 0.85+ */
+  /** Epistemic weight (0.0–1.0), from the unit's weight profile and circle depth */
   epistemicWeight: number;
+  /**
+   * The weight profile that set `epistemicWeight`. Absent on units stored
+   * before #155: they were weighted with `dream-first` and keep it.
+   */
+  weightProfile?: WeightProfileId;
   /** Relational origin dimension */
   source: EpistemicSource;
   /** Relational strings connecting to what this unit is accountable to */
@@ -197,6 +205,8 @@ export interface CreateUnitInput {
   accountabilityLinks?: AccountabilityLink[];
   /** COAIA trace ID */
   traceId?: string;
+  /** Weight profile for this unit (default: `equal`) */
+  weightProfile?: WeightProfileId;
 }
 
 /**

@@ -12,7 +12,7 @@
 
 import type { DirectionName } from '@medicine-wheel/ontology-core';
 import type { ImportanceUnit, CircleRefinement, CeremonyState } from './types.js';
-import { computeWeight } from './epistemic-weight.js';
+import { computeWeight, profileOf } from './epistemic-weight.js';
 
 // ── Circle Increment ────────────────────────────────────────────────────────
 
@@ -45,7 +45,8 @@ export function incrementCircle(
     ...unit,
     circleDepth: newDepth,
     direction,
-    epistemicWeight: computeWeight(unit.source, newDepth),
+    epistemicWeight: computeWeight(unit.source, newDepth, profileOf(unit)),
+    weightProfile: profileOf(unit),
     ceremonyState,
     meta: {
       ...unit.meta,
