@@ -54,7 +54,7 @@ export function elderGuidance(circle: ReviewCircle): {
     suggestions.push(`Voices from ${missing.join(', ')} have not yet been heard`);
   }
   if (circle.wilsonAlignment < 0.5) {
-    suggestions.push('Wilson alignment is below threshold — consider deeper reflection');
+    suggestions.push('The circle\'s alignment number is below 0.5 (ours, not a Wilson score) — ask the circle whether more reflection is needed');
   }
   if (!circle.ocapCompliant) {
     suggestions.push('OCAP® compliance has not been confirmed');

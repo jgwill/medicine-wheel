@@ -113,7 +113,8 @@ export function validateArc(
   if (completeness.wilsonAlignment < 0.5 && relations.length > 0) {
     violations.push({
       type: 'low_wilson',
-      message: `Wilson alignment is ${(completeness.wilsonAlignment * 100).toFixed(0)}% (below 50% threshold)`,
+      // type 'low_wilson' kept for consumers; the number is ours, not Wilson's (#155).
+      message: `Relations' recorded accountability averages ${(completeness.wilsonAlignment * 100).toFixed(0)}% (below 50%)`,
       severity: 'warning',
     });
     recommendations.push('Strengthen relational accountability — review obligations and reciprocity');
