@@ -14,7 +14,7 @@ Ongoing relational consent lifecycle for the Medicine Wheel Developer Suite.
 
 Transforms consent from a boolean checkbox into a living relational obligation with lifecycle tracking, renewal, renegotiation, and community-level consent protocols.
 
-Wilson's relational accountability means consent is not an event — it's a *relationship*. "Once you are in relationship, you are responsible for that relationship's wellbeing." Consent must be maintained, renewed, and can be withdrawn — with cascading effects on all dependent relations.
+Consent is not an event — it's a *relationship*. Wilson describes consent held in the relationship, not only on a form (2008, p. 116). "Once you are in relationship, you are responsible for that relationship's wellbeing" is often credited to him; no page has been found, so here it is this package's principle. Consent must be maintained, renewed, and can be withdrawn — with cascading effects on all dependent relations.
 
 ## Installation
 

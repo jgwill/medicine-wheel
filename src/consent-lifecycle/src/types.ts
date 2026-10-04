@@ -2,9 +2,11 @@
  * @medicine-wheel/consent-lifecycle — Type Definitions
  *
  * Types for managing consent as a living relational obligation.
- * Wilson's relational accountability means consent is not an event —
- * it's a relationship. "Once you are in relationship, you are
- * responsible for that relationship's wellbeing."
+ * Consent is not an event but a relationship. Wilson describes consent
+ * held in the relationship, not only on a form: participants trusted the
+ * person rather than the paper (2008, p. 116). "Once you are in relationship,
+ * you are responsible for that relationship's wellbeing" is often credited to
+ * him; no page has been found, so here it is this package's principle.
  */
 
 import type { OcapFlags } from '@medicine-wheel/ontology-core';
