@@ -4,8 +4,9 @@
  * Types for tracking the transformative impact of research on
  * researchers, communities, and relational networks.
  *
- * Wilson's validity criterion: "If research doesn't change you,
- * you haven't done it right."
+ * Built on Wilson's line that research which does not change you as a
+ * person has not been done right (2008, p. 135, as cited by Wulff 2010;
+ * not yet checked against the page). The dimensions are ours.
  */
 
 import type {

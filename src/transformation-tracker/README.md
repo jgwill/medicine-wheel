@@ -8,7 +8,7 @@ Research transformation tracking for the Medicine Wheel Developer Suite.
 > move in lockstep — pin exact versions. See
 > [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
 
-> Wilson's validity criterion: "If research doesn't change you, you haven't done it right."
+> Built on Wilson's line that research which does not change you as a person has not been done right (2008, p. 135, as cited by Wulff 2010; not yet checked against the page). Reading it as a validity check, and the five dimensions scored here, are this package's design.
 
 ## Purpose
 

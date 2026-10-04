@@ -1,6 +1,6 @@
 # transformation-tracker — RISE Specification
 
-> Research impact and growth tracking — implements Wilson's validity criterion: "If research doesn't change you, you haven't done it right." Tracks transformative impact on researchers, communities, and relational networks.
+> Research impact and growth tracking — built on Wilson's line that research which does not change you as a person has not been done right (2008, p. 135, as cited by Wulff 2010; not yet checked against the page); the validity check is ours. Tracks transformative impact on researchers, communities, and relational networks.
 
 **Version:** 0.1.0  
 **Package:** `@medicine-wheel/transformation-tracker`  
@@ -23,7 +23,7 @@ Users create **transformation-aware research systems** where:
 
 ## Creative Intent
 
-**What this enables:** A research system that measures success not by publication count or citation index, but by *transformation* — of the researcher, the community, and the relational web. Wilson's validity criterion becomes computable.
+**What this enables:** A research system that measures success not by publication count or citation index, but by *transformation* — of the researcher, the community, and the relational web. Our validity check, built on Wilson's line, becomes computable; the computing is ours, not his.
 
 **Structural Tension:** Between Western research validity (replicability, generalizability, peer approval) and Indigenous research validity (transformation of researcher, community benefit, relational strengthening, reciprocity balance). The transformation-tracker resolves this by making transformation measurable alongside — not instead of — traditional metrics.
 
@@ -232,9 +232,9 @@ wilsonValidityCheck(log)
 
 ---
 
-## Wilson Alignment
+## Built on Wilson
 
-This is Wilson's **validity criterion** for Indigenous research:
+This package reads Wilson's line (p. 135, through Wulff 2010) as a **validity check** across five dimensions of its own:
 - **Transformation:** Has the researcher been genuinely changed?
 - **Community benefit:** Has the community received meaningful benefit?
 - **Relational strengthening:** Are relationships stronger after the research?

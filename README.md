@@ -130,7 +130,7 @@ Four-source epistemic dimensional indexing — Land, Dream, Code, Vision travers
 - **Dependencies:** `@medicine-wheel/ontology-core`
 
 ### [@medicine-wheel/transformation-tracker](src/transformation-tracker)
-Research transformation tracking — Wilson validity criterion: "If research doesn't change you, you haven't done it right." Tracks researcher growth, community impact, relational shifts, reciprocity balance, and seven-generation sustainability.
+Research transformation tracking — built on Wilson's line that research which does not change you has not been done right (2008, p. 135, through Wulff 2010); the validity check is ours. Tracks researcher growth, community impact, relational shifts, reciprocity balance, and seven-generation sustainability.
 
 - **Dependencies:** `@medicine-wheel/ontology-core`, `@medicine-wheel/ceremony-protocol`, `zod`
 

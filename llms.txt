@@ -25,7 +25,7 @@
 - [narrative-engine](src/narrative-engine): Beat sequencing, arc validation, cadence patterns, and timeline building for the Medicine Wheel Developer Suite
 - [importance-unit](src/importance-unit): ImportanceUnit — the relational unit of knowledge carrying epistemic weight, source dimensions (Land/Dream/Code/Vision), circle depth tracking, and accountability links grounded in Wilson's relational epistemology
 - [relational-index](src/relational-index): Four-source epistemic dimensional indexing — Land, Dream, Code, Vision traversal with cross-dimensional mapping and spiral depth metrics
-- [transformation-tracker](src/transformation-tracker): Research transformation tracking — Wilson validity criterion: if research doesn't change you, you haven't done it right. Tracks researcher, community, and relational transformation
+- [transformation-tracker](src/transformation-tracker): Research transformation tracking — built on Wilson's line that research which does not change you has not been done right (2008, p. 135, through Wulff 2010); the validity check is ours. Tracks researcher, community, and relational transformation
 - [graph-viz](src/graph-viz): Medicine Wheel graph visualization — circular layout with four-direction node positioning, ceremony-aware edges, and OCAP® indicators
 - [relational-query](src/relational-query): Query builder, graph traversal, and accountability audit for the Medicine Wheel relational web. Protocol-aware: respects ceremony boundaries and OCAP® compliance during traversal.
 - [prompt-decomposition](src/prompt-decomposition): Ontology-enriched prompt decomposition engine for the Medicine Wheel Developer Suite — intent extraction, relational dependency mapping, and ceremony-aware action stacking
@@ -80,7 +80,7 @@ The Next.js app surfaces that relational state as REST endpoints (also consumed 
 - [narrative-beats-lifecycle](rispecs/narrative-beats-lifecycle.spec.md): A beat's life from registration to witnessing
 - [importance-unit](rispecs/importance-unit.spec.md): Epistemic weight, source dimensions, circle depth
 - [relational-index](rispecs/relational-index.spec.md): Four-source dimensional indexing, spiral depth
-- [transformation-tracker](rispecs/transformation-tracker.spec.md): Wilson validity, seven generations, reciprocity
+- [transformation-tracker](rispecs/transformation-tracker.spec.md): a validity check built on Wilson (ours), seven generations, reciprocity
 - [graph-viz](rispecs/graph-viz.spec.md): Layout engine, SVG paths, data converters
 - [relational-query](rispecs/relational-query.spec.md): Query, traversal, audit, Cypher
 - [relational-web-package](rispecs/relational-web-package.spec.md): The neighbourhood a caller receives, and what it withholds
