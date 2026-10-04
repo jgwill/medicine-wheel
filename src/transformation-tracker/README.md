@@ -8,7 +8,7 @@ Research transformation tracking for the Medicine Wheel Developer Suite.
 > move in lockstep — pin exact versions. See
 > [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
 
-> Built on the lesson Wilson reiterates at the end of *Research Is Ceremony*: "If research doesn't change you as a person, then you haven't done it right" (2008, p. 135). It is first quoted on p. 83 as what "one friend stated" at the 2002 Indigenous Scholars Conference; on p. 135 Wilson cannot find who shared it, and the co-researchers all use it as a slogan. Reading it as a validity check, and the five dimensions scored here, are this package's design.
+> Built on the lesson Wilson reiterates at the end of *Research Is Ceremony*: "If research doesn't change you as a person, then you haven't done it right" (2008, p. 135). It is first quoted on p. 83 as what "one friend stated" at the 2002 Indigenous Scholars Conference; on p. 135 Wilson cannot find who shared it, and the co-researchers all use it as a slogan. "Validity" is this package's word, not the book's: Wilson's circle sets validity aside for "authentic or credible" (p. 101). Reading it as a validity check, and the five dimensions scored here, are this package's design.
 
 ## Purpose
 

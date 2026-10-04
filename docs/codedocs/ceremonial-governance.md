@@ -48,7 +48,7 @@ The implementation is intentionally straightforward: path rules can be exact pre
 
 `src/consent-lifecycle/src/lifecycle.ts` and related modules do the same thing for consent. `grantConsent`, `renewConsent`, `renegotiateConsent`, and `withdrawConsent` always return updated records with history. The package also has scope matching, community consent helpers, and withdrawal cascades in `src/consent-lifecycle/src/cascade.ts`.
 
-`src/transformation-tracker/src/validity.ts` then asks the most demanding question in the suite: was the work valid under Wilson's standard because it changed the researcher, the community, and the relationships? Supporting modules break that into reflections, community impact, relational shifts, reciprocity, seven generations, and prompts.
+`src/transformation-tracker/src/validity.ts` then asks the suite's own most demanding question: did the work change the researcher, the community, and the relationships? It builds on a lesson Wilson quotes from his co-researchers (*Research Is Ceremony*, 2008, pp. 83, 135); the "validity" framing is ours, since Wilson's circle sets validity aside for "authentic or credible" (p. 101). Supporting modules break that into reflections, community impact, relational shifts, reciprocity, seven generations, and prompts.
 
 ## Basic Usage
 

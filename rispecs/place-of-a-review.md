@@ -2,9 +2,10 @@
 
 > Where a review stands in the Medicine Wheel, what it is to its community, how it turns a cycle, and which repository holds which part. Drafted 2026-10-03 during screenwalks on grounding the Concordia proposal in Wilson (2008). Everything below is a proposal; nothing is implemented.
 
-**Version:** 0.6.3 (draft for Guillaume's review)
+**Version:** 0.6.4 (draft for Guillaume's review)
 **Document ID:** rispec-place-of-a-review-v0
 **Last Updated:** 2026-10-04
+**Changed in 0.6.4:** pp. 100–107: how a circle opens, the test, recording reciprocity, the steps as a circle.
 **Changed in 0.6.3:** pp. 97–98: a review that spans sessions is a composite, and says so; quotes lifted into themes keep their link back.
 **Changed in 0.6.2:** p. 78: correcting a review's text does not restore a relationship it harmed.
 **Changed in 0.6.1:** chapter 5: a review circle opens with who each person is to the work (p. 84) and speaks in talking story (p. 93).
@@ -114,6 +115,8 @@ Under the life-cycle teachings, the same internal review would rest in the **Wes
 10. **Review changes the reviewer.** "while supervision, examination and review changes my work it also changes me", and the people who directed the change belong in the writing (p. 136). `revised-after` names who changed a review, and the circle's own changes are part of the record.
 11. **Introductions and talking story.** A circle opens with who each person is to the work: "Getting to know their relationships to other people or space is an appropriate way of finding out about them" (p. 84). It speaks in talking story: each adds on to the last, "though you may disagree, you are not disagreeable", and a third person finds a point "that meets both views" (Peter, p. 93; with `council-record` §3).
 12. **A composite says it is one.** Wilson's conversation chapter is several conversations made into one; he says so, keeps "the content of what each person said", alters some words "to get them to flow together", and marks his own words as the links, aware that "it ends up sounding like I just took over the conversation" (p. 98). A review that draws on several screenwalks, or speaks in personas, does the same. And a review that picks themes and backs them with quotes removes the quotes "from their narrative and environmental context" (p. 97); its link back to the recording is the repair.
+13. **How a circle opens, and its test.** Wilson brings his writing back to his co-researchers "so that you can let me know what it is that you would like to see in it", and they agree how to talk: "non-judgemental listening and non-interference", building on ideas "rather than debate over right and wrong" (p. 100). Whoever records, shares: "I don't want there to be any feeling of me just recording your thoughts without sharing my own" (p. 100). Recording comes after relationship: a meal, informal talk, then "I'm given permission to tape", one question, and listening (Cora, p. 106). The circle's test is a question for people: "Is it building relationships rather than breaking them down?" (p. 101).
+14. **The steps are a circle.** Wilson sees topic, methods, analysis and presentation "in a circle in my mind, with each blending into and influencing the others", and asks before putting headings on others' words, "if that is okay with everyone?" (p. 107). The review's three steps (correct, ground, relate) and its circle are one turning, not a pipeline.
 
 ---
 

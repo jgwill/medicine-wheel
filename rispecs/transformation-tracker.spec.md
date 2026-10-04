@@ -234,7 +234,7 @@ wilsonValidityCheck(log)
 
 ## Built on Wilson
 
-This package reads the lesson Wilson quotes from "one friend" (p. 83) and reiterates on p. 135, a slogan whose author he cannot find, as a **validity check** across five dimensions of its own:
+This package reads the lesson Wilson quotes from "one friend" (p. 83) and reiterates on p. 135, a slogan whose author he cannot find, as a **validity check** across five dimensions of its own. The word is ours: in Wilson's conversation, "rather than it being valid or reliable… it's authentic or credible… it is relational" (Peter, p. 101), and the test is "Is it building relationships rather than breaking them down?" (p. 101). `wilsonValidityCheck` keeps its name for compatibility.
 - **Transformation:** Has the researcher been genuinely changed?
 - **Community benefit:** Has the community received meaningful benefit?
 - **Relational strengthening:** Are relationships stronger after the research?
