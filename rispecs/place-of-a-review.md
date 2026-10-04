@@ -5,6 +5,7 @@
 **Version:** 0.5.0 (draft for Guillaume's review)
 **Document ID:** rispec-place-of-a-review-v0
 **Last Updated:** 2026-10-04
+**Changed in 0.5.1:** p. 99: a review is a definition of a recording and loses its context alone (Tafoya's Principle of Uncertainty), so the `reviews` relation keeps them together; summaries keep rough transitions.
 **Changed in 0.5:** chapter 4 read (pp. 70–81): the teller checks a retelling (p. 71); the review steps as relations are the method, not bookkeeping (p. 79); a review circle asks Wilson's six questions (p. 77) instead of scoring; the three R's on p. 77.
 **Changed in 0.4:** two decisions recorded (two words; an internal review rests in the North); the kind name, the relation names and the cycle's grain explained in plain words, each with a recommendation; a section for the local agent; p. 35 replaces p. 53 as the ground against scores (on the page, Hermes's "formula" is a recipe for method).
 **Changed in 0.3:** the end of chapter 3 (pp. 59–61): Atkinson's principles say what a review does and that approval belongs to the community; Kinunwa on ceremony as the preparation.
@@ -135,7 +136,7 @@ A review rides a `knowledge` node with a `metadata.kind` discriminator and a dir
 
 ### 3. The steps and the circle as relations
 
-For Wilson, "the methodology is simply the building of more relations" (p. 79). Writing a review's steps as relations is the method itself, not bookkeeping; each new relation must respect the ones around it, and both sides share its power (p. 79).
+For Wilson, "the methodology is simply the building of more relations" (p. 79). Writing a review's steps as relations is the method itself, not bookkeeping; each new relation must respect the ones around it, and both sides share its power (p. 79). The first relation matters most: a review defines a recording, and a definition loses its context when it travels alone (Tafoya's Principle of Uncertainty, p. 99). A generated summary also keeps the recording's rough transitions rather than inventing smooth ones (p. 99).
 
 | Review step | Relation (proposed name) | To | Exists today? |
 |---|---|---|---|
