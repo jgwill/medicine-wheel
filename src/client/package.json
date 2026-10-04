@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/client",
-  "version": "0.17.3",
+  "version": "0.17.4",
   "type": "module",
   "description": "Typed HTTP client for a Medicine Wheel — nodes, edges, ceremonies, beats and the ceremonial diary — with the wheel's paging honesty carried through (count, total, truncated) and fail-fast errors that name the status.",
   "main": "dist/index.js",
@@ -41,9 +41,9 @@
     "directory": "src/client"
   },
   "dependencies": {
-    "@medicine-wheel/memory": "^0.17.3",
-    "@medicine-wheel/ontology-core": "^0.17.3",
-    "@medicine-wheel/storage-provider": "^0.17.3"
+    "@medicine-wheel/memory": "^0.17.4",
+    "@medicine-wheel/ontology-core": "^0.17.4",
+    "@medicine-wheel/storage-provider": "^0.17.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

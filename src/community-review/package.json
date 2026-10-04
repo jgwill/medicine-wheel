@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/community-review",
-  "version": "0.17.3",
+  "version": "0.17.4",
   "description": "Community-based ceremonial review protocol for Medicine Wheel — review circles, consensus and relational accountability, after the community-grounded credibility Wilson describes; the Elder step is the package's own design",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,8 +23,8 @@
     "README.md"
   ],
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.17.3",
-    "@medicine-wheel/ceremony-protocol": "^0.17.3",
+    "@medicine-wheel/ontology-core": "^0.17.4",
+    "@medicine-wheel/ceremony-protocol": "^0.17.4",
     "zod": "^3.23.0"
   },
   "devDependencies": {
