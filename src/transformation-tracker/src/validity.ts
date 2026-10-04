@@ -2,10 +2,11 @@
  * @medicine-wheel/transformation-tracker — Validity Module
  *
  * THE core function: wilsonValidityCheck.
- * Assesses the package's validity check, built on Wilson's line that
- * research which does not change you as a person has not been done right
- * (2008, p. 135, as cited by Wulff 2010; not yet checked against the page).
- * The check and its five dimensions are ours; the function keeps its name.
+ * Assesses the package's validity check, built on the lesson Wilson
+ * reiterates: "If research doesn't change you as a person, then you haven't
+ * done it right" (2008, p. 135). A co-researcher shared it; Wilson cannot
+ * find which. The check and its five dimensions are ours; the function keeps
+ * its name.
  *
  * This is the primary output of the transformation-tracker package —
  * a holistic assessment of whether the research has been valid

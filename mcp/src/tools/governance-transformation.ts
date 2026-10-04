@@ -193,7 +193,7 @@ export const governanceTransformationTools: Tool[] = [
           overall_valid: validity.overallValid,
           score: validity.score,
           recommendations: validity.recommendations,
-          teaching: "If research doesn't change you, you haven't done it right."
+          teaching: "If research doesn't change you as a person, then you haven't done it right. (A co-researcher's lesson that Wilson quotes, 2008, p. 135.)"
         };
       } catch (error) {
         return { status: "error", message: String(error) };

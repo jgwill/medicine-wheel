@@ -1429,7 +1429,7 @@ const health = indexHealth(index);
 npm install @medicine-wheel/transformation-tracker
 ```
 
-Research transformation tracking — Wilson's validity criterion: "If research doesn't change you, you haven't done it right." Tracks the transformative impact of research on researchers, communities, and relational networks.
+Research transformation tracking — Built on the lesson Wilson quotes from his co-researchers, "If research doesn't change you as a person, then you haven't done it right" (2008, p. 135); the validity check is ours. Tracks the transformative impact of research on researchers, communities, and relational networks.
 
 ### Types
 

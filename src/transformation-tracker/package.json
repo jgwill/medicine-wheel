@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/transformation-tracker",
   "version": "0.17.2",
-  "description": "Research transformation tracking for the Medicine Wheel Developer Suite — built on Wilson: research that does not change you has not been done right",
+  "description": "Research transformation tracking for the Medicine Wheel Developer Suite — built on a lesson Wilson quotes: if research doesn't change you as a person, you haven't done it right",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

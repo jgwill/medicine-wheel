@@ -2,10 +2,11 @@
  * @medicine-wheel/transformation-tracker
  *
  * Research transformation tracking for the Medicine Wheel Developer Suite.
- * Built on Wilson's line that research which does not change you as a
- * person has not been done right (2008, p. 135, as cited by Wulff 2010;
- * not yet checked against the page). Reading it as a validity check, and
- * its five dimensions, are this package's design.
+ * Built on the lesson Wilson reiterates at the end of Research Is Ceremony:
+ * "If research doesn't change you as a person, then you haven't done it
+ * right" (2008, p. 135). He cannot find which co-researcher shared it; they
+ * all use it as a slogan. Reading it as a validity check, and the five
+ * dimensions, are this package's design.
  *
  * @packageDocumentation
  */
