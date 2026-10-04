@@ -10,7 +10,7 @@ The ImportanceUnit is this suite's relational unit of knowledge, after Wilson's 
 
 ## Overview
 
-By default this package ranks no source of knowing above another: every unit starts at the same weight, and weight grows by circling back (#155). Wilson holds empirical knowledge crucial but not the only way of knowing (2008, p. 58), needs both empirical and other forms (p. 111), and declines to judge any paradigm better or worse than another (p. 35). The package's earlier order, dream above land above vision above code, is its own design and is kept as the named profile `dream-first`, so units stored before #155 keep their weights.
+By default this package ranks no source of knowing above another: every unit starts at the same weight, and weight grows by circling back (#155). Wilson holds empirical knowledge crucial but not the only way of knowing (2008, p. 58), needs both empirical and other forms (p. 111), and declines to judge any paradigm better or worse than another (p. 35). Of the circle itself: all parts are equal, and none can claim superiority over the rest (p. 70). The package's earlier order, dream above land above vision above code, is its own design and is kept as the named profile `dream-first`, so units stored before #155 keep their weights.
 
 ### What it provides
 

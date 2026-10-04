@@ -5,9 +5,10 @@
  * profile and the unit's circle depth.
  *
  * By default no source is ranked above another (profile `equal`): weight
- * grows only by circling back. Wilson needs both empirical and other forms
- * of knowing (2008, pp. 58, 111) and declines to judge any paradigm better
- * or worse than another (p. 35). The package's earlier order, dream above
+ * grows only by circling back. Of the circle, Wilson writes that all parts
+ * are equal and none can claim superiority over the rest (2008, p. 70). He
+ * needs both empirical and other forms of knowing (pp. 58, 111) and
+ * declines to judge any paradigm better or worse than another (p. 35). The package's earlier order, dream above
  * land above vision above code, is kept as the profile `dream-first`, our
  * own design and unattributed, so that units stored before #155 keep the
  * weights they were given.
@@ -35,7 +36,7 @@ export const WEIGHT_PROFILES: Readonly<Record<WeightProfileId, WeightProfile>> =
     title: 'Equal: no source ranked above another',
     weights: { dream: 0.7, land: 0.7, vision: 0.7, code: 0.7 },
     provenance:
-      'Default since #155. Wilson needs both empirical and other forms of knowing (2008, pp. 58, 111) and declines to judge paradigms better or worse (p. 35).',
+      'Default since #155. All parts of the circle are equal (Wilson 2008, p. 70); he needs both empirical and other forms of knowing (pp. 58, 111) and declines to judge paradigms better or worse (p. 35).',
   },
   'dream-first': {
     id: 'dream-first',

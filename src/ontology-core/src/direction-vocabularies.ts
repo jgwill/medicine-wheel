@@ -8,6 +8,11 @@
  * each is named, says who uses it, and carries its provenance. A consumer
  * names the vocabulary it means instead of writing its own strings.
  *
+ * Wilson (2008, p. 70) names the risk this guards against: people divide the
+ * circle into four quadrants and say what the east stands for, which is
+ * okay, but arguing that only one's own understanding of the medicine wheel
+ * is the "right" one undermines those who use the circle as a paradigm.
+ *
  * Provenance is `unattributed` for every entry: no source, tradition or
  * steward is recorded for any of them in this repository. Changing that is a
  * knowledge holder's decision, not an engineering one (#113, #125).
