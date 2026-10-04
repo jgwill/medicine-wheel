@@ -2,9 +2,10 @@
 
 > Where a review stands in the Medicine Wheel, what it is to its community, how it turns a cycle, and which repository holds which part. Drafted 2026-10-03 during screenwalks on grounding the Concordia proposal in Wilson (2008). Everything below is a proposal; nothing is implemented.
 
-**Version:** 0.4.0 (draft for Guillaume's review)
+**Version:** 0.5.0 (draft for Guillaume's review)
 **Document ID:** rispec-place-of-a-review-v0
 **Last Updated:** 2026-10-04
+**Changed in 0.5:** chapter 4 read (pp. 70–81): the teller checks a retelling (p. 71); the review steps as relations are the method, not bookkeeping (p. 79); a review circle asks Wilson's six questions (p. 77) instead of scoring; the three R's on p. 77.
 **Changed in 0.4:** two decisions recorded (two words; an internal review rests in the North); the kind name, the relation names and the cycle's grain explained in plain words, each with a recommendation; a section for the local agent; p. 35 replaces p. 53 as the ground against scores (on the page, Hermes's "formula" is a recipe for method).
 **Changed in 0.3:** the end of chapter 3 (pp. 59–61): Atkinson's principles say what a review does and that approval belongs to the community; Kinunwa on ceremony as the preparation.
 **Changed in 0.2:** Wilson's own statement about a review (pp. 43–44) and Cora's return to the community (p. 125) replaces "Wilson never speaks of reviews"; the review and its community; the review as a turn of a cycle; directions named by the teaching they come from; the three R's, cited correctly; small implementation steps.
@@ -99,9 +100,10 @@ Under the life-cycle teachings, the same internal review would rest in the **Wes
 1. **A review is unfinished until it is given back.** After the writing comes going back to the community (Cora, p. 125). The circle held about a review (`subject_id`) is where it is given back. Its responses become the review's next versions, named: who spoke, and when (p. 121; naming per knowledge, pp. 114–116).
 2. **The community can steer it.** The community decides what is researched and has direct access to decisions (Cora and Lewis, p. 110). The circle can change a review, hold it ("Let's sleep on it", p. 113), return it, or deepen it. `community-review` already has these outcomes: `ceremonialHold`, `returnToCircle`, `requestDeepening`.
 3. **It builds on; it does not judge.** A review in Wilson's sense situates and builds on someone's work (pp. 43–44). Step 2 of the review service corrects *our generated text*, never the maker of the video.
-4. **Who the community is.** People in the circle, and the seats (`agent` nodes, 0.17.0) that speak and are accountable to the people they serve. Seats do not stand in for the community.
-5. **Credibility, not a score.** Credibility comes from co-researchers' feedback (p. 121) and from those who know the work confirming it (p. 131). Nothing in the pages read scores it.
-6. **Approval belongs to the community, on its conditions.** The people themselves approve the research *and its methods* (Atkinson, quoted p. 59). For a Miadi review, that means the circle can approve how the screenwalk was made, not only what the review says. What has no source is a fixed "Elder blessing" as a validation step.
+4. **The teller checks the retelling.** Wilson retold Cora's story, she felt misrepresented, and he used her own published version, which she could check "to ensure that they represent the intent of her message" (p. 71). A review retells someone's words: wherever possible, the speaker checks it. An inaccurate translation of her grandfather's words was what hurt most (p. 72); generated summaries and translations say that they are generated.
+5. **Who the community is.** People in the circle, and the seats (`agent` nodes, 0.17.0) that speak and are accountable to the people they serve. Seats do not stand in for the community.
+6. **Credibility, not a score.** Credibility comes from co-researchers' feedback (p. 121) and from those who know the work confirming it (p. 131). Nothing in the pages read scores it.
+7. **Approval belongs to the community, on its conditions.** The people themselves approve the research *and its methods* (Atkinson, quoted p. 59). For a Miadi review, that means the circle can approve how the screenwalk was made, not only what the review says. What has no source is a fixed "Elder blessing" as a validation step.
 
 ---
 
@@ -133,6 +135,8 @@ A review rides a `knowledge` node with a `metadata.kind` discriminator and a dir
 
 ### 3. The steps and the circle as relations
 
+For Wilson, "the methodology is simply the building of more relations" (p. 79). Writing a review's steps as relations is the method itself, not bookkeeping; each new relation must respect the ones around it, and both sides share its power (p. 79).
+
 | Review step | Relation (proposed name) | To | Exists today? |
 |---|---|---|---|
 | The account | `reviews` | The screenwalk's `CaptureRecord` (kind `video`, `uri` the video's address; *capture* is the canonical word, `capture-registry.spec.md`) | The registry, yes; the link, no. The review node holds only `metadata.source_url`. |
@@ -150,7 +154,7 @@ Answering Miadi's R1–R5 (`packages/community/PAGE-POST-CIRCLE.md`):
 - **R1 Storage.** A review circle is the talking-circle ceremony Miadi already opens, with its spoken turns as beats. `ReviewCircle` becomes a read over that ceremony, not a second store.
 - **R2 Roles.** Map from `community-identity` roles. An Elder is a relationship a community recognizes, not a role an administrator assigns (pp. 113–116).
 - **R3 Artifact.** A review is `knowledge`, or a registered review kind (proposal 2).
-- **R4 Outcomes.** Keep `ceremonialHold` (p. 113), `returnToCircle` (p. 121) and `requestDeepening` (pp. 119–120). `approveWithBlessings` should not require an "Elder blessing": no source supports it as a validation step. What does have a source is approval by the community, on its own conditions, covering the methods as well as the work (Atkinson, quoted p. 59). Record who approved and on what conditions; do not count blessings.
+- **R4 Outcomes.** Keep `ceremonialHold` (p. 113), `returnToCircle` (p. 121) and `requestDeepening` (pp. 119–120). `approveWithBlessings` should not require an "Elder blessing": no source supports it as a validation step. What does have a source is approval by the community, on its own conditions, covering the methods as well as the work (Atkinson, quoted p. 59). Record who approved and on what conditions; do not count blessings. In place of `reviewAgainstWilson`'s score, the circle asks Wilson's six questions of its members (p. 77; in the MCP resource as `researcher_questions`): respectful relationships with the topic and with the participants, a stronger shared relationship with the idea, one's role and responsibilities, obligations to all one's relations, and what is given back.
 - **R5.** Upstream first, here, then Miadi bumps.
 
 ### 5. Say Wilson's words correctly
