@@ -12,6 +12,7 @@ import {
   computeWeight, 
   detectDeepening,
   type EpistemicSource,
+  type WeightProfileId,
   type AxiologicalPillar
 } from "@medicine-wheel/importance-unit";
 import { 
@@ -24,7 +25,7 @@ import { store } from "../store.js";
 export const epistemicTools: Tool[] = [
   {
     name: "mw_create_importance_unit",
-    description: "Create a relationally-accountable ImportanceUnit. Assigns epistemic weight based on source (land, dream, code, vision) and initializes circle depth at 1.",
+    description: "Create a relationally-accountable ImportanceUnit. Records its source (land, dream, code, vision); every source starts at the same epistemic weight, which grows by circling back. Initializes circle depth at 1.",
     inputSchema: {
       type: "object",
       properties: {
@@ -82,6 +83,7 @@ export const epistemicTools: Tool[] = [
             ...unit.meta,
             source: unit.source,
             epistemicWeight: unit.epistemicWeight,
+            weightProfile: unit.weightProfile,
             circleDepth: unit.circleDepth,
             axiologicalPillar: unit.axiologicalPillar,
             is_importance_unit: true,
@@ -96,7 +98,7 @@ export const epistemicTools: Tool[] = [
           unit_id: unit.id,
           epistemic_weight: unit.epistemicWeight,
           circle_depth: unit.circleDepth,
-          message: `ImportanceUnit created with ${source}-state authority.`,
+          message: `ImportanceUnit created from ${source} knowing (weight profile: ${unit.weightProfile}).`,
           teaching: "Knowledge has spirit; treat respectfully, not as property."
         };
       } catch (error) {
@@ -135,6 +137,8 @@ export const epistemicTools: Tool[] = [
           id: node.id,
           direction: node.direction as any,
           epistemicWeight: node.metadata.epistemicWeight as number,
+          // Absent on units stored before #155; circleBack then keeps their `dream-first` weights.
+          weightProfile: node.metadata.weightProfile as WeightProfileId | undefined,
           source: node.metadata.source as EpistemicSource,
           circleDepth: node.metadata.circleDepth as number,
           content: node.metadata.full_content as any,
@@ -154,6 +158,7 @@ export const epistemicTools: Tool[] = [
           metadata: {
             ...node.metadata,
             epistemicWeight: deepened.epistemicWeight,
+            weightProfile: deepened.weightProfile,
             circleDepth: deepened.circleDepth,
             full_content: deepened.content,
             lastCircledAt: deepened.meta.lastCircledAt

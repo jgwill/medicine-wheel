@@ -10,7 +10,7 @@ The ImportanceUnit is this suite's relational unit of knowledge, after Wilson's 
 
 ## Overview
 
-This package weights knowledge by source: dream-state and embodied knowledge carry more weight than rational analysis. That ranking is the package's design, not Wilson's. Wilson holds empirical knowledge crucial but not the only way of knowing (2008, p. 58), and needs both empirical and other forms (p. 111); he ranks none above the others.
+By default this package ranks no source of knowing above another: every unit starts at the same weight, and weight grows by circling back (#155). Wilson holds empirical knowledge crucial but not the only way of knowing (2008, p. 58), needs both empirical and other forms (p. 111), and declines to judge any paradigm better or worse than another (p. 35). The package's earlier order, dream above land above vision above code, is its own design and is kept as the named profile `dream-first`, so units stored before #155 keep their weights.
 
 ### What it provides
 
@@ -45,7 +45,7 @@ import {
   createUnit, circleBack, archive,
 
   // Weight
-  computeWeight, BASE_WEIGHTS,
+  computeWeight, WEIGHT_PROFILES, DEFAULT_WEIGHT_PROFILE,
 
   // Accountability
   linkAccountability, findGaps,
@@ -66,23 +66,26 @@ const unit = createUnit({
   axiologicalPillar: 'epistemology',
 });
 
-// unit.epistemicWeight === 0.85 (dream-state base)
+// unit.epistemicWeight === 0.7 (profile `equal`: every source starts here)
+// unit.weightProfile === 'equal'
 // unit.circleDepth === 1
 
 // Circle back with a refinement
 const deepened = circleBack(unit, 'Patience is not waiting — it is attending');
 // deepened.circleDepth === 2
-// deepened.epistemicWeight > 0.85 (depth bonus applied)
+// deepened.epistemicWeight > 0.7 (depth bonus applied)
 ```
 
 ## Epistemic Weight Model
 
-| Source | Base Weight | Rationale |
-|--------|-------------|-----------|
-| `dream` | 0.85 | Liminal/spirit-state knowing has highest authority |
-| `land` | 0.75 | Place-grounded/embodied knowing |
-| `vision` | 0.65 | Intentional/architectural knowing |
-| `code` | 0.50 | Technical/implementation knowing |
+Base weights come from a named profile (`WEIGHT_PROFILES`). Each profile says whose it is.
+
+| Profile | dream | land | vision | code | Whose |
+|---|---|---|---|---|---|
+| `equal` (default) | 0.70 | 0.70 | 0.70 | 0.70 | Default since #155: no source ranked above another |
+| `dream-first` | 0.85 | 0.75 | 0.65 | 0.50 | This package's earlier design; ours, not Wilson's |
+
+A unit records its profile in `weightProfile`. A unit stored before #155 has none: it was weighted with `dream-first` and keeps that profile when circled back to, so no stored weight changes meaning. Through MCP, the profile is written to the node's metadata beside `epistemicWeight`.
 
 Weight increases with `circleDepth` using diminishing returns (logarithmic scaling). The first return yields more insight than the tenth, though all returns matter. Weight never exceeds 1.0.
 

@@ -8,7 +8,7 @@
  */
 
 import type { ImportanceUnit, CreateUnitInput, UpdateUnitInput } from './types.js';
-import { computeWeight } from './epistemic-weight.js';
+import { computeWeight, DEFAULT_WEIGHT_PROFILE, profileOf } from './epistemic-weight.js';
 
 let _counter = 0;
 
@@ -25,21 +25,23 @@ function generateId(): string {
 /**
  * Create a new ImportanceUnit from input.
  *
- * Sets initial epistemic weight based on the source dimension
- * (dream-state starts at 0.85, land at 0.75, etc.), initializes
- * circleDepth to 1, and stamps creation metadata.
+ * Sets the initial epistemic weight from the weight profile (default
+ * `equal`: every source starts the same), records the profile on the unit,
+ * initializes circleDepth to 1, and stamps creation metadata.
  *
  * @param input - The creation input
  * @returns A fully initialized ImportanceUnit
  */
 export function createUnit(input: CreateUnitInput): ImportanceUnit {
   const now = new Date().toISOString();
-  const weight = computeWeight(input.source, 1);
+  const weightProfile = input.weightProfile ?? DEFAULT_WEIGHT_PROFILE;
+  const weight = computeWeight(input.source, 1, weightProfile);
 
   return {
     id: generateId(),
     direction: input.direction,
     epistemicWeight: weight,
+    weightProfile,
     source: input.source,
     accountabilityLinks: input.accountabilityLinks ?? [],
     circleDepth: 1,
@@ -94,12 +96,14 @@ export function updateUnit(unit: ImportanceUnit, input: UpdateUnitInput): Import
 export function circleBack(unit: ImportanceUnit, shift: string): ImportanceUnit {
   const now = new Date().toISOString();
   const newDepth = unit.circleDepth + 1;
-  const newWeight = computeWeight(unit.source, newDepth);
+  const weightProfile = profileOf(unit);
+  const newWeight = computeWeight(unit.source, newDepth, weightProfile);
 
   return {
     ...unit,
     circleDepth: newDepth,
     epistemicWeight: newWeight,
+    weightProfile,
     content: {
       ...unit.content,
       refinements: [
