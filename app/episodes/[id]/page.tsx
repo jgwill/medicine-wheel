@@ -12,14 +12,15 @@
  * that filtered by episode long before any page asked them
  * (`components/episode-holdings.tsx`). What is open, from
  * `?kind=attention&parent_id=<id>`. What it relates to, from
- * `/api/nodes/[id]/web`, which walks the traversal that shipped in
- * `relational-query` and went unimported. Ref jgwill/medicine-wheel#153.
+ * `/api/nodes/[id]/web`: its lineage first — each relation to another episode
+ * read from this episode's end ("continues from", "continued by") with the
+ * words that say why it holds — then everything else it touches
+ * (`lib/episode-lineage.ts`). Ref jgwill/medicine-wheel#153, #156.
  *
- * The relations panel is where the wheel's current honesty shows. 101 of 106
- * containment links live only in `metadata.parent_id` and were never written as
- * edges, so most episodes will show a parent here that has no relation behind
- * it. The panel names that rather than rendering an empty box, because an empty
- * box reads as "this episode touches nothing" when the truth is "the edge was
+ * Containment links that live only in `metadata.parent_id` were never written
+ * as edges, so an episode can show a parent with no relation behind it. The
+ * page names that rather than rendering an empty box, because an empty box
+ * reads as "this episode touches nothing" when the truth is "the edge was
  * never written".
  */
 
@@ -29,6 +30,13 @@ import Link from "next/link";
 import type { RelationalNode, RelationalEdge } from "@/lib/types";
 import { EpisodeFilesPanel } from "@/components/episode-files-panel";
 import { EpisodeHoldings } from "@/components/episode-holdings";
+import {
+  chronicleKey,
+  episodeFolderOfNode,
+  relationsOf,
+  type EpisodeRelation,
+  type LineageEdge,
+} from "@/lib/episode-lineage";
 
 // `description` lives on the store's node, not on ontology-core's — the same
 // widening `app/nodes/page.tsx` declares as `NodeRecord`. Named EpisodeNode
@@ -50,31 +58,39 @@ function metaString(node: EpisodeNode | null, key: string): string | null {
   return typeof value === "string" && value ? value : null;
 }
 
-/**
- * Where an episode sits in the chronicle: its folder's date, then its number —
- * the order the folders keep on disk. Not `created_at`, which records when the
- * wheel learned of an episode, and not the number alone, which the chronicle
- * does not hand out in date order (episode 1000 follows episode 550 by two days).
- */
-function chronicleKey(node: EpisodeNode): string {
-  const match = (episodeFolderOf(node) ?? "").match(/^(\d{4}-\d{2}-\d{2})-episode-(\d+)/i);
-  return match ? `${match[1]}-${match[2].padStart(6, "0")}` : (node.created_at ?? "");
-}
-
-/**
- * The episode's folder name — what the wheel's other records file it under.
- *
- * From the id when it is `chronicle:<folder>`. A few early episodes were
- * registered under other ids (`node:knowledge:…`, a bare uuid); their node
- * still carries the artefact reference, so the folder comes from
- * `metadata.relative_path` when `metadata.root` names the chronicle.
- */
-function episodeFolderOf(node: EpisodeNode): string | null {
-  if (node.id.startsWith("chronicle:")) return node.id.slice("chronicle:".length) || null;
-  const relative = metaString(node, "relative_path");
-  if (metaString(node, "root") !== "MIADI_CHRONICLE_ROOT" || !relative) return null;
-  const folder = relative.split("/")[0];
-  return folder && folder !== relative ? folder : null;
+/** One relation, as read from this episode, with the words that say why it holds. */
+function RelationRow({
+  relation,
+  node,
+  episode = false,
+}: {
+  relation: EpisodeRelation;
+  node?: EpisodeNode;
+  episode?: boolean;
+}) {
+  const name = node?.name ?? relation.other;
+  return (
+    <li className="p-3 border rounded-lg bg-card">
+      <p className="text-sm">
+        <span className="text-muted-foreground">{relation.label}</span>{" "}
+        {episode ? (
+          <Link href={`/episodes/${encodeURIComponent(relation.other)}`} className="font-medium hover:underline">
+            {name}
+          </Link>
+        ) : (
+          <span className="font-medium">{name}</span>
+        )}
+      </p>
+      {!episode && (
+        <span className="font-mono text-xs text-muted-foreground block break-all">{relation.other}</span>
+      )}
+      {relation.descriptions.map((said) => (
+        <p key={said} className="text-sm text-muted-foreground mt-1">
+          {said}
+        </p>
+      ))}
+    </li>
+  );
 }
 
 function EpisodeLink({ node, label }: { node: EpisodeNode | null; label: string }) {
@@ -140,9 +156,17 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
   }, [load]);
 
   const parentId = metaString(episode, "parent_id");
-  const folder = episode ? episodeFolderOf(episode) : null;
+  const folder = episode ? episodeFolderOfNode(episode) : null;
   const neighbours = (web?.nodes ?? []).filter((n) => n.id !== id);
   const parentHasEdge = Boolean(parentId && neighbours.some((n) => n.id === parentId));
+
+  // Each relation read from this episode's end, with the words that say why it
+  // holds; episodes first (the lineage), then everything else it touches.
+  const nodeById = new Map(neighbours.map((n) => [n.id, n]));
+  const relations = relationsOf(id, (web?.edges ?? []) as LineageEdge[]);
+  const isEpisodeId = (other: string) => nodeById.get(other)?.metadata?.kind === "chronicle_episode";
+  const lineage = relations.filter((r) => isEpisodeId(r.other));
+  const elsewhere = relations.filter((r) => !isEpisodeId(r.other));
 
   if (loading) {
     return <div className="p-6 max-w-4xl mx-auto text-sm text-muted-foreground">Loading…</div>;
@@ -231,7 +255,24 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
 
       <section>
         <h2 className="text-sm font-semibold mb-2">
-          Relations {neighbours.length > 0 && `(${neighbours.length})`}
+          Lineage {lineage.length > 0 && `(${lineage.length})`}
+        </h2>
+        {lineage.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No relation to another episode has been woven yet.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {lineage.map((r) => (
+              <RelationRow key={`${r.other}-${r.label}`} relation={r} node={nodeById.get(r.other)} episode />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold mb-2">
+          Also related {elsewhere.length > 0 && `(${elsewhere.length})`}
         </h2>
 
         {parentId && !parentHasEdge && (
@@ -242,37 +283,15 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
           </p>
         )}
 
-        {neighbours.length === 0 ? (
+        {elsewhere.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No relation reaches this episode. {parentId ? "See the note above." : ""}
+            Nothing else is related to this episode. {parentId && !parentHasEdge ? "See the note above." : ""}
           </p>
         ) : (
           <ul className="space-y-2">
-            {neighbours.map((n) => {
-              const edge = (web?.edges ?? []).find(
-                (e) =>
-                  (e.from_id === id && e.to_id === n.id) ||
-                  (e.to_id === id && e.from_id === n.id),
-              );
-              return (
-                <li
-                  key={n.id}
-                  className="p-3 border rounded-lg bg-card flex items-baseline justify-between gap-3 flex-wrap"
-                >
-                  <span className="min-w-0">
-                    <span className="text-sm font-medium">{n.name}</span>
-                    <span className="font-mono text-xs text-muted-foreground block break-all">
-                      {n.id}
-                    </span>
-                  </span>
-                  {edge && (
-                    <span className="mw-badge shrink-0" title="relationship_type">
-                      {edge.from_id === id ? "→" : "←"} {edge.relationship_type}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
+            {elsewhere.map((r) => (
+              <RelationRow key={`${r.other}-${r.label}`} relation={r} node={nodeById.get(r.other)} />
+            ))}
           </ul>
         )}
 

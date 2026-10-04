@@ -21,6 +21,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { RelationalNode } from "@/lib/types";
+import { EpisodeLineageWeb } from "@/components/episode-lineage-web";
+import { chronicleKey, episodeDateOf, lineageEdges, type LineageEdge } from "@/lib/episode-lineage";
+
+type View = "list" | "lineage";
 
 // `description` lives on the store's node, not on ontology-core's — the same
 // widening `app/nodes/page.tsx` declares as `NodeRecord`.
@@ -63,6 +67,24 @@ export default function EpisodesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [edges, setEdges] = useState<LineageEdge[]>([]);
+  const [edgesFailed, setEdgesFailed] = useState(false);
+  const [view, setView] = useState<View>("list");
+
+  // `?view=lineage` opens on the lineage, so it can be linked to. Read once on
+  // mount from the location rather than through useSearchParams, which would
+  // need a Suspense boundary around the whole page.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("view") === "lineage") setView("lineage");
+  }, []);
+
+  const choose = useCallback((next: View) => {
+    setView(next);
+    const url = new URL(window.location.href);
+    if (next === "lineage") url.searchParams.set("view", "lineage");
+    else url.searchParams.delete("view");
+    window.history.replaceState(null, "", url);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -70,9 +92,10 @@ export default function EpisodesPage() {
       // limit=all, not the provider's 100-row default. The chronicle holds more
       // episodes than a default page, and a list that silently ends is worse
       // than one that refuses to load.
-      const [episodesRes, attentionRes] = await Promise.all([
+      const [episodesRes, attentionRes, edgesRes] = await Promise.all([
         fetch("/api/nodes?kind=chronicle_episode&limit=all"),
         fetch("/api/nodes?kind=attention&limit=all"),
+        fetch("/api/edges?limit=all").catch(() => null),
       ]);
 
       if (!episodesRes.ok) throw new Error(`Episodes: ${episodesRes.status}`);
@@ -90,6 +113,18 @@ export default function EpisodesPage() {
 
       setEpisodes([...list].sort((a, b) => sortKey(b).localeCompare(sortKey(a))));
       setAttentionCounts(counts);
+
+      // The relations are a second answer: if they do not come, the list still does.
+      const ids = new Set(list.map((e) => e.id));
+      if (edgesRes?.ok) {
+        const body = await edgesRes.json();
+        const all: LineageEdge[] = Array.isArray(body) ? body : (body.edges ?? []);
+        setEdges(lineageEdges(all, (id) => ids.has(id)));
+        setEdgesFailed(false);
+      } else {
+        setEdges([]);
+        setEdgesFailed(true);
+      }
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -113,6 +148,30 @@ export default function EpisodesPage() {
     );
   }, [episodes, query]);
 
+  /** Relations to other episodes, per episode. */
+  const relationCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const edge of edges) {
+      counts[edge.from_id] = (counts[edge.from_id] ?? 0) + 1;
+      counts[edge.to_id] = (counts[edge.to_id] ?? 0) + 1;
+    }
+    return counts;
+  }, [edges]);
+
+  /** The lineage reads oldest first, in the folders' own order. */
+  const chronological = useMemo(
+    () =>
+      [...episodes]
+        .sort((a, b) => chronicleKey(a).localeCompare(chronicleKey(b)))
+        .map((e) => ({ id: e.id, name: e.name, direction: e.direction, date: episodeDateOf(e) ?? occurredAt(e)?.slice(0, 10) })),
+    [episodes],
+  );
+
+  const matching = useMemo(
+    () => (query.trim() ? new Set(visible.map((e) => e.id)) : null),
+    [query, visible],
+  );
+
   /** How many rows are ordered by registration rather than by when they happened. */
   const undatedCount = useMemo(
     () => episodes.filter((e) => !occurredAt(e)).length,
@@ -128,16 +187,41 @@ export default function EpisodesPage() {
             {loading ? "Reading the chronicle…" : `${episodes.length} episodes in the wheel`}
           </p>
         </div>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Filter by name or id"
-          className="mw-input max-w-xs"
-          aria-label="Filter episodes"
-        />
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex gap-1" role="group" aria-label="View">
+            {(["list", "lineage"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => choose(v)}
+                aria-pressed={view === v}
+                className={`mw-btn ${view === v ? "" : "mw-btn--ghost"}`}
+              >
+                {v === "list" ? "List" : "Lineage"}
+              </button>
+            ))}
+          </div>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Filter by name or id"
+            className="mw-input max-w-xs"
+            aria-label="Filter episodes"
+          />
+        </div>
       </div>
 
-      {undatedCount > 0 && !loading && (
+      {view === "lineage" && !loading && episodes.length > 0 && (
+        <div className="mb-6">
+          {edgesFailed && (
+            <p className="mb-2 text-xs text-muted-foreground">
+              The wheel did not answer for its relations, so the lineage shows episodes without arcs.
+            </p>
+          )}
+          <EpisodeLineageWeb episodes={chronological} edges={edges} matches={matching} />
+        </div>
+      )}
+
+      {view === "list" && undatedCount > 0 && !loading && (
         <p className="mb-4 text-xs text-muted-foreground border rounded-lg p-3 bg-card">
           {undatedCount} of {episodes.length} episodes have no <code>occurred_at</code>, so they
           are ordered by when the wheel recorded them rather than by when they happened. That is
@@ -163,10 +247,12 @@ export default function EpisodesPage() {
         </p>
       )}
 
+      {view === "list" && (
       <ul className="space-y-2">
         {visible.map((episode) => {
           const number = episodeNumber(episode.id);
           const open = attentionCounts[episode.id] ?? 0;
+          const related = relationCounts[episode.id] ?? 0;
           const dated = occurredAt(episode);
           return (
             <li key={episode.id}>
@@ -184,6 +270,11 @@ export default function EpisodesPage() {
                     <span className="font-medium truncate">{episode.name}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    {related > 0 && (
+                      <span className="mw-badge" title={`${related} relations to other episodes`}>
+                        {related} related
+                      </span>
+                    )}
                     {open > 0 && (
                       <span className="mw-badge" title={`${open} open attention items`}>
                         {open} attention
@@ -213,8 +304,9 @@ export default function EpisodesPage() {
           );
         })}
       </ul>
+      )}
 
-      {!loading && visible.length === 0 && episodes.length > 0 && (
+      {view === "list" && !loading && visible.length === 0 && episodes.length > 0 && (
         <p className="text-sm text-muted-foreground">Nothing matches “{query}”.</p>
       )}
     </div>
