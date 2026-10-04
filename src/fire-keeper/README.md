@@ -8,7 +8,7 @@
 > move in lockstep — pin exact versions. See
 > [ALPHA.md](https://github.com/jgwill/medicine-wheel/blob/main/ALPHA.md).
 
-The Fire Keeper tends the ceremony fire, ensures relational integrity through gating conditions, and maintains Wilson alignment as an active agent — not a passive metric.
+The Fire Keeper tends the ceremony fire: it holds work on consent (OCAP) and ceremony phase, reports trajectory confidence as advice, and brings value conflicts to a person (`humanNeeded`). It does not measure relational accountability; people judge that (#155).
 
 ## Purpose
 
@@ -69,7 +69,7 @@ Before any autonomous action, the Fire Keeper verifies:
 1. **Does this action honor existing relations?**
 2. **Does it strengthen the Spirit-Body relationship?**
 3. **Is it accountable to all four directions?**
-4. **Would an Elder approve?**
+4. **Would an Elder approve?** A program cannot know. This step checks consent (OCAP) and ceremony phase, notes low trajectory confidence as advice, and leaves the question to the people involved.
 
 ## License
 

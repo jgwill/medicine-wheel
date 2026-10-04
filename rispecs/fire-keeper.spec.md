@@ -257,13 +257,13 @@ interface FireKeeperMessage {
 
 ---
 
-## Wilson Alignment
+## Relational Accountability, and What the Keeper Measures
 
-In this suite's design a ceremony needs a keeper, and the fire keeper makes relational accountability active:
-- **Gating:** Work cannot proceed until relational conditions are met
-- **Trajectory:** The inquiry's Wilson alignment is continuously monitored
-- **Human agency:** Value conflicts and permission escalations surface to humans
-- **Stop-work:** Violations of relational accountability can halt work
+In this suite's design a ceremony needs a keeper (our principle, not Wilson's sentence). The keeper does not measure relational accountability; people judge it (#155):
+- **Gating:** Work is held until consent (OCAP) is verified and while the ceremony rests. Trajectory confidence is an advisory gate since #155: it is reported, never holds work, and a missing value is not zero.
+- **Trajectory:** Trajectory confidence (how settled the direction trajectory is) is monitored. The value travels in the field `wilsonAlignment` for compatibility; it is not a Wilson score.
+- **Human agency:** Value conflicts, low trajectory confidence and permission escalations surface to humans (`humanNeeded`).
+- **Stop-work:** A stop-work order halts work.
 
 ---
 
