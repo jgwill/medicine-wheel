@@ -178,23 +178,26 @@ function checkElderApproval(
   action: string,
   context: FireKeeperContext,
 ): CheckBackStep {
-  const wilsonOk = (context.wilsonAlignment ?? 0) >= 0.5;
+  // Trajectory confidence advises; it does not decide (#155).
+  const trajectoryLow = context.wilsonAlignment !== undefined && context.wilsonAlignment < 0.5;
   const ocapOk = context.ocapCompliant !== false;
   const noStopWork = context.ceremonyState.ceremonyPhase !== 'resting';
 
-  const passed = wilsonOk && ocapOk && noStopWork;
+  const passed = ocapOk && noStopWork;
   const issues: string[] = [];
 
-  if (!wilsonOk) issues.push(`Wilson alignment too low (${context.wilsonAlignment})`);
   if (!ocapOk) issues.push('OCAP compliance not verified');
   if (!noStopWork) issues.push('Ceremony is in resting phase');
+  const advisory = trajectoryLow
+    ? ` Advisory: trajectory confidence is low (${context.wilsonAlignment}); ask the people involved.`
+    : '';
 
   return {
     step: 4,
     question: 'Would an Elder approve?',
     passed,
-    reason: passed
-      ? 'Wilson alignment, OCAP compliance, and ceremony state all indicate approval'
-      : `Concerns: ${issues.join('; ')}`,
+    reason: (passed
+      ? 'OCAP compliance and ceremony state allow the action.'
+      : `Concerns: ${issues.join('; ')}.`) + advisory,
   };
 }

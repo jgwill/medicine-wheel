@@ -96,16 +96,18 @@ export function resolveHold(
 // ── Default Gates ───────────────────────────────────────────────────────────
 
 /**
- * Trajectory confidence gate.
- * Blocks when the keeper's trajectory confidence (how settled the ceremony's
- * direction trajectory is) drops below 0.65. The value arrives in
- * `context.wilsonAlignment` for compatibility; it is not a measure of Wilson's
+ * Trajectory confidence gate, advisory.
+ * Reports when the keeper's trajectory confidence (how settled the ceremony's
+ * direction trajectory is) is below 0.65, without holding work: low
+ * confidence is a question for a person, and `humanNeeded` already asks one.
+ * A missing value is not low confidence, and passes. The value arrives in
+ * `context.wilsonAlignment` for compatibility; it does not measure Wilson's
  * relational accountability, and Wilson describes no score (#155).
  */
 export const GATE_TRAJECTORY_CONFIDENCE: GatingCondition = createGate(
-  'Trajectory confidence above threshold',
-  (context) => (context.wilsonAlignment ?? 0) >= 0.65,
-  true,
+  'Trajectory confidence above threshold (advisory)',
+  (context) => context.wilsonAlignment === undefined || context.wilsonAlignment >= 0.65,
+  false,
 );
 
 /** @deprecated Measures trajectory confidence; use GATE_TRAJECTORY_CONFIDENCE (#155). */
