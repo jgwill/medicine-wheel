@@ -510,15 +510,16 @@ export const validators: Tool[] = [
           giving_back: "Continuous feedback with participants (p. 121); going back to the community after the writing (p. 125)",
           source: "medicine-wheel://wilson/framework",
         },
+        note: "This check matches keywords in a description: the suite's own heuristic, not a judgement Wilson makes. His book 'is not intended to impose conclusions on other people or to be a manual of techniques for their research' (Wilson 2008, p. 136).",
         recommendations: hasRelational && hasCeremony && hasAccountability ? [
-          "Strong alignment with Wilson's paradigm",
-          "Continue with Elder guidance",
-          "Regular accountability audits",
+          "The keywords of relational framing, ceremony and accountability are present",
+          "Ask the people involved Wilson's six questions (p. 77; medicine-wheel://wilson/framework, researcher_questions)",
+          "Follow the community's own protocol for who is consulted (Atkinson, quoted p. 54)",
         ] : [
           "Strengthen relational framing" + (!hasRelational ? " (CRITICAL)" : ""),
           "Integrate ceremony throughout" + (!hasCeremony ? " (CRITICAL)" : ""),
           "Define reciprocal benefits" + (!hasAccountability ? " (CRITICAL)" : ""),
-          "Consult with Elders before proceeding",
+          "Before proceeding, ask the community whose knowledge this concerns what its own protocol requires (p. 54; p. 136)",
         ],
       };
     },

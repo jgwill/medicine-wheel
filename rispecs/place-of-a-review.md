@@ -2,9 +2,10 @@
 
 > Where a review stands in the Medicine Wheel, what it is to its community, how it turns a cycle, and which repository holds which part. Drafted 2026-10-03 during screenwalks on grounding the Concordia proposal in Wilson (2008). Everything below is a proposal; nothing is implemented.
 
-**Version:** 0.5.0 (draft for Guillaume's review)
+**Version:** 0.6.0 (draft for Guillaume's review)
 **Document ID:** rispec-place-of-a-review-v0
 **Last Updated:** 2026-10-04
+**Changed in 0.6:** the end of the book (pp. 133–136): a review offers connections, not conclusions for others; a summary ranks ideas, a tension the review service holds; review changes the reviewer too; the book is not a manual of techniques.
 **Changed in 0.5.1:** p. 99: a review is a definition of a recording and loses its context alone (Tafoya's Principle of Uncertainty), so the `reviews` relation keeps them together; summaries keep rough transitions.
 **Changed in 0.5:** chapter 4 read (pp. 70–81): the teller checks a retelling (p. 71); the review steps as relations are the method, not bookkeeping (p. 79); a review circle asks Wilson's six questions (p. 77) instead of scoring; the three R's on p. 77.
 **Changed in 0.4:** two decisions recorded (two words; an internal review rests in the North); the kind name, the relation names and the cycle's grain explained in plain words, each with a recommendation; a section for the local agent; p. 35 replaces p. 53 as the ground against scores (on the page, Hermes's "formula" is a recipe for method).
@@ -44,7 +45,7 @@ And around it:
 - **Give it back.** Credibility comes from continuous feedback with all participants (p. 121). The record Wilson reviews shows the opposite: results "seldom if ever explained to those who have been studied" (p. 48).
 - **Name the teller.** Wilson's co-researchers did not want anonymity, because a story "would lose its power without knowledge of the teller" (p. 130).
 - **Show how you came to it.** "some system of showing how we came to our final product" (p. 123).
-- **Not a score.** It is not Wilson's intention to judge any one paradigm "as being better or worse than another" (p. 35); he justifies his own strategies rather than arguing against others (p. 35, after Meyer 2001). "value judgements lose their meaning"; what matters is "fulfilling a role and obligations in the research relationship" (p. 77, cited through Wulff 2010).
+- **Not a score.** It is not Wilson's intention to judge any one paradigm "as being better or worse than another" (p. 35); he justifies his own strategies rather than arguing against others (p. 35, after Meyer 2001). "value judgements lose their meaning"; what matters is "fulfilling a role and obligations in the research relationship" (p. 77).
 - **Choosing what to review is axiology.** Axiology judges "which information is worthy of searching for" and asks what the knowledge "will be used for" (p. 34). Which screenwalks get reviewed, and what a review proposes, are axiological choices.
 
 The pages are indexed privately in `miadisabelle/Etuaptmumk-RSM` → `sources/wilson-2008-research-is-ceremony/` (`INDEX.md`, `GUIDANCE.md`). Pages 33–35, 43–60 and 108–132 are held as photos and p. 61 as an earlier text extraction, so chapter 3 is complete; pages 77 and 99 were checked through the book's text and secondary citations only.
@@ -105,6 +106,9 @@ Under the life-cycle teachings, the same internal review would rest in the **Wes
 5. **Who the community is.** People in the circle, and the seats (`agent` nodes, 0.17.0) that speak and are accountable to the people they serve. Seats do not stand in for the community.
 6. **Credibility, not a score.** Credibility comes from co-researchers' feedback (p. 121) and from those who know the work confirming it (p. 131). Nothing in the pages read scores it.
 7. **Approval belongs to the community, on its conditions.** The people themselves approve the research *and its methods* (Atkinson, quoted p. 59). For a Miadi review, that means the circle can approve how the screenwalk was made, not only what the review says. What has no source is a fixed "Elder blessing" as a validation step.
+8. **Connections, not conclusions.** As a teller, Wilson's role "is not to draw conclusions for another or to make an argument" but to share information and make connections (p. 133). A review offers its relations (fields, related reviews, internal uses) and leaves the conclusions to the people who read it.
+9. **A summary ranks ideas.** Restating earlier messages "would require me to judge certain ideas as more important than others", and summarizing is "a real problem" in this discourse pattern (p. 133). The review service summarizes; it holds the tension by saying a summary is a selection, linking back to the recording (p. 99), and not telling anyone what to learn.
+10. **Review changes the reviewer.** "while supervision, examination and review changes my work it also changes me", and the people who directed the change belong in the writing (p. 136). `revised-after` names who changed a review, and the circle's own changes are part of the record.
 
 ---
 
@@ -161,6 +165,7 @@ Answering Miadi's R1–R5 (`packages/community/PAGE-POST-CIRCLE.md`):
 ### 5. Say Wilson's words correctly
 - **The three R's.** Wilson: respect, reciprocity and responsibility "are key features of any healthy relationship and must be included in an Indigenous methodology"; Cora Weber-Pillwax "calls these the 3 R's of Indigenous research and learning" (p. 77; again p. 99). A variant of hers, quoted by Evelyn Steinhauer, has Relationality as the third R (p. 58). Cite the page and credit the label to her.
 - **What the checks measure.** `reviewAgainstWilson` passes respect when two directions are present, and reciprocity when an Elder or community voice appears in the log. In Wilson's pages, respect is listening intently, not insisting your idea prevails (p. 58), and reciprocity is the work giving back (pp. 48, 121, 127). Name each check by what it measures ("directions present", "voices heard", "accountability stated"), and add "returned to participants".
+- **Not a manual.** The book "is not intended to impose conclusions on other people or to be a manual of techniques for their research", and "models do not work outside of specific contexts" (p. 136). A checker or gate in Wilson's name makes it exactly that.
 - **Scores.** `wilsonAlignment` and the gates that block work below it (fire-keeper 0.65; elsewhere 0.5, 0.6, 0.67, 0.7) are our construct. Label them so, and prefer questions asked of people (the relational accountability lens) to a gate on a number.
 
 ---
