@@ -152,7 +152,7 @@ export const resources: Resource[] = [
         giving_back: "Credibility through continuous feedback with all participants (p. 121); after the writing, going back to the community (Cora, p. 125).",
         presentation: "The presentation or knowledge transfer is about continuing healthy relationships (p. 125).",
       },
-      removed: "Earlier versions listed 'wetiko disease', 'spiritual crash', 'natural law', a five-phase methodology (Prepare, Invoke, Witness, Integrate, Document) and 'once in relationship, you are responsible for its wellbeing' as Wilson's. None was found in the book; they were removed (jgwill/medicine-wheel#154).",
+      removed: "Earlier versions listed 'wetiko disease', 'spiritual crash', 'natural law', a five-phase methodology (Prepare, Invoke, Witness, Integrate, Document) and 'once in relationship, you are responsible for its wellbeing' as key concepts of Wilson's paradigm; they were removed (jgwill/medicine-wheel#154). None is a concept of the book's paradigm. 'Natural law' appears once, as Stan's gloss of the Cree otcinawin, 'breaking of natural law' (chapter 'Relational Accountability'). Wetiko and spiritual crash may come from a 2020 lecture by Wilson (model summaries; unverified against the recording); wetiko as a disease of exploitation is Jack D. Forbes's framing.",
     },
   },
   {
