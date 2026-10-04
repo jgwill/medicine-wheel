@@ -61,7 +61,8 @@ export function auditAccountability(
   }
 
   if (averageWilsonAlignment < 0.5) {
-    recommendations.push(`Wilson alignment is ${(averageWilsonAlignment * 100).toFixed(0)}% — strengthen respect, reciprocity, and responsibility`);
+    // The mean of the relations' stored accountability numbers: ours, not a Wilson score (#155).
+    recommendations.push(`Relations' recorded accountability averages ${(averageWilsonAlignment * 100).toFixed(0)}% — ask the people in these relations about respect, reciprocity and responsibility`);
   }
 
   const emptyDirections = (Object.entries(directionCoverage) as Array<[DirectionName, number]>)

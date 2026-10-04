@@ -71,7 +71,8 @@ export function computeProgress(
   } else if (!completeness.ocapCompliant) {
     suggestedAction = 'Review OCAP® compliance on relations before closing the cycle';
   } else if (completeness.wilsonAlignment < 0.7) {
-    suggestedAction = `Strengthen Wilson alignment (currently ${(completeness.wilsonAlignment * 100).toFixed(0)}%) before closing`;
+    // The mean of the relations' stored accountability numbers: ours, not a Wilson score (#155).
+    suggestedAction = `Relations' recorded accountability averages ${(completeness.wilsonAlignment * 100).toFixed(0)}% — ask the people in these relations before closing`;
   } else {
     suggestedAction = 'All directions visited — the cycle is ready to close';
   }
