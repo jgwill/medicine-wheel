@@ -2,9 +2,10 @@
 
 > Where a review stands in the Medicine Wheel, what it is to its community, how it turns a cycle, and which repository holds which part. Drafted 2026-10-03 during screenwalks on grounding the Concordia proposal in Wilson (2008). Everything below is a proposal; nothing is implemented.
 
-**Version:** 0.2.0 (draft for Guillaume's review)
+**Version:** 0.3.0 (draft for Guillaume's review)
 **Document ID:** rispec-place-of-a-review-v0
-**Last Updated:** 2026-10-03
+**Last Updated:** 2026-10-04
+**Changed in 0.3:** the end of chapter 3 (pp. 59–61): Atkinson's principles say what a review does and that approval belongs to the community; Kinunwa on ceremony as the preparation.
 **Changed in 0.2:** Wilson's own statement about a review (pp. 43–44) and Cora's return to the community (p. 125) replaces "Wilson never speaks of reviews"; the review and its community; the review as a turn of a cycle; directions named by the teaching they come from; the three R's, cited correctly; small implementation steps.
 
 ---
@@ -29,6 +30,9 @@ Chapter 3 of *Research Is Ceremony* is Wilson's own literature review, and he sa
 - **A review builds on.** Done "in a style that is not critical, but builds upon the work of others, it can also form the context for relational accountability" (p. 44).
 - **A review is written for its audience.** "The academic audience that requires a literature review is in itself the context for and through which it is written" (p. 43).
 - **The academy's opposite habit.** Manu Meyer: students are challenged to find fault and the weak link in others' work, so that their own looks better (p. 57).
+- **What a review does.** Among Judy Atkinson's principles, which Wilson quotes: "quietly aware watching", deep listening "with more than the ears", "A reflective non-judgemental consideration of what is being seen and heard", and fidelity to what was heard (p. 59). Read in order, they are a screenwalk and its review.
+- **Approval is the community's.** Atkinson's first principle: "Aboriginal people themselves approve the research and the research methods"; many communities let researchers in only once their own conditions are met (p. 59).
+- **Ceremony is the preparation.** For the Elder Lionel Kinunwa, quoted by Wilson, a ceremony is not just the period at the end of the sentence (p. 60); it is the "preparation that happens long before the event" (p. 61).
 
 And around it:
 - **Hearing yourself is analysis.** Rewatching videos of his own talks helped his ideas become "more firmly anchored or internalized" (p. 131).
@@ -39,7 +43,7 @@ And around it:
 - **Show how you came to it.** "some system of showing how we came to our final product" (p. 123).
 - **Not a score.** "value judgements lose their meaning"; what matters is "fulfilling a role and obligations in the research relationship" (p. 77, cited through Wulff 2010). The method "refuses a single category or any other formula" (Hermes, p. 53).
 
-The pages are indexed privately in `miadisabelle/Etuaptmumk-RSM` → `sources/wilson-2008-research-is-ceremony/` (`INDEX.md`, `GUIDANCE.md`). Pages 43–58 and 108–132 are held as photos; pages 77 and 99 were checked through the book's text and secondary citations only.
+The pages are indexed privately in `miadisabelle/Etuaptmumk-RSM` → `sources/wilson-2008-research-is-ceremony/` (`INDEX.md`, `GUIDANCE.md`). Pages 43–60 and 108–132 are held as photos and p. 61 as an earlier text extraction, so chapter 3 is complete; pages 77 and 99 were checked through the book's text and secondary citations only.
 
 ---
 
@@ -90,13 +94,14 @@ Under the life-cycle teachings, the same internal review would rest in the **Wes
 2. **The community can steer it.** The community decides what is researched and has direct access to decisions (Cora and Lewis, p. 110). The circle can change a review, hold it ("Let's sleep on it", p. 113), return it, or deepen it. `community-review` already has these outcomes: `ceremonialHold`, `returnToCircle`, `requestDeepening`.
 3. **It builds on; it does not judge.** A review in Wilson's sense situates and builds on someone's work (pp. 43–44). Step 2 of the review service corrects *our generated text*, never the maker of the video.
 4. **Who the community is.** People in the circle, and the seats (`agent` nodes, 0.17.0) that speak and are accountable to the people they serve. Seats do not stand in for the community.
-5. **Credibility, not a score.** Credibility comes from co-researchers' feedback (p. 121) and from those who know the work confirming it (p. 131). Nothing in the pages read scores it, and no source found describes an "Elder blessing" as a validation step.
+5. **Credibility, not a score.** Credibility comes from co-researchers' feedback (p. 121) and from those who know the work confirming it (p. 131). Nothing in the pages read scores it.
+6. **Approval belongs to the community, on its conditions.** The people themselves approve the research *and its methods* (Atkinson, quoted p. 59). For a Miadi review, that means the circle can approve how the screenwalk was made, not only what the review says. What has no source is a fixed "Elder blessing" as a validation step.
 
 ---
 
 ## A Review Turns a Cycle
 
-Guillaume, 2026-10-03: a screenwalk gives him something to review later, and that review is itself a new cycle in the wheel, with a relation to the ceremony. Wilson says the same of his own work: the analysis "has been ongoing and has helped to shape the very nature of the research as it progresses" (p. 131).
+Guillaume, 2026-10-03: a screenwalk gives him something to review later, and that review is itself a new cycle in the wheel, with a relation to the ceremony. Wilson says the same of his own work: the analysis "has been ongoing and has helped to shape the very nature of the research as it progresses" (p. 131). And Kinunwa's ceremony is the preparation long before the event (pp. 60–61): screenwalks and reviews are part of the ceremony, not a prelude to some later product.
 
 Using the Diné-named sequence the screenwalk practice already follows:
 
@@ -139,7 +144,7 @@ Answering Miadi's R1–R5 (`packages/community/PAGE-POST-CIRCLE.md`):
 - **R1 Storage.** A review circle is the talking-circle ceremony Miadi already opens, with its spoken turns as beats. `ReviewCircle` becomes a read over that ceremony, not a second store.
 - **R2 Roles.** Map from `community-identity` roles. An Elder is a relationship a community recognizes, not a role an administrator assigns (pp. 113–116).
 - **R3 Artifact.** A review is `knowledge`, or a registered review kind (proposal 2).
-- **R4 Outcomes.** Keep `ceremonialHold` (p. 113), `returnToCircle` (p. 121) and `requestDeepening` (pp. 119–120). `approveWithBlessings` should not require an "Elder blessing": no source supports it as a validation step.
+- **R4 Outcomes.** Keep `ceremonialHold` (p. 113), `returnToCircle` (p. 121) and `requestDeepening` (pp. 119–120). `approveWithBlessings` should not require an "Elder blessing": no source supports it as a validation step. What does have a source is approval by the community, on its own conditions, covering the methods as well as the work (Atkinson, quoted p. 59). Record who approved and on what conditions; do not count blessings.
 - **R5.** Upstream first, here, then Miadi bumps.
 
 ### 5. Say Wilson's words correctly
