@@ -188,7 +188,7 @@ Different packages may apply direction at different altitudes. Ceremonial teachi
 
 ### Respect, Reciprocity, Responsibility
 
-Wilson (2008) names respect, reciprocity and responsibility as features of relational accountability (ch. 4; p. 99). He credits the label "three R's" to Cora Weber-Pillwax, whose set, as he quotes it, is Respect, Reciprocity and Relationality (p. 58). Kirkness and Barnhardt's Four R's (1991) are Respect, Relevance, Reciprocity and Responsibility.
+Wilson (2008) names respect, reciprocity and responsibility as features of relational accountability (p. 77; p. 99). Cora Weber-Pillwax, he writes, "calls these the 3 R's of Indigenous research and learning" (p. 77); a variant of hers, quoted by Evelyn Steinhauer, has Relationality as the third R (p. 58). Kirkness and Barnhardt's Four R's (1991) are Respect, Relevance, Reciprocity and Responsibility.
 
 - Respect
 - Reciprocity

@@ -39,7 +39,7 @@ export function reviewerAccountability(reviewer: Reviewer): {
 
 /**
  * Check an artifact (via its review circle) against respect, reciprocity and
- * responsibility (after Wilson 2008, ch. 4; p. 99). How each is measured here is
+ * responsibility (after Wilson 2008, p. 77; p. 99). How each is measured here is
  * this package's reading, not Wilson's.
  */
 export function reviewAgainstWilson(circle: ReviewCircle): {

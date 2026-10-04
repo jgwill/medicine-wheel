@@ -116,7 +116,7 @@ The Next.js app surfaces that relational state as REST endpoints (also consumed 
 ## Key Concepts
 
 - **Four Directions**: East (vision/Waabinong), South (growth/Zhaawanong), West (reflection/Epangishmok), North (wisdom/Kiiwedinong)
-- **Respect, reciprocity, responsibility** (Wilson 2008, ch. 4; p. 99): scored 0–1 per relation; the scores are this library's construct
+- **Respect, reciprocity, responsibility** (Wilson 2008, p. 77; p. 99): scored 0–1 per relation; the scores are this library's construct
 - **OCAP®**: Ownership, Control, Access, Possession — Indigenous data sovereignty
 - **Structural Tension**: Germination → Assimilation → Completion creative cycle
 - **Ceremonial Inquiry**: opening → council → integration → closure phase progression

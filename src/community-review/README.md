@@ -26,7 +26,7 @@ Each participant shares their voice in turn, honoring all directions. Voices are
 Elders provide final validation and blessing, ensuring artifacts honor relational accountability.
 
 ### Respect, Reciprocity, Responsibility Check
-Every review outcome includes a check against respect, reciprocity and responsibility, which Wilson names as features of relational accountability (*Research Is Ceremony*, 2008, ch. 4; p. 99). He credits the label "three R's" to Cora Weber-Pillwax, whose set, as he quotes it, is Respect, Reciprocity and Relationality (p. 58). The checks below are this package's reading:
+Every review outcome includes a check against respect, reciprocity and responsibility, which Wilson names as features of relational accountability (*Research Is Ceremony*, 2008, p. 77; p. 99). Cora Weber-Pillwax, he writes, "calls these the 3 R's of Indigenous research and learning" (p. 77); a variant of hers, quoted by Evelyn Steinhauer, has Relationality as the third R (p. 58). The checks below are this package's reading:
 - **Respect** — Are all perspectives honored?
 - **Reciprocity** — Does the artifact give back?
 - **Responsibility** — Is accountability explicit?

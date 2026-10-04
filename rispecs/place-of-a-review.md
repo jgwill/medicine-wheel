@@ -154,7 +154,7 @@ Answering Miadi's R1–R5 (`packages/community/PAGE-POST-CIRCLE.md`):
 - **R5.** Upstream first, here, then Miadi bumps.
 
 ### 5. Say Wilson's words correctly
-- **The three R's.** Wilson writes "respect, reciprocity and responsibility" in his own voice (ch. 4, around pp. 77–78; ch. 6, p. 99). The label "three R's" he credits to Cora Weber-Pillwax, whose set, as he quotes it, is "Respect, Reciprocity and Relationality" (p. 58). Cite the pages and credit the label.
+- **The three R's.** Wilson: respect, reciprocity and responsibility "are key features of any healthy relationship and must be included in an Indigenous methodology"; Cora Weber-Pillwax "calls these the 3 R's of Indigenous research and learning" (p. 77; again p. 99). A variant of hers, quoted by Evelyn Steinhauer, has Relationality as the third R (p. 58). Cite the page and credit the label to her.
 - **What the checks measure.** `reviewAgainstWilson` passes respect when two directions are present, and reciprocity when an Elder or community voice appears in the log. In Wilson's pages, respect is listening intently, not insisting your idea prevails (p. 58), and reciprocity is the work giving back (pp. 48, 121, 127). Name each check by what it measures ("directions present", "voices heard", "accountability stated"), and add "returned to participants".
 - **Scores.** `wilsonAlignment` and the gates that block work below it (fire-keeper 0.65; elsewhere 0.5, 0.6, 0.67, 0.7) are our construct. Label them so, and prefer questions asked of people (the relational accountability lens) to a gate on a number.
 

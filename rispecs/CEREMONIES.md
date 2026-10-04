@@ -142,7 +142,7 @@ Ceremonies conducted within a research cycle are archived with the cycle via `ar
 
 ## Wilson Alignment
 
-Respect, reciprocity and responsibility, which Wilson (2008, ch. 4; p. 99) names as features of relational accountability, are mapped onto the ceremony data model below. He credits the label "three R's" to Cora Weber-Pillwax, whose set, as he quotes it, is Respect, Reciprocity and Relationality (p. 58). The mapping is ours:
+Respect, reciprocity and responsibility, which Wilson (2008, p. 77; p. 99) names as features of relational accountability, are mapped onto the ceremony data model below. Cora Weber-Pillwax, he writes, "calls these the 3 R's of Indigenous research and learning" (p. 77); a variant of hers, quoted by Evelyn Steinhauer, has Relationality as the third R (p. 58). The mapping is ours:
 
 | Principle | How It Manifests |
 |-----------|-----------------|

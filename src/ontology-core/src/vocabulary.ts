@@ -118,7 +118,7 @@ export const OCAP = {
 export const REL = {
   RelationalAccountability: `${REL_NS}RelationalAccountability`,
 
-  // Respect, reciprocity, responsibility (Wilson 2008, ch. 4; p. 99). The label "three R's" is Weber-Pillwax's (p. 58).
+  // Respect, reciprocity, responsibility (Wilson 2008, p. 77; p. 99). The label "3 R's" is Cora Weber-Pillwax's (p. 77).
   respect: `${REL_NS}respect`,
   reciprocity: `${REL_NS}reciprocity`,
   responsibility: `${REL_NS}responsibility`,

@@ -125,7 +125,7 @@ Every relation carries `OcapFlags` (Ownership, Control, Access, Possession) — 
 
 ### Wilson Alignment
 
-Respect, reciprocity and responsibility, which Shawn Wilson names as features of relational accountability (*Research Is Ceremony*, 2008, ch. 4; p. 99), are tracked per relation and aggregated across cycles. The 0–1 scores and their aggregation are this library's construct, not Wilson's. Use `computeWilsonAlignment()` and `findAccountabilityGaps()` to monitor relational health.
+Respect, reciprocity and responsibility, which Shawn Wilson names as features of relational accountability (*Research Is Ceremony*, 2008, p. 77; p. 99), are tracked per relation and aggregated across cycles. The 0–1 scores and their aggregation are this library's construct, not Wilson's. Use `computeWilsonAlignment()` and `findAccountabilityGaps()` to monitor relational health.
 
 ### RDF Interop Adapter (optional)
 
