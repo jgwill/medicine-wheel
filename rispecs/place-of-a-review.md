@@ -2,9 +2,10 @@
 
 > Where a review stands in the Medicine Wheel, what it is to its community, how it turns a cycle, and which repository holds which part. Drafted 2026-10-03 during screenwalks on grounding the Concordia proposal in Wilson (2008). Everything below is a proposal; nothing is implemented.
 
-**Version:** 0.3.0 (draft for Guillaume's review)
+**Version:** 0.4.0 (draft for Guillaume's review)
 **Document ID:** rispec-place-of-a-review-v0
 **Last Updated:** 2026-10-04
+**Changed in 0.4:** two decisions recorded (two words; an internal review rests in the North); the kind name, the relation names and the cycle's grain explained in plain words, each with a recommendation; a section for the local agent; p. 35 replaces p. 53 as the ground against scores (on the page, Hermes's "formula" is a recipe for method).
 **Changed in 0.3:** the end of chapter 3 (pp. 59–61): Atkinson's principles say what a review does and that approval belongs to the community; Kinunwa on ceremony as the preparation.
 **Changed in 0.2:** Wilson's own statement about a review (pp. 43–44) and Cora's return to the community (p. 125) replaces "Wilson never speaks of reviews"; the review and its community; the review as a turn of a cycle; directions named by the teaching they come from; the three R's, cited correctly; small implementation steps.
 
@@ -41,9 +42,10 @@ And around it:
 - **Give it back.** Credibility comes from continuous feedback with all participants (p. 121). The record Wilson reviews shows the opposite: results "seldom if ever explained to those who have been studied" (p. 48).
 - **Name the teller.** Wilson's co-researchers did not want anonymity, because a story "would lose its power without knowledge of the teller" (p. 130).
 - **Show how you came to it.** "some system of showing how we came to our final product" (p. 123).
-- **Not a score.** "value judgements lose their meaning"; what matters is "fulfilling a role and obligations in the research relationship" (p. 77, cited through Wulff 2010). The method "refuses a single category or any other formula" (Hermes, p. 53).
+- **Not a score.** It is not Wilson's intention to judge any one paradigm "as being better or worse than another" (p. 35); he justifies his own strategies rather than arguing against others (p. 35, after Meyer 2001). "value judgements lose their meaning"; what matters is "fulfilling a role and obligations in the research relationship" (p. 77, cited through Wulff 2010).
+- **Choosing what to review is axiology.** Axiology judges "which information is worthy of searching for" and asks what the knowledge "will be used for" (p. 34). Which screenwalks get reviewed, and what a review proposes, are axiological choices.
 
-The pages are indexed privately in `miadisabelle/Etuaptmumk-RSM` → `sources/wilson-2008-research-is-ceremony/` (`INDEX.md`, `GUIDANCE.md`). Pages 43–60 and 108–132 are held as photos and p. 61 as an earlier text extraction, so chapter 3 is complete; pages 77 and 99 were checked through the book's text and secondary citations only.
+The pages are indexed privately in `miadisabelle/Etuaptmumk-RSM` → `sources/wilson-2008-research-is-ceremony/` (`INDEX.md`, `GUIDANCE.md`). Pages 33–35, 43–60 and 108–132 are held as photos and p. 61 as an earlier text extraction, so chapter 3 is complete; pages 77 and 99 were checked through the book's text and secondary citations only.
 
 ---
 
@@ -82,7 +84,11 @@ The pages are indexed privately in `miadisabelle/Etuaptmumk-RSM` → `sources/wi
 | A review of… | Rests in | Why |
 |---|---|---|
 | Our own recording: a screenwalk (these reviews mark themselves `type: internal`) | **North**: reflection, integration | What has been learned. Hearing yourself (p. 131). |
-| Someone else's work entering an episode | **East**: vision, emergence | A seed received. It builds on their work (p. 44). |
+| Someone else's work entering an episode | **East**: vision, emergence | A seed received. It builds on their work (p. 44). *Still a proposal.* |
+
+**Decided (Guillaume, 2026-10-04): an internal review rests in the North.** His reason: "we capture when we are at the West." The recording is living and action (West, Iina); the review reflects on what was captured (North, Siihasin). The teaching followed is the Diné-named sequence, which the focus labels agree with. The life-cycle teachings, which put reflection in the West, are not the teaching that places reviews.
+
+**Stored data stays as it is.** Review nodes Miadi already wrote carry `east`. Placing new ones North changes nothing stored; moving the old ones would be a migration and its own decision.
 
 Under the life-cycle teachings, the same internal review would rest in the **West** (reflection, autumn). Choosing is Guillaume's decision; what matters is that the choice is named.
 
@@ -123,7 +129,7 @@ Using the Diné-named sequence the screenwalk practice already follows:
 *review*, the account; *review circle*, the process (`community-review` already names its type `ReviewCircle`).
 
 ### 2. Register the kind here
-A review rides a `knowledge` node with a `metadata.kind` discriminator and a direction binding, beside `ProductionEntityKind`, `InfraEntityKind` and `AcademicEntityKind`. Miadi then reads the kind from `ontology-core`. Adopt `miadi_review` as it stands, or register `review` and migrate the existing nodes.
+A review rides a `knowledge` node with a `metadata.kind` discriminator and a direction binding, beside `ProductionEntityKind`, `InfraEntityKind` and `AcademicEntityKind`. Miadi then reads the kind from `ontology-core`. Recommended: adopt `miadi_review` as it stands, so no stored node changes (see Decisions).
 
 ### 3. The steps and the circle as relations
 
@@ -160,7 +166,7 @@ Each needs its issue first, per `medicine-wheel-upstream-delivery`.
 
 | # | Where | Change | Size |
 |---|---|---|---|
-| 1 | Miadi `packages/inquiry-weave/src/review.ts` (node creation) | Direction from the review's type: internal → the teaching's reflection direction; outside work → east | small |
+| 1 | Miadi `packages/inquiry-weave/src/review.ts` (node creation) | Direction from the review's type: internal → **north** (decided); outside work → east (proposal). New nodes only. | small |
 | 2 | Miadi `lib/review-ceremony.ts` (circle and ceremony) | The circle's direction follows its review's, instead of `"east"` hard-coded | small |
 | 3 | Review service | Provenance per section (who wrote, who checked, from what); a circle's response becomes a version that names its speakers | small |
 | 4 | Here, `ontology-core` | Register the review kind and its binding (proposal 2) | small |
@@ -183,11 +189,58 @@ Each needs its issue first, per `medicine-wheel-upstream-delivery`.
 
 ## Decisions for Guillaume
 
-- [ ] Two words: *review* and *review circle*
-- [ ] Kind name: adopt `miadi_review` here, or register `review` and migrate
-- [ ] Which teaching places a review, and so where an internal review rests: North (focus labels, Diné-named sequence) or West (life-cycle teachings)
-- [ ] The relation names in proposal 3
-- [ ] One cycle per episode inquiry, or another grain
+### Decided
+
+- [x] **Two words.** A *review* is the written, versioned account of a recording. A *review circle* is where people talk together about a review. In Guillaume's words (2026-10-04): "one is an actual activity where we talk to each other in relationship to a review".
+- [x] **North.** An internal review rests in the North, because "we capture when we are at the West" (Guillaume, 2026-10-04).
+
+### Still open, in plain words
+
+**1. 🏷️ The kind's name.**
+- **What it is.** Think of a label on a jar. Every review Miadi has put on the wheel is a jar labelled `miadi_review`; that label is the node's `metadata.kind`. medicine-wheel keeps the official list of labels: production, infrastructure, academic. A review is not on that list yet.
+- **The question.** Do we add `miadi_review` to the list as it is? Or do we add a plainer `review` and relabel every jar already on the shelf? Relabelling rewrites stored nodes, in Neon and JSONL; that is a migration.
+- **Recommendation: keep `miadi_review`.** Nothing stored changes, and the label says where the review comes from. If reviews ever come from somewhere else, they get their own label beside it.
+
+**2. 🧵 The relation names.**
+- **What it is.** On the wheel, a link between two things is a *relation*, and every relation has a name: a short verb. Miadi already writes one, from an episode to the review it discusses. Each review step would add a link:
+
+| The review step | Links the review to | Proposed name |
+|---|---|---|
+| Watching the recording | the video | `reviews` |
+| Academic fields | each field | `grounded-in` |
+| Relations to other reviews | another review | `related-to` (or `follows`, for parts of one screenwalk) |
+| Internal usage | a team or package | `proposes-to` |
+| A circle changed it | the circle's ceremony | `revised-after` |
+
+- **The question.** Are these the right words? Once relations are written, a rename is a migration, so now is the moment to change one.
+- **Recommendation: accept them**, changing any word that feels wrong before the first one is written.
+
+**3. 🌾 The grain of a cycle.**
+- **What it is.** A cycle (`MedicineWheelCycle`, a feature that exists and has never been used) is one journey around the wheel, held together by one research question; it has a `research_question` field. Each screenwalk → review → circle is one *turn* inside it. "Grain" is how big one cycle is. If a turn is a day, is the cycle a season or a single day?
+- **The choices.**
+  - (a) One cycle per research question. For example, "grounding the Concordia proposal in Wilson" is one cycle and the T4 chart path is another.
+  - (b) One cycle per episode.
+  - (c) One cycle per screenwalk. Then every cycle has a single turn, which loses what a cycle is for.
+- **Recommendation: (a).** It is Wilson's Topic step: the question is what holds the turns together (p. 108).
+
+---
+
+## For the local agent
+
+What can start now, and what waits. Each item needs its issue first (`medicine-wheel-upstream-delivery`).
+
+| Step | Can start | Depends on |
+|---|---|---|
+| Miadi step 1: new review nodes placed North when internal | now | decided |
+| Miadi step 2: the circle's direction follows its review's | now | decided |
+| Review service step 3: provenance per section; circle responses named | now | nothing |
+| medicine-wheel step 4: register the kind | after decision 1 | recommended default: `miadi_review` |
+| Relations from the review steps (proposal 3) | after decision 2 | recommended: the names above |
+| medicine-wheel step 5: `community-review` checks and outcomes | after #155's decisions | R1–R5 answers in proposal 4 |
+| Miadi step 6: bind circles to a cycle | after decision 3 | recommended: one cycle per research question |
+| medicine-wheel step 7: `CYCLES.md`, `CEREMONIES.md` | now | nothing |
+
+The answers to Miadi's R1–R5 (`packages/community/PAGE-POST-CIRCLE.md`) are proposal 4 above. When a decision is made, record it here and in the issue, so the next agent reads one place.
 
 ---
 
