@@ -505,7 +505,7 @@ export const validators: Tool[] = [
             : "WEAK ALIGNMENT",
         },
         key_concepts: {
-          relational_accountability: "Answerable to all your relations when doing research (Wilson 2001, quoted in Wilson 2008, p. 57)",
+          relational_accountability: "Answerable to all your relations when doing research (Shawn Wilson 2001, CJNE 25(2), p. 177, quoted in Wilson 2008, p. 57)",
           research_as_ceremony: "A ceremony for improving your relationship with an idea (Wilson 2008, p. 110)",
           giving_back: "Continuous feedback with participants (p. 121); going back to the community after the writing (p. 125)",
           source: "medicine-wheel://wilson/framework",

@@ -129,12 +129,12 @@ export const resources: Resource[] = [
       },
       epistemology: {
         definition: "How we know what we know",
-        indigenous_view: "Knowledge is relational, shared with all of creation, and cannot be owned (Wilson 2001, quoted p. 74 and pp. 56-57; p. 127). Indigenous ontology is the equivalent of Indigenous epistemology (p. 73).",
+        indigenous_view: "Knowledge is relational, shared with all of creation, and cannot be owned (Shawn Wilson 2001, CJNE 25(2), p. 177, quoted pp. 56-57 and 74; p. 127). Indigenous ontology is the equivalent of Indigenous epistemology (p. 73).",
         ways_of_knowing: "Through the senses and beyond them, including putting form to a bundle of relationships previously invisible (p. 111). Empirical knowledge is crucial but not the only way of knowing (p. 58).",
       },
       axiology: {
         definition: "Ethics and values",
-        indigenous_view: "Built upon relational accountability: value judgements lose their meaning; what matters is fulfilling a role and obligations in the research relationship (p. 77). You are answerable to all your relations (Wilson 2001, quoted p. 57). Respect, reciprocity and responsibility are key features of any healthy relationship and must be included in an Indigenous methodology (p. 77; p. 99).",
+        indigenous_view: "Built upon relational accountability: value judgements lose their meaning; what matters is fulfilling a role and obligations in the research relationship (p. 77). You are answerable to all your relations (Shawn Wilson 2001, CJNE 25(2), p. 177, quoted p. 57). Respect, reciprocity and responsibility are key features of any healthy relationship and must be included in an Indigenous methodology (p. 77; p. 99).",
         three_rs_note: "Cora Weber-Pillwax calls respect, reciprocity and responsibility 'the 3 R's of Indigenous research and learning' (Wilson, p. 77). A variant of hers, quoted by Evelyn Steinhauer, has Relationality as the third R (p. 58).",
         researcher_questions: [
           "How do my methods help to build respectful relationships between the topic and myself as researcher?",
@@ -157,7 +157,7 @@ export const resources: Resource[] = [
         notes: "The methodology is simply the building of more relations (p. 79). Talking circles, participatory action research, storytelling and personal narrative fit the paradigm (p. 115). The method refuses a single formula (Hermes, quoted p. 53). Choosing where to build these connections, the topic, is a responsibility (p. 79).",
       },
       key_concepts: {
-        relational_accountability: "Being answerable to all your relations when doing research (Wilson 2001, quoted p. 57).",
+        relational_accountability: "Being answerable to all your relations when doing research (Shawn Wilson 2001, CJNE 25(2), p. 177, quoted p. 57).",
         research_as_ceremony: "A ceremony for improving your relationship with an idea (p. 110).",
         review_not_critique: "A review that builds on the work of others, rather than judging it, can form the context for relational accountability (pp. 43-44).",
         giving_back: "Credibility through continuous feedback with all participants (p. 121); after the writing, going back to the community (Cora, p. 125).",
