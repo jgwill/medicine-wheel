@@ -513,10 +513,11 @@ import {
   evaluateGates,         // (gates, context) => GateEvaluationResult
   createGate,            // (condition, required, evaluator) => GatingCondition
   resolveHold,           // (gate, context) => resolved GatingConditionStatus
-  GATE_WILSON_ALIGNMENT, // Pre-built: Wilson alignment >= 0.6
+  GATE_TRAJECTORY_CONFIDENCE, // Pre-built, advisory: trajectory confidence >= 0.65; never holds work; missing passes (#155)
+  GATE_WILSON_ALIGNMENT, // Deprecated alias of GATE_TRAJECTORY_CONFIDENCE
   GATE_OCAP_COMPLIANCE,  // Pre-built: OCAP flags compliant
   GATE_CEREMONY_PHASE,   // Pre-built: ceremony in active phase
-  DEFAULT_GATES,         // [GATE_WILSON_ALIGNMENT, GATE_OCAP_COMPLIANCE, GATE_CEREMONY_PHASE]
+  DEFAULT_GATES,         // [GATE_TRAJECTORY_CONFIDENCE (advisory), GATE_OCAP_COMPLIANCE, GATE_CEREMONY_PHASE]
 } from '@medicine-wheel/fire-keeper';
 import type { GateEvaluationResult } from '@medicine-wheel/fire-keeper';
 // GateEvaluationResult: { allPassed, results: { condition, passed, required }[] }
@@ -539,7 +540,7 @@ import type { CheckBackStep, CheckBackResult } from '@medicine-wheel/fire-keeper
 // 1. Does this action honor existing relations?
 // 2. Does it strengthen the Spirit-Body relationship?
 // 3. Is it accountable to all four directions?
-// 4. Would an Elder approve?
+// 4. Would an Elder approve? (A program cannot know: checks OCAP and ceremony phase; low trajectory confidence is advice.)
 ```
 
 ### Ceremony State & Trajectory
