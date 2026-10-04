@@ -1,7 +1,7 @@
 # Research: Relational Web Gap Analysis — Wilson × Medicine Wheel
 
 > **Corrections, 2026-10-04 (jgwill/medicine-wheel#154, #155).** This report is a dated analysis; its readings of Wilson are kept as written except where marked. Checked against the pages since:
-> - The "six domains of relation" are ours, built on Wilson's list (2001, quoted in 2008, p. 56).
+> - The "six domains of relation" nearly hold: Wilson organizes relationality by people, environment/land, cosmos and ideas (2008, pp. 84, 86, 89, 91), and ancestors and future generations follow Stan Wilson (p. 80). (A first correction, calling them ours, overcorrected.)
 > - "If research doesn't change you as a person…" is a lesson Wilson quotes on p. 135 and cannot attribute (a co-researcher's slogan); reading it as a validity criterion is ours.
 > - "Once you are in relationship, you are responsible for that relationship's wellbeing" has no page found; it is not quoted as Wilson's.
 > - Germination, assimilation and completion are Robert Fritz's creative cycle.

@@ -29,6 +29,16 @@ export interface Direction {
 
 // ── Node Types ──────────────────────────────────────────────────────────────
 
+/**
+ * The six foundational kinds correspond to the relations Wilson's chapter
+ * "Relationality" is organized by (Research Is Ceremony, 2008): people
+ * (`human`, p. 84), environment/land (`land`, p. 86), cosmos (`spirit`,
+ * spirituality as "one's internal sense of connection to the universe",
+ * pp. 89–91) and ideas (`knowledge`, p. 91); and to the ancestors and future
+ * generations of Stan Wilson's editorial (`ancestor`, `future`, p. 80).
+ * A correspondence, not a record of how the union was first designed.
+ * `circle` and `agent` are later revisions (#152).
+ */
 export type NodeType =
   | 'human'
   | 'land'
