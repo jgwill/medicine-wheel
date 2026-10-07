@@ -16,7 +16,10 @@ import type { CircleRole } from './circles.js';
 
 export interface InvitationRecord {
   code: string;
+  /** The first circle the code opens. */
   circle_id: string;
+  /** The further circles the code opens, after `circle_id` (0.17.5). Read every circle with `invitationCircles()`. */
+  circle_ids?: string[];
   invited_by: string;
   role: CircleRole;
   /** The name the invitation was meant for; informational. */
@@ -32,6 +35,8 @@ export interface InvitationRecord {
 
 export interface InvitationInput {
   circle_id: string;
+  /** Further circles the same code opens. `circle_id` and repeats are dropped. */
+  circle_ids?: string[];
   invited_by: string;
   role?: CircleRole;
   intended_for?: string;
@@ -62,6 +67,11 @@ export function mintInvitationCode(length = 8): string {
   return out;
 }
 
+/** Every circle a code opens: `circle_id` first, then `circle_ids`, without repeats. */
+export function invitationCircles(record: Pick<InvitationRecord, 'circle_id' | 'circle_ids'>): string[] {
+  return [...new Set([record.circle_id, ...(record.circle_ids ?? [])])];
+}
+
 export function invitationState(record: InvitationRecord, now = Date.now()): 'open' | 'revoked' | 'expired' | 'exhausted' {
   if (record.revoked_at) return 'revoked';
   if (record.expires_at && Date.parse(record.expires_at) < now) return 'expired';
@@ -75,6 +85,8 @@ export interface PublicInvitation {
   role: CircleRole;
   state: ReturnType<typeof invitationState>;
   circle_name: string;
+  /** Every circle's name, in `invitationCircles()` order, when the code opens more than one. */
+  circle_names?: string[];
   invited_by_name?: string;
   intended_for?: string;
   expires_at?: string;
@@ -82,12 +94,13 @@ export interface PublicInvitation {
   has_email: boolean;
 }
 
-export function publicInvitation(record: InvitationRecord, names: { circle_name: string; invited_by_name?: string }, now = Date.now()): PublicInvitation {
+export function publicInvitation(record: InvitationRecord, names: { circle_name: string; circle_names?: string[]; invited_by_name?: string }, now = Date.now()): PublicInvitation {
   return {
     code: record.code,
     role: record.role,
     state: invitationState(record, now),
     circle_name: names.circle_name,
+    ...(names.circle_names && names.circle_names.length > 1 ? { circle_names: names.circle_names } : {}),
     ...(names.invited_by_name ? { invited_by_name: names.invited_by_name } : {}),
     ...(record.intended_for ? { intended_for: record.intended_for } : {}),
     ...(record.expires_at ? { expires_at: record.expires_at } : {}),
@@ -113,9 +126,11 @@ export class JsonlInvitationStore implements InvitationStore {
 
   async create(input: InvitationInput): Promise<InvitationRecord> {
     const now = Date.now();
+    const further = invitationCircles({ circle_id: input.circle_id, circle_ids: input.circle_ids }).slice(1);
     const record: InvitationRecord = {
       code: mintInvitationCode(),
       circle_id: input.circle_id,
+      ...(further.length ? { circle_ids: further } : {}),
       invited_by: input.invited_by,
       role: input.role ?? 'member',
       ...(input.intended_for ? { intended_for: input.intended_for } : {}),
@@ -135,7 +150,7 @@ export class JsonlInvitationStore implements InvitationStore {
   }
 
   async listForCircle(circle_id: string): Promise<InvitationRecord[]> {
-    return this.readAll().filter((r) => r.circle_id === circle_id);
+    return this.readAll().filter((r) => invitationCircles(r).includes(circle_id));
   }
 
   async accept(code: string, person_id: string) {

@@ -152,6 +152,24 @@ describe("invitations (the door into a circle)", () => {
     expect(explicit.expires_at).toBe("2030-01-01T00:00:00.000Z");
     expect(publicInvitation(explicit, { circle_name: "C" }).has_email).toBe(false);
   });
+
+  it("one code opens several circles: circle_id first, then circle_ids, found from any of them (0.17.5)", async () => {
+    const { invitationCircles, publicInvitation } = await import("../src/community-identity/src/index");
+    const store = new JsonlInvitationStore(path.join(tempDir, "invites-many.jsonl"));
+    const inv = await store.create({ circle_id: "circle:a", circle_ids: ["circle:b", "circle:a", "circle:c", "circle:b"], invited_by: "g" });
+    expect(inv.circle_id).toBe("circle:a");
+    expect(inv.circle_ids).toEqual(["circle:b", "circle:c"]);
+    expect(invitationCircles(inv)).toEqual(["circle:a", "circle:b", "circle:c"]);
+    expect((await store.listForCircle("circle:c")).map((r) => r.code)).toEqual([inv.code]);
+
+    const single = await store.create({ circle_id: "circle:a", invited_by: "g", circle_ids: [] });
+    expect(single).not.toHaveProperty("circle_ids");
+    expect(invitationCircles(single)).toEqual(["circle:a"]);
+    expect(await store.listForCircle("circle:a")).toHaveLength(2);
+
+    expect(publicInvitation(inv, { circle_name: "A", circle_names: ["A", "B", "C"] }).circle_names).toEqual(["A", "B", "C"]);
+    expect(publicInvitation(single, { circle_name: "A", circle_names: ["A"] })).not.toHaveProperty("circle_names");
+  });
 });
 
 describe("status, circle fields, audit and config (0.14.1)", () => {

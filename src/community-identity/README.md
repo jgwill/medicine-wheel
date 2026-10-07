@@ -17,7 +17,7 @@ const { token } = await creds.issue(node.id, 'laptop');                  // show
 const record = await creds.verify(token);                                // who is calling
 ```
 
-An invitation code opens one circle. A code minted without `expires_at` lives `DEFAULT_INVITATION_TTL_HOURS` (96). `intended_email` records where it was sent. `publicInvitation()` is what a code holder may see before registering: no address, no acceptances.
+An invitation code opens one circle, `circle_id`, or several: `circle_ids` holds the circles after the first (0.17.5), and `invitationCircles(record)` lists them all in order. A code minted without `expires_at` lives `DEFAULT_INVITATION_TTL_HOURS` (96). `intended_email` records where it was sent. `publicInvitation()` is what a code holder may see before registering: no address, no acceptances.
 
 ```ts
 const invites = new JsonlInvitationStore('/srv/miadi/identity/invitations.jsonl');
