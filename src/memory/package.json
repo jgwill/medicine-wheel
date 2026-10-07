@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/memory",
-  "version": "0.17.4",
+  "version": "0.17.5",
   "type": "module",
   "description": "Asking the wheel's memory, whoever keeps it: one contract that names no provider (scope, reach, answer, source, provider), the rule that turns a scope into ceremonies, a text match over the wheel's own records, and the orchestration a wheel server or any caller shares. Zero dependencies.",
   "main": "dist/index.js",
