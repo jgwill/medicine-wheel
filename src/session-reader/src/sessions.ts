@@ -7,7 +7,7 @@
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { SessionSummary, SessionEvent, SessionAnalytics, SessionFilters } from './types.js';
+import type { SessionSummary, SessionEvent, SessionAnalytics, SessionFilters, SessionBinding } from './types.js';
 
 /**
  * Resolve the `_sessiondata/` root.
@@ -51,6 +51,11 @@ function extractAnalytics(events: SessionEvent[]): SessionAnalytics {
   let feedbackCount = 0;
   let firstPrompt: string | undefined;
 
+  // A tool call writes a PreToolUse line and then a PostToolUse (or
+  // PostToolUseFailure) line. Count each call once: at its PreToolUse line, or
+  // at its PostToolUse line when the capture holds no PreToolUse lines at all.
+  const callEvent = events.some((e) => e.hook_event_name === 'PreToolUse') ? 'PreToolUse' : 'PostToolUse';
+
   for (const e of events) {
     const type = String(e.hook_event_name || 'unknown');
     eventsByType[type] = (eventsByType[type] || 0) + 1;
@@ -62,10 +67,12 @@ function extractAnalytics(events: SessionEvent[]): SessionAnalytics {
         break;
       case 'PreToolUse':
       case 'PostToolUse':
-        toolCallCount++;
-        if (e.tool_name) {
-          const name = String(e.tool_name);
-          toolUsage[name] = (toolUsage[name] || 0) + 1;
+        if (type === callEvent) {
+          toolCallCount++;
+          if (e.tool_name) {
+            const name = String(e.tool_name);
+            toolUsage[name] = (toolUsage[name] || 0) + 1;
+          }
         }
         if (e.file_path) filesEdited.add(String(e.file_path));
         break;
@@ -148,6 +155,21 @@ export async function getDistinctModels(): Promise<string[]> {
   return [...models].sort();
 }
 
+/**
+ * The binding lines of a session (`_terminal_binding.jsonl`), oldest first:
+ * one per start, resume, rename and end, each with its time. Empty when the
+ * session was captured without the session-observability binding.
+ */
+export async function getSessionBindings(sessionId: string): Promise<SessionBinding[]> {
+  const content = await safeRead(path.join(getSessionDir(), sessionId, '_terminal_binding.jsonl'));
+  if (!content) return [];
+  return parseJsonlLines(content) as SessionBinding[];
+}
+
+function lineCount(content: string): number {
+  return content.trim() ? content.trim().split('\n').filter(Boolean).length : 0;
+}
+
 export async function getSessionSummary(sessionId: string): Promise<SessionSummary | null> {
   const sessionDir = path.join(getSessionDir(), sessionId);
 
@@ -163,6 +185,12 @@ export async function getSessionSummary(sessionId: string): Promise<SessionSumma
   let endedAt: string | undefined;
   let eventCount = 0;
   let firstPrompt: string | undefined;
+  let name: string | undefined;
+
+  // Hook lines carry no time of their own (none of 240 recent sessions on the
+  // host this was measured on, 2026-10-12). The binding line does.
+  const bindings = await getSessionBindings(sessionId);
+  const binding = bindings[bindings.length - 1];
 
   const startContent = await safeRead(path.join(sessionDir, '_claude_session_starts.jsonl'));
   if (startContent) {
@@ -170,9 +198,12 @@ export async function getSessionSummary(sessionId: string): Promise<SessionSumma
     if (lines[0]) {
       model = lines[0].model as string;
       cwd = lines[0].cwd as string;
-      startedAt = (lines[0].timestamp || lines[0].created_at) as string;
+      startedAt = (lines[0].timestamp || lines[0].created_at) as string | undefined;
     }
   }
+  const firstStart = bindings.find((b) => b.event === 'session.start');
+  if (firstStart?.at) startedAt = firstStart.at;
+  if (!cwd && binding?.cwd) cwd = binding.cwd;
 
   const inputContent = await safeRead(path.join(sessionDir, '_claude_user_inputs.jsonl'));
   if (inputContent) {
@@ -181,31 +212,63 @@ export async function getSessionSummary(sessionId: string): Promise<SessionSumma
   }
 
   const endContent = await safeRead(path.join(sessionDir, '_claude_SessionEnd.jsonl'));
-  const hasEnd = endContent.trim().length > 0;
-  if (hasEnd) {
-    const lines = parseJsonlLines(endContent);
-    const last = lines[lines.length - 1];
-    if (last) endedAt = (last.timestamp || last.created_at) as string;
+  const startCount = lineCount(startContent);
+  const endCount = lineCount(endContent);
+
+  // Counting starts against ends does not decide whether a session is open: a
+  // context compaction writes a start with no end, and a crash or reboot ends a
+  // session without writing one. What was written last decides. The binding
+  // lines are in order and carry a time; without them, the file written last.
+  let isActive: boolean;
+  const lastStartOrEnd = [...bindings].reverse().find((b) => b.event === 'session.start' || b.event === 'session.end');
+  if (lastStartOrEnd) {
+    isActive = lastStartOrEnd.event === 'session.start';
+    if (!isActive && lastStartOrEnd.at) endedAt = lastStartOrEnd.at;
+  } else if (endCount === 0) {
+    isActive = startCount > 0;
+  } else {
+    const [startStat, endStat] = await Promise.all([
+      fs.stat(path.join(sessionDir, '_claude_session_starts.jsonl')).catch(() => null),
+      fs.stat(path.join(sessionDir, '_claude_SessionEnd.jsonl')).catch(() => null),
+    ]);
+    isActive = !!startStat && !!endStat && startStat.mtimeMs > endStat.mtimeMs;
+    if (!isActive) {
+      const lines = parseJsonlLines(endContent);
+      const last = lines[lines.length - 1];
+      endedAt = ((last?.timestamp || last?.created_at) as string | undefined) ?? endStat?.mtime.toISOString();
+    }
+  }
+
+  // The latest binding line carries the current name, renames included.
+  if (binding?.name?.name) name = binding.name.name;
+  if (!name) {
+    try {
+      const title = JSON.parse(await safeRead(path.join(sessionDir, 'custom-title.json')) || '{}');
+      if (typeof title.customTitle === 'string' && title.customTitle) name = title.customTitle;
+    } catch { /* no title */ }
   }
 
   for (const f of jsonlFiles) {
     const content = await safeRead(path.join(sessionDir, f));
-    if (content) eventCount += content.trim().split('\n').filter(Boolean).length;
+    if (content) eventCount += lineCount(content);
   }
 
   const hasTranscript = files.includes('_transcript_final.jsonl');
-  const isActive = !hasEnd && startContent.trim().length > 0;
 
   return {
     id: sessionId,
     model,
     cwd,
+    name,
     startedAt,
     endedAt,
+    startCount,
+    endCount,
     eventCount,
     hasTranscript,
     isActive,
     files: jsonlFiles,
+    binding,
     firstPrompt,
   };
 }
@@ -256,6 +319,7 @@ export async function searchSessions(query: string, limit = 50): Promise<Session
     if (session.id.includes(lowerQuery) ||
         session.model?.toLowerCase().includes(lowerQuery) ||
         session.cwd?.toLowerCase().includes(lowerQuery) ||
+        session.name?.toLowerCase().includes(lowerQuery) ||
         session.firstPrompt?.toLowerCase().includes(lowerQuery)) {
       results.push(session);
     }

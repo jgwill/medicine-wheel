@@ -18,8 +18,8 @@
   - Any future session analytics, monitoring, or reporting tools
 
 ## 3. Exports
-- `types` — SessionEvent, SessionAnalytics, SessionSummary, SessionFilters, EVENT_ICONS
-- `sessions` — listSessions, getSessionSummary, getSessionEvents, getSessionDetail, searchSessions, readSessionFile, getLatestEvents, getDistinctModels
+- `types` — SessionEvent, SessionAnalytics, SessionSummary, SessionFilters, SessionBinding, EVENT_ICONS
+- `sessions` — listSessions, getSessionSummary, getSessionBindings, getSessionEvents, getSessionDetail, searchSessions, readSessionFile, getLatestEvents, getDistinctModels
 
 ## 4. Responsibilities and Boundaries
 - **Responsibilities**: Read JSONL session event files; extract analytics; provide search/filtering
@@ -30,3 +30,4 @@
 - **Steward**: Guillaume
 - **Review trigger**: When new Claude hook event types are added, or when `_sessiondata/` file format changes
 - [2026-03-01] [Copilot CLI agent] — Initial creation. Extracted from ceremony-session-observer lib/sessions.ts and lib/types.ts.
+- [2026-10-12] [Mino seat, Claude Opus 5.5, fork mino-261012a-fork1-mw-sessions] — Measured against the capture on gaia: hook lines carry no time (0 of 240 recent sessions), so `startedAt`, `endedAt`, sorting and date filters did nothing. Times now come from `_terminal_binding.jsonl`. A tool call was counted twice (PreToolUse and PostToolUse); it is counted once. `isActive` read a resumed session as ended; it now follows the last start or end line. Added `name`, `startCount`, `endCount`, `binding`, `getSessionBindings`. README signatures of `getLatestEvents` and `readSessionFile` now match the code. Multi-engine reading stays with jgwill/medicine-wheel#51. Grounded in Episode 554 (miadi-chronicle://554), the first session inventory.

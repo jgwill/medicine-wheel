@@ -19,6 +19,28 @@ This package reads agent session event data from `_sessiondata/` JSONL files. Ze
 | `sessions` | Session listing, detail retrieval, search, and utility functions |
 | `types` | TypeScript type definitions and constants for session events |
 
+## What the reader calls a session
+
+A session is one agent conversation, identified by its session id. The id
+survives a resume and a rename. A fork starts a new session with a new id.
+
+The capture keeps one folder per session id under `_sessiondata/`:
+
+| file | what it holds |
+|------|---------------|
+| `_claude_<HookEvent>.jsonl`, `_claude_session_starts.jsonl`, `_claude_user_inputs.jsonl` | one line per hook event. These lines carry no time of their own. |
+| `_terminal_binding.jsonl` | one line per start, resume, rename and end: the time (`at`), the terminal that held the session, its name and former names, its team and its episode. Written by the session-observability capture. |
+| `custom-title.json` | the name given with `/rename`, when there was one |
+
+So the reader takes times from the binding lines. A session is **active** when
+its last start or end line is a start. Counting starts against ends does not
+decide this: a context compaction writes a start with no end, and a crash or a
+reboot ends a session without writing one. Without binding lines, the reader
+compares which of the start and end files was written last.
+
+An ended session can be resumed and become active again. Whether a person
+decided that a session's work is finished is not in the capture.
+
 ## Installation
 
 ```bash
@@ -102,13 +124,15 @@ const detail = await getSessionDetail(sessions[0].id);
 console.log(detail.analytics.toolUsage);
 ```
 
-**`getSessionSummary(sessionId)`** — Summary metadata for a single session.
+**`getSessionSummary(sessionId)`** — Summary metadata for a single session: name, first start, last end, start and end line counts, whether it is active, and its latest binding line.
+
+**`getSessionBindings(sessionId)`** — The session's binding lines, oldest first. Empty when the capture has none.
 
 **`getSessionEvents(sessionId)`** — Raw event array for a session.
 
 ### Search
 
-**`searchSessions(query)`** — Full-text search across session data.
+**`searchSessions(query, limit = 50)`** — Match the query against each session's id, name, model, working directory and first prompt.
 
 ```typescript
 const results = await searchSessions('authentication');
@@ -116,9 +140,9 @@ const results = await searchSessions('authentication');
 
 ### Utilities
 
-**`readSessionFile(filePath)`** — Parse a single JSONL session file into events.
+**`readSessionFile(sessionId, fileName)`** — Parse one JSONL file of a session into its lines.
 
-**`getLatestEvents(count?)`** — Retrieve the most recent events across all sessions.
+**`getLatestEvents(sessionId, sinceLineCount = 0)`** — The session's events after the first `sinceLineCount`, for polling one session.
 
 **`getDistinctModels()`** — List all unique model identifiers found in session data.
 
@@ -136,7 +160,7 @@ interface SessionEvent {
 }
 
 interface SessionAnalytics {
-  toolUsage: Record<string, number>;
+  toolUsage: Record<string, number>;   // calls per tool, each call counted once
   filesEdited: string[];
   promptCount: number;
   toolCallCount: number;
@@ -146,14 +170,20 @@ interface SessionAnalytics {
 
 interface SessionSummary {
   id: string;
+  name?: string;          // latest binding name, else custom title
   model?: string;
-  startedAt?: string;
-  endedAt?: string;
+  startedAt?: string;     // first start, from the binding line
+  endedAt?: string;       // last end, when not active
+  startCount: number;     // start lines: first start, resumes, compactions
+  endCount: number;
+  isActive: boolean;      // last start or end line is a start
+  binding?: SessionBinding;
   eventCount: number;
   analytics?: SessionAnalytics;
   // ...
 }
 
+// A session whose start time is unknown is kept by the since/until filters.
 interface SessionFilters {
   model?: string;
   hasTranscript?: boolean;

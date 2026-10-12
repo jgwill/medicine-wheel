@@ -20,6 +20,7 @@ export type {
   SessionAnalytics,
   SessionSummary,
   SessionFilters,
+  SessionBinding,
 } from './types.js';
 
 export { EVENT_ICONS } from './types.js';
@@ -35,4 +36,5 @@ export {
   readSessionFile,
   getLatestEvents,
   getSessionDir,
+  getSessionBindings,
 } from './sessions.js';
