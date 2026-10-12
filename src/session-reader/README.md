@@ -106,6 +106,21 @@ SESSION_DATA_DIR=/srv/agents/_sessiondata node my-report.js
 
 **`getSessionDir()`** — The absolute `_sessiondata/` path the reader will use, after applying `SESSION_DATA_DIR`.
 
+### The binding line
+
+The capture appends one line per session event to `<root>/data/terminal_bindings.jsonl`.
+This module gives that line a schema and one fold, shared by every reader.
+
+**`BINDING_LINE_SCHEMA`** — JSON Schema (2020-12) for one line. It requires `at`, `event` and `session_id`, and keeps any other field.
+
+**`readBindingLines(root)`** / **`parseBindingLines(jsonl)`** — The lines, with torn lines skipped.
+
+**`foldBindingLines(lines)`** — One `SessionIdentity` per session id. Each field takes the newest line that carries it, so a late older line never rolls a value back. `ended` follows the last start or end line. A `declared` episode (a shell-wide default) binds nothing.
+
+**`sessionIdentities(lines)`** — Every identity, oldest first. **`sessionsOfEpisode(lines, folder)`** — the sessions that worked in one episode folder.
+
+On gaia's 1110 binding lines (2026-10-12), this fold agrees with `@miadi/hooks-interpreter` on all 363 sessions: name, ended, episode, team and pane.
+
 ### Session listing
 
 **`listSessions(filters?)`** — List sessions from `_sessiondata/` directories with optional filters.

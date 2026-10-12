@@ -55,33 +55,9 @@ export interface SessionAnalytics {
   firstPrompt?: string;
 }
 
-/**
- * One line of a session's binding, from `_terminal_binding.jsonl`. The
- * session-observability capture writes a line at every start, resume, rename
- * and end: which terminal held the session, under which name, for which team
- * and episode, and when. It is the only capture file whose lines carry a time
- * (`at`); the hook files do not.
- */
-export interface SessionBinding {
-  /** ISO time the line was written. */
-  at?: string;
-  /** `session.start`, `session.rename` or `session.end`. */
-  event?: string;
-  /** For a start: `startup`, `resume`, `clear`… */
-  source?: string;
-  /** The engine: `claude`, `hermes`, `gemini`, `codex`… */
-  agent?: string;
-  host?: string;
-  cwd?: string;
-  /** The session's current name and the names it had before. */
-  name?: { name?: string; source?: string; since?: number; former?: string[] };
-  /** The terminal that held the session at that moment. */
-  tmux?: { session?: string; window?: number; pane?: number; pane_id?: string; socket?: string };
-  team?: { id?: string; source?: string };
-  /** `source: 'declared'` is a shell-wide default, not evidence the session worked in that episode. */
-  episode?: { id?: string; source?: string };
-  [key: string]: unknown;
-}
+/** One line of a session's binding. The full shape and its schema are in `./binding.ts`. */
+export type { BindingLine as SessionBinding } from './binding.js';
+import type { BindingLine } from './binding.js';
 
 /**
  * What the reader knows about one session.
@@ -111,7 +87,7 @@ export interface SessionSummary {
   isActive: boolean;
   files: string[];
   /** The latest binding line, when the capture has one. */
-  binding?: SessionBinding;
+  binding?: BindingLine;
   analytics?: SessionAnalytics;
   firstPrompt?: string;
 }

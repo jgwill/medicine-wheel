@@ -38,3 +38,24 @@ export {
   getSessionDir,
   getSessionBindings,
 } from './sessions.js';
+
+// The binding line: schema, reader and fold
+export type {
+  BindingLine,
+  BindingEvent,
+  BindingName,
+  BindingTmux,
+  BindingLabel,
+  BindingMission,
+  EpisodeSource,
+  SessionIdentity,
+} from './binding.js';
+export {
+  BINDING_LINE_SCHEMA,
+  parseBindingLines,
+  bindingLinesPath,
+  readBindingLines,
+  foldBindingLines,
+  sessionIdentities,
+  sessionsOfEpisode,
+} from './binding.js';
