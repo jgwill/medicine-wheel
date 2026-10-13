@@ -4,6 +4,9 @@
  * An episode's folder on the episode page — listed, and any text file read in
  * place. Read-only: the wheel reads an episode, Miadi writes it.
  *
+ * Files are listed in the folders their paths name, every one open to begin
+ * with, so a reader can tell which folder a file is in.
+ *
  * Text is shown as text. Markdown is not rendered here: rendering it means a
  * renderer and a sanitizer between an episode's files and this page, and plain
  * text is already readable. Media and documents are listed, not played.
@@ -11,7 +14,9 @@
  * @see app/api/episodes/[id]/files/route.ts — and the rules it states
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { EpisodeFileTree } from "@/components/episode-file-tree";
+import { buildFileTree, folderPaths } from "@/lib/episode-file-tree";
 
 type EpisodeFile = {
   relativePath: string;
@@ -61,6 +66,8 @@ export function EpisodeFilesPanel({ episodeId }: { episodeId: string }) {
   // The path last asked for, so a slow answer for an earlier click cannot
   // replace the file the reader opened after it.
   const wanted = useRef<string | null>(null);
+  // Folders the reader closed. The tree opens fully; only a closed folder is remembered.
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
 
   useEffect(() => {
     let live = true;
@@ -99,17 +106,37 @@ export function EpisodeFilesPanel({ episodeId }: { episodeId: string }) {
     [base],
   );
 
-  const files =
-    room?.state === "open"
-      ? // The episode's own work first; host and agent guidance after it.
-        [...room.files].sort((a, b) => Number(a.guidance) - Number(b.guidance))
-      : [];
+  const files = useMemo(() => (room?.state === "open" ? room.files : []), [room]);
+  const tree = useMemo(() => buildFileTree(files), [files]);
+  const folders = useMemo(() => folderPaths(tree), [tree]);
+  const allClosed = folders.length > 0 && folders.every((path) => collapsed.has(path));
+
+  const toggleFolder = useCallback(
+    (path: string) =>
+      setCollapsed((current) => {
+        const next = new Set(current);
+        if (!next.delete(path)) next.add(path);
+        return next;
+      }),
+    [],
+  );
 
   return (
     <section>
-      <h2 className="text-sm font-semibold mb-2">
-        Files {files.length > 0 && `(${files.length})`}
-      </h2>
+      <div className="flex items-baseline justify-between gap-3 mb-2">
+        <h2 className="text-sm font-semibold">
+          Files {files.length > 0 && `(${files.length})`}
+        </h2>
+        {folders.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setCollapsed(allClosed ? new Set() : new Set(folders))}
+            className="text-xs text-muted-foreground hover:underline"
+          >
+            {allClosed ? "Expand all" : "Collapse all"}
+          </button>
+        )}
+      </div>
 
       {room === null ? (
         <p className="text-sm text-muted-foreground">Opening the folder…</p>
@@ -118,23 +145,30 @@ export function EpisodeFilesPanel({ episodeId }: { episodeId: string }) {
       ) : files.length === 0 ? (
         <p className="text-sm text-muted-foreground">The folder holds nothing the room shows.</p>
       ) : (
-        <ul className="space-y-1">
-          {files.map((file) => {
+        <EpisodeFileTree
+          tree={tree}
+          collapsed={collapsed}
+          onToggleFolder={toggleFolder}
+          renderFile={(file, name) => {
             const isOpen = opened?.path === file.relativePath;
             return (
-              <li key={file.relativePath}>
+              <>
                 <div className="p-2 border rounded-lg bg-card flex items-baseline justify-between gap-3 flex-wrap">
                   {file.previewable ? (
                     <button
                       onClick={() => toggle(file)}
+                      title={file.relativePath}
                       className="text-sm font-mono text-left break-all hover:underline"
                       aria-expanded={isOpen}
                     >
-                      {isOpen ? "▾" : "▸"} {file.relativePath}
+                      {isOpen ? "▾" : "▸"} {name}
                     </button>
                   ) : (
-                    <span className="text-sm font-mono break-all text-muted-foreground">
-                      {file.relativePath}
+                    <span
+                      title={file.relativePath}
+                      className="text-sm font-mono break-all text-muted-foreground"
+                    >
+                      {name}
                     </span>
                   )}
                   <span className="text-xs text-muted-foreground shrink-0 flex gap-2 items-baseline">
@@ -157,10 +191,10 @@ export function EpisodeFilesPanel({ episodeId }: { episodeId: string }) {
                     )}
                   </div>
                 )}
-              </li>
+              </>
             );
-          })}
-        </ul>
+          }}
+        />
       )}
     </section>
   );

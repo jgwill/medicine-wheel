@@ -20,6 +20,13 @@ export default defineConfig({
       '@': resolve(process.cwd()),
     },
   },
+  // `tsconfig.json` says `jsx: preserve` because Next compiles the JSX itself.
+  // Vitest has no Next in front of it and cannot parse a preserved `.tsx`, so a
+  // test that renders a component fails on its first `<`. Tests transform JSX
+  // with the automatic runtime; the Next build is unchanged. Added with
+  // tests/episode-file-tree.test.ts, the first test to render a component.
+  // Vite 8 transforms with oxc, not esbuild.
+  oxc: { jsx: { runtime: 'automatic' } },
   test: {
     include: ['mcp/tests/**/*.test.ts', 'tests/**/*.test.ts'],
     testTimeout: 15000,
