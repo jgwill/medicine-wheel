@@ -20,6 +20,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_LINEAGE_VIEW,
+  DEFAULT_LINEAGE_WEB_LAYOUT,
   LINEAGE_BANDS,
   layoutLineageWeb,
   lineageArcPath,
@@ -140,7 +141,31 @@ export function LineageWeb({
     () => visibleLineage(episodes, edges, { view, focus: selected, matches, matchMode }),
     [episodes, edges, view, selected, matches, matchMode],
   );
-  const layout = useMemo(() => layoutLineageWeb(shown.episodes, layoutProp), [shown.episodes, layoutProp]);
+  // The canvas fills its box: `layout.minWidth` is a floor, the box's width the fill.
+  const [boxWidth, setBoxWidth] = useState(0);
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => setBoxWidth(Math.floor(entry.contentRect.width)));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  const layout = useMemo(
+    () =>
+      layoutLineageWeb(shown.episodes, {
+        ...layoutProp,
+        minWidth: Math.max(layoutProp?.minWidth ?? DEFAULT_LINEAGE_WEB_LAYOUT.minWidth, boxWidth),
+      }),
+    [shown.episodes, layoutProp, boxWidth],
+  );
+  // A month label that would overlap the one before it is left out.
+  const monthLabels = useMemo(() => {
+    const kept: typeof layout.months = [];
+    for (const m of layout.months) {
+      if (!kept.length || m.x - kept[kept.length - 1].x >= 56) kept.push(m);
+    }
+    return kept;
+  }, [layout.months]);
   const chains = useMemo(() => (view.threads ? threadChains(shown.episodes) : []), [shown.episodes, view.threads]);
   const byId = useMemo(() => new Map(shown.episodes.map((e) => [e.id, e])), [shown.episodes]);
   const hasThreads = useMemo(() => episodes.some((e) => e.thread), [episodes]);
@@ -188,6 +213,7 @@ export function LineageWeb({
     color: on ? colors.text : colors.muted,
     border: `1px solid ${on ? colors.accent : colors.border}`,
     fontWeight: on ? 700 : 500,
+    whiteSpace: 'nowrap',
   });
   const kindLabel: Record<LineageEdgeKind, string> = { continuation: 'continues from', relation: 'relates to' };
 
@@ -229,7 +255,7 @@ export function LineageWeb({
               style={option(view.kinds[kind])}
               onClick={() => changeView({ kinds: { ...view.kinds, [kind]: !view.kinds[kind] } })}
             >
-              <svg width={18} height={8} aria-hidden style={{ marginRight: 6, verticalAlign: 'middle' }}>
+              <svg width={18} height={8} aria-hidden style={{ display: 'inline-block', marginRight: 6, verticalAlign: 'middle' }}>
                 <line x1={1} y1={4} x2={17} y2={4} stroke="currentColor" strokeWidth={1.6} strokeDasharray={kind === 'relation' ? '3 3' : undefined} />
               </svg>
               {kindLabel[kind]}
@@ -266,7 +292,7 @@ export function LineageWeb({
               </g>
             ))}
 
-            {layout.months.map((m) => (
+            {monthLabels.map((m) => (
               <text
                 key={m.label}
                 x={m.x}
