@@ -375,7 +375,16 @@ export function LineageWeb({
                   )}
                   {isSelected && <circle r={8.5} fill="none" stroke={colors.text} strokeWidth={1.4} />}
                   {showLabels && (
-                    <text x={7} y={-8} fontSize={10} fontFamily={FONT_MONO} fill={colors.muted} pointerEvents="none">
+                    // Near the right edge the label sits to the left of its dot, inside the canvas.
+                    <text
+                      x={p.x > layout.width - 48 ? -7 : 7}
+                      y={-8}
+                      textAnchor={p.x > layout.width - 48 ? 'end' : 'start'}
+                      fontSize={10}
+                      fontFamily={FONT_MONO}
+                      fill={colors.muted}
+                      pointerEvents="none"
+                    >
                       {episode.label}
                     </text>
                   )}
