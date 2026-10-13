@@ -394,33 +394,41 @@ export function LineageWeb({
           </svg>
         </div>
 
-        {chip && active && (
-          <div
-            style={{
-              position: 'absolute',
-              left: 12,
-              bottom: 30,
-              maxWidth: 320,
-              background: colors.panel,
-              border: `1px solid ${colors.border}`,
-              borderLeft: `3px solid ${colorOf(active.direction)}`,
-              borderRadius: 10,
-              padding: '10px 12px',
-              pointerEvents: 'none',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, fontSize: 11, color: colors.muted }}>
+      </div>
+
+      {/* The hovered or selected episode, in a strip under the canvas: a chip
+          floating over the web hid the dots of the lowest band. */}
+      {chip && (
+        <div
+          aria-live="polite"
+          style={{
+            minHeight: 42,
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'baseline',
+            columnGap: 10,
+            rowGap: 2,
+            padding: '6px 4px 4px',
+            borderTop: `1px solid ${colors.border}`,
+            borderLeft: active ? `3px solid ${colorOf(active.direction)}` : '3px solid transparent',
+            paddingLeft: 10,
+            fontSize: 11,
+            color: colors.muted,
+          }}
+        >
+          {active ? (
+            <>
               <span style={{ fontFamily: FONT_MONO, fontWeight: 700, color: colorOf(active.direction) }}>{active.label}</span>
               {active.date && <span style={{ fontFamily: FONT_MONO }}>{active.date}</span>}
-              {active.caption && <span style={{ marginLeft: 'auto' }}>{active.caption}</span>}
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 800, lineHeight: 1.2, color: colors.text }}>{active.title ?? active.id}</div>
-            {shown.found && !shown.found.has(active.id) && (
-              <div style={{ fontSize: 11, color: colors.muted, marginTop: 4 }}>related to an episode the search found</div>
-            )}
-          </div>
-        )}
-      </div>
+              <span style={{ fontSize: 13.5, fontWeight: 800, lineHeight: 1.25, color: colors.text }}>{active.title ?? active.id}</span>
+              {active.caption && <span>{active.caption}</span>}
+              {shown.found && !shown.found.has(active.id) && <span>related to an episode the search found</span>}
+            </>
+          ) : (
+            <span>Hover or tap an episode to name it; tap it again to open it.</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
