@@ -38,6 +38,8 @@ export function EpisodeLineageWeb({
   episodes,
   edges,
   matches,
+  around,
+  panel = true,
 }: {
   /** In chronicle order, oldest first. */
   episodes: LineageEpisode[];
@@ -45,9 +47,13 @@ export function EpisodeLineageWeb({
   edges: LineageEdge[];
   /** When a filter is typed: the episodes it matches. Their relatives stay, as rings. */
   matches?: Set<string> | null;
+  /** Open centred on this episode and its relatives (an episode's own page). */
+  around?: string;
+  /** The selected episode's relations under the web. Off where the page lists them already. */
+  panel?: boolean;
 }) {
   const router = useRouter();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(around ?? null);
 
   const webEpisodes = useMemo(
     () => episodes.map((e) => ({ id: e.id, label: markOf(e.id), title: e.name, direction: e.direction, date: e.date })),
@@ -84,11 +90,12 @@ export function EpisodeLineageWeb({
           matches={matches}
           layout={LAYOUT}
           bandLabels={BAND_LABELS}
-          startAt="end"
+          startAt={around ? "start" : "end"}
+          defaultView={around ? { scope: "around" } : undefined}
         />
       </div>
 
-      {chosen ? (
+      {!panel ? null : chosen ? (
         <div className="p-3 border rounded-lg bg-card space-y-2">
           <div className="flex items-baseline justify-between gap-3 flex-wrap">
             <Link href={`/episodes/${encodeURIComponent(chosen.id)}`} className="text-sm font-medium hover:underline">

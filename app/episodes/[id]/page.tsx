@@ -30,9 +30,12 @@ import Link from "next/link";
 import type { RelationalNode, RelationalEdge } from "@/lib/types";
 import { EpisodeFilesPanel } from "@/components/episode-files-panel";
 import { EpisodeHoldings } from "@/components/episode-holdings";
+import { EpisodeLineageWeb, type LineageEpisode } from "@/components/episode-lineage-web";
 import {
   chronicleKey,
+  episodeDateOf,
   episodeFolderOfNode,
+  lineageEdges,
   relationsOf,
   type EpisodeRelation,
   type LineageEdge,
@@ -113,6 +116,8 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
   const [episode, setEpisode] = useState<EpisodeNode | null>(null);
   const [attention, setAttention] = useState<EpisodeNode[]>([]);
   const [web, setWeb] = useState<{ nodes: EpisodeNode[]; edges: RelationalEdge[] } | null>(null);
+  // The whole chronicle's lineage, for the picture: two relations away needs more than this episode's web.
+  const [chronicle, setChronicle] = useState<{ episodes: LineageEpisode[]; edges: LineageEdge[] } | null>(null);
   const [before, setBefore] = useState<EpisodeNode | null>(null);
   const [after, setAfter] = useState<EpisodeNode | null>(null);
   const [loading, setLoading] = useState(true);
@@ -122,10 +127,11 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
     setLoading(true);
     try {
       const encoded = encodeURIComponent(id);
-      const [nodeRes, attentionRes, webRes] = await Promise.all([
+      const [nodeRes, attentionRes, webRes, edgesRes] = await Promise.all([
         fetch(`/api/nodes?kind=chronicle_episode&limit=all`),
         fetch(`/api/nodes?kind=attention&parent_id=${encoded}&limit=all`),
         fetch(`/api/nodes/${encoded}/web?depth=1`),
+        fetch(`/api/edges?limit=all`).catch(() => null),
       ]);
 
       if (!nodeRes.ok) throw new Error(`Episodes: ${nodeRes.status}`);
@@ -137,6 +143,19 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
       const at = ordered.findIndex((n) => n.id === id);
       setBefore(at > 0 ? ordered[at - 1] : null);
       setAfter(at >= 0 && at < ordered.length - 1 ? ordered[at + 1] : null);
+
+      // The picture is a second answer: without the edges, the lists below still stand.
+      if (edgesRes?.ok) {
+        const body = await edgesRes.json();
+        const allEdges: LineageEdge[] = Array.isArray(body) ? body : (body.edges ?? []);
+        const ids = new Set(all.map((n) => n.id));
+        setChronicle({
+          episodes: ordered.map((n) => ({ id: n.id, name: n.name, direction: n.direction, date: episodeDateOf(n) })),
+          edges: lineageEdges(allEdges, (other) => ids.has(other)),
+        });
+      } else {
+        setChronicle(null);
+      }
 
       setAttention(attentionRes.ok ? ((await attentionRes.json()).nodes ?? []) : []);
 
@@ -257,6 +276,11 @@ export default function EpisodePage({ params }: { params: Promise<{ id: string }
         <h2 className="text-sm font-semibold mb-2">
           Lineage {lineage.length > 0 && `(${lineage.length})`}
         </h2>
+        {lineage.length > 0 && chronicle && (
+          <div className="mb-3">
+            <EpisodeLineageWeb episodes={chronicle.episodes} edges={chronicle.edges} around={id} panel={false} />
+          </div>
+        )}
         {lineage.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No relation to another episode has been woven yet.
