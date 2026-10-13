@@ -96,6 +96,39 @@ const positioned = applyWheelLayout(data, { radius: 300, centerX: 400, centerY: 
 import { buildGraphData, nodesToGraphNodes, edgesToGraphLinks } from '@medicine-wheel/graph-viz';
 ```
 
+### `<LineageWeb>`: episodes and their relations
+
+Episodes sit on a spine in chronicle order, each in its direction's band. Continuation arcs bow
+above and relation arcs bow below, rising with the square root of their length and staying inside
+the canvas. Hover or select an episode to light its arcs. A tap selects and a second tap calls
+`onOpen`. The wheel's Episodes tab and the Miadi chronicle both draw it (jgwill/medicine-wheel#162).
+
+```tsx
+import { LineageWeb } from '@medicine-wheel/graph-viz';
+
+<LineageWeb
+  episodes={[{ id: 'ep044', label: 'E044', title: 'Teaching…', direction: 'east', date: '2026-06-10', thread: 'portal' }]}
+  edges={[{ from: 'ep044', to: 'ep001', kind: 'continuation', words: 'grounds the ceremony of seeing' }]}
+  matches={query ? new Set(found) : null}   // keeps what a search found and, as rings, its relatives
+  onOpen={(id) => router.push(`/episodes/${id}`)}
+/>
+```
+
+| Prop | Default | |
+|------|---------|---|
+| `episodes`, `edges` | | Episodes oldest first; edges `continuation` or `relation`, with optional `words` |
+| `selected` / `onSelect` | held by the web | Controlled selection |
+| `onOpen` | | Called on a second tap of the selected episode |
+| `matches`, `matchMode` | `null`, `'kin'` | `kin` keeps the matches and their relatives; `fade` dims the rest |
+| `view` / `defaultView` / `onViewChange` | whole chronicle, depth 1, both kinds, threads on | `scope: 'all' \| 'around'`, `depth: 1 \| 2`, `kinds`, `threads` |
+| `controls` | `true` | The options bar: whole chronicle or around the selected episode, depth, kinds, threads |
+| `colors`, `threadColors`, `bandLabels` | `--mw-*` tokens | |
+| `layout` | `DEFAULT_LINEAGE_WEB_LAYOUT` | Margins, band gap, head and foot room for arcs, minimum step and width |
+| `startAt` | `'start'` | `'end'` opens scrolled to the newest episodes |
+
+The geometry is exported without React: `visibleLineage`, `lineageNeighbourhood`,
+`layoutLineageWeb`, `lineageArcPath`, `threadChains`.
+
 ## License
 
 MIT — IAIP Collaborative, Shawinigan, QC

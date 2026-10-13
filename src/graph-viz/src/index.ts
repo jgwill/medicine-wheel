@@ -10,6 +10,31 @@
 
 // ── Component ───────────────────────────────────────────────────────────────
 export { MedicineWheelGraph } from './MedicineWheelGraph.js';
+export { LineageWeb, DEFAULT_LINEAGE_WEB_COLORS } from './LineageWeb.js';
+export type { LineageWebProps, LineageWebColors } from './LineageWeb.js';
+
+// ── Lineage web (headless) ──────────────────────────────────────────────────
+export {
+  DEFAULT_LINEAGE_VIEW,
+  DEFAULT_LINEAGE_WEB_LAYOUT,
+  LINEAGE_BANDS,
+  layoutLineageWeb,
+  lineageArcPath,
+  lineageNeighbourhood,
+  threadChains,
+  visibleLineage,
+} from './lineage-web.js';
+export type {
+  LineageBand,
+  LineageEdgeKind,
+  LineageWebEdge,
+  LineageWebEpisode,
+  LineageWebLayout,
+  LineageWebLayoutConfig,
+  LineageWebView,
+  VisibleLineage,
+  VisibleLineageOptions,
+} from './lineage-web.js';
 
 // ── Types ───────────────────────────────────────────────────────────────────
 export type {
