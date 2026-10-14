@@ -126,8 +126,25 @@ import { LineageWeb } from '@medicine-wheel/graph-viz';
 | `layout` | `DEFAULT_LINEAGE_WEB_LAYOUT` | Margins, band gap, head and foot room for arcs, minimum step and width |
 | `startAt` | `'start'` | `'end'` opens scrolled to the newest episodes |
 
+Moving and reading it by hand (jgwill/medicine-wheel#163):
+
+| Gesture | What it does |
+|---------|--------------|
+| Drag the empty canvas (mouse) | Moves along time; a finger scrolls natively. A press without a drag clears the selection |
+| − + Fit, Ctrl/⌘ + wheel, pinch | Zoom, keeping the moment under the pointer in place; Fit puts the whole span in the box |
+| Hover or tap an arc | Lights it and its two ends; the strip names both episodes and shows the relation's words. A tap pins it |
+| ← → | Step along time |
+| ↑ ↓ | Choose one of the selected episode's relations; its words show and its other end scrolls into view |
+| Enter | Follow the chosen relation, or open the selected episode |
+| Esc | Let the relation go, then the selection |
+| − + 0 | Zoom out, in, fit |
+
+A new selection scrolls into view, the episode in focus and its relatives are labelled at any size,
+and the band names stay at the left edge.
+
 The geometry is exported without React: `visibleLineage`, `lineageNeighbourhood`,
-`layoutLineageWeb`, `lineageArcPath`, `threadChains`.
+`layoutLineageWeb`, `lineageArcPath`, `threadChains`, `lineageWebWidth`, `fitZoom`,
+`zoomScrollLeft`, `stepAlongSpine`, `relationsAround`, `lineageEdgeKey`.
 
 ## License
 

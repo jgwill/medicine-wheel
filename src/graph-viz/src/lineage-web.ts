@@ -301,3 +301,67 @@ export function threadChains(episodes: readonly LineageWebEpisode[]): Array<{ fr
   }
   return chains;
 }
+
+// ── Moving through the web by hand (#163) ───────────────────────────────────
+
+/** The canvas width for `count` episodes at `zoom`, never narrower than `boxWidth`. */
+export function lineageWebWidth(
+  count: number,
+  zoom: number,
+  boxWidth: number,
+  config: Partial<LineageWebLayoutConfig> = {},
+): number {
+  const cfg = { ...DEFAULT_LINEAGE_WEB_LAYOUT, ...config };
+  const span = Math.max(0, count - 1) * cfg.minStep * zoom;
+  return Math.max(cfg.minWidth, boxWidth, cfg.marginL + cfg.marginR + span);
+}
+
+/** The zoom at which `count` episodes fill `boxWidth` exactly: the whole span in view. */
+export function fitZoom(count: number, boxWidth: number, config: Partial<LineageWebLayoutConfig> = {}): number {
+  const cfg = { ...DEFAULT_LINEAGE_WEB_LAYOUT, ...config };
+  const span = Math.max(1, count - 1) * cfg.minStep;
+  return Math.max(0.01, (boxWidth - cfg.marginL - cfg.marginR) / span);
+}
+
+/**
+ * Where to scroll after the canvas changed width, so the point at `pointerX`
+ * (measured from the box's left edge) shows the same moment on the spine.
+ */
+export function zoomScrollLeft(
+  scrollLeft: number,
+  pointerX: number,
+  oldWidth: number,
+  newWidth: number,
+  config: Partial<LineageWebLayoutConfig> = {},
+): number {
+  const cfg = { ...DEFAULT_LINEAGE_WEB_LAYOUT, ...config };
+  const inner = (w: number) => Math.max(1, w - cfg.marginL - cfg.marginR);
+  const fraction = (scrollLeft + pointerX - cfg.marginL) / inner(oldWidth);
+  return Math.max(0, cfg.marginL + fraction * inner(newWidth) - pointerX);
+}
+
+/** The next or previous episode along the spine; from nothing, the first or the last. */
+export function stepAlongSpine(order: readonly string[], current: string | null, step: 1 | -1): string | null {
+  if (order.length === 0) return null;
+  const at = current === null ? -1 : order.indexOf(current);
+  if (at === -1) return step === 1 ? order[0] : order[order.length - 1];
+  return order[Math.min(order.length - 1, Math.max(0, at + step))];
+}
+
+/** An episode's relations, ordered by where the episode at the other end sits on the spine. */
+export function relationsAround(
+  id: string,
+  edges: readonly LineageWebEdge[],
+  order: readonly string[],
+): LineageWebEdge[] {
+  const position = new Map(order.map((other, i) => [other, i]));
+  const other = (e: LineageWebEdge) => (e.from === id ? e.to : e.from);
+  return edges
+    .filter((e) => (e.from === id || e.to === id) && e.from !== e.to)
+    .sort((a, b) => (position.get(other(a)) ?? 0) - (position.get(other(b)) ?? 0));
+}
+
+/** A key for an edge that survives a change of view: its id, or its two ends and kind. */
+export function lineageEdgeKey(e: LineageWebEdge): string {
+  return e.id ?? `${e.from}:${e.kind}:${e.to}`;
+}

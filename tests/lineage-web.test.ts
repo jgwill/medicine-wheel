@@ -19,7 +19,12 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
   DEFAULT_LINEAGE_VIEW,
+  fitZoom,
   layoutLineageWeb,
+  lineageWebWidth,
+  relationsAround,
+  stepAlongSpine,
+  zoomScrollLeft,
   lineageArcPath,
   lineageNeighbourhood,
   threadChains,
@@ -168,12 +173,53 @@ describe("<LineageWeb>", () => {
     expect(html).toContain("1 found · 5 related · 5 relations");
     expect((html.match(/<circle r="4.5" fill="none"/g) ?? []).length).toBe(5);
     expect((html.match(/<circle r="4" fill=/g) ?? []).length).toBe(1);
-    expect((html.match(/<path /g) ?? []).length).toBe(5);
+    expect((html.match(/data-edge/g) ?? []).length).toBe(5); // one hit target per arc, beside the arc it lights
   });
 
   it("without a search, every episode and relation", () => {
     const html = renderToStaticMarkup(createElement(LineageWeb, { episodes: EPISODES, edges: EDGES, controls: false }));
     expect(html).not.toContain("toolbar");
     expect(html).toContain("7 episodes · 6 relations");
+  });
+});
+
+describe("moving through the web by hand (#163)", () => {
+  it("width grows with zoom and never falls under the box", () => {
+    expect(lineageWebWidth(201, 1, 1100)).toBe(64 + 40 + 200 * 19);
+    expect(lineageWebWidth(201, 2, 1100)).toBe(64 + 40 + 400 * 19);
+    expect(lineageWebWidth(7, 1, 1100)).toBe(1100);
+  });
+
+  it("fit puts the whole span in the box", () => {
+    const z = fitZoom(201, 1100);
+    expect(lineageWebWidth(201, z, 1100)).toBeCloseTo(1100, 6);
+  });
+
+  it("zoom keeps the moment under the pointer in place", () => {
+    const oldWidth = lineageWebWidth(201, 1, 1100);
+    const newWidth = lineageWebWidth(201, 2, 1100);
+    const left = zoomScrollLeft(500, 300, oldWidth, newWidth);
+    const before = (500 + 300 - 64) / (oldWidth - 104);
+    const after = (left + 300 - 64) / (newWidth - 104);
+    expect(after).toBeCloseTo(before, 9);
+    expect(zoomScrollLeft(0, 0, newWidth, oldWidth)).toBeGreaterThanOrEqual(0);
+  });
+
+  it("steps along the spine and stops at its ends", () => {
+    const order = ["a", "b", "c"];
+    expect(stepAlongSpine(order, null, 1)).toBe("a");
+    expect(stepAlongSpine(order, null, -1)).toBe("c");
+    expect(stepAlongSpine(order, "b", 1)).toBe("c");
+    expect(stepAlongSpine(order, "c", 1)).toBe("c");
+    expect(stepAlongSpine(order, "a", -1)).toBe("a");
+    expect(stepAlongSpine([], "a", 1)).toBeNull();
+  });
+
+  it("an episode's relations in the order their other ends sit on the spine", () => {
+    const order = EPISODES.map((e) => e.id);
+    expect(relationsAround("044", EDGES, order).map((e) => (e.from === "044" ? e.to : e.from))).toEqual([
+      "001", "039", "040", "045", "552",
+    ]);
+    expect(relationsAround("100", [...EDGES, rel("100", "100")], order)).toHaveLength(1);
   });
 });

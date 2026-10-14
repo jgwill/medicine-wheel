@@ -18,11 +18,17 @@ export {
   DEFAULT_LINEAGE_VIEW,
   DEFAULT_LINEAGE_WEB_LAYOUT,
   LINEAGE_BANDS,
+  fitZoom,
   layoutLineageWeb,
   lineageArcPath,
+  lineageEdgeKey,
   lineageNeighbourhood,
+  lineageWebWidth,
+  relationsAround,
+  stepAlongSpine,
   threadChains,
   visibleLineage,
+  zoomScrollLeft,
 } from './lineage-web.js';
 export type {
   LineageBand,
