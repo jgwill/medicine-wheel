@@ -354,6 +354,26 @@ start, every five minutes, and after any projection that gets through —
 `honcho.pending` counts what waits. A running server holds its old
 build and its old environment — restart it for either to take effect.
 
+### Event log
+
+Every cycle, beat, ceremony and diary write the routes commit leaves one line in
+`events.jsonl` beside the store (`MW_EVENTS_FILE` overrides): `cycle.opened`,
+`cycle.amended`, `cycle.archived`, `beat.recorded`, `beat.amended`,
+`beat.witnessed`, `ceremony.opened`, `ceremony.closed`, `ceremony.amended`,
+`diary.written`, `diary.amended`. Each line is a `MiadiEventEnvelope`
+(jgwill/Miadi `rispecs/events/00-miadi-event-spine.rispec.md`) namespaced
+`medicine-wheel.*`. It names records and carries labels; a cycle's question, a
+beat's words and a diary entry's text stay in the store. A write that changes
+nothing writes no event, and a log that cannot be written never fails the write.
+
+```bash
+curl 'localhost:8040/api/events?type=cycle.&limit=20'   # newest first; type, subject, since, limit
+curl localhost:8040/api/health                          # events.count, events.last_at
+```
+
+Nothing leaves the machine yet: the log waits for the broker Episode 548 is
+choosing (jgwill/medicine-wheel#164).
+
 ## License
 
 Indigenous Knowledge Stewardship License (IKSL) v1.0 MIT Derived   see [LICENSE](LICENSE)

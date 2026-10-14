@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createProvider, detectProvider } from '@medicine-wheel/storage-provider';
 import { honchoProjectionStatus } from '@/lib/honcho-projection';
+import { eventLogStatus } from '@/lib/event-log';
 
 export async function GET() {
   const providerType = detectProvider();
@@ -31,6 +32,9 @@ export async function GET() {
       // reports enabled projects every stored beat, ceremony and diary entry;
       // `pending` counts those still waiting for Honcho to take them (#147).
       honcho: honchoProjectionStatus(),
+      // The event log (#164): how many events the wheel has written beside its
+      // store, and when the last one was. Read them on /api/events.
+      events: eventLogStatus(),
       env: {
         MW_STORAGE_PROVIDER: process.env.MW_STORAGE_PROVIDER || 'not set',
         DATABASE_URL: process.env.DATABASE_URL ? 'configured' : 'not configured',

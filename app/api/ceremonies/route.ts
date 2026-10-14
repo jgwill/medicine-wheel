@@ -4,6 +4,7 @@ import { createProvider, detectProvider } from "@medicine-wheel/storage-provider
 import { ceremonyBelongsToEpisode, ceremonyEpisodePath } from "@/lib/ceremony-response";
 import { projectCeremony } from "@medicine-wheel/honcho";
 import { projectAfterWrite } from "@/lib/honcho-projection";
+import { instanceOf, recordEvent } from "@/lib/event-log";
 
 /** Episode directory names are `YYYY-MM-DD-episode-NNN-slug`; nothing else may bind. */
 const EPISODE_PATH = /^\d{4}-\d{2}-\d{2}-episode-\d{3,}-[a-z0-9-]+$/;
@@ -159,10 +160,29 @@ export async function POST(request: Request) {
       ...(typeof body.subject_id === "string" ? { subject_id: body.subject_id } : {}),
     };
 
+    const existed = typeof body.id === "string" && body.id ? await store.getCeremony(body.id) : null;
     await store.logCeremony(ceremony);
     // The river: the stored ceremony leaves for Honcho in the background when
     // HONCHO_URL is set. Never awaited.
     projectAfterWrite({ kind: "ceremony", id: ceremony.id }, () => projectCeremony(ceremony));
+    // The event log (#164). A closing names the ceremony it closes, and both
+    // share that ceremony's id as their correlation.
+    recordEvent({
+      name: existed ? "ceremony.amended" : ceremony.closes ? "ceremony.closed" : "ceremony.opened",
+      subject: { kind: "ceremony", id: ceremony.id },
+      correlation_id: ceremony.closes ?? ceremony.id,
+      ...(ceremony.source ? { actor: { kind: "source", id: ceremony.source } } : {}),
+      instance: instanceOf(request),
+      payload: {
+        type: ceremony.type,
+        direction: ceremony.direction,
+        closes: ceremony.closes,
+        circle_id: ceremony.circle_id,
+        subject_id: ceremony.subject_id,
+        episode_path: ceremony.episode_path,
+        episode_number: ceremony.episode_number,
+      },
+    });
     return NextResponse.json({ success: true, ceremony, provider: detectProvider() }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

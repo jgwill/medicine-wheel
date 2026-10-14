@@ -5,6 +5,7 @@ import type { DiaryEntryFilters, DiaryEntryRecord } from "@medicine-wheel/storag
 import { createDiaryEntry } from "@medicine-wheel/ceremonial-diary";
 import { projectDiaryEntry } from "@medicine-wheel/honcho";
 import { projectAfterWrite } from "@/lib/honcho-projection";
+import { instanceOf, recordEvent } from "@/lib/event-log";
 
 /**
  * The ceremonial diary door (0.14.0).
@@ -113,6 +114,7 @@ export async function POST(request: Request) {
       }
       metadata.ceremony_id = body.ceremony_id;
     }
+    const existed = typeof body.id === "string" && body.id ? await store.getDiaryEntry(body.id) : null;
     const entry = await createDiaryEntry(store, {
       ...(typeof body.id === "string" && body.id ? { id: body.id } : {}),
       ...(typeof body.timestamp === "string" && body.timestamp ? { timestamp: body.timestamp } : {}),
@@ -127,6 +129,23 @@ export async function POST(request: Request) {
     // The river: the participant's voice leaves for Honcho in the background
     // when HONCHO_URL is set. Never awaited.
     projectAfterWrite({ kind: "diary", id: entry.id }, () => projectDiaryEntry(entry));
+    // The event log (#164): who wrote, in which phase and ceremony — not what
+    // they wrote, which stays in the diary.
+    const ceremonyId = typeof metadata.ceremony_id === "string" ? metadata.ceremony_id : undefined;
+    recordEvent({
+      name: existed ? "diary.amended" : "diary.written",
+      subject: { kind: "diary", id: entry.id },
+      correlation_id: ceremonyId,
+      actor: { kind: "participant", id: entry.participant },
+      instance: instanceOf(request),
+      payload: {
+        phase: entry.phase,
+        entry_type: entry.entryType,
+        ceremony_id: ceremonyId,
+        chronicle: entry.chronicle,
+        agent: entry.agent,
+      },
+    });
     return NextResponse.json({ success: true, entry, provider: detectProvider() }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

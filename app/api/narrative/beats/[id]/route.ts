@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getBeat, witnessBeat } from "@/lib/store";
+import { beatEventFields, instanceOf, recordEvent } from "@/lib/event-log";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -49,7 +50,22 @@ export async function PATCH(request: Request, context: RouteContext) {
       { status: 400 },
     );
   }
+  const before = getBeat(id);
   const beat = witnessBeat(id, parsed.data);
   if (!beat) return notFound(id);
+  // The event log (#164): a witness added or a speaker named. A name already
+  // witnessing, or the speaker restated, adds nothing and records nothing.
+  const had = new Set(before?.witnesses ?? []);
+  const added = (beat.witnesses ?? []).filter((w) => !had.has(w));
+  const speakerNamed = beat.speaker !== before?.speaker ? beat.speaker : undefined;
+  if (added.length || speakerNamed) {
+    const fields = beatEventFields(beat);
+    recordEvent({
+      name: "beat.witnessed",
+      instance: instanceOf(request),
+      ...fields,
+      payload: { added_witnesses: added.length ? added : undefined, speaker: speakerNamed },
+    });
+  }
   return NextResponse.json(beat);
 }
