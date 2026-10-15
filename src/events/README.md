@@ -172,3 +172,11 @@ hooks-gateway once it accepts this envelope. A broker client would be another
 
 In the wheel, set `MW_EVENTS_PUBLISH_URL` (and `MW_EVENTS_PUBLISH_TOKEN`) to turn
 publishing on. `GET /api/health` then reports how many events are still owed.
+
+## Foundations
+
+[docs/foundations/event-driven-architecture.md](../../docs/foundations/event-driven-architecture.md)
+covers the literature behind this package and maps each idea to the code:
+notification versus event-carried state, the log, the outbox, idempotent
+receivers, dead letters and AsyncAPI. It also covers why the logic lives in the
+wheel and Miadi consumes it.
