@@ -18,6 +18,16 @@ import * as path from 'path';
 import { buildRelationalWeb, type WebHubHold } from './relational-web.js';
 import { rankNodes } from './node-search.js';
 import type { NodeFilters } from './types.js';
+import {
+  beatWritten,
+  buildEvent,
+  ceremonyWritten,
+  cycleWritten,
+  nodeWritten,
+  relationWritten,
+  type WheelEventInput,
+} from '@medicine-wheel/events';
+import { appendEvent, eventLogPath } from '@medicine-wheel/events/log';
 
 // ── Types ──
 
@@ -512,8 +522,29 @@ export class JsonlStore {
     );
   }
 
+  /**
+   * The event log (jgwill/medicine-wheel#164). Writes that reach the wheel's
+   * HTTP routes are recorded there; these are the writes the MCP server makes
+   * to its own files, recorded the same way — the same decider, the same
+   * line — in `events.jsonl` beside this store. A line that cannot be written
+   * is reported on stderr; the write it describes stands.
+   */
+  private record(input: WheelEventInput | null): void {
+    if (!input) return;
+    const file = eventLogPath(this.dataDir);
+    try {
+      appendEvent(file, buildEvent(input, { instance: process.env.MW_INSTANCE?.trim() || undefined }));
+    } catch (error) {
+      console.error(`[events] medicine-wheel.${input.name} for ${input.subject.kind} ${input.subject.id} was not written to ${file}: ${(error as Error)?.message ?? String(error)}`);
+    }
+  }
+
   // === Nodes ===
-  createNode(node: StoredNode): void { this.nodes.set(node.id, node); }
+  createNode(node: StoredNode): void {
+    const before = this.nodes.get(node.id);
+    this.nodes.set(node.id, node);
+    this.record(nodeWritten(before, node));
+  }
   getNode(id: string): StoredNode | undefined { return this.nodes.get(id); }
 
   getAllNodes(limit?: number): StoredNode[] {
@@ -562,12 +593,24 @@ export class JsonlStore {
   }
 
   // === Edges ===
-  createEdge(edge: StoredEdge): void { this.edges.add(edge); }
+  createEdge(edge: StoredEdge): void {
+    const before = this.edges.getAll().find((e) => e.from_id === edge.from_id && e.to_id === edge.to_id);
+    this.edges.add(edge);
+    this.record(relationWritten(before, edge));
+  }
   getAllEdges(): StoredEdge[] { return this.edges.getAll(); }
   getEdgesForNode(nodeId: string): StoredEdge[] { return this.edges.getForNode(nodeId); }
   getRelatedNodeIds(nodeId: string): string[] { return this.edges.getRelatedNodeIds(nodeId); }
   updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): void {
+    const joins = (e: StoredEdge) =>
+      (e.from_id === fromId && e.to_id === toId) || (e.from_id === toId && e.to_id === fromId);
+    const before = this.edges.getAll().filter(joins);
     this.edges.updateCeremony(fromId, toId, ceremonyId);
+    const after = this.edges.getAll().filter(joins);
+    for (const edge of after) {
+      const was = before.find((e) => e.from_id === edge.from_id && e.to_id === edge.to_id);
+      this.record(relationWritten(was ?? edge, edge));
+    }
   }
 
   /**
@@ -584,7 +627,11 @@ export class JsonlStore {
   }
 
   // === Ceremonies ===
-  logCeremony(ceremony: StoredCeremony): void { this.ceremonies.set(ceremony.id, ceremony); }
+  logCeremony(ceremony: StoredCeremony): void {
+    const existed = this.ceremonies.has(ceremony.id);
+    this.ceremonies.set(ceremony.id, ceremony);
+    this.record(ceremonyWritten(existed, ceremony));
+  }
   getCeremony(id: string): StoredCeremony | undefined { return this.ceremonies.get(id); }
 
   getAllCeremonies(limit?: number): StoredCeremony[] {
@@ -606,7 +653,11 @@ export class JsonlStore {
   }
 
   // === Beats ===
-  createBeat(beat: StoredBeat): void { this.beats.set(beat.id, beat); }
+  createBeat(beat: StoredBeat): void {
+    const before = this.beats.get(beat.id);
+    this.beats.set(beat.id, beat);
+    this.record(beatWritten(before, beat));
+  }
   getBeat(id: string): StoredBeat | undefined { return this.beats.get(id); }
 
   getAllBeats(limit?: number): StoredBeat[] {
@@ -617,7 +668,11 @@ export class JsonlStore {
   getBeatsByDirection(direction: string): StoredBeat[] { return this.beats.filter(b => b.direction === direction); }
 
   // === Cycles ===
-  createCycle(cycle: StoredCycle): void { this.cycles.set(cycle.id, cycle); }
+  createCycle(cycle: StoredCycle): void {
+    const before = this.cycles.get(cycle.id);
+    this.cycles.set(cycle.id, cycle);
+    this.record(cycleWritten(before, cycle, Object.keys(cycle)));
+  }
   getCycle(id: string): StoredCycle | undefined { return this.cycles.get(id); }
 
   getAllCycles(): { active: StoredCycle[]; archived: StoredCycle[] } {
@@ -627,7 +682,10 @@ export class JsonlStore {
 
   archiveCycle(id: string): void {
     const cycle = this.cycles.get(id);
-    if (cycle) this.cycles.set(id, { ...cycle, archived: true });
+    if (!cycle) return;
+    const archived = { ...cycle, archived: true };
+    this.cycles.set(id, archived);
+    this.record(cycleWritten(cycle, archived, ['archived']));
   }
 
   // === Charts ===

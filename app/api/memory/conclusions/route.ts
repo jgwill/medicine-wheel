@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { honchoIdFor, memoryProjectionNode, type MemoryProjectionKind, type MemoryProjectionStatus } from '@medicine-wheel/honcho';
 import { createProvider } from '@medicine-wheel/storage-provider';
+import { nodeWritten } from '@medicine-wheel/events';
+import { recordEvent } from '@/lib/event-log';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +38,10 @@ export async function POST(request: Request) {
     });
     node.metadata.about = about;
     const store = await createProvider();
+    const before = await store.getNode(node.id);
     await store.createNode(node as never);
+    // The event log (#164): memory.conclusion.recorded, about its person.
+    recordEvent(nodeWritten(before, node));
     return NextResponse.json({ node }, { status: 201, headers: { 'cache-control': 'no-store' } });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });

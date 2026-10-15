@@ -5,7 +5,9 @@ import {
   detectProvider,
   EdgeNotFoundError,
 } from "@medicine-wheel/storage-provider";
+import { relationRemoved, relationWritten } from "@medicine-wheel/events";
 import { parseLimit } from "@/lib/api-paging";
+import { recordEvent } from "@/lib/event-log";
 
 const EdgeCreateSchema = z.object({
   from_id: z.string({ required_error: "from_id is required" }).trim().min(1),
@@ -160,7 +162,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const replaced = Boolean(await store.getEdge(parsed.data.from_id, parsed.data.to_id));
+    const previous = await store.getEdge(parsed.data.from_id, parsed.data.to_id);
+    const replaced = Boolean(previous);
 
     const edge = {
       from_id: parsed.data.from_id,
@@ -174,6 +177,9 @@ export async function POST(request: Request) {
     };
 
     await store.createEdge(edge);
+    // The event log (#164): a relation made, or — over an existing pair —
+    // amended in what moved.
+    recordEvent(relationWritten(previous, edge));
     return NextResponse.json(
       { success: true, edge, replaced, provider: detectProvider() },
       { status: 201 },
@@ -208,7 +214,9 @@ export async function PATCH(request: Request) {
     }
 
     const store = await createProvider();
+    const previous = await store.getEdge(pair.from, pair.to);
     const edge = await store.updateEdge(pair.from, pair.to, parsed.data);
+    recordEvent(relationWritten(previous ?? edge, edge));
     return NextResponse.json({ success: true, edge, provider: detectProvider() });
   } catch (error: unknown) {
     if (error instanceof EdgeNotFoundError) {
@@ -225,7 +233,9 @@ export async function DELETE(request: Request) {
     if (!pair) return pairRequired();
 
     const store = await createProvider();
+    const previous = await store.getEdge(pair.from, pair.to);
     await store.deleteEdge(pair.from, pair.to);
+    recordEvent(relationRemoved(previous ?? { from_id: pair.from, to_id: pair.to }));
     return NextResponse.json({
       success: true,
       deleted: { from_id: pair.from, to_id: pair.to },

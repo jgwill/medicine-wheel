@@ -1,0 +1,2374 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Medicine Wheel events",
+    "version": "0.2.0",
+    "description": "The events a Medicine Wheel writes beside its store (events.jsonl) and publishes once a broker is chosen (miadi-chronicle://548). Each message is a MiadiEventEnvelope whose payload names records and carries labels; a consumer reads the record back from the wheel by subject.id. Package: @medicine-wheel/events."
+  },
+  "defaultContentType": "application/json",
+  "channels": {
+    "cycleOpened": {
+      "address": "medicine-wheel.cycle.opened",
+      "description": "A research cycle was opened. Written by: POST /api/narrative/cycles with a new id; MCP create_research_cycle.",
+      "messages": {
+        "cycleOpened": {
+          "$ref": "#/components/messages/cycleOpened"
+        }
+      }
+    },
+    "cycleAmended": {
+      "address": "medicine-wheel.cycle.amended",
+      "description": "A research cycle changed: its question, its direction, its counts. Written by: POST /api/narrative/cycles with a known id; MCP update_cycle_direction. A cycle's beats list follows from beat.recorded and is not an amendment..",
+      "messages": {
+        "cycleAmended": {
+          "$ref": "#/components/messages/cycleAmended"
+        }
+      }
+    },
+    "cycleArchived": {
+      "address": "medicine-wheel.cycle.archived",
+      "description": "A research cycle was archived for the seven generations. Written by: POST /api/narrative/cycles with `archived: true`; MCP archive_for_seven_generations.",
+      "messages": {
+        "cycleArchived": {
+          "$ref": "#/components/messages/cycleArchived"
+        }
+      }
+    },
+    "beatRecorded": {
+      "address": "medicine-wheel.beat.recorded",
+      "description": "A narrative beat was recorded — in a talking circle, a turn was spoken. Written by: POST /api/narrative/beats with a new id; MCP create_narrative_beat, create_sub_beats.",
+      "messages": {
+        "beatRecorded": {
+          "$ref": "#/components/messages/beatRecorded"
+        }
+      }
+    },
+    "beatAmended": {
+      "address": "medicine-wheel.beat.amended",
+      "description": "A narrative beat was rewritten. Written by: POST /api/narrative/beats with a known id.",
+      "messages": {
+        "beatAmended": {
+          "$ref": "#/components/messages/beatAmended"
+        }
+      }
+    },
+    "beatWitnessed": {
+      "address": "medicine-wheel.beat.witnessed",
+      "description": "A beat gained a witness, or its speaker was named. Written by: PATCH /api/narrative/beats/{id}.",
+      "messages": {
+        "beatWitnessed": {
+          "$ref": "#/components/messages/beatWitnessed"
+        }
+      }
+    },
+    "ceremonyOpened": {
+      "address": "medicine-wheel.ceremony.opened",
+      "description": "A ceremony was opened. Written by: POST /api/ceremonies without `closes`; MCP log_ceremony, ceremony lifecycle tools.",
+      "messages": {
+        "ceremonyOpened": {
+          "$ref": "#/components/messages/ceremonyOpened"
+        }
+      }
+    },
+    "ceremonyClosed": {
+      "address": "medicine-wheel.ceremony.closed",
+      "description": "A ceremony was closed. The subject is the closing record; `closes` names the ceremony it closes. Written by: POST /api/ceremonies with `closes`.",
+      "messages": {
+        "ceremonyClosed": {
+          "$ref": "#/components/messages/ceremonyClosed"
+        }
+      }
+    },
+    "ceremonyAmended": {
+      "address": "medicine-wheel.ceremony.amended",
+      "description": "A ceremony record was written again under its id. Written by: POST /api/ceremonies with a known id.",
+      "messages": {
+        "ceremonyAmended": {
+          "$ref": "#/components/messages/ceremonyAmended"
+        }
+      }
+    },
+    "ceremonyRemoved": {
+      "address": "medicine-wheel.ceremony.removed",
+      "description": "A ceremony record nobody entered was removed. Written by: DELETE /api/ceremonies/{id}.",
+      "messages": {
+        "ceremonyRemoved": {
+          "$ref": "#/components/messages/ceremonyRemoved"
+        }
+      }
+    },
+    "diaryWritten": {
+      "address": "medicine-wheel.diary.written",
+      "description": "A participant wrote a diary entry. Written by: POST /api/diary with a new id.",
+      "messages": {
+        "diaryWritten": {
+          "$ref": "#/components/messages/diaryWritten"
+        }
+      }
+    },
+    "diaryAmended": {
+      "address": "medicine-wheel.diary.amended",
+      "description": "A diary entry was written again under its id. Written by: POST /api/diary with a known id.",
+      "messages": {
+        "diaryAmended": {
+          "$ref": "#/components/messages/diaryAmended"
+        }
+      }
+    },
+    "diaryRemoved": {
+      "address": "medicine-wheel.diary.removed",
+      "description": "A diary entry was removed. Written by: DELETE /api/diary/{id}.",
+      "messages": {
+        "diaryRemoved": {
+          "$ref": "#/components/messages/diaryRemoved"
+        }
+      }
+    },
+    "circleCreated": {
+      "address": "medicine-wheel.circle.created",
+      "description": "A circle was created. Written by: POST /api/nodes with `type: circle`.",
+      "messages": {
+        "circleCreated": {
+          "$ref": "#/components/messages/circleCreated"
+        }
+      }
+    },
+    "circleAmended": {
+      "address": "medicine-wheel.circle.amended",
+      "description": "A circle changed: its name, its description, its metadata. Written by: PATCH /api/nodes/{id}; POST /api/nodes with a known id.",
+      "messages": {
+        "circleAmended": {
+          "$ref": "#/components/messages/circleAmended"
+        }
+      }
+    },
+    "circleRemoved": {
+      "address": "medicine-wheel.circle.removed",
+      "description": "A circle was removed. Written by: DELETE /api/nodes/{id}.",
+      "messages": {
+        "circleRemoved": {
+          "$ref": "#/components/messages/circleRemoved"
+        }
+      }
+    },
+    "chronicleEpisodeRegistered": {
+      "address": "medicine-wheel.chronicle.episode.registered",
+      "description": "A chronicle episode was registered on the wheel. Written by: POST /api/nodes with `metadata.kind: chronicle_episode` (mkepisode).",
+      "messages": {
+        "chronicleEpisodeRegistered": {
+          "$ref": "#/components/messages/chronicleEpisodeRegistered"
+        }
+      }
+    },
+    "chronicleEpisodeAmended": {
+      "address": "medicine-wheel.chronicle.episode.amended",
+      "description": "A chronicle episode's card changed. Written by: PATCH /api/nodes/{id}; POST /api/nodes with a known id.",
+      "messages": {
+        "chronicleEpisodeAmended": {
+          "$ref": "#/components/messages/chronicleEpisodeAmended"
+        }
+      }
+    },
+    "chronicleEpisodeRemoved": {
+      "address": "medicine-wheel.chronicle.episode.removed",
+      "description": "A chronicle episode's card was removed. Written by: DELETE /api/nodes/{id}.",
+      "messages": {
+        "chronicleEpisodeRemoved": {
+          "$ref": "#/components/messages/chronicleEpisodeRemoved"
+        }
+      }
+    },
+    "memoryConclusionRecorded": {
+      "address": "medicine-wheel.memory.conclusion.recorded",
+      "description": "The memory returned a conclusion about someone to the wheel. Written by: POST /api/memory/conclusions.",
+      "messages": {
+        "memoryConclusionRecorded": {
+          "$ref": "#/components/messages/memoryConclusionRecorded"
+        }
+      }
+    },
+    "memoryConclusionJudged": {
+      "address": "medicine-wheel.memory.conclusion.judged",
+      "description": "A person confirmed or rejected a conclusion. Written by: PATCH /api/memory/conclusions/{id}.",
+      "messages": {
+        "memoryConclusionJudged": {
+          "$ref": "#/components/messages/memoryConclusionJudged"
+        }
+      }
+    },
+    "memoryConclusionAmended": {
+      "address": "medicine-wheel.memory.conclusion.amended",
+      "description": "A conclusion's node changed by another door than judging. Written by: PATCH /api/nodes/{id}.",
+      "messages": {
+        "memoryConclusionAmended": {
+          "$ref": "#/components/messages/memoryConclusionAmended"
+        }
+      }
+    },
+    "memoryConclusionRemoved": {
+      "address": "medicine-wheel.memory.conclusion.removed",
+      "description": "A conclusion was removed. Written by: DELETE /api/nodes/{id}.",
+      "messages": {
+        "memoryConclusionRemoved": {
+          "$ref": "#/components/messages/memoryConclusionRemoved"
+        }
+      }
+    },
+    "nodeCreated": {
+      "address": "medicine-wheel.node.created",
+      "description": "A relational node was created — a person, a place, a teaching, an agent. Written by: POST /api/nodes; MCP create_relational_node and the tools that make nodes.",
+      "messages": {
+        "nodeCreated": {
+          "$ref": "#/components/messages/nodeCreated"
+        }
+      }
+    },
+    "nodeAmended": {
+      "address": "medicine-wheel.node.amended",
+      "description": "A relational node changed. Written by: PATCH /api/nodes/{id}; POST /api/nodes with a known id.",
+      "messages": {
+        "nodeAmended": {
+          "$ref": "#/components/messages/nodeAmended"
+        }
+      }
+    },
+    "nodeRemoved": {
+      "address": "medicine-wheel.node.removed",
+      "description": "A relational node was removed. Written by: DELETE /api/nodes/{id}.",
+      "messages": {
+        "nodeRemoved": {
+          "$ref": "#/components/messages/nodeRemoved"
+        }
+      }
+    },
+    "relationMade": {
+      "address": "medicine-wheel.relation.made",
+      "description": "A relation was woven between two nodes. Written by: POST /api/edges; MCP create_relational_edge.",
+      "messages": {
+        "relationMade": {
+          "$ref": "#/components/messages/relationMade"
+        }
+      }
+    },
+    "relationAmended": {
+      "address": "medicine-wheel.relation.amended",
+      "description": "A relation changed: its strength, its obligations, the ceremony that honoured it. Written by: PATCH /api/edges; POST /api/edges over an existing pair.",
+      "messages": {
+        "relationAmended": {
+          "$ref": "#/components/messages/relationAmended"
+        }
+      }
+    },
+    "relationRemoved": {
+      "address": "medicine-wheel.relation.removed",
+      "description": "A relation was released. Written by: DELETE /api/edges.",
+      "messages": {
+        "relationRemoved": {
+          "$ref": "#/components/messages/relationRemoved"
+        }
+      }
+    }
+  },
+  "operations": {
+    "cycleOpened": {
+      "action": "send",
+      "summary": "A research cycle was opened.",
+      "channel": {
+        "$ref": "#/channels/cycleOpened"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/cycleOpened/messages/cycleOpened"
+        }
+      ]
+    },
+    "cycleAmended": {
+      "action": "send",
+      "summary": "A research cycle changed: its question, its direction, its counts.",
+      "channel": {
+        "$ref": "#/channels/cycleAmended"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/cycleAmended/messages/cycleAmended"
+        }
+      ]
+    },
+    "cycleArchived": {
+      "action": "send",
+      "summary": "A research cycle was archived for the seven generations.",
+      "channel": {
+        "$ref": "#/channels/cycleArchived"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/cycleArchived/messages/cycleArchived"
+        }
+      ]
+    },
+    "beatRecorded": {
+      "action": "send",
+      "summary": "A narrative beat was recorded — in a talking circle, a turn was spoken.",
+      "channel": {
+        "$ref": "#/channels/beatRecorded"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/beatRecorded/messages/beatRecorded"
+        }
+      ]
+    },
+    "beatAmended": {
+      "action": "send",
+      "summary": "A narrative beat was rewritten.",
+      "channel": {
+        "$ref": "#/channels/beatAmended"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/beatAmended/messages/beatAmended"
+        }
+      ]
+    },
+    "beatWitnessed": {
+      "action": "send",
+      "summary": "A beat gained a witness, or its speaker was named.",
+      "channel": {
+        "$ref": "#/channels/beatWitnessed"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/beatWitnessed/messages/beatWitnessed"
+        }
+      ]
+    },
+    "ceremonyOpened": {
+      "action": "send",
+      "summary": "A ceremony was opened.",
+      "channel": {
+        "$ref": "#/channels/ceremonyOpened"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/ceremonyOpened/messages/ceremonyOpened"
+        }
+      ]
+    },
+    "ceremonyClosed": {
+      "action": "send",
+      "summary": "A ceremony was closed. The subject is the closing record; `closes` names the ceremony it closes.",
+      "channel": {
+        "$ref": "#/channels/ceremonyClosed"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/ceremonyClosed/messages/ceremonyClosed"
+        }
+      ]
+    },
+    "ceremonyAmended": {
+      "action": "send",
+      "summary": "A ceremony record was written again under its id.",
+      "channel": {
+        "$ref": "#/channels/ceremonyAmended"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/ceremonyAmended/messages/ceremonyAmended"
+        }
+      ]
+    },
+    "ceremonyRemoved": {
+      "action": "send",
+      "summary": "A ceremony record nobody entered was removed.",
+      "channel": {
+        "$ref": "#/channels/ceremonyRemoved"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/ceremonyRemoved/messages/ceremonyRemoved"
+        }
+      ]
+    },
+    "diaryWritten": {
+      "action": "send",
+      "summary": "A participant wrote a diary entry.",
+      "channel": {
+        "$ref": "#/channels/diaryWritten"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/diaryWritten/messages/diaryWritten"
+        }
+      ]
+    },
+    "diaryAmended": {
+      "action": "send",
+      "summary": "A diary entry was written again under its id.",
+      "channel": {
+        "$ref": "#/channels/diaryAmended"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/diaryAmended/messages/diaryAmended"
+        }
+      ]
+    },
+    "diaryRemoved": {
+      "action": "send",
+      "summary": "A diary entry was removed.",
+      "channel": {
+        "$ref": "#/channels/diaryRemoved"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/diaryRemoved/messages/diaryRemoved"
+        }
+      ]
+    },
+    "circleCreated": {
+      "action": "send",
+      "summary": "A circle was created.",
+      "channel": {
+        "$ref": "#/channels/circleCreated"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/circleCreated/messages/circleCreated"
+        }
+      ]
+    },
+    "circleAmended": {
+      "action": "send",
+      "summary": "A circle changed: its name, its description, its metadata.",
+      "channel": {
+        "$ref": "#/channels/circleAmended"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/circleAmended/messages/circleAmended"
+        }
+      ]
+    },
+    "circleRemoved": {
+      "action": "send",
+      "summary": "A circle was removed.",
+      "channel": {
+        "$ref": "#/channels/circleRemoved"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/circleRemoved/messages/circleRemoved"
+        }
+      ]
+    },
+    "chronicleEpisodeRegistered": {
+      "action": "send",
+      "summary": "A chronicle episode was registered on the wheel.",
+      "channel": {
+        "$ref": "#/channels/chronicleEpisodeRegistered"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/chronicleEpisodeRegistered/messages/chronicleEpisodeRegistered"
+        }
+      ]
+    },
+    "chronicleEpisodeAmended": {
+      "action": "send",
+      "summary": "A chronicle episode's card changed.",
+      "channel": {
+        "$ref": "#/channels/chronicleEpisodeAmended"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/chronicleEpisodeAmended/messages/chronicleEpisodeAmended"
+        }
+      ]
+    },
+    "chronicleEpisodeRemoved": {
+      "action": "send",
+      "summary": "A chronicle episode's card was removed.",
+      "channel": {
+        "$ref": "#/channels/chronicleEpisodeRemoved"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/chronicleEpisodeRemoved/messages/chronicleEpisodeRemoved"
+        }
+      ]
+    },
+    "memoryConclusionRecorded": {
+      "action": "send",
+      "summary": "The memory returned a conclusion about someone to the wheel.",
+      "channel": {
+        "$ref": "#/channels/memoryConclusionRecorded"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/memoryConclusionRecorded/messages/memoryConclusionRecorded"
+        }
+      ]
+    },
+    "memoryConclusionJudged": {
+      "action": "send",
+      "summary": "A person confirmed or rejected a conclusion.",
+      "channel": {
+        "$ref": "#/channels/memoryConclusionJudged"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/memoryConclusionJudged/messages/memoryConclusionJudged"
+        }
+      ]
+    },
+    "memoryConclusionAmended": {
+      "action": "send",
+      "summary": "A conclusion's node changed by another door than judging.",
+      "channel": {
+        "$ref": "#/channels/memoryConclusionAmended"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/memoryConclusionAmended/messages/memoryConclusionAmended"
+        }
+      ]
+    },
+    "memoryConclusionRemoved": {
+      "action": "send",
+      "summary": "A conclusion was removed.",
+      "channel": {
+        "$ref": "#/channels/memoryConclusionRemoved"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/memoryConclusionRemoved/messages/memoryConclusionRemoved"
+        }
+      ]
+    },
+    "nodeCreated": {
+      "action": "send",
+      "summary": "A relational node was created — a person, a place, a teaching, an agent.",
+      "channel": {
+        "$ref": "#/channels/nodeCreated"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/nodeCreated/messages/nodeCreated"
+        }
+      ]
+    },
+    "nodeAmended": {
+      "action": "send",
+      "summary": "A relational node changed.",
+      "channel": {
+        "$ref": "#/channels/nodeAmended"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/nodeAmended/messages/nodeAmended"
+        }
+      ]
+    },
+    "nodeRemoved": {
+      "action": "send",
+      "summary": "A relational node was removed.",
+      "channel": {
+        "$ref": "#/channels/nodeRemoved"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/nodeRemoved/messages/nodeRemoved"
+        }
+      ]
+    },
+    "relationMade": {
+      "action": "send",
+      "summary": "A relation was woven between two nodes.",
+      "channel": {
+        "$ref": "#/channels/relationMade"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/relationMade/messages/relationMade"
+        }
+      ]
+    },
+    "relationAmended": {
+      "action": "send",
+      "summary": "A relation changed: its strength, its obligations, the ceremony that honoured it.",
+      "channel": {
+        "$ref": "#/channels/relationAmended"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/relationAmended/messages/relationAmended"
+        }
+      ]
+    },
+    "relationRemoved": {
+      "action": "send",
+      "summary": "A relation was released.",
+      "channel": {
+        "$ref": "#/channels/relationRemoved"
+      },
+      "messages": [
+        {
+          "$ref": "#/channels/relationRemoved/messages/relationRemoved"
+        }
+      ]
+    }
+  },
+  "components": {
+    "schemas": {
+      "envelope": {
+        "title": "MiadiEventEnvelope (Medicine Wheel)",
+        "description": "A Medicine Wheel event in jgwill/Miadi's MiadiEventEnvelope 0.1.0. The payload carries references and labels, never a person's words.",
+        "type": "object",
+        "required": [
+          "id",
+          "schema_version",
+          "event_type",
+          "source",
+          "subject",
+          "occurred_at",
+          "observed_at",
+          "idempotency_key",
+          "privacy",
+          "payload"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^mwev:",
+            "description": "Stable identity of this occurrence."
+          },
+          "schema_version": {
+            "type": "string",
+            "const": "0.1.0"
+          },
+          "event_type": {
+            "type": "string",
+            "pattern": "^medicine\\-wheel\\.",
+            "description": "The namespaced event name; also its topic."
+          },
+          "source": {
+            "type": "object",
+            "required": [
+              "kind",
+              "system"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "const": "miadi"
+              },
+              "system": {
+                "type": "string",
+                "const": "medicine-wheel"
+              },
+              "instance": {
+                "type": "string",
+                "description": "The wheel that observed it, as configured (MW_INSTANCE)."
+              }
+            }
+          },
+          "subject": {
+            "type": "object",
+            "required": [
+              "kind",
+              "id"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "cycle",
+                  "beat",
+                  "ceremony",
+                  "diary",
+                  "node",
+                  "relation"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The record the event is about; read it back from the wheel by this id."
+              }
+            }
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "actor": {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "description": "Who acted, when the record names them: a speaker, a participant, a source, a judge."
+          },
+          "correlation_id": {
+            "type": "string",
+            "description": "Groups related events: a cycle and the beats recorded in it, a ceremony and its closing."
+          },
+          "causation_id": {
+            "type": "string",
+            "description": "The event that directly led to this one."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "description": "Equal to id. A resend is the same occurrence."
+          },
+          "privacy": {
+            "type": "object",
+            "required": [
+              "classification",
+              "content_included"
+            ],
+            "properties": {
+              "classification": {
+                "type": "string"
+              },
+              "content_included": {
+                "type": "boolean"
+              }
+            }
+          },
+          "payload": {
+            "type": "object"
+          }
+        }
+      },
+      "cycleOpened": {
+        "title": "medicine-wheel.cycle.opened",
+        "description": "A research cycle was opened. Written by: POST /api/narrative/cycles with a new id; MCP create_research_cycle. Correlation: the cycle.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.cycle.opened"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "cycle"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "current_direction": {
+                    "type": "string",
+                    "description": "The direction the cycle starts in."
+                  }
+                },
+                "required": [
+                  "current_direction"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "cycleAmended": {
+        "title": "medicine-wheel.cycle.amended",
+        "description": "A research cycle changed: its question, its direction, its counts. Written by: POST /api/narrative/cycles with a known id; MCP update_cycle_direction. A cycle's beats list follows from beat.recorded and is not an amendment.. Correlation: the cycle.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.cycle.amended"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "cycle"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "changed": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The fields the write changed. Metadata keys appear as `metadata.<key>`."
+                  },
+                  "current_direction": {
+                    "type": "string",
+                    "description": "The direction the cycle now stands in."
+                  }
+                },
+                "required": [
+                  "changed",
+                  "current_direction"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "cycleArchived": {
+        "title": "medicine-wheel.cycle.archived",
+        "description": "A research cycle was archived for the seven generations. Written by: POST /api/narrative/cycles with `archived: true`; MCP archive_for_seven_generations. Correlation: the cycle.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.cycle.archived"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "cycle"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        ]
+      },
+      "beatRecorded": {
+        "title": "medicine-wheel.beat.recorded",
+        "description": "A narrative beat was recorded — in a talking circle, a turn was spoken. Written by: POST /api/narrative/beats with a new id; MCP create_narrative_beat, create_sub_beats. Correlation: the beat's cycle, else its first ceremony.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.beat.recorded"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "beat"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "direction": {
+                    "type": "string",
+                    "description": "The direction the beat stands in."
+                  },
+                  "act": {
+                    "type": "number",
+                    "description": "The act, derived from the direction."
+                  },
+                  "cycle_id": {
+                    "type": "string",
+                    "description": "The research cycle the beat belongs to."
+                  },
+                  "parent_beat_id": {
+                    "type": "string",
+                    "description": "The beat this one was telescoped out of."
+                  },
+                  "ceremonies": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Ceremonies the beat was spoken in."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "description": "Who or what put the beat on the wheel (`hand`, `rest`, `session-reader`, …)."
+                  }
+                },
+                "required": [
+                  "direction",
+                  "act"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "beatAmended": {
+        "title": "medicine-wheel.beat.amended",
+        "description": "A narrative beat was rewritten. Written by: POST /api/narrative/beats with a known id. Correlation: the beat's cycle, else its first ceremony.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.beat.amended"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "beat"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "direction": {
+                    "type": "string",
+                    "description": "The direction the beat stands in."
+                  },
+                  "act": {
+                    "type": "number",
+                    "description": "The act, derived from the direction."
+                  },
+                  "cycle_id": {
+                    "type": "string",
+                    "description": "The research cycle the beat belongs to."
+                  },
+                  "parent_beat_id": {
+                    "type": "string",
+                    "description": "The beat this one was telescoped out of."
+                  },
+                  "ceremonies": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Ceremonies the beat was spoken in."
+                  },
+                  "origin": {
+                    "type": "string",
+                    "description": "Who or what put the beat on the wheel (`hand`, `rest`, `session-reader`, …)."
+                  },
+                  "changed": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The fields the write changed. Metadata keys appear as `metadata.<key>`."
+                  }
+                },
+                "required": [
+                  "direction",
+                  "act",
+                  "changed"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "beatWitnessed": {
+        "title": "medicine-wheel.beat.witnessed",
+        "description": "A beat gained a witness, or its speaker was named. Written by: PATCH /api/narrative/beats/{id}. Correlation: the beat's cycle, else its first ceremony.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.beat.witnessed"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "beat"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "added_witnesses": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Witnesses added by this write."
+                  },
+                  "speaker": {
+                    "type": "string",
+                    "description": "The speaker this write named."
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ceremonyOpened": {
+        "title": "medicine-wheel.ceremony.opened",
+        "description": "A ceremony was opened. Written by: POST /api/ceremonies without `closes`; MCP log_ceremony, ceremony lifecycle tools. Correlation: the ceremony.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.ceremony.opened"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "ceremony"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The ceremony type (`talking_circle`, `closing`, …)."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "description": "The direction the ceremony is held in."
+                  },
+                  "circle_id": {
+                    "type": "string",
+                    "description": "The circle node the ceremony is held in."
+                  },
+                  "subject_id": {
+                    "type": "string",
+                    "description": "The node the ceremony gathers around (a review, a knowledge node)."
+                  },
+                  "episode_path": {
+                    "type": "string",
+                    "description": "The chronicle episode folder the ceremony belongs to."
+                  },
+                  "episode_number": {
+                    "type": "number",
+                    "description": "That episode's number."
+                  }
+                },
+                "required": [
+                  "type",
+                  "direction"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ceremonyClosed": {
+        "title": "medicine-wheel.ceremony.closed",
+        "description": "A ceremony was closed. The subject is the closing record; `closes` names the ceremony it closes. Written by: POST /api/ceremonies with `closes`. Correlation: the ceremony it closes.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.ceremony.closed"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "ceremony"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The ceremony type (`talking_circle`, `closing`, …)."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "description": "The direction the ceremony is held in."
+                  },
+                  "circle_id": {
+                    "type": "string",
+                    "description": "The circle node the ceremony is held in."
+                  },
+                  "subject_id": {
+                    "type": "string",
+                    "description": "The node the ceremony gathers around (a review, a knowledge node)."
+                  },
+                  "episode_path": {
+                    "type": "string",
+                    "description": "The chronicle episode folder the ceremony belongs to."
+                  },
+                  "episode_number": {
+                    "type": "number",
+                    "description": "That episode's number."
+                  },
+                  "closes": {
+                    "type": "string",
+                    "description": "The ceremony this closing closes."
+                  }
+                },
+                "required": [
+                  "type",
+                  "direction",
+                  "closes"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ceremonyAmended": {
+        "title": "medicine-wheel.ceremony.amended",
+        "description": "A ceremony record was written again under its id. Written by: POST /api/ceremonies with a known id. Correlation: the ceremony, or the one it closes.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.ceremony.amended"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "ceremony"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The ceremony type (`talking_circle`, `closing`, …)."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "description": "The direction the ceremony is held in."
+                  },
+                  "circle_id": {
+                    "type": "string",
+                    "description": "The circle node the ceremony is held in."
+                  },
+                  "subject_id": {
+                    "type": "string",
+                    "description": "The node the ceremony gathers around (a review, a knowledge node)."
+                  },
+                  "episode_path": {
+                    "type": "string",
+                    "description": "The chronicle episode folder the ceremony belongs to."
+                  },
+                  "episode_number": {
+                    "type": "number",
+                    "description": "That episode's number."
+                  },
+                  "closes": {
+                    "type": "string",
+                    "description": "The ceremony this closing closes."
+                  }
+                },
+                "required": [
+                  "type",
+                  "direction"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "ceremonyRemoved": {
+        "title": "medicine-wheel.ceremony.removed",
+        "description": "A ceremony record nobody entered was removed. Written by: DELETE /api/ceremonies/{id}. Correlation: the ceremony.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.ceremony.removed"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "ceremony"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The ceremony type (`talking_circle`, `closing`, …)."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "description": "The direction the ceremony is held in."
+                  }
+                },
+                "required": [
+                  "type",
+                  "direction"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "diaryWritten": {
+        "title": "medicine-wheel.diary.written",
+        "description": "A participant wrote a diary entry. Written by: POST /api/diary with a new id. Correlation: the entry's ceremony.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.diary.written"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "diary"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "phase": {
+                    "type": "string",
+                    "description": "The ceremonial phase the entry was written in."
+                  },
+                  "entry_type": {
+                    "type": "string",
+                    "description": "`intention`, `observation`, `reflection`, …"
+                  },
+                  "ceremony_id": {
+                    "type": "string",
+                    "description": "The ceremony the entry belongs to."
+                  },
+                  "chronicle": {
+                    "type": "string",
+                    "description": "The chronicle episode node the entry writes into."
+                  },
+                  "agent": {
+                    "type": "string",
+                    "description": "The agent that facilitated the entry."
+                  }
+                },
+                "required": [
+                  "phase",
+                  "entry_type"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "diaryAmended": {
+        "title": "medicine-wheel.diary.amended",
+        "description": "A diary entry was written again under its id. Written by: POST /api/diary with a known id. Correlation: the entry's ceremony.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.diary.amended"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "diary"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "phase": {
+                    "type": "string",
+                    "description": "The ceremonial phase the entry was written in."
+                  },
+                  "entry_type": {
+                    "type": "string",
+                    "description": "`intention`, `observation`, `reflection`, …"
+                  },
+                  "ceremony_id": {
+                    "type": "string",
+                    "description": "The ceremony the entry belongs to."
+                  },
+                  "chronicle": {
+                    "type": "string",
+                    "description": "The chronicle episode node the entry writes into."
+                  },
+                  "agent": {
+                    "type": "string",
+                    "description": "The agent that facilitated the entry."
+                  }
+                },
+                "required": [
+                  "phase",
+                  "entry_type"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "diaryRemoved": {
+        "title": "medicine-wheel.diary.removed",
+        "description": "A diary entry was removed. Written by: DELETE /api/diary/{id}. Correlation: the entry's ceremony.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.diary.removed"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "diary"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "phase": {
+                    "type": "string",
+                    "description": "The ceremonial phase the entry was written in."
+                  },
+                  "entry_type": {
+                    "type": "string",
+                    "description": "`intention`, `observation`, `reflection`, …"
+                  }
+                },
+                "required": [
+                  "phase",
+                  "entry_type"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "circleCreated": {
+        "title": "medicine-wheel.circle.created",
+        "description": "A circle was created. Written by: POST /api/nodes with `type: circle`. Correlation: the circle.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.circle.created"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The node type (`human`, `circle`, `knowledge`, `agent`, …)."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The node's `metadata.kind`, when it carries one."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "description": "The node's direction, when it has one."
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "circleAmended": {
+        "title": "medicine-wheel.circle.amended",
+        "description": "A circle changed: its name, its description, its metadata. Written by: PATCH /api/nodes/{id}; POST /api/nodes with a known id. Correlation: the circle.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.circle.amended"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The node type (`human`, `circle`, `knowledge`, `agent`, …)."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The node's `metadata.kind`, when it carries one."
+                  },
+                  "changed": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The fields the write changed. Metadata keys appear as `metadata.<key>`."
+                  }
+                },
+                "required": [
+                  "type",
+                  "changed"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "circleRemoved": {
+        "title": "medicine-wheel.circle.removed",
+        "description": "A circle was removed. Written by: DELETE /api/nodes/{id}. Correlation: the circle.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.circle.removed"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The node type (`human`, `circle`, `knowledge`, `agent`, …)."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The node's `metadata.kind`, when it carries one."
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "chronicleEpisodeRegistered": {
+        "title": "medicine-wheel.chronicle.episode.registered",
+        "description": "A chronicle episode was registered on the wheel. Written by: POST /api/nodes with `metadata.kind: chronicle_episode` (mkepisode). Correlation: the episode node.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.chronicle.episode.registered"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The node type (`human`, `circle`, `knowledge`, `agent`, …)."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The node's `metadata.kind`, when it carries one."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "description": "The node's direction, when it has one."
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "chronicleEpisodeAmended": {
+        "title": "medicine-wheel.chronicle.episode.amended",
+        "description": "A chronicle episode's card changed. Written by: PATCH /api/nodes/{id}; POST /api/nodes with a known id. Correlation: the episode node.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.chronicle.episode.amended"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The node type (`human`, `circle`, `knowledge`, `agent`, …)."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The node's `metadata.kind`, when it carries one."
+                  },
+                  "changed": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The fields the write changed. Metadata keys appear as `metadata.<key>`."
+                  }
+                },
+                "required": [
+                  "type",
+                  "changed"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "chronicleEpisodeRemoved": {
+        "title": "medicine-wheel.chronicle.episode.removed",
+        "description": "A chronicle episode's card was removed. Written by: DELETE /api/nodes/{id}. Correlation: the episode node.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.chronicle.episode.removed"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The node type (`human`, `circle`, `knowledge`, `agent`, …)."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The node's `metadata.kind`, when it carries one."
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "memoryConclusionRecorded": {
+        "title": "medicine-wheel.memory.conclusion.recorded",
+        "description": "The memory returned a conclusion about someone to the wheel. Written by: POST /api/memory/conclusions. Correlation: the node the conclusion is about.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.memory.conclusion.recorded"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The node type (`human`, `circle`, `knowledge`, `agent`, …)."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The node's `metadata.kind`, when it carries one."
+                  },
+                  "about": {
+                    "type": "string",
+                    "description": "The node the conclusion is about."
+                  },
+                  "conclusion_kind": {
+                    "type": "string",
+                    "description": "`pattern`, `summary`, `open_question`, `preference`."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "`inferred`, `confirmed`, `rejected`."
+                  }
+                },
+                "required": [
+                  "type",
+                  "about"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "memoryConclusionJudged": {
+        "title": "medicine-wheel.memory.conclusion.judged",
+        "description": "A person confirmed or rejected a conclusion. Written by: PATCH /api/memory/conclusions/{id}. Correlation: the node the conclusion is about.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.memory.conclusion.judged"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "about": {
+                    "type": "string",
+                    "description": "The node the conclusion is about."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "`inferred`, `confirmed`, `rejected`."
+                  },
+                  "judged_by": {
+                    "type": "string",
+                    "description": "Who judged it."
+                  }
+                },
+                "required": [
+                  "about",
+                  "status",
+                  "judged_by"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "memoryConclusionAmended": {
+        "title": "medicine-wheel.memory.conclusion.amended",
+        "description": "A conclusion's node changed by another door than judging. Written by: PATCH /api/nodes/{id}. Correlation: the node the conclusion is about.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.memory.conclusion.amended"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The node type (`human`, `circle`, `knowledge`, `agent`, …)."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The node's `metadata.kind`, when it carries one."
+                  },
+                  "about": {
+                    "type": "string",
+                    "description": "The node the conclusion is about."
+                  },
+                  "changed": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The fields the write changed. Metadata keys appear as `metadata.<key>`."
+                  }
+                },
+                "required": [
+                  "type",
+                  "about",
+                  "changed"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "memoryConclusionRemoved": {
+        "title": "medicine-wheel.memory.conclusion.removed",
+        "description": "A conclusion was removed. Written by: DELETE /api/nodes/{id}. Correlation: the node the conclusion is about.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.memory.conclusion.removed"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The node type (`human`, `circle`, `knowledge`, `agent`, …)."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The node's `metadata.kind`, when it carries one."
+                  },
+                  "about": {
+                    "type": "string",
+                    "description": "The node the conclusion is about."
+                  }
+                },
+                "required": [
+                  "type",
+                  "about"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "nodeCreated": {
+        "title": "medicine-wheel.node.created",
+        "description": "A relational node was created — a person, a place, a teaching, an agent. Written by: POST /api/nodes; MCP create_relational_node and the tools that make nodes.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.node.created"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The node type (`human`, `circle`, `knowledge`, `agent`, …)."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The node's `metadata.kind`, when it carries one."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "description": "The node's direction, when it has one."
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "nodeAmended": {
+        "title": "medicine-wheel.node.amended",
+        "description": "A relational node changed. Written by: PATCH /api/nodes/{id}; POST /api/nodes with a known id.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.node.amended"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The node type (`human`, `circle`, `knowledge`, `agent`, …)."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The node's `metadata.kind`, when it carries one."
+                  },
+                  "changed": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The fields the write changed. Metadata keys appear as `metadata.<key>`."
+                  }
+                },
+                "required": [
+                  "type",
+                  "changed"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "nodeRemoved": {
+        "title": "medicine-wheel.node.removed",
+        "description": "A relational node was removed. Written by: DELETE /api/nodes/{id}.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.node.removed"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "node"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "description": "The node type (`human`, `circle`, `knowledge`, `agent`, …)."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "The node's `metadata.kind`, when it carries one."
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "relationMade": {
+        "title": "medicine-wheel.relation.made",
+        "description": "A relation was woven between two nodes. Written by: POST /api/edges; MCP create_relational_edge. Correlation: the node the relation starts from.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.relation.made"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "relation"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "from_id": {
+                    "type": "string",
+                    "description": "The node the relation starts from."
+                  },
+                  "to_id": {
+                    "type": "string",
+                    "description": "The node the relation reaches."
+                  },
+                  "relationship_type": {
+                    "type": "string",
+                    "description": "What kind of relation it is."
+                  }
+                },
+                "required": [
+                  "from_id",
+                  "to_id",
+                  "relationship_type"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "relationAmended": {
+        "title": "medicine-wheel.relation.amended",
+        "description": "A relation changed: its strength, its obligations, the ceremony that honoured it. Written by: PATCH /api/edges; POST /api/edges over an existing pair. Correlation: the node the relation starts from.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.relation.amended"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "relation"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "from_id": {
+                    "type": "string",
+                    "description": "The node the relation starts from."
+                  },
+                  "to_id": {
+                    "type": "string",
+                    "description": "The node the relation reaches."
+                  },
+                  "relationship_type": {
+                    "type": "string",
+                    "description": "What kind of relation it is."
+                  },
+                  "changed": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The fields the write changed. Metadata keys appear as `metadata.<key>`."
+                  }
+                },
+                "required": [
+                  "from_id",
+                  "to_id",
+                  "relationship_type",
+                  "changed"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "relationRemoved": {
+        "title": "medicine-wheel.relation.removed",
+        "description": "A relation was released. Written by: DELETE /api/edges. Correlation: the node the relation starts from.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/envelope"
+          },
+          {
+            "properties": {
+              "event_type": {
+                "const": "medicine-wheel.relation.removed"
+              },
+              "subject": {
+                "properties": {
+                  "kind": {
+                    "const": "relation"
+                  }
+                }
+              },
+              "payload": {
+                "type": "object",
+                "properties": {
+                  "from_id": {
+                    "type": "string",
+                    "description": "The node the relation starts from."
+                  },
+                  "to_id": {
+                    "type": "string",
+                    "description": "The node the relation reaches."
+                  },
+                  "relationship_type": {
+                    "type": "string",
+                    "description": "What kind of relation it was."
+                  }
+                },
+                "required": [
+                  "from_id",
+                  "to_id"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "messages": {
+      "cycleOpened": {
+        "name": "medicine-wheel.cycle.opened",
+        "title": "cycle.opened",
+        "summary": "A research cycle was opened.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/cycleOpened"
+        }
+      },
+      "cycleAmended": {
+        "name": "medicine-wheel.cycle.amended",
+        "title": "cycle.amended",
+        "summary": "A research cycle changed: its question, its direction, its counts.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/cycleAmended"
+        }
+      },
+      "cycleArchived": {
+        "name": "medicine-wheel.cycle.archived",
+        "title": "cycle.archived",
+        "summary": "A research cycle was archived for the seven generations.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/cycleArchived"
+        }
+      },
+      "beatRecorded": {
+        "name": "medicine-wheel.beat.recorded",
+        "title": "beat.recorded",
+        "summary": "A narrative beat was recorded — in a talking circle, a turn was spoken.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/beatRecorded"
+        }
+      },
+      "beatAmended": {
+        "name": "medicine-wheel.beat.amended",
+        "title": "beat.amended",
+        "summary": "A narrative beat was rewritten.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/beatAmended"
+        }
+      },
+      "beatWitnessed": {
+        "name": "medicine-wheel.beat.witnessed",
+        "title": "beat.witnessed",
+        "summary": "A beat gained a witness, or its speaker was named.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/beatWitnessed"
+        }
+      },
+      "ceremonyOpened": {
+        "name": "medicine-wheel.ceremony.opened",
+        "title": "ceremony.opened",
+        "summary": "A ceremony was opened.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/ceremonyOpened"
+        }
+      },
+      "ceremonyClosed": {
+        "name": "medicine-wheel.ceremony.closed",
+        "title": "ceremony.closed",
+        "summary": "A ceremony was closed. The subject is the closing record; `closes` names the ceremony it closes.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/ceremonyClosed"
+        }
+      },
+      "ceremonyAmended": {
+        "name": "medicine-wheel.ceremony.amended",
+        "title": "ceremony.amended",
+        "summary": "A ceremony record was written again under its id.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/ceremonyAmended"
+        }
+      },
+      "ceremonyRemoved": {
+        "name": "medicine-wheel.ceremony.removed",
+        "title": "ceremony.removed",
+        "summary": "A ceremony record nobody entered was removed.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/ceremonyRemoved"
+        }
+      },
+      "diaryWritten": {
+        "name": "medicine-wheel.diary.written",
+        "title": "diary.written",
+        "summary": "A participant wrote a diary entry.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/diaryWritten"
+        }
+      },
+      "diaryAmended": {
+        "name": "medicine-wheel.diary.amended",
+        "title": "diary.amended",
+        "summary": "A diary entry was written again under its id.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/diaryAmended"
+        }
+      },
+      "diaryRemoved": {
+        "name": "medicine-wheel.diary.removed",
+        "title": "diary.removed",
+        "summary": "A diary entry was removed.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/diaryRemoved"
+        }
+      },
+      "circleCreated": {
+        "name": "medicine-wheel.circle.created",
+        "title": "circle.created",
+        "summary": "A circle was created.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/circleCreated"
+        }
+      },
+      "circleAmended": {
+        "name": "medicine-wheel.circle.amended",
+        "title": "circle.amended",
+        "summary": "A circle changed: its name, its description, its metadata.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/circleAmended"
+        }
+      },
+      "circleRemoved": {
+        "name": "medicine-wheel.circle.removed",
+        "title": "circle.removed",
+        "summary": "A circle was removed.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/circleRemoved"
+        }
+      },
+      "chronicleEpisodeRegistered": {
+        "name": "medicine-wheel.chronicle.episode.registered",
+        "title": "chronicle.episode.registered",
+        "summary": "A chronicle episode was registered on the wheel.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/chronicleEpisodeRegistered"
+        }
+      },
+      "chronicleEpisodeAmended": {
+        "name": "medicine-wheel.chronicle.episode.amended",
+        "title": "chronicle.episode.amended",
+        "summary": "A chronicle episode's card changed.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/chronicleEpisodeAmended"
+        }
+      },
+      "chronicleEpisodeRemoved": {
+        "name": "medicine-wheel.chronicle.episode.removed",
+        "title": "chronicle.episode.removed",
+        "summary": "A chronicle episode's card was removed.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/chronicleEpisodeRemoved"
+        }
+      },
+      "memoryConclusionRecorded": {
+        "name": "medicine-wheel.memory.conclusion.recorded",
+        "title": "memory.conclusion.recorded",
+        "summary": "The memory returned a conclusion about someone to the wheel.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/memoryConclusionRecorded"
+        }
+      },
+      "memoryConclusionJudged": {
+        "name": "medicine-wheel.memory.conclusion.judged",
+        "title": "memory.conclusion.judged",
+        "summary": "A person confirmed or rejected a conclusion.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/memoryConclusionJudged"
+        }
+      },
+      "memoryConclusionAmended": {
+        "name": "medicine-wheel.memory.conclusion.amended",
+        "title": "memory.conclusion.amended",
+        "summary": "A conclusion's node changed by another door than judging.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/memoryConclusionAmended"
+        }
+      },
+      "memoryConclusionRemoved": {
+        "name": "medicine-wheel.memory.conclusion.removed",
+        "title": "memory.conclusion.removed",
+        "summary": "A conclusion was removed.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/memoryConclusionRemoved"
+        }
+      },
+      "nodeCreated": {
+        "name": "medicine-wheel.node.created",
+        "title": "node.created",
+        "summary": "A relational node was created — a person, a place, a teaching, an agent.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/nodeCreated"
+        }
+      },
+      "nodeAmended": {
+        "name": "medicine-wheel.node.amended",
+        "title": "node.amended",
+        "summary": "A relational node changed.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/nodeAmended"
+        }
+      },
+      "nodeRemoved": {
+        "name": "medicine-wheel.node.removed",
+        "title": "node.removed",
+        "summary": "A relational node was removed.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/nodeRemoved"
+        }
+      },
+      "relationMade": {
+        "name": "medicine-wheel.relation.made",
+        "title": "relation.made",
+        "summary": "A relation was woven between two nodes.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/relationMade"
+        }
+      },
+      "relationAmended": {
+        "name": "medicine-wheel.relation.amended",
+        "title": "relation.amended",
+        "summary": "A relation changed: its strength, its obligations, the ceremony that honoured it.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/relationAmended"
+        }
+      },
+      "relationRemoved": {
+        "name": "medicine-wheel.relation.removed",
+        "title": "relation.removed",
+        "summary": "A relation was released.",
+        "contentType": "application/json",
+        "payload": {
+          "$ref": "#/components/schemas/relationRemoved"
+        }
+      }
+    }
+  }
+}

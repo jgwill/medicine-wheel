@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { DirectionNameSchema, NodeTypeSchema } from "@medicine-wheel/ontology-core";
 import { createProvider, detectProvider } from "@medicine-wheel/storage-provider";
+import { nodeWritten } from "@medicine-wheel/events";
 import { parseLimit } from "@/lib/api-paging";
+import { recordEvent } from "@/lib/event-log";
 
 const NodeCreateSchema = z.object({
   id: z.string().trim().min(1).optional(),
@@ -171,7 +173,11 @@ export async function POST(request: Request) {
       updated_at: new Date().toISOString(),
     };
 
+    const before = parsed.data.id ? await store.getNode(parsed.data.id) : null;
     await store.createNode(node);
+    // The event log (#164): a circle created, an episode registered, a node
+    // created — or, under a known id, amended in what moved.
+    recordEvent(nodeWritten(before, node));
     return NextResponse.json({ success: true, node, provider: detectProvider() }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

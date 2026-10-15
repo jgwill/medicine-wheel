@@ -7,6 +7,8 @@ import {
   NodeNotFoundError,
   NodeHasRelationsError,
 } from "@medicine-wheel/storage-provider";
+import { nodeRemoved, nodeWritten } from "@medicine-wheel/events";
+import { recordEvent } from "@/lib/event-log";
 
 // `direction: null` releases the node from its direction.
 const NodePatchSchema = z
@@ -82,8 +84,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     // silently drops its siblings breaks that everywhere it is used. A caller
     // that genuinely wants to clear a key now says so with `null`.
     let patch = parsed.data;
+    const existing = await store.getNode(id);
     if (patch.metadata) {
-      const existing = await store.getNode(id);
       if (existing) {
         const merged: Record<string, unknown> = {
           ...(existing.metadata ?? {}),
@@ -99,6 +101,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const node = await store.updateNode(id, patch);
+    // The event log (#164): amended in the fields and metadata keys that moved.
+    recordEvent(nodeWritten(existing, node));
     return NextResponse.json({ success: true, node, provider: detectProvider() });
   } catch (error: unknown) {
     if (error instanceof NodeNotFoundError) return notFound(error.nodeId);
@@ -110,7 +114,9 @@ export async function DELETE(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
     const store = await createProvider();
+    const node = await store.getNode(id);
     await store.deleteNode(id);
+    if (node) recordEvent(nodeRemoved(node));
     return NextResponse.json({ success: true, deleted: id, provider: detectProvider() });
   } catch (error: unknown) {
     if (error instanceof NodeNotFoundError) return notFound(error.nodeId);

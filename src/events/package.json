@@ -1,0 +1,65 @@
+{
+  "name": "@medicine-wheel/events",
+  "version": "0.17.11",
+  "description": "The events a Medicine Wheel writes — catalog, MiadiEventEnvelope, JSON Schema and AsyncAPI document, the append-only events.jsonl log, and the publisher seam a broker plugs into",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./log": {
+      "types": "./dist/log.d.ts",
+      "import": "./dist/log.js",
+      "require": "./dist/log.js",
+      "default": "./dist/log.js"
+    },
+    "./publish": {
+      "types": "./dist/publish.d.ts",
+      "import": "./dist/publish.js",
+      "require": "./dist/publish.js",
+      "default": "./dist/publish.js"
+    },
+    "./schema/wheel-events.schema.json": "./schema/wheel-events.schema.json",
+    "./schema/asyncapi.json": "./schema/asyncapi.json"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "schema",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc && node scripts/write-schema.cjs",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "events",
+    "event-driven",
+    "asyncapi",
+    "json-schema",
+    "outbox",
+    "miadi"
+  ],
+  "author": "IAIP Collaborative - Shawinigan, QC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/events"
+  },
+  "engines": {
+    "node": ">=19"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}

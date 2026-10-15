@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { MEMORY_PROJECTION_KIND } from '@medicine-wheel/honcho';
 import { createProvider } from '@medicine-wheel/storage-provider';
+import { conclusionJudged } from '@medicine-wheel/events';
+import { recordEvent } from '@/lib/event-log';
 
 export const dynamic = 'force-dynamic';
 type RouteContext = { params: Promise<{ id: string }> };
@@ -27,6 +29,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     const updated = await store.updateNode(id, {
       metadata: { ...node.metadata, status: body.status, judged_by: by, judged_at: new Date().toISOString() },
     });
+    // The event log (#164): a person confirmed or rejected it.
+    recordEvent(conclusionJudged(node, updated));
     return NextResponse.json({ node: updated }, { headers: { 'cache-control': 'no-store' } });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });

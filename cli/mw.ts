@@ -15,6 +15,7 @@ import * as fs from 'fs';
 import { viewSkills, installSkill, explainSkillRunUnavailable } from './skills';
 import { registerEpisodeBeats, describeArc } from './beats-register';
 import { cmdOrient } from './orientation';
+import { asyncApiDocument, shortName, wheelEventsJsonSchema, type WheelEvent } from '@medicine-wheel/events';
 
 // ── Config ────────────────────────────────────────────────────────
 const MW_API_URL = process.env.MW_API_URL ?? 'http://localhost:8040';
@@ -277,6 +278,14 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
 
   MEMORY
     mw memory store <key> <value> [dir]   Store relational memory
+
+  EVENTS (what happened on the wheel, kept in events.jsonl)
+    mw events [--type cycle.] [--subject <id>] [--correlation <id>]
+              [--since <iso>] [--limit 20]  List events, newest first
+    mw events status                       What the publisher still owes
+    mw events publish                      Send what waits now
+    mw events replay <event-id|all>        Send again from that event
+    mw events schema [--asyncapi]          Print the JSON Schema (or AsyncAPI)
 
   SYSTEM
     mw status                              Show system status
@@ -761,6 +770,90 @@ function cmdMemory(positional: string[]): void {
   }
 }
 
+// ── Events ────────────────────────────────────────────────────────
+interface EventsAnswer {
+  error?: string;
+  hint?: string;
+  events?: WheelEvent[];
+  total?: number;
+  stopped?: boolean;
+  [key: string]: unknown;
+}
+
+async function eventsApi(method: string, urlPath: string, body?: unknown): Promise<{ status: number; data: EventsAnswer }> {
+  const res = await fetch(`${MW_API_URL}${urlPath}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+  });
+  return { status: res.status, data: (await res.json().catch(() => ({}))) as EventsAnswer };
+}
+
+function printEvent(e: WheelEvent): void {
+  const when = e.observed_at.replace('T', ' ').slice(0, 19);
+  const payload = e.payload as Record<string, unknown>;
+  const changed = Array.isArray(payload.changed) ? ` ${C.dim}changed ${payload.changed.join(', ')}${C.reset}` : '';
+  const corr = e.correlation_id && e.correlation_id !== e.subject.id ? ` ${C.dim}↳ ${e.correlation_id}${C.reset}` : '';
+  console.log(`  ${C.dim}${when}${C.reset}  ${C.bold}${shortName(e.event_type)}${C.reset}  ${e.subject.kind} ${e.subject.id}${changed}${corr}`);
+}
+
+async function cmdEvents(positional: string[], flags: Record<string, string | boolean>): Promise<void> {
+  const sub = positional[0] ?? 'list';
+  const failed = (status: number, data: EventsAnswer) => {
+    console.error(`${C.south}${data?.error ?? `HTTP ${status}`}${C.reset}`);
+    if (data?.hint) console.error(`  ${data.hint}`);
+    process.exitCode = 1;
+  };
+  switch (sub) {
+    case 'list': {
+      const params = new URLSearchParams();
+      for (const key of ['type', 'subject', 'correlation', 'since', 'limit']) {
+        const value = flags[key];
+        if (typeof value === 'string') params.set(key, value);
+      }
+      if (!params.has('limit')) params.set('limit', '20');
+      const { status, data } = await eventsApi('GET', `/api/events?${params}`);
+      if (status !== 200) return failed(status, data);
+      if (MW_FORMAT !== 'pretty') return ppValue(data);
+      const events = data.events ?? [];
+      console.log(`${C.bold}${events.length} of ${data.total ?? events.length} event(s)${C.reset}`);
+      for (const e of events) printEvent(e);
+      break;
+    }
+    case 'status': {
+      const { status, data } = await eventsApi('GET', '/api/events/publish');
+      if (status !== 200) return failed(status, data);
+      ppValue(data);
+      break;
+    }
+    case 'publish': {
+      const { status, data } = await eventsApi('POST', '/api/events/publish', {});
+      if (status !== 200) return failed(status, data);
+      ppValue(data);
+      if (data.stopped) process.exitCode = 1;
+      break;
+    }
+    case 'replay': {
+      const from = positional[1];
+      if (!from) {
+        console.error(`${C.south}mw events replay needs an event id, or "all"${C.reset}`);
+        process.exitCode = EXIT_USAGE;
+        return;
+      }
+      const { status, data } = await eventsApi('POST', '/api/events/publish', { replay_from: from });
+      if (status !== 200) return failed(status, data);
+      ppValue(data);
+      if (data.stopped) process.exitCode = 1;
+      break;
+    }
+    case 'schema':
+      console.log(JSON.stringify(flags['asyncapi'] ? asyncApiDocument() : wheelEventsJsonSchema(), null, 2));
+      break;
+    default:
+      unknownSub('events', sub, ['list', 'status', 'publish', 'replay', 'schema']);
+  }
+}
+
 // ── Main dispatch ─────────────────────────────────────────────────
 async function main(): Promise<void> {
   const { flags, positional } = parseArgs(process.argv);
@@ -786,6 +879,7 @@ async function main(): Promise<void> {
     case 'mmot':                          cmdMmot(rest); break;
     case 'validate': case 'v':            cmdValidate(rest); break;
     case 'memory': case 'mem':            cmdMemory(rest); break;
+    case 'events': case 'ev':       await cmdEvents(rest, flags); break;
     case 'skill': case 'sk':            cmdSkill(rest); break;
     case 'arc':
       mcpCall('get_narrative_arc', { cycle_id: rest[0] ?? '' });

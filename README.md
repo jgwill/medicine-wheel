@@ -356,23 +356,45 @@ build and its old environment — restart it for either to take effect.
 
 ### Event log
 
-Every cycle, beat, ceremony and diary write the routes commit leaves one line in
-`events.jsonl` beside the store (`MW_EVENTS_FILE` overrides): `cycle.opened`,
-`cycle.amended`, `cycle.archived`, `beat.recorded`, `beat.amended`,
-`beat.witnessed`, `ceremony.opened`, `ceremony.closed`, `ceremony.amended`,
-`diary.written`, `diary.amended`. Each line is a `MiadiEventEnvelope`
-(jgwill/Miadi `rispecs/events/00-miadi-event-spine.rispec.md`) namespaced
-`medicine-wheel.*`. It names records and carries labels; a cycle's question, a
-beat's words and a diary entry's text stay in the store. A write that changes
-nothing writes no event, and a log that cannot be written never fails the write.
+Every write to a cycle, beat, ceremony, diary entry, node or relation leaves one
+line in `events.jsonl` beside the store (`MW_EVENTS_FILE` overrides). Nodes
+include circles, chronicle episodes and memory conclusions. Captures, inquiry
+weaves, plan perspectives, charts and MMOTs are not recorded yet. Each line is
+a `MiadiEventEnvelope` (jgwill/Miadi
+`rispecs/events/00-miadi-event-spine.rispec.md`) namespaced `medicine-wheel.*`:
+`cycle.opened`, `beat.recorded`, `ceremony.closed`, `circle.created`,
+`chronicle.episode.registered`, `relation.made`, … — 29 in all, catalogued in
+[`@medicine-wheel/events`](src/events/README.md).
+
+- A payload names records and carries labels. A cycle's question, a beat's
+  words and a diary entry's text stay in the store.
+- A write that changes nothing writes no event.
+- A log that cannot be written never fails the write.
+- The MCP server's local store records its own writes the same way.
 
 ```bash
-curl 'localhost:8040/api/events?type=cycle.&limit=20'   # newest first; type, subject, since, limit
-curl localhost:8040/api/health                          # events.count, events.last_at
+curl 'localhost:8040/api/events?type=cycle.&limit=20'   # newest first; type, subject, correlation, since, limit
+mw events --correlation <cycle-id>                      # a cycle's moments; also on the cycle's page
+mw events schema [--asyncapi]                           # the JSON Schema, or the AsyncAPI document
 ```
 
-Nothing leaves the machine yet: the log waits for the broker Episode 548 is
-choosing (jgwill/medicine-wheel#164).
+Set `MW_INSTANCE` (e.g. `ilex:8040`) to name this wheel in each event's
+`source.instance`.
+
+**Publishing.** Nothing leaves the machine until `MW_EVENTS_PUBLISH_URL` is set.
+Once it is, the wheel POSTs each event, in log order, after every write and
+every minute (`MW_EVENTS_PUBLISH_INTERVAL_MS`).
+
+- **Headers:** `Idempotency-Key`, `X-Event-Type`, and `Authorization: Bearer
+  $MW_EVENTS_PUBLISH_TOKEN` when a token is set.
+- **Delivery records:** a cursor and receipts beside the log record
+  `arrived`, `failed` (retried) or `refused` (passed).
+- **Checking and replaying:** `mw events status`, `mw events publish` and
+  `mw events replay <event-id|all>` (also `GET`/`POST /api/events/publish`).
+- **What can receive it:** a webhook endpoint, a Hookdeck source, a Cloudflare
+  Worker in front of a queue, or the Miadi hooks-gateway. A broker client is
+  another publisher beside it. The events keep their names
+  (jgwill/medicine-wheel#164, miadi-chronicle://548).
 
 ## License
 

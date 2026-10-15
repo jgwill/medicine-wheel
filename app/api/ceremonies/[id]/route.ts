@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createProvider, detectProvider } from "@medicine-wheel/storage-provider";
+import { ceremonyRemoved } from "@medicine-wheel/events";
 import { getAllBeats } from "@/lib/store";
+import { recordEvent } from "@/lib/event-log";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -52,6 +54,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       );
     }
     await store.deleteCeremony(id);
+    recordEvent(ceremonyRemoved(ceremony));
     return NextResponse.json({ success: true, deleted: { id }, provider: detectProvider() });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

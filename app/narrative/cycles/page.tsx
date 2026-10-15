@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { type MedicineWheelCycle, type DirectionName } from "@/lib/types";
 import { extractCycles } from "@/lib/cycle-response";
 import { toast } from "sonner";
+import { CycleEvents } from "@/components/cycle-events";
 
 const dirVar = (d: string) => `var(--mw-${d})`;
 const dirInk = (d: string) => `var(--mw-${d}-ink)`;
@@ -138,6 +139,7 @@ export default function CyclesPage() {
                       <p className="font-bold">{cycle.relations_mapped}</p>
                     </div>
                   </div>
+                  <CycleEvents cycleId={cycle.id} />
                   <p className="mt-3 text-xs text-muted-foreground">Cycle ID: {cycle.id}</p>
                 </div>
               )}

@@ -33,7 +33,8 @@ export async function GET() {
       // `pending` counts those still waiting for Honcho to take them (#147).
       honcho: honchoProjectionStatus(),
       // The event log (#164): how many events the wheel has written beside its
-      // store, and when the last one was. Read them on /api/events.
+      // store, when the last one was, and — with a publisher configured — how
+      // many it still owes. Read them on /api/events.
       events: eventLogStatus(),
       env: {
         MW_STORAGE_PROVIDER: process.env.MW_STORAGE_PROVIDER || 'not set',

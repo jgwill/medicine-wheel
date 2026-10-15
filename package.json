@@ -28,6 +28,7 @@
   "workspaces": [
     "src/ontology-core",
     "src/infra",
+    "src/events",
     "src/creative-orientation",
     "src/session-reader",
     "src/ceremony-protocol",
@@ -99,6 +100,7 @@
     "@medicine-wheel/creative-orientation": "^0.17.11",
     "@medicine-wheel/data-store": "^0.17.11",
     "@medicine-wheel/data-store-postgres": "^0.17.11",
+    "@medicine-wheel/events": "^0.17.11",
     "@medicine-wheel/fire-keeper": "^0.17.11",
     "@medicine-wheel/github-ceremony": "^0.17.11",
     "@medicine-wheel/graph-viz": "^0.17.11",
@@ -138,6 +140,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "ajv": "^6.12.6",
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.25",
     "shx": "^0.4.0",

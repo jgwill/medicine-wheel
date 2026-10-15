@@ -40,6 +40,7 @@
     "@medicine-wheel/community-review": "^0.17.11",
     "@medicine-wheel/consent-lifecycle": "^0.17.11",
     "@medicine-wheel/creative-orientation": "^0.17.11",
+    "@medicine-wheel/events": "^0.17.11",
     "@medicine-wheel/fire-keeper": "^0.17.11",
     "@medicine-wheel/gap-analysis": "^0.17.11",
     "@medicine-wheel/graph-viz": "^0.17.11",

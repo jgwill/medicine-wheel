@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getAllBeats, getBeat, createBeat } from "@/lib/store";
 import { projectBeat } from "@medicine-wheel/honcho";
 import { projectAfterWrite } from "@/lib/honcho-projection";
-import { beatEventFields, BEAT_CONTENT_FIELDS, changedFields, instanceOf, recordEvent } from "@/lib/event-log";
+import { beatWritten } from "@medicine-wheel/events";
+import { recordEvent } from "@/lib/event-log";
 
 export async function GET() {
   try {
@@ -42,18 +43,9 @@ export async function POST(request: Request) {
     projectAfterWrite({ kind: "beat", id: beat.id }, () => projectBeat(beat));
     // The event log (#164): a new beat is recorded; a known one is amended
     // only in what moved — re-posting a beat as it stands is not an occurrence.
-    const instance = instanceOf(request);
-    if (!before) {
-      recordEvent({ name: "beat.recorded", instance, ...beatEventFields(beat) });
-    } else {
-      // Read back through the same normalization as `before`, so a field the
-      // reader fills in is not mistaken for one the write moved.
-      const changed = changedFields(before, getBeat(beat.id) ?? beat, BEAT_CONTENT_FIELDS);
-      if (changed.length) {
-        const fields = beatEventFields(beat);
-        recordEvent({ name: "beat.amended", instance, ...fields, payload: { ...fields.payload, changed } });
-      }
-    }
+    // Read back through the same normalization as `before`, so a field the
+    // reader fills in is not mistaken for one the write moved.
+    recordEvent(beatWritten(before, before ? getBeat(beat.id) ?? beat : beat));
     // Warnings ride on the created beat rather than replacing it, so clients
     // that read the beat back by id keep working while advisory findings stop
     // being computed-and-discarded.
