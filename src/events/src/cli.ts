@@ -67,6 +67,9 @@ function runHandler(command: string, event: WheelEvent): Promise<boolean> {
     });
     child.on('error', () => resolve(false));
     child.on('close', (code) => resolve(code === 0));
+    // A handler that never reads stdin may exit before the event is written;
+    // the broken pipe is its choice, not a failure. Its exit code decides.
+    child.stdin.on('error', () => {});
     child.stdin.end(JSON.stringify(event) + '\n');
   });
 }

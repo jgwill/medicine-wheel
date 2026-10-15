@@ -160,6 +160,21 @@ describe("a follower elsewhere", () => {
     expect(handled.startsWith("medicine-wheel.cycle.opened c6 {")).toBe(true);
     expect(JSON.parse(handled.slice(handled.indexOf("{"))).subject.id).toBe("c6");
   });
+
+  it("a handler that never reads stdin is not a broken pipe", () => {
+    const cli = path.join(__dirname, "..", "src", "events", "dist", "cli.js");
+    if (!fs.existsSync(cli)) return;
+    // Larger than a pipe's buffer (64 KiB), so the write cannot finish before
+    // the handler has closed its stdin: the pipe breaks every time, not by chance.
+    const big = event("p-big");
+    appendEvent(logFile, { ...big, payload: { ...big.payload, pad: "x".repeat(200_000) } } as WheelEvent);
+    execFileSync("git", ["commit", "-q", "--only", "-m", "events", "--", "miadi-chronicle/store/events.jsonl"], { cwd: wheel });
+    execFileSync("git", ["push", "-q"], { cwd: wheel });
+    const run = spawnSync(process.execPath, [cli, "follow", elsewhere, "--state-dir", stateDir, "--exec", "exec 0<&-; sleep 0.2"], { encoding: "utf-8" });
+    expect(run.stderr).not.toMatch(/EPIPE/);
+    expect(run.status).toBe(0);
+    expect(run.stderr).toMatch(/1 handled, 0 waiting/);
+  });
 });
 
 describe("the wheel's carriage", () => {
