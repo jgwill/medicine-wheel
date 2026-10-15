@@ -178,8 +178,9 @@ export async function POST(request: Request) {
 
     await store.createEdge(edge);
     // The event log (#164): a relation made, or — over an existing pair —
-    // amended in what moved.
-    recordEvent(relationWritten(previous, edge));
+    // amended in what moved. Between two chronicle episodes it is lineage,
+    // and carries the sentence that says why.
+    recordEvent(relationWritten(previous, edge, { from: fromNode, to: toNode }));
     return NextResponse.json(
       { success: true, edge, replaced, provider: detectProvider() },
       { status: 201 },
@@ -216,7 +217,8 @@ export async function PATCH(request: Request) {
     const store = await createProvider();
     const previous = await store.getEdge(pair.from, pair.to);
     const edge = await store.updateEdge(pair.from, pair.to, parsed.data);
-    recordEvent(relationWritten(previous ?? edge, edge));
+    const [fromNode, toNode] = await Promise.all([store.getNode(pair.from), store.getNode(pair.to)]);
+    recordEvent(relationWritten(previous ?? edge, edge, { from: fromNode, to: toNode }));
     return NextResponse.json({ success: true, edge, provider: detectProvider() });
   } catch (error: unknown) {
     if (error instanceof EdgeNotFoundError) {
@@ -234,8 +236,9 @@ export async function DELETE(request: Request) {
 
     const store = await createProvider();
     const previous = await store.getEdge(pair.from, pair.to);
+    const [fromNode, toNode] = await Promise.all([store.getNode(pair.from), store.getNode(pair.to)]);
     await store.deleteEdge(pair.from, pair.to);
-    recordEvent(relationRemoved(previous ?? { from_id: pair.from, to_id: pair.to }));
+    recordEvent(relationRemoved(previous ?? { from_id: pair.from, to_id: pair.to }, { from: fromNode, to: toNode }));
     return NextResponse.json({
       success: true,
       deleted: { from_id: pair.from, to_id: pair.to },

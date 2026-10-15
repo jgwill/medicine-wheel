@@ -24,10 +24,16 @@ const schema = require('@medicine-wheel/events/schema/wheel-events.schema.json')
 const { WHEEL_EVENT_CATALOG, filterEvents } = require('@medicine-wheel/events');
 ```
 
-A payload carries references and labels — ids, a direction, a type — never a
-person's words. A cycle's question, a beat's prose and a diary entry's text
-stay in the wheel. To read one, fetch the record by `subject.id` from the wheel
-that wrote the event (`source.instance`).
+A payload carries references and labels: ids, a direction, a type. A cycle's
+question, a beat's prose and a diary entry's text stay in the wheel. To read
+one, fetch the record by `subject.id` from the wheel that wrote the event
+(`source.instance`).
+
+There is one exception. When two chronicle episodes are related, the
+`chronicle.lineage.*` events carry the sentence that says why
+(`payload.relation`). That sentence is already committed to the episode's
+`episode.yaml`, so the event repeats it rather than releasing it. These
+events say so with `privacy: { classification: "chronicle", content_included: true }`.
 
 ## The envelope
 
@@ -69,6 +75,7 @@ jgwill/Miadi's `MiadiEventEnvelope` 0.1.0
 | chronicle episode | `chronicle.episode.registered`, `chronicle.episode.amended`, `chronicle.episode.removed` |
 | memory conclusion | `memory.conclusion.recorded`, `memory.conclusion.judged`, `memory.conclusion.amended`, `memory.conclusion.removed` |
 | node | `node.created`, `node.amended`, `node.removed` |
+| chronicle lineage | `chronicle.lineage.made`, `chronicle.lineage.amended`, `chronicle.lineage.removed` — a relation between two chronicle episodes, with the why |
 | relation | `relation.made`, `relation.amended`, `relation.removed` |
 
 `WHEEL_EVENT_CATALOG` says, for each: what happened, which write produces it,
@@ -89,6 +96,51 @@ The deciders (`cycleWritten`, `beatWritten`, `beatWitnessed`, `ceremonyWritten`,
 `diaryWritten`, `nodeWritten`, `conclusionJudged`, `relationWritten` and the
 `*Removed` ones) are shared by the wheel's HTTP routes and the MCP server's
 local store, so the same act leaves the same event whichever door it used.
+
+## Carried by git
+
+Before any broker exists, the log can travel through the data repository it
+already lives in. This is not a publisher: nothing here sends one event and
+waits for a receipt.
+
+```ts
+import { commitEventLog, followEventLog } from '@medicine-wheel/events/git';
+```
+
+**On the wheel's side,** `commitEventLog` commits `events.jsonl` and nothing
+else. Anything else that is changed or staged stays exactly as it was. It then
+pushes. It pushes only commits that touch the log alone. When the branch also
+holds someone's own data commit, it holds the push and says why. A log the
+repository ignores is reported as an error, not committed by force.
+
+In the wheel, set `MW_EVENTS_GIT_SYNC=push` (or `commit`). The wheel then
+commits:
+
+- about 30 seconds after events are recorded, so a burst travels as one commit;
+- on start;
+- every 10 minutes.
+
+`mw events sync` commits now. `GET /api/events/git` shows the last pass.
+
+**Anywhere else,** clone the data repository, then follow it:
+
+```bash
+npx -p @medicine-wheel/events mw-events follow ~/mw-data --exec ./on-event.sh
+npx -p @medicine-wheel/events mw-events follow ~/mw-data --every 60   # pull every minute, print new events
+```
+
+`follow` pulls, then hands each event this follower has not handled yet to
+`--exec`, oldest first:
+
+- The event's JSON goes on stdin.
+- `MW_EVENT_ID`, `MW_EVENT_TYPE`, `MW_EVENT_SUBJECT_KIND`, `MW_EVENT_SUBJECT_ID`,
+  `MW_EVENT_CORRELATION` and `MW_EVENT_OBSERVED_AT` go in the environment.
+- Exit 0 and the follower moves past that event. Anything else and it stops,
+  and the same event comes first next time.
+
+The cursor lives in `--state-dir`, which defaults to
+`~/.local/state/medicine-wheel-events`, never in the clone. Use `--name` to give
+two followers of one clone separate places.
 
 ## Publishing
 

@@ -13,7 +13,7 @@
  */
 
 /** Version of this catalog. It moves when an event or a payload field is added or changed. */
-export const CATALOG_VERSION = '0.2.0';
+export const CATALOG_VERSION = '0.3.0';
 
 export type WheelSubjectKind = 'cycle' | 'beat' | 'ceremony' | 'diary' | 'node' | 'relation';
 
@@ -31,6 +31,14 @@ export interface EventDefinition {
   writtenBy: string;
   /** What `correlation_id` groups, when the event carries one. */
   correlation?: string;
+  /**
+   * The payload carries a person's words. Set only where those words are
+   * already published elsewhere — an episode manifest — so the event repeats
+   * them rather than releasing them.
+   */
+  contentIncluded?: true;
+  /** `privacy.classification`; `internal` when absent. */
+  classification?: string;
   payload: Record<string, PayloadField>;
 }
 
@@ -73,6 +81,13 @@ const nodeFields = {
 const nodeKey = { type: { ...nodeFields.type }, kind: { ...nodeFields.kind } } as const;
 
 const about = { type: 'string', required: true, description: 'The node the conclusion is about.' } as const;
+
+const lineageFields = {
+  from_id: { type: 'string', required: true, description: 'The episode the relation starts from (`chronicle:<folder>`).' },
+  to_id: { type: 'string', required: true, description: 'The episode it relates to (`chronicle:<folder>`).' },
+  relationship_type: { type: 'string', required: true, description: '`continues_from` or `relates_to`.' },
+  relation: { type: 'string', description: 'Why they are related — the sentence the episode manifest (episode.yaml) carries, already committed to the chronicle.' },
+} as const;
 
 const relationFields = {
   from_id: { type: 'string', required: true, description: 'The node the relation starts from.' },
@@ -255,6 +270,33 @@ export const WHEEL_EVENT_CATALOG = {
     writtenBy: 'DELETE /api/nodes/{id}',
     correlation: 'the node the conclusion is about',
     payload: { ...nodeKey, about: { ...about } },
+  },
+  'chronicle.lineage.made': {
+    subject: 'relation',
+    summary: 'One chronicle episode was related to another — it continues from it, or relates to it — with the words that say why.',
+    writtenBy: 'POST /api/edges between two chronicle_episode nodes; the Miadi lineage door (POST /api/chronicle/episodes/{ref}/lineage) writes there',
+    correlation: 'the episode the relation starts from',
+    contentIncluded: true,
+    classification: 'chronicle',
+    payload: { ...lineageFields },
+  },
+  'chronicle.lineage.amended': {
+    subject: 'relation',
+    summary: 'A relation between two chronicle episodes changed — most often, the words that say why were written.',
+    writtenBy: 'PATCH /api/edges between two chronicle_episode nodes; POST /api/edges over an existing pair',
+    correlation: 'the episode the relation starts from',
+    contentIncluded: true,
+    classification: 'chronicle',
+    payload: { ...lineageFields, changed },
+  },
+  'chronicle.lineage.removed': {
+    subject: 'relation',
+    summary: 'A relation between two chronicle episodes was released.',
+    writtenBy: 'DELETE /api/edges between two chronicle_episode nodes',
+    correlation: 'the episode the relation starts from',
+    contentIncluded: true,
+    classification: 'chronicle',
+    payload: { ...lineageFields, relationship_type: { type: 'string', description: '`continues_from` or `relates_to`.' } },
   },
   'node.created': {
     subject: 'node',

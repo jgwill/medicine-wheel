@@ -539,6 +539,11 @@ export class JsonlStore {
     }
   }
 
+  /** The nodes a relation joins: between two chronicle episodes it is lineage. */
+  private endsOf(edge: StoredEdge) {
+    return { from: this.nodes.get(edge.from_id), to: this.nodes.get(edge.to_id) };
+  }
+
   // === Nodes ===
   createNode(node: StoredNode): void {
     const before = this.nodes.get(node.id);
@@ -596,7 +601,7 @@ export class JsonlStore {
   createEdge(edge: StoredEdge): void {
     const before = this.edges.getAll().find((e) => e.from_id === edge.from_id && e.to_id === edge.to_id);
     this.edges.add(edge);
-    this.record(relationWritten(before, edge));
+    this.record(relationWritten(before, edge, this.endsOf(edge)));
   }
   getAllEdges(): StoredEdge[] { return this.edges.getAll(); }
   getEdgesForNode(nodeId: string): StoredEdge[] { return this.edges.getForNode(nodeId); }
@@ -609,7 +614,7 @@ export class JsonlStore {
     const after = this.edges.getAll().filter(joins);
     for (const edge of after) {
       const was = before.find((e) => e.from_id === edge.from_id && e.to_id === edge.to_id);
-      this.record(relationWritten(was ?? edge, edge));
+      this.record(relationWritten(was ?? edge, edge, this.endsOf(edge)));
     }
   }
 

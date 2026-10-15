@@ -19,9 +19,16 @@
  * `MW_EVENTS_PUBLISH_INTERVAL_MS` (default one minute), from this wheel's
  * cursor, with receipts beside the log. Unset, nothing leaves the machine.
  *
+ * Carried by git, before any broker: with `MW_EVENTS_GIT_SYNC=push` (or
+ * `commit`), the wheel commits `events.jsonl` — that file only — in the data
+ * repository it lives in, about half a minute after events are recorded
+ * (`MW_EVENTS_GIT_DELAY_MS`), on start, and every ten minutes
+ * (`MW_EVENTS_GIT_INTERVAL_MS`), then pushes. A follower elsewhere pulls a
+ * clone and acts on what it has not seen (`mw-events follow`).
+ *
  * Never the caller's error: a line that cannot be written is reported once on
- * stderr with the record's id, and a publisher that cannot be reached is a
- * receipt, not a failed write.
+ * stderr with the record's id, and a publisher or a remote that cannot be
+ * reached is a receipt or a status, not a failed write.
  */
 
 import { buildEvent, filterEvents, type EventFilter, type WheelEvent, type WheelEventInput } from '@medicine-wheel/events';
@@ -37,6 +44,7 @@ import {
   type PublisherStatus,
   type Receipt,
 } from '@medicine-wheel/events/publish';
+import { commitEventLog, type CommitResult } from '@medicine-wheel/events/git';
 import { resolveProjectDataDir } from '@/lib/jsonl-store';
 
 /** Where the log lives: `MW_EVENTS_FILE`, else beside the wheel's JSONL store. */
@@ -68,6 +76,7 @@ export function recordEvent(input: WheelEventInput | null): WheelEvent | undefin
     return undefined;
   }
   kickPublisher();
+  kickGitSync();
   return event;
 }
 
@@ -170,8 +179,90 @@ export function eventPublisherReport(limit = 20): { publisher: PublisherStatus; 
   return { publisher: publisherStatus(file, publisher.name), receipts: readReceipts(file, publisher.name).slice(-limit).reverse() };
 }
 
-/** What `/api/health` reports: how many events, the last one, and what the publisher still owes. */
-export function eventLogStatus(): { count: number; last_at?: string; publisher?: PublisherStatus } | { error: string } {
+// ── carried by git ──────────────────────────────────────────────────────────
+
+export type GitSyncMode = 'off' | 'commit' | 'push';
+
+/** `MW_EVENTS_GIT_SYNC`: `push` (or `1`, `true`), `commit`, else off. */
+export function gitSyncMode(): GitSyncMode {
+  const value = process.env.MW_EVENTS_GIT_SYNC?.trim().toLowerCase();
+  if (value === 'push' || value === '1' || value === 'true') return 'push';
+  if (value === 'commit') return 'commit';
+  return 'off';
+}
+
+const GIT = Symbol.for('@medicine-wheel/app.event-git');
+type GitState = {
+  running?: Promise<CommitResult | null>;
+  again?: boolean;
+  timer?: ReturnType<typeof setTimeout>;
+  interval?: ReturnType<typeof setInterval>;
+  failing?: boolean;
+  last?: CommitResult & { at: string };
+};
+const gitState: GitState = ((globalThis as Record<symbol, GitState>)[GIT] ??= {});
+
+async function gitPass(): Promise<CommitResult | null> {
+  const mode = gitSyncMode();
+  if (mode === 'off') return null;
+  const result = await commitEventLog(eventLogFile(), { push: mode === 'push', instance: eventInstance() });
+  gitState.last = { ...result, at: new Date().toISOString() };
+  if (result.error && !gitState.failing) {
+    console.error(`[events] git carriage stopped: ${result.error} — the log keeps growing and the next pass tries again`);
+  } else if (!result.error && gitState.failing) {
+    console.log('[events] git carriage resumed');
+  }
+  if (result.committed) {
+    console.log(`[events] committed ${result.events} event(s) in ${result.commit?.slice(0, 8)}${result.pushed ? ', pushed' : ''}`);
+  }
+  gitState.failing = Boolean(result.error);
+  return result;
+}
+
+/** Commit (and push) the log now. A pass already running is joined, and runs once more after it. */
+export function syncEventsToGit(): Promise<CommitResult | null> {
+  if (gitState.running) {
+    gitState.again = true;
+    return gitState.running;
+  }
+  const run = gitPass().then(async (result) => {
+    while (gitState.again) {
+      gitState.again = false;
+      result = (await gitPass()) ?? result;
+    }
+    return result;
+  }).finally(() => {
+    if (gitState.running === run) gitState.running = undefined;
+  });
+  gitState.running = run;
+  return run;
+}
+
+/** After a recorded event: commit soon, so a burst of writes travels as one commit. */
+export function kickGitSync(): void {
+  if (gitSyncMode() === 'off' || gitState.timer) return;
+  gitState.timer = setTimeout(() => {
+    gitState.timer = undefined;
+    void syncEventsToGit();
+  }, Number(process.env.MW_EVENTS_GIT_DELAY_MS) || 30_000);
+  gitState.timer.unref?.();
+}
+
+/** Start the carriage clock from `instrumentation.ts`: a pass now, then every ten minutes. */
+export function startEventGitSync(intervalMs = Number(process.env.MW_EVENTS_GIT_INTERVAL_MS) || 10 * 60_000): void {
+  if (gitSyncMode() === 'off' || gitState.interval) return;
+  gitState.interval = setInterval(() => { void syncEventsToGit(); }, intervalMs);
+  gitState.interval.unref?.();
+  void syncEventsToGit();
+}
+
+/** The carriage's mode and its last pass. */
+export function eventGitStatus(): { mode: GitSyncMode; last?: GitState['last'] } {
+  return { mode: gitSyncMode(), ...(gitState.last ? { last: gitState.last } : {}) };
+}
+
+/** What `/api/health` reports: how many events, the last one, what the publisher owes, how the git carriage stands. */
+export function eventLogStatus(): { count: number; last_at?: string; publisher?: PublisherStatus; git?: ReturnType<typeof eventGitStatus> } | { error: string } {
   try {
     const events = readEvents();
     const last = events[events.length - 1];
@@ -180,6 +271,7 @@ export function eventLogStatus(): { count: number; last_at?: string; publisher?:
       count: events.length,
       ...(last ? { last_at: last.observed_at } : {}),
       ...(publisher ? { publisher: publisherStatus(eventLogFile(), publisher.name) } : {}),
+      ...(gitSyncMode() !== 'off' ? { git: eventGitStatus() } : {}),
     };
   } catch (error) {
     return { error: (error as Error)?.message ?? String(error) };

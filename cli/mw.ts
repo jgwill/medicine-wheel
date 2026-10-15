@@ -285,6 +285,7 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
     mw events status                       What the publisher still owes
     mw events publish                      Send what waits now
     mw events replay <event-id|all>        Send again from that event
+    mw events sync                         Commit (and push) events.jsonl now
     mw events schema [--asyncapi]          Print the JSON Schema (or AsyncAPI)
 
   SYSTEM
@@ -846,11 +847,17 @@ async function cmdEvents(positional: string[], flags: Record<string, string | bo
       if (data.stopped) process.exitCode = 1;
       break;
     }
+    case 'sync': {
+      const { status, data } = await eventsApi('POST', '/api/events/git');
+      if (status !== 200) return failed(status, data);
+      ppValue(data);
+      break;
+    }
     case 'schema':
       console.log(JSON.stringify(flags['asyncapi'] ? asyncApiDocument() : wheelEventsJsonSchema(), null, 2));
       break;
     default:
-      unknownSub('events', sub, ['list', 'status', 'publish', 'replay', 'schema']);
+      unknownSub('events', sub, ['list', 'status', 'publish', 'replay', 'sync', 'schema']);
   }
 }
 

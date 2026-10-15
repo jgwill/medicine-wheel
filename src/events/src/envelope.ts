@@ -80,7 +80,10 @@ export function buildEvent<N extends WheelEventName>(input: WheelEventInput<N>, 
     ...(input.correlation_id ? { correlation_id: input.correlation_id } : {}),
     ...(input.causation_id ? { causation_id: input.causation_id } : {}),
     idempotency_key: id,
-    privacy: { classification: 'internal', content_included: false },
+    privacy: {
+      classification: ('classification' in definition && definition.classification) || 'internal',
+      content_included: 'contentIncluded' in definition && definition.contentIncluded === true,
+    },
     payload: defined((input.payload ?? {}) as Record<string, unknown>) as PayloadOf<N>,
   };
 }

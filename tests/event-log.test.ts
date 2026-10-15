@@ -250,6 +250,33 @@ describe("nodes, relations and conclusions", () => {
     expect(events[1].payload.changed).toEqual(["strength"]);
   });
 
+  it("two chronicle episodes related, with the sentence that says why — lineage, not a bare relation", async () => {
+    for (const [id, n] of [["chronicle:2026-10-15-episode-901-ev-a", 901], ["chronicle:2026-10-15-episode-902-ev-b", 902]] as const) {
+      await send("nodes", "POST", { id, name: `Episode ${n}`, type: "knowledge", metadata: { kind: "chronicle_episode" } });
+    }
+    await send("nodes", "POST", { id: "node:ev:plain", name: "plain", type: "human" });
+    fs.rmSync(logFile, { force: true });
+    // What the Miadi lineage door sends: POST /api/edges with the manifest's sentence as description.
+    await send("edges", "POST", {
+      from_id: "chronicle:2026-10-15-episode-902-ev-b", to_id: "chronicle:2026-10-15-episode-901-ev-a",
+      relationship_type: "continues_from", description: "It carries 901's question into the broker inquiry.",
+    });
+    await send("edges", "POST", { from_id: "node:ev:plain", to_id: "chronicle:2026-10-15-episode-901-ev-a", relationship_type: "witnessed", description: "a private why" });
+
+    const [lineage, plain] = lines();
+    expect(lineage.event_type).toBe("medicine-wheel.chronicle.lineage.made");
+    expect(lineage.subject).toEqual({ kind: "relation", id: "chronicle:2026-10-15-episode-902-ev-b->chronicle:2026-10-15-episode-901-ev-a" });
+    expect(lineage.correlation_id).toBe("chronicle:2026-10-15-episode-902-ev-b");
+    expect(lineage.payload).toEqual({
+      from_id: "chronicle:2026-10-15-episode-902-ev-b", to_id: "chronicle:2026-10-15-episode-901-ev-a",
+      relationship_type: "continues_from", relation: "It carries 901's question into the broker inquiry.",
+    });
+    expect(lineage.privacy).toEqual({ classification: "chronicle", content_included: true });
+    expect(plain.event_type).toBe("medicine-wheel.relation.made");
+    expect(plain.privacy.content_included).toBe(false);
+    expect(JSON.stringify(plain)).not.toContain("a private why");
+  });
+
   it("a conclusion is recorded about its person and judged once", async () => {
     await send("nodes", "POST", { id: "node:human:ev-g", name: "G", type: "human" });
     fs.rmSync(logFile, { force: true });

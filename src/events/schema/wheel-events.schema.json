@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Medicine Wheel events",
-  "description": "Every event a Medicine Wheel writes to events.jsonl and will publish. Catalog 0.2.0, envelope MiadiEventEnvelope 0.1.0.",
+  "description": "Every event a Medicine Wheel writes to events.jsonl and will publish. Catalog 0.3.0, envelope MiadiEventEnvelope 0.1.0.",
   "definitions": {
     "envelope": {
       "title": "MiadiEventEnvelope (Medicine Wheel)",
-      "description": "A Medicine Wheel event in jgwill/Miadi's MiadiEventEnvelope 0.1.0. The payload carries references and labels, never a person's words.",
+      "description": "A Medicine Wheel event in jgwill/Miadi's MiadiEventEnvelope 0.1.0. The payload carries references and labels; a person's words travel only where privacy.content_included says so, and only words already published (an episode manifest's lineage sentence).",
       "type": "object",
       "required": [
         "id",
@@ -154,6 +154,13 @@
                 }
               }
             },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
+                }
+              }
+            },
             "payload": {
               "type": "object",
               "properties": {
@@ -186,6 +193,13 @@
               "properties": {
                 "kind": {
                   "const": "cycle"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -232,6 +246,13 @@
                 }
               }
             },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
+                }
+              }
+            },
             "payload": {
               "type": "object",
               "properties": {}
@@ -256,6 +277,13 @@
               "properties": {
                 "kind": {
                   "const": "beat"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -315,6 +343,13 @@
               "properties": {
                 "kind": {
                   "const": "beat"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -385,6 +420,13 @@
                 }
               }
             },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
+                }
+              }
+            },
             "payload": {
               "type": "object",
               "properties": {
@@ -421,6 +463,13 @@
               "properties": {
                 "kind": {
                   "const": "ceremony"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -477,6 +526,13 @@
               "properties": {
                 "kind": {
                   "const": "ceremony"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -541,6 +597,13 @@
                 }
               }
             },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
+                }
+              }
+            },
             "payload": {
               "type": "object",
               "properties": {
@@ -601,6 +664,13 @@
                 }
               }
             },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
+                }
+              }
+            },
             "payload": {
               "type": "object",
               "properties": {
@@ -638,6 +708,13 @@
               "properties": {
                 "kind": {
                   "const": "diary"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -693,6 +770,13 @@
                 }
               }
             },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
+                }
+              }
+            },
             "payload": {
               "type": "object",
               "properties": {
@@ -745,6 +829,13 @@
                 }
               }
             },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
+                }
+              }
+            },
             "payload": {
               "type": "object",
               "properties": {
@@ -782,6 +873,13 @@
               "properties": {
                 "kind": {
                   "const": "node"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -825,6 +923,13 @@
               "properties": {
                 "kind": {
                   "const": "node"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -875,6 +980,13 @@
                 }
               }
             },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
+                }
+              }
+            },
             "payload": {
               "type": "object",
               "properties": {
@@ -911,6 +1023,13 @@
               "properties": {
                 "kind": {
                   "const": "node"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -954,6 +1073,13 @@
               "properties": {
                 "kind": {
                   "const": "node"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -1004,6 +1130,13 @@
                 }
               }
             },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
+                }
+              }
+            },
             "payload": {
               "type": "object",
               "properties": {
@@ -1040,6 +1173,13 @@
               "properties": {
                 "kind": {
                   "const": "node"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -1095,6 +1235,13 @@
                 }
               }
             },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
+                }
+              }
+            },
             "payload": {
               "type": "object",
               "properties": {
@@ -1137,6 +1284,13 @@
               "properties": {
                 "kind": {
                   "const": "node"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -1192,6 +1346,13 @@
                 }
               }
             },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
+                }
+              }
+            },
             "payload": {
               "type": "object",
               "properties": {
@@ -1217,6 +1378,181 @@
         }
       ]
     },
+    "chronicleLineageMade": {
+      "title": "medicine-wheel.chronicle.lineage.made",
+      "description": "One chronicle episode was related to another — it continues from it, or relates to it — with the words that say why. Written by: POST /api/edges between two chronicle_episode nodes; the Miadi lineage door (POST /api/chronicle/episodes/{ref}/lineage) writes there. Correlation: the episode the relation starts from.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "medicine-wheel.chronicle.lineage.made"
+            },
+            "subject": {
+              "properties": {
+                "kind": {
+                  "const": "relation"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": true
+                }
+              }
+            },
+            "payload": {
+              "type": "object",
+              "properties": {
+                "from_id": {
+                  "type": "string",
+                  "description": "The episode the relation starts from (`chronicle:<folder>`)."
+                },
+                "to_id": {
+                  "type": "string",
+                  "description": "The episode it relates to (`chronicle:<folder>`)."
+                },
+                "relationship_type": {
+                  "type": "string",
+                  "description": "`continues_from` or `relates_to`."
+                },
+                "relation": {
+                  "type": "string",
+                  "description": "Why they are related — the sentence the episode manifest (episode.yaml) carries, already committed to the chronicle."
+                }
+              },
+              "required": [
+                "from_id",
+                "to_id",
+                "relationship_type"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "chronicleLineageAmended": {
+      "title": "medicine-wheel.chronicle.lineage.amended",
+      "description": "A relation between two chronicle episodes changed — most often, the words that say why were written. Written by: PATCH /api/edges between two chronicle_episode nodes; POST /api/edges over an existing pair. Correlation: the episode the relation starts from.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "medicine-wheel.chronicle.lineage.amended"
+            },
+            "subject": {
+              "properties": {
+                "kind": {
+                  "const": "relation"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": true
+                }
+              }
+            },
+            "payload": {
+              "type": "object",
+              "properties": {
+                "from_id": {
+                  "type": "string",
+                  "description": "The episode the relation starts from (`chronicle:<folder>`)."
+                },
+                "to_id": {
+                  "type": "string",
+                  "description": "The episode it relates to (`chronicle:<folder>`)."
+                },
+                "relationship_type": {
+                  "type": "string",
+                  "description": "`continues_from` or `relates_to`."
+                },
+                "relation": {
+                  "type": "string",
+                  "description": "Why they are related — the sentence the episode manifest (episode.yaml) carries, already committed to the chronicle."
+                },
+                "changed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The fields the write changed. Metadata keys appear as `metadata.<key>`."
+                }
+              },
+              "required": [
+                "from_id",
+                "to_id",
+                "relationship_type",
+                "changed"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "chronicleLineageRemoved": {
+      "title": "medicine-wheel.chronicle.lineage.removed",
+      "description": "A relation between two chronicle episodes was released. Written by: DELETE /api/edges between two chronicle_episode nodes. Correlation: the episode the relation starts from.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/envelope"
+        },
+        {
+          "properties": {
+            "event_type": {
+              "const": "medicine-wheel.chronicle.lineage.removed"
+            },
+            "subject": {
+              "properties": {
+                "kind": {
+                  "const": "relation"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": true
+                }
+              }
+            },
+            "payload": {
+              "type": "object",
+              "properties": {
+                "from_id": {
+                  "type": "string",
+                  "description": "The episode the relation starts from (`chronicle:<folder>`)."
+                },
+                "to_id": {
+                  "type": "string",
+                  "description": "The episode it relates to (`chronicle:<folder>`)."
+                },
+                "relationship_type": {
+                  "type": "string",
+                  "description": "`continues_from` or `relates_to`."
+                },
+                "relation": {
+                  "type": "string",
+                  "description": "Why they are related — the sentence the episode manifest (episode.yaml) carries, already committed to the chronicle."
+                }
+              },
+              "required": [
+                "from_id",
+                "to_id"
+              ]
+            }
+          }
+        }
+      ]
+    },
     "nodeCreated": {
       "title": "medicine-wheel.node.created",
       "description": "A relational node was created — a person, a place, a teaching, an agent. Written by: POST /api/nodes; MCP create_relational_node and the tools that make nodes.",
@@ -1233,6 +1569,13 @@
               "properties": {
                 "kind": {
                   "const": "node"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -1276,6 +1619,13 @@
               "properties": {
                 "kind": {
                   "const": "node"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -1326,6 +1676,13 @@
                 }
               }
             },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
+                }
+              }
+            },
             "payload": {
               "type": "object",
               "properties": {
@@ -1362,6 +1719,13 @@
               "properties": {
                 "kind": {
                   "const": "relation"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -1407,6 +1771,13 @@
               "properties": {
                 "kind": {
                   "const": "relation"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -1460,6 +1831,13 @@
               "properties": {
                 "kind": {
                   "const": "relation"
+                }
+              }
+            },
+            "privacy": {
+              "properties": {
+                "content_included": {
+                  "const": false
                 }
               }
             },
@@ -1558,6 +1936,15 @@
     },
     {
       "$ref": "#/definitions/memoryConclusionRemoved"
+    },
+    {
+      "$ref": "#/definitions/chronicleLineageMade"
+    },
+    {
+      "$ref": "#/definitions/chronicleLineageAmended"
+    },
+    {
+      "$ref": "#/definitions/chronicleLineageRemoved"
     },
     {
       "$ref": "#/definitions/nodeCreated"

@@ -33,7 +33,7 @@ export function schemaId(name: string): string {
 export function envelopeJsonSchema(): Schema {
   return {
     title: 'MiadiEventEnvelope (Medicine Wheel)',
-    description: `A Medicine Wheel event in jgwill/Miadi's MiadiEventEnvelope ${EVENT_SCHEMA_VERSION}. The payload carries references and labels, never a person's words.`,
+    description: `A Medicine Wheel event in jgwill/Miadi's MiadiEventEnvelope ${EVENT_SCHEMA_VERSION}. The payload carries references and labels; a person's words travel only where privacy.content_included says so, and only words already published (an episode manifest's lineage sentence).`,
     type: 'object',
     required: ['id', 'schema_version', 'event_type', 'source', 'subject', 'occurred_at', 'observed_at', 'idempotency_key', 'privacy', 'payload'],
     properties: {
@@ -107,6 +107,7 @@ export function eventJsonSchema(name: WheelEventName, envelopeRef: string): Sche
         properties: {
           event_type: { const: `${EVENT_NAMESPACE}.${name}` },
           subject: { properties: { kind: { const: def.subject } } },
+          privacy: { properties: { content_included: { const: 'contentIncluded' in def && def.contentIncluded === true } } },
           payload: payloadJsonSchema(name),
         },
       },

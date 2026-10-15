@@ -363,7 +363,7 @@ weaves, plan perspectives, charts and MMOTs are not recorded yet. Each line is
 a `MiadiEventEnvelope` (jgwill/Miadi
 `rispecs/events/00-miadi-event-spine.rispec.md`) namespaced `medicine-wheel.*`:
 `cycle.opened`, `beat.recorded`, `ceremony.closed`, `circle.created`,
-`chronicle.episode.registered`, `relation.made`, … — 29 in all, catalogued in
+`chronicle.episode.registered`, `chronicle.lineage.made`, `relation.made`, … — 32 in all, catalogued in
 [`@medicine-wheel/events`](src/events/README.md).
 
 - A payload names records and carries labels. A cycle's question, a beat's
@@ -380,6 +380,16 @@ mw events schema [--asyncapi]                           # the JSON Schema, or th
 
 Set `MW_INSTANCE` (e.g. `ilex:8040`) to name this wheel in each event's
 `source.instance`.
+
+**Carried by git.** Set `MW_EVENTS_GIT_SYNC=push` and the wheel commits
+`events.jsonl` (that file only) in its data repository and pushes it. It never
+pushes someone else's commit. A follower elsewhere runs
+`mw-events follow <clone> --exec <command>` and handles each event it has not
+seen yet. See the [package README](src/events/README.md#carried-by-git).
+
+Two chronicle episodes related through the Miadi lineage door (`POST /api/edges`
+between two `chronicle_episode` nodes) produce `chronicle.lineage.made`, which
+carries the manifest's sentence that says why.
 
 **Publishing.** Nothing leaves the machine until `MW_EVENTS_PUBLISH_URL` is set.
 Once it is, the wheel POSTs each event, in log order, after every write and

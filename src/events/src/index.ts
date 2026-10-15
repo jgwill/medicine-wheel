@@ -53,6 +53,7 @@ export {
   cycleWritten,
   diaryRemoved,
   diaryWritten,
+  isLineage,
   nodeChanges,
   nodeFamily,
   nodeRemoved,
@@ -66,6 +67,7 @@ export {
   type DiaryLike,
   type NodeFamily,
   type NodeLike,
+  type RelationEnds,
   type RelationLike,
 } from './decide';
 

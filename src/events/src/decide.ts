@@ -316,27 +316,51 @@ export interface RelationLike {
 
 const RELATION_FIELDS = ['relationship_type', 'strength', 'ceremony_honored', 'ceremony_id', 'obligations', 'description'] as const;
 
+/** The nodes at either end of a relation, when the writer holds them. */
+export interface RelationEnds {
+  from?: NodeLike | null;
+  to?: NodeLike | null;
+}
+
+/** A relation between two chronicle episodes is lineage: one continues from, or relates to, the other. */
+export function isLineage(ends?: RelationEnds): boolean {
+  return !!ends?.from && !!ends?.to
+    && nodeFamily(ends.from) === 'chronicle.episode' && nodeFamily(ends.to) === 'chronicle.episode';
+}
+
 /** A relation is named by its two ends. */
 export function relationId(r: { from_id: string; to_id: string }): string {
   return `${r.from_id}->${r.to_id}`;
 }
 
-function relationFrame(r: RelationLike) {
+/**
+ * A relation's words (`description`) stay in the wheel — except between two
+ * chronicle episodes, where they are the lineage sentence the episode
+ * manifest already carries in the chronicle, and the event repeats them.
+ */
+function relationFrame(r: RelationLike, lineage: boolean) {
   return {
     subject: { kind: 'relation' as const, id: relationId(r) },
     correlation_id: r.from_id,
-    payload: { from_id: r.from_id, to_id: r.to_id, relationship_type: str(r.relationship_type) },
+    payload: {
+      from_id: r.from_id,
+      to_id: r.to_id,
+      relationship_type: str(r.relationship_type),
+      ...(lineage ? { relation: str(r.description) } : {}),
+    },
   };
 }
 
-export function relationWritten(before: RelationLike | undefined | null, after: RelationLike): WheelEventInput | null {
-  const frame = relationFrame(after);
-  if (!before) return { name: 'relation.made', ...frame };
+export function relationWritten(before: RelationLike | undefined | null, after: RelationLike, ends?: RelationEnds): WheelEventInput | null {
+  const lineage = isLineage(ends);
+  const frame = relationFrame(after, lineage);
+  if (!before) return { name: lineage ? 'chronicle.lineage.made' : 'relation.made', ...frame };
   const changed = changedFields(before, after, RELATION_FIELDS);
   if (!changed.length) return null;
-  return { name: 'relation.amended', ...frame, payload: { ...frame.payload, changed } };
+  return { name: lineage ? 'chronicle.lineage.amended' : 'relation.amended', ...frame, payload: { ...frame.payload, changed } };
 }
 
-export function relationRemoved(r: RelationLike): WheelEventInput {
-  return { name: 'relation.removed', ...relationFrame(r) };
+export function relationRemoved(r: RelationLike, ends?: RelationEnds): WheelEventInput {
+  const lineage = isLineage(ends);
+  return { name: lineage ? 'chronicle.lineage.removed' : 'relation.removed', ...relationFrame(r, lineage) };
 }

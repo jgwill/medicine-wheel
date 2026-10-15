@@ -97,12 +97,23 @@ export function httpPublisher(options: HttpPublisherOptions): Publisher {
 
 // ── state beside the log ────────────────────────────────────────────────────
 
-export function cursorPath(logFile: string, publisher: string): string {
-  return path.join(path.dirname(logFile), `events-cursor.${publisher}.json`);
+/**
+ * Where a publisher keeps its cursor and receipts: beside the log, or in
+ * `stateDir` — a follower reading someone else's checkout keeps its own state
+ * out of it.
+ */
+export interface StateOptions {
+  stateDir?: string;
 }
 
-export function receiptsPath(logFile: string): string {
-  return path.join(path.dirname(logFile), 'events-receipts.jsonl');
+const stateDirOf = (logFile: string, options?: StateOptions) => options?.stateDir ?? path.dirname(logFile);
+
+export function cursorPath(logFile: string, publisher: string, options?: StateOptions): string {
+  return path.join(stateDirOf(logFile, options), `events-cursor.${publisher}.json`);
+}
+
+export function receiptsPath(logFile: string, options?: StateOptions): string {
+  return path.join(stateDirOf(logFile, options), 'events-receipts.jsonl');
 }
 
 export interface Cursor {
@@ -111,31 +122,34 @@ export interface Cursor {
   at?: string;
 }
 
-export function readCursor(logFile: string, publisher: string): Cursor {
+export function readCursor(logFile: string, publisher: string, options?: StateOptions): Cursor {
   try {
-    return JSON.parse(fs.readFileSync(cursorPath(logFile, publisher), 'utf-8')) as Cursor;
+    return JSON.parse(fs.readFileSync(cursorPath(logFile, publisher, options), 'utf-8')) as Cursor;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return {};
     throw error;
   }
 }
 
-function writeCursor(logFile: string, publisher: string, cursor: Cursor): void {
-  const file = cursorPath(logFile, publisher);
+function writeCursor(logFile: string, publisher: string, cursor: Cursor, options?: StateOptions): void {
+  const file = cursorPath(logFile, publisher, options);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
   const tmp = `${file}.${process.pid}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(cursor) + '\n');
   fs.renameSync(tmp, file);
 }
 
-function appendReceipt(logFile: string, receipt: Receipt): void {
-  fs.appendFileSync(receiptsPath(logFile), JSON.stringify(receipt) + '\n');
+function appendReceipt(logFile: string, receipt: Receipt, options?: StateOptions): void {
+  const file = receiptsPath(logFile, options);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.appendFileSync(file, JSON.stringify(receipt) + '\n');
 }
 
 /** Receipts, oldest first, optionally for one publisher. */
-export function readReceipts(logFile: string, publisher?: string): Receipt[] {
+export function readReceipts(logFile: string, publisher?: string, options?: StateOptions): Receipt[] {
   let text: string;
   try {
-    text = fs.readFileSync(receiptsPath(logFile), 'utf-8');
+    text = fs.readFileSync(receiptsPath(logFile, options), 'utf-8');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return [];
     throw error;
@@ -174,9 +188,9 @@ export interface DrainResult {
 }
 
 /** Send what this publisher still owes, oldest first, until it is all sent or a send fails. */
-export async function drainLog(logFile: string, publisher: Publisher): Promise<DrainResult> {
+export async function drainLog(logFile: string, publisher: Publisher, options?: StateOptions): Promise<DrainResult> {
   const events = readEventLog(logFile);
-  let index = startIndex(events, readCursor(logFile, publisher.name));
+  let index = startIndex(events, readCursor(logFile, publisher.name, options));
   const result: DrainResult = { publisher: publisher.name, arrived: 0, refused: 0, stopped: false, pending: 0 };
   for (; index < events.length; index++) {
     const event = events[index];
@@ -195,7 +209,7 @@ export async function drainLog(logFile: string, publisher: Publisher): Promise<D
       at,
       ...(outcome.status !== undefined ? { status: outcome.status } : {}),
       ...('error' in outcome ? { error: outcome.error } : {}),
-    });
+    }, options);
     if (outcome.outcome === 'failed') {
       result.stopped = true;
       result.error = outcome.error;
@@ -203,7 +217,7 @@ export async function drainLog(logFile: string, publisher: Publisher): Promise<D
     }
     if (outcome.outcome === 'arrived') result.arrived++;
     else result.refused++;
-    writeCursor(logFile, publisher.name, { last_event_id: event.id, at });
+    writeCursor(logFile, publisher.name, { last_event_id: event.id, at }, options);
   }
   result.pending = events.length - index;
   return result;
@@ -215,15 +229,15 @@ export async function drainLog(logFile: string, publisher: Publisher): Promise<D
  * lines and their idempotency keys are the same; a receiver that keeps keys
  * recognises them. Returns how many events the next pass will send.
  */
-export function rewind(logFile: string, publisher: string, fromEventId?: string): { pending: number } {
+export function rewind(logFile: string, publisher: string, fromEventId?: string, options?: StateOptions): { pending: number } {
   const events = readEventLog(logFile);
   if (fromEventId === undefined) {
-    writeCursor(logFile, publisher, { at: new Date().toISOString() });
+    writeCursor(logFile, publisher, { at: new Date().toISOString() }, options);
     return { pending: events.length };
   }
   const at = events.findIndex((e) => e.id === fromEventId);
   if (at < 0) throw new Error(`No event ${fromEventId} in ${logFile}`);
-  writeCursor(logFile, publisher, { ...(at > 0 ? { last_event_id: events[at - 1].id } : {}), at: new Date().toISOString() });
+  writeCursor(logFile, publisher, { ...(at > 0 ? { last_event_id: events[at - 1].id } : {}), at: new Date().toISOString() }, options);
   return { pending: events.length - at };
 }
 
@@ -236,10 +250,10 @@ export interface PublisherStatus {
 }
 
 /** Where a publisher stands: how much it owes, what last arrived, what last failed. */
-export function publisherStatus(logFile: string, publisher: string): PublisherStatus {
+export function publisherStatus(logFile: string, publisher: string, options?: StateOptions): PublisherStatus {
   const events = readEventLog(logFile);
-  const cursor = readCursor(logFile, publisher);
-  const receipts = readReceipts(logFile, publisher);
+  const cursor = readCursor(logFile, publisher, options);
+  const receipts = readReceipts(logFile, publisher, options);
   const lastArrived = [...receipts].reverse().find((r) => r.outcome === 'arrived');
   const lastFailure = [...receipts].reverse().find((r) => r.outcome === 'failed');
   return {
