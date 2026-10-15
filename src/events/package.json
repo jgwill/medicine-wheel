@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/events",
-  "version": "0.18.0",
-  "description": "The events a Medicine Wheel writes \u2014 catalog, MiadiEventEnvelope, JSON Schema and AsyncAPI document, the append-only events.jsonl log, the publisher seam a broker plugs into, and git carriage with a follower (mw-events)",
+  "version": "0.19.0",
+  "description": "The events a Medicine Wheel writes — catalog, MiadiEventEnvelope, JSON Schema and AsyncAPI document, the append-only events.jsonl log, the publisher seam a broker plugs into, and git carriage with a follower (mw-events)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
