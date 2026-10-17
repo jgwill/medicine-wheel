@@ -37,6 +37,19 @@ It is a reading list with a map, not a survey.
 | **Smart endpoints, dumb pipes.** Keep the logic in the producers and consumers, and keep the channel simple. | Lewis & Fowler, "Microservices" (2014) | The transport should not need to understand the events. | Git carries the log as a file. `commitEventLog` knows nothing of what the events mean. `mw-events follow` hands each event to whatever command the follower names. |
 | **Contracts for messages.** Producers and consumers agree on a schema. AsyncAPI does for channels what OpenAPI does for HTTP. | AsyncAPI 3.0 (2023); JSON Schema (draft-07) | Publish the contract as a file anyone can read and validate against. | `schema/wheel-events.schema.json` and `schema/asyncapi.json` are generated from one catalog. A test fails when they drift, and every event the routes write is validated against them. |
 
+### Ports and adapters: the word for the broker side
+
+| Idea | Source | What it asks | In the wheel |
+|---|---|---|---|
+| **Ports and adapters** (hexagonal architecture). The application defines a port in its own terms, and each technology gets an adapter. The core never imports a technology. | Cockburn, "Hexagonal Architecture" (2005) | Name the port first. An adapter is replaceable, and the core does not change when it is. | `Publisher` is the port. `httpPublisher`, `hookdeckPublisher` and `cloudflareQueuesPublisher` are adapters (jgwill/medicine-wheel#165). The log, the cursors and the deciders import none of them. |
+| **Channel Adapter, Messaging Gateway.** An adapter connects an application to a messaging system, and a gateway hides the messaging API from the application. | Hohpe & Woolf (2003) | Keep broker vocabulary out of producers. | Routes call `recordEvent`. Nothing upstream of the drain knows a broker exists. |
+| **Bindings.** CloudEvents *protocol bindings* say how one event travels over HTTP, Kafka, NATS or AMQP. AsyncAPI *bindings* hold each protocol's details for a channel, an operation or a message. | CloudEvents 1.0; AsyncAPI 3.0 | Keep the event the same, and put what is protocol-specific in a binding. | `toCloudEvent` and `cloudEventHeaders` are the HTTP binding, structured and binary. `topicFor` and `partitionKey` are what a Kafka or NATS binding needs. The AsyncAPI document names no server and no binding until a broker is chosen. |
+| **Declared guarantees.** An adapter states its acknowledgement point, ordering, retention, replay, redelivery, dead letters and consumer position. | jgwill/Miadi `rispecs/events` §4 | Do not flatten brokers into a fictional lowest common denominator. | Each adapter carries `guarantees`, and `mw events status` shows them. |
+
+"Provider" already names `@medicine-wheel/storage-provider`, where records are kept. The broker side is
+therefore *adapters*. Which broker to try first is weighed in miadi-chronicle://548,
+`foundations/broker-adapters/`.
+
 ### Before a broker
 
 Episode 548 asks which broker. The literature asks something earlier: **what
@@ -87,6 +100,7 @@ covering a different aspect of it.
 
 ## References
 
+- Cockburn, A. (2005). Hexagonal Architecture (ports and adapters). alistair.cockburn.us/hexagonal-architecture
 - Conway, M. E. (1968). How Do Committees Invent? *Datamation*, 14(4), 28–31.
 - Evans, E. (2003). *Domain-Driven Design: Tackling Complexity in the Heart of Software*. Addison-Wesley.
 - Fowler, M. (1999). *Refactoring: Improving the Design of Existing Code*. Addison-Wesley.

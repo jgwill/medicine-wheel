@@ -282,9 +282,9 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
   EVENTS (what happened on the wheel, kept in events.jsonl)
     mw events [--type cycle.] [--subject <id>] [--correlation <id>]
               [--since <iso>] [--limit 20]  List events, newest first
-    mw events status                       What the publisher still owes
-    mw events publish                      Send what waits now
-    mw events replay <event-id|all>        Send again from that event
+    mw events status                       What each destination owes and promises
+    mw events publish                      Send what waits now, to every destination
+    mw events replay <event-id|all> [--publisher <name>]  Send again from that event
     mw events sync                         Commit (and push) events.jsonl now
     mw events schema [--asyncapi]          Print the JSON Schema (or AsyncAPI)
 
@@ -831,7 +831,7 @@ async function cmdEvents(positional: string[], flags: Record<string, string | bo
       const { status, data } = await eventsApi('POST', '/api/events/publish', {});
       if (status !== 200) return failed(status, data);
       ppValue(data);
-      if (data.stopped) process.exitCode = 1;
+      if ((data.results as { stopped?: boolean }[] | undefined)?.some((r) => r.stopped)) process.exitCode = 1;
       break;
     }
     case 'replay': {
@@ -841,10 +841,11 @@ async function cmdEvents(positional: string[], flags: Record<string, string | bo
         process.exitCode = EXIT_USAGE;
         return;
       }
-      const { status, data } = await eventsApi('POST', '/api/events/publish', { replay_from: from });
+      const publisher = typeof flags['publisher'] === 'string' ? flags['publisher'] : undefined;
+      const { status, data } = await eventsApi('POST', '/api/events/publish', { replay_from: from, ...(publisher ? { publisher } : {}) });
       if (status !== 200) return failed(status, data);
       ppValue(data);
-      if (data.stopped) process.exitCode = 1;
+      if ((data.results as { stopped?: boolean }[] | undefined)?.some((r) => r.stopped)) process.exitCode = 1;
       break;
     }
     case 'sync': {

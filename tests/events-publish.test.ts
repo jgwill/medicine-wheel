@@ -142,7 +142,7 @@ describe("the wheel's publishing door", () => {
     expect((await GET()).status).toBe(409);
     const res = await POST(new Request("http://wheel/api/events/publish", { method: "POST", body: "{}" }));
     expect(res.status).toBe(409);
-    expect((await res.json()).hint).toMatch(/MW_EVENTS_PUBLISH_URL/);
+    expect((await res.json()).hint).toMatch(/MW_EVENTS_PUBLISH_URL.*MW_EVENTS_CF_ACCOUNT_ID/);
   });
 
   it("a recorded event is sent soon after; the door reports, publishes and replays", async () => {
@@ -153,15 +153,17 @@ describe("the wheel's publishing door", () => {
     expect(received.map((r) => r.body.id)).toEqual([event?.id]);
 
     const { GET, POST } = await import("../app/api/events/publish/route");
-    const report = await (await GET()).json();
-    expect(report.publisher).toMatchObject({ publisher: "http", pending: 0, last_event_id: event?.id });
+    const [report] = (await (await GET()).json()).publishers;
+    expect(report.status).toMatchObject({ publisher: "http", pending: 0, last_event_id: event?.id });
     expect(report.receipts[0]).toMatchObject({ event_id: event?.id, outcome: "arrived" });
+    expect(report.guarantees.acknowledgement).toMatch(/2xx/);
 
     const replayed = await (await POST(new Request("http://wheel/api/events/publish", { method: "POST", body: JSON.stringify({ replay_from: "all" }) }))).json();
-    expect(replayed).toMatchObject({ replayed: 1, arrived: 1, pending: 0 });
+    expect(replayed.replayed).toEqual({ publisher: "http", pending: 1 });
+    expect(replayed.results[0]).toMatchObject({ arrived: 1, pending: 0 });
     expect(received).toHaveLength(2);
 
     const { GET: health } = await import("../app/api/health/route");
-    expect((await (await health()).json()).events.publisher).toMatchObject({ publisher: "http", pending: 0 });
+    expect((await (await health()).json()).events.publishers[0]).toMatchObject({ publisher: "http", pending: 0 });
   });
 });

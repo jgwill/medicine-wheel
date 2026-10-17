@@ -142,36 +142,67 @@ The cursor lives in `--state-dir`, which defaults to
 `~/.local/state/medicine-wheel-events`, never in the clone. Use `--name` to give
 two followers of one clone separate places.
 
-## Publishing
+## Publishing: one port, many adapters
+
+`Publisher` is the **port**: one event in, one outcome out (`arrived`, `failed`, `refused`), with the
+destination's declared `guarantees`. Each **adapter** is that port for one destination (ports and adapters,
+Cockburn 2005).
 
 ```ts
-import { drainLog, httpPublisher, rewind, publisherStatus } from '@medicine-wheel/events/publish';
+import { cloudflareQueuesPublisher, drainLog, hookdeckPublisher, httpPublisher, rewind } from '@medicine-wheel/events/publish';
 
-await drainLog(logFile, httpPublisher({ url, token }));
+await drainLog(logFile, cloudflareQueuesPublisher({ accountId, queueId, token }));
 ```
 
-Episode 548 draws an event's path as Named → Sent → Arrived | Failed →
-Replayed. An event in the log is Named. `drainLog` sends each event after the
-publisher's cursor, in order, and writes the outcome to `events-receipts.jsonl`:
+**What every broker needs** (`route.ts`, plus the drain):
 
-- `arrived`: a 2xx answer.
-- `failed`: unreachable, timed out, 408, 429 or 5xx. The pass stops, and the
-  next one starts from the same event.
-- `refused`: any other answer. It is recorded and passed, so one bad event does
-  not hold back the rest.
+- `topicFor(event, { scheme, naming })` divides events into topics in one of four schemes:
+  - `event`: one topic per event type, so one schema per topic;
+  - `family`: one ordered topic per lifecycle;
+  - `subject`: one per subject kind;
+  - `single`: everything in one topic.
 
-`rewind` is Replay: it moves the cursor back, and the same lines go out again
-with the same idempotency keys. Each publisher keeps its own cursor
-(`events-cursor.<name>.json`).
+  Names follow the rules of `nats`, `kafka` or `cloudflare`.
+- `partitionKey(event)` is the correlation, else the subject. It keeps a cycle and its beats in order together.
+- `toCloudEvent` / `fromCloudEvent` / `cloudEventHeaders` turn the envelope into CloudEvents 1.0, structured or
+  binary, and back, field for field.
+- `classifyHttpStatus` is one rule for every HTTP destination:
+  - **failed**, where the pass stops and the event waits: unreachable, 401, 403, 404, 405, 407, 408, 410, 421,
+    425, 429 and 5xx. None of these is the receiver's judgement of the event.
+  - **refused**, where the event is recorded and passed: any other 4xx.
+- **The drain.** Each publisher keeps its own cursor and receipts, and `rewind` replays an event with the
+  same idempotency key.
 
-`httpPublisher` POSTs the envelope as JSON with `Idempotency-Key` and
-`X-Event-Type` headers. Each of these can receive it: a webhook endpoint, a
-Hookdeck source, a Cloudflare Worker in front of a queue, or the Miadi
-hooks-gateway once it accepts this envelope. A broker client would be another
-`Publisher` beside it. The events and their names stay the same.
+**One adapter per destination** (`adapters.ts`):
 
-In the wheel, set `MW_EVENTS_PUBLISH_URL` (and `MW_EVENTS_PUBLISH_TOKEN`) to turn
-publishing on. `GET /api/health` then reports how many events are still owed.
+| adapter | request | arrived when |
+|---|---|---|
+| `httpPublisher({ url, token, format })` | POST, as the `envelope`, `cloudevents` or `cloudevents-binary` | 2xx |
+| `hookdeckPublisher({ sourceUrl })` | POST to a Hookdeck source URL | 2xx at the source |
+| `cloudflareQueuesPublisher({ accountId, queueId, token })` | POST `/accounts/{a}/queues/{q}/messages`, `{ "body": … }`, a "Queues Edit" token | 2xx **and** `success: true` |
+
+Each adapter declares what it promises: acknowledgement, ordering, retention, replay, redelivery, dead
+letters and consumer position. NATS JetStream and Kafka need a client and a server. Their adapter contracts
+and test plans are in miadi-chronicle://548, `foundations/broker-adapters/`.
+
+Episode 548 draws an event's path as Named → Sent → Arrived | Failed → Replayed:
+
+- An event in the log is **Named**.
+- A pass of the drain is **Sent**.
+- The receipt says **Arrived** or **Failed**.
+- `rewind` is **Replayed**.
+
+**In the wheel**, each destination is configured by its own environment variables and gets its own cursor.
+One that is down never holds another back.
+
+| destination | variables |
+|---|---|
+| any HTTP receiver | `MW_EVENTS_PUBLISH_URL`, with `_TOKEN`, `_NAME` and `_FORMAT` |
+| a Hookdeck source | `MW_EVENTS_HOOKDECK_SOURCE_URL`, with `_FORMAT` |
+| a Cloudflare queue | `MW_EVENTS_CF_ACCOUNT_ID`, `MW_EVENTS_CF_QUEUE_ID` and `MW_EVENTS_CF_API_TOKEN`, with `MW_EVENTS_CF_FORMAT` and `MW_EVENTS_CF_API_BASE` |
+
+`GET /api/events/publish` and `mw events status` show each destination: its place, its receipts and its
+guarantees. `mw events replay <event-id|all> --publisher <name>` replays one.
 
 ## Foundations
 

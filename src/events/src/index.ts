@@ -72,6 +72,20 @@ export {
 } from './decide';
 
 export {
+  cloudEventHeaders,
+  fromCloudEvent,
+  nameFor,
+  partitionKey,
+  toCloudEvent,
+  topicFor,
+  type CloudEvent,
+  type CloudEventOptions,
+  type TopicNaming,
+  type TopicOptions,
+  type TopicScheme,
+} from './route';
+
+export {
   asyncApiDocument,
   envelopeJsonSchema,
   eventJsonSchema,

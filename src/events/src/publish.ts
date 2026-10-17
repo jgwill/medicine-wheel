@@ -14,10 +14,9 @@
  * second destination starts from the beginning without disturbing the first.
  * The log itself is never changed.
  *
- * {@link httpPublisher} is the one adapter today: a POST of the envelope as
- * JSON, which a webhook endpoint, a Hookdeck source, a Cloudflare Worker in
- * front of a queue, or the Miadi hooks-gateway can each receive. A broker
- * client is another `Publisher` beside it, not a change to the log.
+ * The adapters (`./adapters`) are this port for one destination each: a plain
+ * HTTP receiver, a Hookdeck source, Cloudflare Queues. A broker client is
+ * another `Publisher` beside them, not a change to the log.
  *
  * Node only — import it as `@medicine-wheel/events/publish`.
  */
@@ -25,6 +24,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { WheelEvent } from './envelope';
+import type { AdapterGuarantees } from './adapters';
 import { readEventLog } from './log';
 
 export type PublishOutcome =
@@ -35,6 +35,8 @@ export type PublishOutcome =
 export interface Publisher {
   /** Names the cursor and the receipts: `http`, `nats`, `hookdeck`. */
   name: string;
+  /** What this destination actually promises (rispecs/events §4 in jgwill/Miadi). */
+  guarantees?: AdapterGuarantees;
   publish(event: WheelEvent): Promise<PublishOutcome>;
 }
 
@@ -48,52 +50,18 @@ export interface Receipt {
   error?: string;
 }
 
-// ── the HTTP adapter ────────────────────────────────────────────────────────
-
-export interface HttpPublisherOptions {
-  url: string;
-  /** Sent as `Authorization: Bearer <token>`. */
-  token?: string;
-  name?: string;
-  timeoutMs?: number;
-  fetch?: typeof fetch;
-}
-
-/**
- * POST each envelope as JSON, with `Idempotency-Key` and `X-Event-Type`.
- * 2xx arrived. Unreachable, timed out, 408, 429 or 5xx failed — may arrive
- * later. Any other answer is refused.
- */
-export function httpPublisher(options: HttpPublisherOptions): Publisher {
-  const send = options.fetch ?? fetch;
-  const timeoutMs = options.timeoutMs ?? 10_000;
-  return {
-    name: options.name ?? 'http',
-    async publish(event) {
-      let res: Response;
-      try {
-        res = await send(options.url, {
-          method: 'POST',
-          headers: {
-            'content-type': 'application/json',
-            'idempotency-key': event.idempotency_key,
-            'x-event-type': event.event_type,
-            ...(options.token ? { authorization: `Bearer ${options.token}` } : {}),
-          },
-          body: JSON.stringify(event),
-          signal: AbortSignal.timeout(timeoutMs),
-        });
-      } catch (error) {
-        return { outcome: 'failed', error: (error as Error)?.message ?? String(error) };
-      }
-      if (res.ok) return { outcome: 'arrived', status: res.status };
-      const body = await res.text().catch(() => '');
-      const error = `HTTP ${res.status}${body ? `: ${body.slice(0, 200)}` : ''}`;
-      const later = res.status >= 500 || res.status === 408 || res.status === 429;
-      return { outcome: later ? 'failed' : 'refused', status: res.status, error };
-    },
-  };
-}
+// The adapters, `httpPublisher` among them, live in `./adapters` (#165).
+export {
+  classifyHttpStatus,
+  cloudflareQueuesPublisher,
+  hookdeckPublisher,
+  httpPublisher,
+  type AdapterGuarantees,
+  type CloudflareQueuesOptions,
+  type HookdeckPublisherOptions,
+  type HttpPublisherOptions,
+  type WireFormat,
+} from './adapters';
 
 // ── state beside the log ────────────────────────────────────────────────────
 

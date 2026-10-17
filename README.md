@@ -391,20 +391,23 @@ Two chronicle episodes related through the Miadi lineage door (`POST /api/edges`
 between two `chronicle_episode` nodes) produce `chronicle.lineage.made`, which
 carries the manifest's sentence that says why.
 
-**Publishing.** Nothing leaves the machine until `MW_EVENTS_PUBLISH_URL` is set.
-Once it is, the wheel POSTs each event, in log order, after every write and
-every minute (`MW_EVENTS_PUBLISH_INTERVAL_MS`).
+**Publishing.** Nothing leaves the machine until a destination is configured. Each destination is an
+adapter with its own cursor, so one that is down never holds another back:
 
-- **Headers:** `Idempotency-Key`, `X-Event-Type`, and `Authorization: Bearer
-  $MW_EVENTS_PUBLISH_TOKEN` when a token is set.
-- **Delivery records:** a cursor and receipts beside the log record
-  `arrived`, `failed` (retried) or `refused` (passed).
-- **Checking and replaying:** `mw events status`, `mw events publish` and
-  `mw events replay <event-id|all>` (also `GET`/`POST /api/events/publish`).
-- **What can receive it:** a webhook endpoint, a Hookdeck source, a Cloudflare
-  Worker in front of a queue, or the Miadi hooks-gateway. A broker client is
-  another publisher beside it. The events keep their names
-  (jgwill/medicine-wheel#164, miadi-chronicle://548).
+- any HTTP receiver: `MW_EVENTS_PUBLISH_URL`, with `_FORMAT` = `envelope`, `cloudevents` or
+  `cloudevents-binary`;
+- a Hookdeck source: `MW_EVENTS_HOOKDECK_SOURCE_URL`;
+- a Cloudflare queue: `MW_EVENTS_CF_ACCOUNT_ID`, `MW_EVENTS_CF_QUEUE_ID` and `MW_EVENTS_CF_API_TOKEN`.
+
+The wheel sends in log order, after every write and every minute. Each adapter declares what it guarantees,
+and receipts record `arrived`, `failed` (kept and retried) or `refused` (recorded and passed). Wrong
+credentials and wrong addresses count as `failed`, never as `refused`.
+
+`mw events status`, `mw events publish` and `mw events replay <event-id|all> --publisher <name>` show and
+drive it, as do `GET` and `POST /api/events/publish`.
+
+NATS JetStream and Kafka are specified, not built. Which broker to try first is weighed in
+miadi-chronicle://548, `foundations/broker-adapters/` (jgwill/medicine-wheel#165).
 
 ## License
 
