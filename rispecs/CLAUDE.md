@@ -21,6 +21,7 @@ This folder contains RISE framework specifications for Medicine Wheel packages, 
 | `capture-registry.spec.md` | storage-provider + app | Capture records + URIs, canonical `/api/captures`, deprecated `/api/recordings` alias |
 | `reading-layer.spec.md` | unassigned | Standings registry, read-time composition, refusal as return type, read-as-event |
 | `council-record.spec.md` | unassigned | Contributions on a matter, recognized patterns, advance-with-divergence |
+| `workspace/` | app + storage-provider (folder) | Wheel-workspace scope, configuration implications, two ERDs, display-by-workspace analysis |
 
 > **This table is intentionally not exhaustive.** `rispecs/` contains package specs, capability specs, registry specs, proposals, and records. Search the directory before concluding that a subject is unspecified.
 
