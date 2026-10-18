@@ -61,6 +61,7 @@ The npm array is not being renamed; the new concept is always qualified in code
 | File | Kind | Purpose |
 | --- | --- | --- |
 | `GOAL.md` | Statement of intent | **Read this first.** What configurable workspaces are *for*, in two paragraphs, before any mechanism |
+| `NAMESPACE.md` | **Recommendation — 2026-10-18** | Honcho's workspace/peer/session model is the shape the requirement asks for and is already running; the per-process `HONCHO_WORKSPACE_ID` leak; `MemoryScope` as the shipped scope mechanism; whether a workspace is a `circle` |
 | `STATUS.md` | **Divergence record — read first** | What was asked, what was built, where they parted, and what in this folder survives the correction |
 | `INPUT.md` | Record | First request, verbatim — implications, ERDs, display analysis |
 | `INPUT-02.md` | Record | Second request, verbatim — question the definition, research it, name the service layer |
