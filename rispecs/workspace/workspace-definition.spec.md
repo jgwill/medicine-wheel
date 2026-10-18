@@ -392,7 +392,7 @@ still blocked, still not claimed before it runs.
   scope. Making `workspace_id` part of the key rather than a filter column is the right mitigation
   and it is not parity. Any claim that the two providers have "the same observable isolation
   semantics" is a claim about the *API surface*, never about what a mistake costs.
-- The `NodeType` union is still closed at six; the npm `workspaces` array is still topological.
+- A workspace is **not** a `NodeType`. (The union is **eight** since 0.17.0 — six foundational plus `circle` and `agent`; earlier drafts here said six. A workspace remains the namespace nodes are identified within, one plane up.) The npm `workspaces` array is still topological.
 
 ---
 

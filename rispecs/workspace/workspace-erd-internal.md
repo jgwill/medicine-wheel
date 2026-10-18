@@ -140,7 +140,7 @@ erDiagram
         string workspace_id PK, FK "mandatory scope"
         string id PK "unique within workspace"
         string name
-        string type "land|human|knowledge|ancestor|future|spirit — closed at six"
+        string type "the 8 NodeTypes (6 + circle 0.14.0 + agent 0.17.0)"
         string direction FK "nullable"
         string description
         json metadata "carries metadata.kind for additive kinds"

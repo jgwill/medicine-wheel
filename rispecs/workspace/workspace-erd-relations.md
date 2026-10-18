@@ -252,7 +252,7 @@ erDiagram
     KNOWLEDGE_NODE {
         string workspace_id PK, FK
         string id PK
-        string type "knowledge — the union stays closed at six"
+        string type "knowledge — one of the 8 NodeTypes"
         string metadata_kind "package | release | repository (proposed SoftwareEntityKind)"
         string direction "west — the thing that executes"
     }
@@ -335,7 +335,7 @@ would force a false constraint onto one of them.
 `SoftwareEntityKind` of `package | release | repository`, following the pattern already established
 by `ProductionEntityKind`, `InfraEntityKind`, and `AcademicEntityKind` in
 `src/ontology-core/src/types.ts`. Direction binding follows the infra precedent: a package is
-**west** — the thing that executes. The `NodeType` union stays closed at six. The knowledge node is
+**west** — the thing that executes. A package is not a new `NodeType` (the union is **eight** since 0.17.0: six foundational plus `circle` and `agent`). The knowledge node is
 the *portrait* of the package in the wheel; `PACKAGE` is the registry record. They are joined
 optionally, and the wheel can hold either without the other.
 

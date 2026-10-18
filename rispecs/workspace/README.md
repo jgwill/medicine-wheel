@@ -61,6 +61,7 @@ The npm array is not being renamed; the new concept is always qualified in code
 | File | Kind | Purpose |
 | --- | --- | --- |
 | `GOAL.md` | Statement of intent | **Read this first.** What configurable workspaces are *for*, in two paragraphs, before any mechanism |
+| `HIERARCHY.md` | **Design — 2026-10-18** | workspace → circle → ceremony; the folder question; the six cards decoded as 4 workspaces + 2 circles; `circle` is a NodeType so the graph filter mostly ships today; what the menu does on switch, in three steps |
 | `NAMESPACE.md` | **Recommendation — 2026-10-18** | Honcho's workspace/peer/session model is the shape the requirement asks for and is already running; the per-process `HONCHO_WORKSPACE_ID` leak; `MemoryScope` as the shipped scope mechanism; whether a workspace is a `circle` |
 | `STATUS.md` | **Divergence record — read first** | What was asked, what was built, where they parted, and what in this folder survives the correction |
 | `INPUT.md` | Record | First request, verbatim — implications, ERDs, display analysis |
@@ -94,7 +95,10 @@ The npm array is not being renamed; the new concept is always qualified in code
 ## Invariants every document here upholds
 
 - A wheel workspace is **not** a seventh `NodeType`. The union in `src/ontology-core/src/types.ts`
-  stays closed at six. A workspace is the container, one plane up — not a member of the ontology.
+  not a `NodeType` at all. (The union is **eight** since 0.17.0 — six foundational plus `circle`,
+  0.14.0, and `agent`, 0.17.0. `circle` being a node is what makes the graph filter in
+  `HIERARCHY.md` §3 possible.) A workspace is the namespace nodes are identified within, one plane
+  up — not a member of the ontology.
 - **Isolation is not disconnection.** Related workspaces remain describable.
 - **A visible relationship is not an access grant.** Seeing that A relates to B implies nothing about
   reading B.

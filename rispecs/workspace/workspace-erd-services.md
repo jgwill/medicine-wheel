@@ -166,7 +166,7 @@ erDiagram
 
     KNOWLEDGE_NODE {
         string id PK
-        string type "knowledge — union stays closed at six"
+        string type "knowledge — one of the 8 NodeTypes; a workspace is NOT one"
         string metadata_kind "service (INFRA_ENTITY_BINDING)"
         string direction "west — the thing that executes"
     }

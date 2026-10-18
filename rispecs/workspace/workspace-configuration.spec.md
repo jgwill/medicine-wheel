@@ -288,7 +288,7 @@ CLI and MCP → *only then* allow a second workspace → *only after identity* c
 - `mw status` and every MCP tool response name the active workspace.
 - Existing records survive migration with verified counts and same-workspace edge endpoints.
 - Documentation nowhere implies authenticated privacy.
-- The `NodeType` union is still closed at six.
+- A workspace is **not** a `NodeType`. (The union is **eight** since 0.17.0 — `circle` and `agent` were added by ontology revision; earlier drafts here said six.)
 - The npm `workspaces` array is still topological.
 
 ---
