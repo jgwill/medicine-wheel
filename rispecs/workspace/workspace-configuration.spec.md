@@ -76,6 +76,28 @@ in the house.
 
 ## The vocabulary problem that must be solved before anything else
 
+> [!IMPORTANT]
+> **Revised 2026-10-18 — there are three homonyms now, and the conclusion flipped.**
+>
+> | | Where | Runtime meaning |
+> | --- | --- | --- |
+> | **Suite workspace** | root `package.json` `workspaces[]` (27, topological) | Build time only |
+> | **Honcho workspace** | `HONCHO_WORKSPACE_ID`, `/v3/workspaces/{ws}/…` | **Live** — the memory namespace every beat is projected into |
+> | **Wheel workspace** | proposed | The namespace being defined |
+>
+> The Honcho one is not a third thing to disambiguate from. It is **the same concept the wheel
+> workspace is trying to be**, already named `workspace`, already serving HTTP, already receiving
+> every record the wheel writes.
+>
+> So this section's recommendation is **withdrawn**. It proposed renaming the new concept to avoid
+> the npm homonym; a later recommendation proposed `wheel` outright. Both are wrong now: the word is
+> already load-bearing at the memory bridge, and renaming would put a translation at the one seam
+> where the term is real at runtime. The npm homonym stays a documentation problem — qualify it in
+> prose, keep `workspaceId` / `MW_WORKSPACE` out of build tooling — not a naming problem.
+>
+> See `workspace-definition.spec.md` §2.0 and `NAMESPACE.md`.
+
+
 This repository already uses the word *workspace* for something else, and uses it load-bearingly.
 
 `package.json` carries a **27-entry `workspaces` array in deliberate topological order**, with a

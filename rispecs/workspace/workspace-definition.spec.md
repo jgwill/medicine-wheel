@@ -56,34 +56,70 @@ document's real contribution and this revision keeps every one of them.
 
 ## 2. The definition
 
-> **A workspace is a named store location that a request can select, and that one running server
-> resolves per request — so the same server reads and writes a different location depending on which
-> workspace the request named.**
+> **A workspace is the top-level namespace of one Medicine Wheel's records, inside one storage
+> location, in one deployment. Records are identified within it, never across it. It is the same
+> namespace the memory bridge already calls a workspace, and a wheel workspace maps one-to-one onto
+> a Honcho workspace.**
 >
-> **The name and the registry exist to make that selection possible. Access control attaches later
-> and is never implied by it.**
+> **Access control attaches to it later and is never implied by it.**
 
-**Corrected 2026-09-06 — see `DIVERGENCE` in `STATUS.md`.** The definition previously read here was
-*"a named, resolvable binding of one Medicine Wheel — its store location, its storage provider, and
-the service endpoints that serve it."* That is one process per location, with switching between
-locations deferred. It is the wrong shape: the requirement is one server serving several locations at
-once. `§2.2` and `§2.3` below still describe the superseded shape and are corrected in `§2.0`.
+**Definition inherited, not invented — 2026-10-18.** Two earlier definitions were written here and
+both were wrong in the same direction: *"a named, resolvable binding … its store location, its
+storage provider, and the service endpoints that serve it"* (one process per location), then *"a
+named store location that a request can select, and that one running server resolves per request"*
+(several locations, one server). The requirement is neither. It is **one location, many workspaces
+inside it** — and the system already contains a running implementation of exactly that, which is
+where this definition now comes from. See `NAMESPACE.md`.
 
-### 2.0 What per-request resolution requires
+### 2.0 The authority is the bridge, not an analogy
 
-Three things, and none of them is a name:
+`@medicine-wheel/honcho` (shipped `0.20.0`) projects every beat, ceremony and diary entry into
+Honcho on write. That projection is a complete, running mapping of the wheel's concepts onto a
+namespace model — and it already uses the word *workspace* for the outermost container:
 
-1. **A request carries a workspace.** Path segment, header, or session — the mechanism is open; that
-   it is *on the request* is not.
-2. **The server holds several open stores at once**, keyed by workspace, rather than one resolved at
-   import. `lib/store.ts:32` and `mcp/src/store.ts:49` are the module-level constants that make this
-   impossible today, and changing them is the feature.
-3. **Every operation downstream takes the resolved store**, so no route, tool or helper can reach a
-   store it was not handed.
+| Wheel concept | Honcho | Where the mapping lives |
+| --- | --- | --- |
+| **a wheel** | **workspace** | `HONCHO_WORKSPACE_ID` — one, fixed per process today |
+| a ceremony | **session** | `sessionIdForCeremony` |
+| an episode | **session** | `chronicle:<path>` and `<path>` |
+| a person, an agent, a speaker | **peer** | `honchoIdFor` |
+| **a circle** | **a set of sessions** | `resolveReach(scope.circle_id)` → ceremonies → `sessionsForReach` |
 
-That third point is what `workspace-scope-and-access.spec.md` called mandatory scope at the storage
-seam, and what ERD 1 draws as `workspace_id` in the primary key. **Those were right.** This document
-superseded them in favour of separate processes, which is the divergence.
+Three consequences, none of them a matter of taste:
+
+1. **The definition is inherited.** The outermost namespace in the wheel's own live memory model is
+   called a workspace, holds records identified within it (a Honcho peer id is *"a unique identifier
+   within a workspace"*), and sits one per deployment-with-many. Defining a wheel workspace as
+   anything else would require a translation at the one seam where the word is already load-bearing
+   at runtime.
+2. **A circle is not a workspace.** `MemoryScope.circle_id` resolves to the *ceremonies* held in that
+   circle, and those become *sessions*. A circle is a filter over sessions **inside** a workspace.
+   The workspace is the layer above circles, and `NAMESPACE.md` §5's question is answered by the
+   code rather than by a guess.
+3. **The name stays `workspace`.** An earlier recommendation to rename it `wheel` to escape the npm
+   homonym is **withdrawn**: the bridge already says workspace, so renaming buys a tidy vocabulary
+   at the cost of a translation layer at the only runtime boundary that matters.
+
+### 2.0.1 What the namespace requires
+
+Taken from Honcho's model, because it is proven and because the wheel already talks to a server that
+enforces it:
+
+1. **The namespace is in the path** — `/api/workspaces/:workspaceId/nodes`. Honcho does this
+   (`/v3/workspaces/{ws}/…`). A path segment cannot be omitted by a caller or defaulted by a proxy;
+   a header or a field can.
+2. **Ids are unique within the namespace** — `(workspace_id, id)`, which is `workspace-erd-internal.md`
+   (ERD 1) unchanged. A bare record id stops naming a row, so no direct lookup crosses a workspace.
+3. **Get-or-create on first write** — Honcho's `POST /v3/workspaces` is get-or-create, which closes
+   `workspace-configuration.spec.md` §1's catalog-bootstrap question without a provisioning step.
+4. **Authorization narrows and never widens** — Honcho keys are *"authorized by their narrowest
+   claim and never widen to the whole workspace."*
+
+`lib/store.ts:32` and `mcp/src/store.ts:49` are still module-level constants, so every operation
+today inherits one store. Under this definition they do not need to resolve a *different location*
+per request — the location is the same — they need to carry the **namespace** into every provider
+call, which is what `workspace-scope-and-access.spec.md` called mandatory scope at the storage seam.
+**That document was right and remains the architecture of record for scope.**
 
 ### 2.1 It already exists; it is anonymous
 

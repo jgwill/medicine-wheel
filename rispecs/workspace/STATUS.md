@@ -10,6 +10,22 @@ in conversation. **§0 added by a second agent after the requirement was stated 
 
 ## 0. The requirement, stated a third time — and this record is not the last word
 
+> [!NOTE]
+> **2026-10-18 — the definition now has an anchor outside this folder.** The requirement in §0 (one
+> storage location, many workspaces inside it, one deployment) matches, exactly, the namespace model
+> of the memory provider the wheel started projecting into at `0.20.0`: a Honcho **workspace** is the
+> top-level container, a peer id is unique *within* a workspace, selection is a path segment, and one
+> server holds many. The word is already in the wheel's code at that seam
+> (`HONCHO_WORKSPACE_ID`, `/v3/workspaces/{ws}/…`).
+>
+> So `workspace-definition.spec.md` §2 has been rewritten to **inherit** the definition from the
+> bridge instead of proposing a fourth one, and the bridge's own mapping answers what a circle is (a
+> set of sessions inside a workspace, not a workspace). `NAMESPACE.md` holds the evidence.
+>
+> This narrows §0 rather than closing it: the shape is settled and the remaining question is
+> granularity — which of the six catalog cards are workspaces (see `jgwill/medicine-wheel#136` `G4`).
+
+
 §1 below states the requirement as *one server resolving **that workspace's location** on disk*. The
 requester's words later the same day say something narrower:
 

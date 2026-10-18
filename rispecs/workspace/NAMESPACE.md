@@ -1,7 +1,7 @@
 # Namespace — The Model Is Already Running On Port 8133
 
 **Date:** 2026-10-18
-**State:** Recommendation. Written against `main` at `0.20.0`, after five packages landed that did not exist when this folder was written.
+**State:** Recommendation, and now the source of the folder's definition. Written against `main` at `0.20.0`, after five packages landed that did not exist when this folder was written. `workspace-definition.spec.md` §2 inherits its definition from §1 and §5 here.
 **Reads:** `STATUS.md` first — three statements of the requirement and a definition left deliberately unanswered.
 
 ---
@@ -29,7 +29,7 @@ That is a partition inside one place, not a place the server switches to. So:
   **does not.** It is the second wrong answer, and §2.0 point 3 of the same file already contradicts
   it by requiring mandatory scope at the storage seam.
 
-This is not a fourth guess. It is reading the sentence.
+This is not a fourth guess. It is reading the sentence — and §1 and §5 below show the same shape already implemented in the wheel's own memory bridge, which is where `workspace-definition.spec.md` §2 now takes its definition from.
 
 ---
 
@@ -137,33 +137,56 @@ must not *imply* membership — Honcho's narrowest-claim rule says the same thin
 
 ---
 
-## 5. The one question left, and it is cheap
+## 5. A circle is not a workspace — the bridge already says so
 
-`circle` already does most of what this folder proposed to build:
+`NAMESPACE.md` previously left this open. The projection answers it, in code:
 
-| A workspace was to have | `circle` already has |
-| --- | --- |
-| A name and an identity | a `circle` node |
-| Members with roles | `member_of` edges + the role ladder + `hasPermission` |
-| Records that belong to it | ceremonies carry `circle_id` |
-| A scope you can ask within | `MemoryScope.circle_id` |
-| A way in | `JsonlInvitationStore`, codes that open one circle or several |
-| A place it sits on the wheel | `circleNode({ intention, facilitator_id })`, `episode_path` |
+| Wheel concept | Honcho | Where |
+| --- | --- | --- |
+| **a wheel** | **workspace** | `HONCHO_WORKSPACE_ID` |
+| a ceremony | session | `sessionIdForCeremony` → `honchoIdFor(ceremony.id)` |
+| an episode | session | `chronicle:<path>` and `<path>` |
+| a person, an agent | peer | `honchoIdFor` |
+| **a circle** | **a set of sessions** | `resolveReach(scope.circle_id)` → ceremonies → `sessionsForReach` |
 
-**Is a workspace a circle?**
+`resolveReach` turns `circle_id` into the ceremonies carrying it; `sessionsForReach` turns those into
+session ids; `honchoMemoryProvider` confines every question to `session_id: { in: … }`. **A circle is
+a filter over sessions inside one workspace.** The workspace is the layer above circles — so a
+workspace is not a circle, and asking "within this circle" is already implemented as asking within a
+subset of one workspace's sessions.
 
-- **If yes** — namespace management is mostly built. What is missing is the storage seam
-  (`circle_id` or `workspace_id` in the primary key, per ERD 1), the path segment, and the Honcho
-  mapping in §2. The six hardcoded cards become circles, and `jgwill/medicine-wheel#136` `G4`'s two
-  tiers (four repositories, two `#fragment` subjects) becomes a question about circle granularity
-  rather than about store locations.
-- **If no** — what does a workspace hold that a circle cannot?
+What stays open is **granularity, not shape**: which of the six catalog cards are workspaces, which
+are circles, and which are neither (`jgwill/medicine-wheel#136` `G4` — four repositories, two
+`#fragment` subjects on one). That is a product question about the six rows, not a definition
+question.
 
-**Not answered here.** That question has been answered wrong three times by an agent, and the whole
-reason `STATUS.md` exists is that each wrong answer was delivered as a design. This one is for the
-requester.
+### The name stays `workspace`
 
----
+An earlier recommendation in this folder was to rename the concept `wheel`, to escape the npm
+homonym, and §1 of `workspace-configuration.spec.md` spent its longest section on that homonym.
+**Withdrawn.** The bridge already calls the outermost namespace a workspace, in shipped code, on a
+live service the wheel writes to on every beat. Renaming buys tidier vocabulary and pays for it with
+a translation at the only runtime seam where the word is real. The npm collision is a documentation
+problem: qualify it in prose, keep `workspaceId` and `MW_WORKSPACE` out of build tooling.
+
+## 5b. A second bridge finding: `honchoIdFor` can collide two beings into one peer
+
+```ts
+export function honchoIdFor(wheelId: string): string {
+  const folded = wheelId.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  const swapped = folded.replace(/[^a-zA-Z0-9_-]+/g, '-').replace(/-{2,}/g, '-')…
+```
+
+Every run of non-alphanumerics collapses to a single `-`, so `node:human:abc` and `node-human-abc`
+both become `node-human-abc`, and the doc comment shows a *name* used as a peer id
+(`Guillaume Isabelle` → `Guillaume-Isabelle`). Peer ids are unique **within a workspace**, so a
+collision does not error — it **merges two beings' representations**, and the deriver then reasons
+about the merged peer.
+
+Today one workspace holds one wheel, so the id space is small and the risk is low. It grows with
+every workspace that shares a Honcho workspace — which is the §2 leak seen from the other side. The
+fix in §2 (one Honcho workspace per wheel workspace) shrinks the shared id space back down; a
+collision check on projection would close it.
 
 ## 6. Branch state — `main`'s history was rewritten and this branch is stranded
 
