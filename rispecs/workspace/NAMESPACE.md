@@ -87,7 +87,11 @@ axis to confine on.
 
 This is the same mistake as `lib/store.ts:32`, one layer out — and it is worse in one specific way:
 the store merely reads the wrong rows, while the deriver **forms conclusions about a person across
-workspaces**, in the background, and a derived representation cannot be un-derived. Issue
+workspaces**, in the background. *(Corrected 2026-10-18: an earlier version of this sentence said a
+derived representation "cannot be un-derived." Too strong — from Honcho 3.0.12 `peers.representation`
+accepts `filters.session_id` and can be read confined. What is workspace-level regardless is the peer
+id space and the search index, and confinement only holds for a caller who passes a reach. See
+`MEMORY-ROUTING.md` §1–2.)* Issue
 [#148](https://github.com/jgwill/medicine-wheel/issues/148) already records the within-workspace
 version of this (3.0.11's dialectic answering from every session in the workspace, listing intentions
 from other circles).

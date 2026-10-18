@@ -61,6 +61,7 @@ The npm array is not being renamed; the new concept is always qualified in code
 | File | Kind | Purpose |
 | --- | --- | --- |
 | `GOAL.md` | Statement of intent | **Read this first.** What configurable workspaces are *for*, in two paragraphs, before any mechanism |
+| `MEMORY-ROUTING.md` | **Design — 2026-10-18** | Which Honcho workspace a record goes into: route on the workspace tier, never the circle (no cross-workspace dialectic, one representation per being); reach vs workspace as confinement vs isolation; the three things to do before tier 1 exists |
 | `HIERARCHY.md` | **Design — 2026-10-18** | workspace → circle → ceremony; the folder question; the six cards decoded as 4 workspaces + 2 circles; `circle` is a NodeType so the graph filter mostly ships today; what the menu does on switch, in three steps |
 | `NAMESPACE.md` | **Recommendation — 2026-10-18** | Honcho's workspace/peer/session model is the shape the requirement asks for and is already running; the per-process `HONCHO_WORKSPACE_ID` leak; `MemoryScope` as the shipped scope mechanism; whether a workspace is a `circle` |
 | `STATUS.md` | **Divergence record — read first** | What was asked, what was built, where they parted, and what in this folder survives the correction |
