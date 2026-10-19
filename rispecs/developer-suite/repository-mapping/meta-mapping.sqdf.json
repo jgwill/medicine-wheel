@@ -1,0 +1,131 @@
+{
+ "settings": {
+  "namespace": "MedicineWheel.DeveloperSuite",
+  "name": "meta_mapping",
+  "description": "A mapping agent maps one owner's repositories into that owner's hub, the meta hub registers the hub and reads it where it lives, and a person reads every hub on one page and affirms what holds."
+ },
+ "participants": [
+  {
+   "name": "Person",
+   "actor": "Person"
+  },
+  {
+   "name": "MappingAgent",
+   "actor": "MappingAgent"
+  },
+  {
+   "name": "Cli",
+   "actor": "Cli"
+  },
+  {
+   "name": "OwnerHub",
+   "actor": "OwnerHub"
+  },
+  {
+   "name": "MetaHub",
+   "actor": "MetaHub"
+  }
+ ],
+ "messages": [
+  {
+   "from": "Person",
+   "to": "MappingAgent",
+   "label": "map miadisabelle's repositories into miadisabelle/miadisabelle"
+  },
+  {
+   "from": "MappingAgent",
+   "to": "Cli",
+   "label": "mw-repomap init miadisabelle --owner miadisabelle",
+   "carries": "OwnerHub"
+  },
+  {
+   "from": "MappingAgent",
+   "to": "Cli",
+   "label": "mw-repomap observe <clones> --write",
+   "carries": "ActivityReading",
+   "description": "Read-only on the clones: git log, tag, rev-parse, remote get-url."
+  },
+  {
+   "from": "MappingAgent",
+   "to": "OwnerHub",
+   "label": "repositories.jsonl: a prototype, purpose in 55 words, pending",
+   "event": "explore",
+   "carries": "Repository",
+   "state": "Prototype"
+  },
+  {
+   "from": "MappingAgent",
+   "to": "OwnerHub",
+   "label": "features.jsonl: its three core features",
+   "carries": "Feature"
+  },
+  {
+   "from": "MappingAgent",
+   "to": "Cli",
+   "label": "mw-repomap validate"
+  },
+  {
+   "from": "Cli",
+   "to": "MappingAgent",
+   "label": "0 errors, warnings name capabilities held elsewhere",
+   "reply": true
+  },
+  {
+   "from": "Person",
+   "to": "MetaHub",
+   "label": "owners.jsonl: register miadisabelle/miadisabelle",
+   "carries": "OwnerRegistration"
+  },
+  {
+   "from": "Cli",
+   "to": "MetaHub",
+   "label": "mw-repomap serve jgwill: read owners.jsonl"
+  },
+  {
+   "from": "Cli",
+   "to": "OwnerHub",
+   "label": "read .miadi/repository-mapping/ where it lives",
+   "description": "raw.githubusercontent.com/<hub>/HEAD by default; nothing is copied into the meta hub."
+  },
+  {
+   "from": "Cli",
+   "to": "Person",
+   "label": "one page: every hub, drift, rows pending revision",
+   "reply": true
+  },
+  {
+   "from": "Person",
+   "to": "OwnerHub",
+   "label": "affirm a row: revision affirmed, revisedBy, revisedAt",
+   "carries": "Repository"
+  }
+ ],
+ "fragments": [
+  {
+   "kind": "opt",
+   "label": "for a repository whose purpose does not fit 55 words",
+   "after": 3,
+   "messages": [
+    {
+     "from": "MappingAgent",
+     "to": "OwnerHub",
+     "label": "status needs-resolution, no purpose; move to the next repository",
+     "carries": "Repository"
+    }
+   ]
+  },
+  {
+   "kind": "opt",
+   "label": "when the evidence says the intent already grew into another repository",
+   "after": 4,
+   "messages": [
+    {
+     "from": "MappingAgent",
+     "to": "OwnerHub",
+     "label": "relations.jsonl: grew-into, the prototype keeps its state",
+     "carries": "Relation"
+    }
+   ]
+  }
+ ]
+}

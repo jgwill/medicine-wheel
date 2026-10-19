@@ -1,0 +1,136 @@
+{
+ "stateMachine": {
+  "settings": {
+   "namespace": "MedicineWheel.DeveloperSuite",
+   "name": "RepositoryLifecycle",
+   "asynchronous": false,
+   "description": "What kind of thing a repository is, declared in its owner's hub. How recently anyone committed is observed from git separately, and compared with this to name drift.",
+   "objects": [
+    {
+     "instance": "repository",
+     "class": "Repository"
+    },
+    {
+     "instance": "reading",
+     "class": "ActivityReading"
+    }
+   ]
+  },
+  "events": [
+   {
+    "name": "Lifecycle",
+    "events": [
+     {
+      "id": "explore",
+      "description": "Classified as exploring an intent: its value is what it shows."
+     },
+     {
+      "id": "implement",
+      "description": "Classified as a concrete build that is not distributed."
+     },
+     {
+      "id": "concretize",
+      "description": "What this prototype explored becomes a concrete implementation in the same repository. When the intent continues elsewhere, write grew-into instead and keep this state."
+     },
+     {
+      "id": "release",
+      "description": "First distributed version: npm, PyPI, apt, a deployed service. Kept current from then on."
+     },
+     {
+      "id": "archive",
+      "description": "Ended by its owner."
+     },
+     {
+      "id": "reopen",
+      "description": "An archived repository comes back and is read again from the start."
+     }
+    ]
+   }
+  ],
+  "state": {
+   "name": "Root",
+   "states": [
+    {
+     "name": "Unclassified",
+     "kind": "normal",
+     "description": "Not read yet.",
+     "prompt": "Read the README, the package manifests and mw-repomap observe's git reading. Classify from evidence, not from what the README promises. Write purpose in at most 55 words, or status needs-resolution and no purpose. Every row starts revision pending.",
+     "transitions": [
+      {
+       "event": "explore",
+       "nextState": "Prototype"
+      },
+      {
+       "event": "implement",
+       "nextState": "Implementation"
+      },
+      {
+       "event": "release",
+       "nextState": "Maintained"
+      },
+      {
+       "event": "archive",
+       "nextState": "Archived"
+      }
+     ]
+    },
+    {
+     "name": "Prototype",
+     "kind": "normal",
+     "description": "Explores an intent. At least a quarter of the repositories are here.",
+     "prompt": "Name its three core features, each in at most 55 words, each with a status. Link its prototype:<slug> node when the Miadi seam holds one (public address on the node, editing address never in the row). Relate it to the repositories it grew into.",
+     "transitions": [
+      {
+       "event": "concretize",
+       "nextState": "Implementation"
+      },
+      {
+       "event": "archive",
+       "nextState": "Archived"
+      }
+     ]
+    },
+    {
+     "name": "Implementation",
+     "kind": "normal",
+     "description": "A concrete build of an intent, not distributed.",
+     "prompt": "Name the capabilities its features realize. Write consumes for each package or API it depends on.",
+     "transitions": [
+      {
+       "event": "release",
+       "nextState": "Maintained"
+      },
+      {
+       "event": "archive",
+       "nextState": "Archived"
+      }
+     ]
+    },
+    {
+     "name": "Maintained",
+     "kind": "normal",
+     "description": "Distributed and kept current.",
+     "prompt": "Keep the git reading fresh. A maintained repository with no commit in a year is drift to report, not to correct by hand.",
+     "transitions": [
+      {
+       "event": "archive",
+       "nextState": "Archived"
+      }
+     ]
+    },
+    {
+     "name": "Archived",
+     "kind": "normal",
+     "description": "Ended by its owner. Commits after this are drift.",
+     "prompt": "Keep its relations: a prototype that ended is still where an intent was first seen.",
+     "transitions": [
+      {
+       "event": "reopen",
+       "nextState": "Unclassified"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

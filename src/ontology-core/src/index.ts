@@ -51,6 +51,9 @@ export type {
   AcademicEntityKind,
   AcademicAppointment,
   AcademicRelation,
+  // Developer entity kinds — additive, ride knowledge nodes
+  DeveloperEntityKind,
+  DeveloperRelation,
   // RSIS types
   SunName,
   CeremonyPhase,
@@ -139,6 +142,9 @@ export { INFRA_ENTITY_BINDING, INFRA_ENTITY_KINDS } from './types';
 
 // ── Academic entity binding (additive — no NodeType was widened) ────────────
 export { ACADEMIC_ENTITY_BINDING, ACADEMIC_ENTITY_KINDS } from './types';
+
+// ── Developer entity binding (additive — no NodeType was widened) ───────────
+export { DEVELOPER_ENTITY_BINDING, DEVELOPER_ENTITY_KINDS } from './types';
 
 // ── Zod Schemas ─────────────────────────────────────────────────────────────
 export {

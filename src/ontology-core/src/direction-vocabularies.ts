@@ -99,7 +99,7 @@ export const DIRECTION_VOCABULARIES: Readonly<Record<DirectionVocabularyId, Dire
     meanings: byDirection((d) => DIRECTION_INFO[d].focus),
     usedBy: [
       'src/ontology-core DIRECTION_INFO',
-      'src/ontology-core INFRA_ENTITY_BINDING and ACADEMIC_ENTITY_BINDING rationales',
+      'src/ontology-core INFRA_ENTITY_BINDING, ACADEMIC_ENTITY_BINDING and DEVELOPER_ENTITY_BINDING rationales',
     ],
     provenance: { source: null, steward: null, status: 'unattributed', note: UNATTRIBUTED },
   },

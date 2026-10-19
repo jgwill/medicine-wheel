@@ -686,6 +686,64 @@ export interface AcademicRelation extends Relation {
   appointment?: AcademicAppointment;
 }
 
+// ── Developer Entity Kinds (repositories, features, capabilities) ───────────
+// The same additive move as InfraEntityKind and AcademicEntityKind above. A
+// repository, a feature observed in it and a capability the platform offers
+// are already beings this ontology can hold — `knowledge`. They are NOT new
+// NodeTypes. They ride `knowledge` nodes carrying a
+// `metadata.kind: DeveloperEntityKind` discriminator, and their specifics live
+// in the typed facets of `@medicine-wheel/capabilities` and
+// `@medicine-wheel/developer-repository-mapping`, keyed by node id. Whoever
+// holds a repository is already a being too: a `human` node, or an `agent`
+// node for a companion's account.
+
+/** Discriminator for developer entities riding on `knowledge` nodes. */
+export type DeveloperEntityKind = 'repository' | 'feature' | 'capability';
+
+/**
+ * Which closed `NodeType` each developer kind rides, and which direction it
+ * serves. A capability is **west** — what executes and is offered — for the
+ * reason a service is. A repository carries no direction of its own: like a
+ * host, it is the ground its features stand on. A feature carries none yet:
+ * whether an observed feature is a vision, a growth or an act is not settled
+ * here, and giving it one is an ontology revision with its own issue.
+ */
+export const DEVELOPER_ENTITY_BINDING = {
+  repository: { nodeType: 'knowledge', direction: undefined },
+  feature: { nodeType: 'knowledge', direction: undefined },
+  capability: { nodeType: 'knowledge', direction: 'west' },
+} as const satisfies Record<
+  DeveloperEntityKind,
+  { nodeType: NodeType; direction: DirectionName | undefined }
+>;
+
+/** The registered developer kinds. */
+export const DEVELOPER_ENTITY_KINDS: readonly DeveloperEntityKind[] = [
+  'repository',
+  'feature',
+  'capability',
+];
+
+/**
+ * A relation between repositories, the features observed in them and the
+ * capabilities they offer. The first five names are governed kinship edges
+ * (the developer edges of `KINSHIP_EDGE_TYPES`), so a fork between two
+ * repositories reads with the same grammar as any other kinship. A
+ * repository's research fields reuse `field-aligns-with` from
+ * {@link AcademicRelation}.
+ */
+export interface DeveloperRelation extends Relation {
+  relationship_type:
+    | 'forked-from' // repository → the repository it was copied from
+    | 'grew-into' // prototype repository → the implementation that continued it
+    | 'provides' // repository or service → capability
+    | 'realizes' // feature → capability
+    | 'consumes' // repository → repository whose package, API or schema it depends on
+    | 'field-aligns-with'; // repository ↔ research-field
+  /** Where the claim was observed — a commit, a file path, a package.json, owner/repo#n. */
+  grounding?: string;
+}
+
 // ── MCP Tool/Resource/Prompt types ──────────────────────────────────────────
 
 export interface MWTool {

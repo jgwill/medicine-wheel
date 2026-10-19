@@ -1,0 +1,46 @@
+{
+ "settings": {
+  "namespace": "MedicineWheel.DeveloperSuite",
+  "name": "repository-mapping",
+  "description": "Repository mapping: the rows an owner hub holds, the lifecycle a repository moves through, and the meta mapping that reads several hubs without copying them.",
+  "notes": "Drawn 2026-10-18 with the first implementation (@medicine-wheel/developer-repository-mapping and @medicine-wheel/capabilities, suite 0.21.0). Decomposition: .pde/2610182156--872139f0-b71c-4e94-9781-a5546182e3c1 in jgwill/medicine-wheel."
+ },
+ "members": [
+  {
+   "path": "repository-mapping.erdf.json"
+  },
+  {
+   "path": "repository-lifecycle.smdf.json"
+  },
+  {
+   "path": "meta-mapping.sqdf.json"
+  }
+ ],
+ "actors": [
+  {
+   "name": "Person",
+   "kind": "person",
+   "description": "Whoever the repositories belong to, or a reader they trust. Affirms rows; registers hubs; decides what a career-facing hub shows."
+  },
+  {
+   "name": "MappingAgent",
+   "kind": "agent",
+   "description": "A model session reading repositories. Its output is assumed biased until a person reads it, so every row it writes is pending."
+  },
+  {
+   "name": "Cli",
+   "kind": "service",
+   "description": "mw-repomap: init, validate, list, show, observe, move, hub, serve, wheel."
+  },
+  {
+   "name": "OwnerHub",
+   "kind": "service",
+   "description": "A <owner>/<owner> repository holding .miadi/repository-mapping/ for that owner's repositories."
+  },
+  {
+   "name": "MetaHub",
+   "kind": "service",
+   "description": "jgwill/jgwill: an owner hub that also registers other hubs in owners.jsonl and reads them."
+  }
+ ]
+}

@@ -134,6 +134,50 @@ export const KINSHIP_EDGE_TYPES = {
       'A service claims a scarce slot on a host. Scarcity is the relation: two beings cannot both hold it, so the claim carries an obligation to the land it is made on.',
     defaultObligations: ['land', 'human'],
   },
+
+  // ── Developer edges ───────────────────────────────────────────────────────
+  // How repositories, the features observed in them and the capabilities of
+  // the platform hold each other. Registered here for the reason the
+  // infrastructure edges are: a repository mapping never forks the edge
+  // vocabulary, and a fork reads with the grammar of every other kinship.
+  'forked-from': {
+    name: 'forked-from',
+    symmetry: 'asymmetric',
+    inverse: 'forked-into',
+    description:
+      'A repository began as a copy of another, often one held by a member of the community. The copy carries an obligation to the work and the people it came from.',
+    defaultObligations: ['human'],
+  },
+  'grew-into': {
+    name: 'grew-into',
+    symmetry: 'asymmetric',
+    inverse: 'grew-from',
+    description:
+      'What a prototype explored continues in a concrete implementation. The prototype is not replaced: it stays the place where the intent was first seen.',
+    defaultObligations: ['future'],
+  },
+  provides: {
+    name: 'provides',
+    symmetry: 'asymmetric',
+    inverse: 'provided-by',
+    description: 'A repository or a running service offers a platform capability to whoever consumes it.',
+    defaultObligations: ['human'],
+  },
+  realizes: {
+    name: 'realizes',
+    symmetry: 'asymmetric',
+    inverse: 'realized-by',
+    description: "A feature observed in one repository is that repository's way of giving a platform capability.",
+    defaultObligations: ['future'],
+  },
+  consumes: {
+    name: 'consumes',
+    symmetry: 'asymmetric',
+    inverse: 'consumed-by',
+    description:
+      'A repository depends on what another publishes — a package, an API, a schema — and moves when it moves.',
+    defaultObligations: ['human'],
+  },
 } as const satisfies Record<string, KinshipEdgeType>;
 
 /** Union of governed kinship-edge names — the value stored on a Relation. */

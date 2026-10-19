@@ -1,0 +1,506 @@
+{
+ "settings": {
+  "namespace": "MedicineWheel.DeveloperSuite",
+  "name": "repository_mapping",
+  "description": "What an owner hub's .miadi/repository-mapping/ folder holds, and what a meta hub reads from the hubs it registers. Every row says who wrote it, from what, and whether a person has read it since."
+ },
+ "entities": [
+  {
+   "name": "OwnerHub",
+   "description": "manifest.json of a <owner>/<owner> repository. An owner hub maps its owner's repositories; a meta hub also reads the hubs it registers.",
+   "attributes": [
+    {
+     "name": "hub",
+     "type": "string",
+     "description": "<owner>/<owner>",
+     "key": "pk"
+    },
+    {
+     "name": "owner",
+     "type": "string",
+     "description": "GitHub login"
+    },
+    {
+     "name": "kind",
+     "type": "enum(owner, meta)"
+    },
+    {
+     "name": "schema",
+     "type": "string",
+     "description": "medicine-wheel/repository-mapping"
+    },
+    {
+     "name": "version",
+     "type": "number"
+    },
+    {
+     "name": "description",
+     "type": "string",
+     "nullable": true
+    }
+   ]
+  },
+  {
+   "name": "OwnerRegistration",
+   "description": "owners.jsonl, in a meta hub only: an owner hub the meta hub reads, where it lives, who registered it.",
+   "attributes": [
+    {
+     "name": "hub",
+     "type": "string",
+     "description": "The registered <owner>/<owner>",
+     "key": "pk"
+    },
+    {
+     "name": "registered_in",
+     "type": "string",
+     "description": "The meta hub holding the row",
+     "references": "OwnerHub.hub"
+    },
+    {
+     "name": "owner",
+     "type": "string"
+    },
+    {
+     "name": "source",
+     "type": "string",
+     "description": "Local path or https URL of the mapping folder; GitHub raw by default",
+     "nullable": true
+    },
+    {
+     "name": "holder",
+     "type": "string",
+     "description": "The owner's human or agent node on the wheel",
+     "nullable": true
+    },
+    {
+     "name": "registeredBy",
+     "type": "string"
+    },
+    {
+     "name": "registeredAt",
+     "type": "datetime"
+    }
+   ]
+  },
+  {
+   "name": "Repository",
+   "description": "repositories.jsonl: what a repository is, as its owner's hub says. Rides a knowledge node, metadata.kind repository, no direction.",
+   "attributes": [
+    {
+     "name": "nodeId",
+     "type": "string",
+     "description": "repository:<owner>/<name>",
+     "key": "pk"
+    },
+    {
+     "name": "hub",
+     "type": "string",
+     "description": "The hub of the owner who holds it",
+     "references": "OwnerHub.hub"
+    },
+    {
+     "name": "origin",
+     "type": "enum(own, agent, community-fork)"
+    },
+    {
+     "name": "lifecycle",
+     "type": "enum(unclassified, prototype, implementation, maintained, archived)",
+     "description": "Declared. The state machine repository_lifecycle moves it."
+    },
+    {
+     "name": "purpose",
+     "type": "string",
+     "description": "What it is and has done, at most 55 words",
+     "nullable": true
+    },
+    {
+     "name": "horizon",
+     "type": "string",
+     "description": "What it might do, at most 55 words",
+     "nullable": true
+    },
+    {
+     "name": "status",
+     "type": "enum(clear, unclear, undefinable, needs-resolution)",
+     "description": "needs-resolution: the statement did not fit 55 words, or two sources disagree."
+    },
+    {
+     "name": "fields",
+     "type": "string[]",
+     "description": "research-field:<slug> nodes"
+    },
+    {
+     "name": "prototypes",
+     "type": "string[]",
+     "description": "prototype:<slug> nodes of the Miadi prototype seam"
+    },
+    {
+     "name": "holder",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "statedBy",
+     "type": "string",
+     "description": "A model id, an agent seat or a person."
+    },
+    {
+     "name": "statedAt",
+     "type": "datetime"
+    },
+    {
+     "name": "grounding",
+     "type": "string[]",
+     "description": "What was read: paths, commits, URLs, owner/repo#n. At least one."
+    },
+    {
+     "name": "revision",
+     "type": "enum(pending, revised, affirmed)",
+     "description": "pending until a person reads it; every model-written row starts pending."
+    },
+    {
+     "name": "revisedBy",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "revisedAt",
+     "type": "datetime",
+     "nullable": true
+    }
+   ]
+  },
+  {
+   "name": "ActivityReading",
+   "description": "A repository's observed field: its git history read at a moment, by someone. Compared with the declared lifecycle to name drift.",
+   "attributes": [
+    {
+     "name": "repository",
+     "type": "string",
+     "references": "Repository.nodeId",
+     "key": "pk"
+    },
+    {
+     "name": "observedBy",
+     "type": "string"
+    },
+    {
+     "name": "observedAt",
+     "type": "datetime",
+     "description": "Also the time activity is measured from"
+    },
+    {
+     "name": "commits",
+     "type": "number"
+    },
+    {
+     "name": "commitsLast90Days",
+     "type": "number"
+    },
+    {
+     "name": "firstCommitAt",
+     "type": "datetime",
+     "nullable": true
+    },
+    {
+     "name": "lastCommitAt",
+     "type": "datetime",
+     "nullable": true
+    },
+    {
+     "name": "tags",
+     "type": "number"
+    },
+    {
+     "name": "branch",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "head",
+     "type": "string",
+     "nullable": true
+    }
+   ]
+  },
+  {
+   "name": "Feature",
+   "description": "features.jsonl: a feature observed in one repository. A prototype is read for its three core ones.",
+   "attributes": [
+    {
+     "name": "nodeId",
+     "type": "string",
+     "description": "feature:<owner>/<name>#<slug>",
+     "key": "pk"
+    },
+    {
+     "name": "repository",
+     "type": "string",
+     "references": "Repository.nodeId"
+    },
+    {
+     "name": "name",
+     "type": "string"
+    },
+    {
+     "name": "statement",
+     "type": "string",
+     "description": "At most 55 words",
+     "nullable": true
+    },
+    {
+     "name": "status",
+     "type": "enum(clear, unclear, undefinable, needs-resolution)",
+     "description": "needs-resolution: the statement did not fit 55 words, or two sources disagree."
+    },
+    {
+     "name": "realizes",
+     "type": "string",
+     "references": "Capability.nodeId",
+     "nullable": true
+    },
+    {
+     "name": "statedBy",
+     "type": "string",
+     "description": "A model id, an agent seat or a person."
+    },
+    {
+     "name": "statedAt",
+     "type": "datetime"
+    },
+    {
+     "name": "grounding",
+     "type": "string[]",
+     "description": "What was read: paths, commits, URLs, owner/repo#n. At least one."
+    },
+    {
+     "name": "revision",
+     "type": "enum(pending, revised, affirmed)",
+     "description": "pending until a person reads it; every model-written row starts pending."
+    },
+    {
+     "name": "revisedBy",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "revisedAt",
+     "type": "datetime",
+     "nullable": true
+    }
+   ]
+  },
+  {
+   "name": "Capability",
+   "description": "capabilities.jsonl: something the platform can do for someone. Rides a knowledge node, metadata.kind capability, west. Usually held by the meta hub.",
+   "attributes": [
+    {
+     "name": "nodeId",
+     "type": "string",
+     "description": "capability:<slug>",
+     "key": "pk"
+    },
+    {
+     "name": "name",
+     "type": "string"
+    },
+    {
+     "name": "statement",
+     "type": "string",
+     "description": "At most 55 words",
+     "nullable": true
+    },
+    {
+     "name": "status",
+     "type": "enum(clear, unclear, undefinable, needs-resolution)",
+     "description": "needs-resolution: the statement did not fit 55 words, or two sources disagree."
+    },
+    {
+     "name": "providedBy",
+     "type": "string[]",
+     "description": "Repository or service nodes"
+    },
+    {
+     "name": "statedBy",
+     "type": "string",
+     "description": "A model id, an agent seat or a person."
+    },
+    {
+     "name": "statedAt",
+     "type": "datetime"
+    },
+    {
+     "name": "grounding",
+     "type": "string[]",
+     "description": "What was read: paths, commits, URLs, owner/repo#n. At least one."
+    },
+    {
+     "name": "revision",
+     "type": "enum(pending, revised, affirmed)",
+     "description": "pending until a person reads it; every model-written row starts pending."
+    },
+    {
+     "name": "revisedBy",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "revisedAt",
+     "type": "datetime",
+     "nullable": true
+    }
+   ]
+  },
+  {
+   "name": "Relation",
+   "description": "relations.jsonl: kinship between two nodes, named from the governed edges. Endpoints are checked per name.",
+   "attributes": [
+    {
+     "name": "from",
+     "type": "string",
+     "key": "pk"
+    },
+    {
+     "name": "type",
+     "type": "enum(forked-from, grew-into, provides, realizes, consumes, field-aligns-with)",
+     "key": "pk"
+    },
+    {
+     "name": "to",
+     "type": "string",
+     "key": "pk"
+    },
+    {
+     "name": "description",
+     "type": "string",
+     "description": "Why the two are related, at most 55 words",
+     "nullable": true
+    },
+    {
+     "name": "statedBy",
+     "type": "string",
+     "description": "A model id, an agent seat or a person."
+    },
+    {
+     "name": "statedAt",
+     "type": "datetime"
+    },
+    {
+     "name": "grounding",
+     "type": "string[]",
+     "description": "What was read: paths, commits, URLs, owner/repo#n. At least one."
+    },
+    {
+     "name": "revision",
+     "type": "enum(pending, revised, affirmed)",
+     "description": "pending until a person reads it; every model-written row starts pending."
+    },
+    {
+     "name": "revisedBy",
+     "type": "string",
+     "nullable": true
+    },
+    {
+     "name": "revisedAt",
+     "type": "datetime",
+     "nullable": true
+    }
+   ]
+  },
+  {
+   "name": "ResearchField",
+   "description": "A field of study, held on the wheel as an academic kind (research-field, east). The mapping points at it; it does not define it.",
+   "attributes": [
+    {
+     "name": "nodeId",
+     "type": "string",
+     "description": "research-field:<slug>",
+     "key": "pk"
+    },
+    {
+     "name": "name",
+     "type": "string"
+    }
+   ]
+  },
+  {
+   "name": "Prototype",
+   "description": "A prototype node of the Miadi prototype seam (jgwill/Miadi#769). It holds the public address; the editing address stays in its metadata.",
+   "attributes": [
+    {
+     "name": "nodeId",
+     "type": "string",
+     "description": "prototype:<slug>",
+     "key": "pk"
+    },
+    {
+     "name": "public_url",
+     "type": "string"
+    },
+    {
+     "name": "editor_url",
+     "type": "string",
+     "description": "Handed only to a viewer who may edit the episode",
+     "nullable": true
+    }
+   ]
+  }
+ ],
+ "relationships": [
+  {
+   "from": "OwnerHub",
+   "to": "Repository",
+   "cardinality": "1:N",
+   "label": "maps"
+  },
+  {
+   "from": "OwnerHub",
+   "to": "OwnerRegistration",
+   "cardinality": "1:N",
+   "label": "registers",
+   "description": "Meta hubs only"
+  },
+  {
+   "from": "Repository",
+   "to": "ActivityReading",
+   "cardinality": "1:1",
+   "label": "is observed as"
+  },
+  {
+   "from": "Repository",
+   "to": "Feature",
+   "cardinality": "1:N",
+   "label": "holds"
+  },
+  {
+   "from": "Capability",
+   "to": "Feature",
+   "cardinality": "1:N",
+   "label": "is realized by"
+  },
+  {
+   "from": "Repository",
+   "to": "Capability",
+   "cardinality": "N:M",
+   "label": "provides"
+  },
+  {
+   "from": "Repository",
+   "to": "ResearchField",
+   "cardinality": "N:M",
+   "label": "aligns with"
+  },
+  {
+   "from": "Repository",
+   "to": "Prototype",
+   "cardinality": "N:M",
+   "label": "is prototyped as"
+  },
+  {
+   "from": "Repository",
+   "to": "Relation",
+   "cardinality": "1:N",
+   "label": "is related through"
+  }
+ ]
+}

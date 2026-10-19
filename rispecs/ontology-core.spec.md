@@ -270,6 +270,7 @@ The ontology includes additive relation subtypes that preserve the first-class `
 - `CosmicRelation` — cosmic/spirit kinship, teaching, and reciprocity;
 - `ProductionRelation` — film/media relationships such as shot-of, rush-of, sequence-of, witnessed-by, directed-by, and sounds-in;
 - `AcademicRelation` — academic relationships including researches-in, appointed-at, supervises-in, field-aligns-with, profiled-in, and corresponds-with.
+- `DeveloperRelation` — repository relationships: forked-from, grew-into, provides, realizes, consumes, and field-aligns-with.
 
 Specialization adds domain meaning without replacing the relational obligations, OCAP data, accountability, and context inherited from `Relation`.
 
@@ -326,6 +327,20 @@ Canonical binding:
 Academic appointment state includes `full-time`, `part-time`, `tenure-track`, `tenured`, `affiliated`, `emeritus`, and the explicit epistemic value `unverified`.
 
 A claim that has not earned a stronger status must remain `unverified`; absence of proof is not silently upgraded.
+
+### Developer
+
+```typescript
+type DeveloperEntityKind = 'repository' | 'feature' | 'capability';
+```
+
+Canonical binding:
+
+- repository → `knowledge`, no imposed direction (the ground its features stand on);
+- feature → `knowledge`, no direction yet (assigning one is an ontology revision with its own issue);
+- capability → `knowledge`, west (what executes and is offered).
+
+`DeveloperRelation` names `forked-from`, `grew-into`, `provides`, `realizes`, `consumes` and `field-aligns-with`. The first five are governed kinship edges (inverses `forked-into`, `grew-from`, `provided-by`, `realized-by`, `consumed-by`). Facets live in `@medicine-wheel/capabilities` and `@medicine-wheel/developer-repository-mapping`; see `rispecs/developer-suite/repository-mapping/`.
 
 ---
 

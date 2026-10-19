@@ -1,0 +1,625 @@
+{
+  "id": "872139f0-b71c-4e94-9781-a5546182e3c1",
+  "timestamp": "2026-10-19T01:56:20.017Z",
+  "engine": "claude",
+  "model": "opus",
+  "prompt": "Decompose prompt bellow with actions , dependencies, implication using \"implicature resolvers principles\" classifying and producing an output that we will use into a \"miadiRun\" later\n<prompt>\nYou will be a sub-agent. Not necessarily a sub-agent, but we're starting your session as if you were a sub-agent. Responsible for mapping. You have 114 repositories connected. And you're running in the cloud. And we will be interested in creating a relational mapping of these repository, but not as you usually understand the term relational.\nlet's say first what it is not.\n* It's not relational database.\n* It has nothing to do with Western or European culture, which most of your training data comes from. Therefore, you can assume automatically that any output you produce is biased and need revision.\n* We are not in a linear way of thinking, but in a cyclical one. And you'll understand that by looking at  our the repository jgwill/medicine-wheel and installing the relevant packages where your repository mapping will live.\nOkay, I agree it's not just what it is not, it contains insight into what might happen.\nHere is what I don't know that might help:\n*! I have no idea if... There are existing definitions that are really recent. We need to be really careful about not being affected by past hallucination, which many of these repositories were done with ancient model that were much less intelligent than you are. And given the fact that they are much more intelligent model than you are, you'll need to limit yourself and what you will work. And what I don't know here is, do I have a recent definition of what a prototype is about? We don't need extensive definition about that, but I know that this is now possible to actually associate with an episode, an actual prototype public URL, as well as its editing URL, which implies opening the agent session that is actually implementing and is capable to use, for instance, a Chrome browser to actually steer that model and evolve the prototype, or to pull the changes in there and publish a new version of the prototype. And either way, many of the repositories that you have are actually prototype, I would say at least 25%. Therefore, there's a cycle of what a prototype is, and one of the recent one is the author's desk. Which is one of the most important one. Another one, which I love, that is pretty old, but it has really something interesting. It was a Copilot workspace that I tried to recreate when the GitHub team retired. And I know that inside of the factory, we are trying at one level for one of the team that is there. We're trying to have a similar chain of events to arrive at something like that. So I know that this prototype is going to be important as well.\n    •    I don't know what's the best way to actually decide where to put this mapping. What I know is, personally speaking, all of the repositories that are there are either they're mine directly, they are ones of my agents, or there are forks that we did from contributors from the community. Therefore, if I had to say this is really important for me to achieve a goal of being credible online for my career, I wouldn't judge in the mess that is in there, but I would definitely want inside of each of these repositories something that give us a statement of what it is. Otherwise, I would want a minimum amount of repositories to at least have a mapping of these. One of my thinking in that regard would be  using repositories like <owner>/<owner> (ex. miadisabelle/miadisabelle, avadisabelle/avadisabelle, jgwill/jgwill, …) to actually store these mapping. And I think that  \"jgwill/jgwill\" could be one of the hub that relates to others, as this would become an agentic platform or something. And there's another one that is my personal account, which basically is probably the one, you know, I'm thinking of a job posting, and they ask that you give your GitHub username so they arrive inside of your profile, which I'm not going to give jgwill/jgwill but repo guillaumedescoteauxisabelle/guillaumedescoteauxisabelle\n    •    I know that putting this mapping inside of markdown files that we can't process with any CLI or any application is something completely useless. We'll need to be capable of interpreting the minimal amount of columns and try to understand the position of each of these repositories in terms of what they did, what they might do in the future, in which academic fields do they locate, and where are they type prototype, or they are more something that we actually distribute and maintain actively, which by looking at the Git log of each of them, you'll be capable of knowing about that. All of that aspect should enable you to actually decompose into the most meaningful data structure and create us the most basic CLI and small server that we could start. You know, you are inside s ok something like .miadi/repository-mapping/ (for any of <owner>/<owner> , ex.  miadisabelle/miadisabelle/.miadi/repository-mapping/)) and there are structured JSONL the when you start the CLI and Web UI we are capable to know some really basic information about the mapping you did and navigate to them. jgwill/jgwill/.miadi/repository-mapping/ would have a little bit more structure, because it would be capable of mapping and consume all other mapping. It means maybe it's called a meta mapping or something, which basically you don't map and index all of the repositories of others there, but you consume the data from their repositories if that exists. So it's a way to register other owners from there, which I think is going to work.\n    •    repository \"jgwill/smcraft\" is one of a tool where we experimented creating system diagrams, which contain three other type of diagrams, such as the entity relationship diagram ( There might be some contradiction with the actual initial definition that I gave you about relational, but we are making it relational. For instance, relational to the state machine diagram and the events, as well as the sequence diagram that are currently being supported there. So if you need a way to actually define the schema of what you're going to create, definitely these will help you create the most appropriate representation of this little data structure that I'm talking about, probably with the entity relationship diagram. And in terms of the state machine, I think that there's a little very simple state machine, like when a repository is in a state of being a prototype, there's an event that makes it transition what we explored into a concrete implementation. So it's just, you know, these are going to be something that you will save as little specifications, you know, very simple, like, okay, I've been asked to write specifications for a feature. I must define that feature in less than 55 words. So you'll need to be careful here that when you are trying to define a feature in more than 55 words, you need to self-correct and stop there and move to the next feature. And if there's something that you could do is actually put a status for each of the features that you're discovering, and you can mark it as unclear or undefinable or needs resolution or something like that. Because sometimes when you are going to do the mapping, you're going to try to name the three core feature that you're observing inside of a repository if you decided that this is a prototype. And obviously with some semantics, you're going to try to relate a repository with another one.\n    •    repository \"jgwill/medicine-wheel\" contain a service that we are actually using and deploying. And I know that right now it supports infrastructure inventory, which basically is a registry of everything that runs on a machine. And my feeling is everything that you're doing is part of a need to have repository inventory or something. So there would be in there in its own  a subfolder \"./rispecs/developer-suite/repository-mapping/<RISE framework specs (see repo \"jgwill/llms-txt\") >/<here>.spec.md … (which basically corresponds to what I am asking you todo in this complex work.  Probably the Cli And small Web UI helpers for the .miadi/repository-mapping I am asking can be there or into repository \"jgwill/Miadi\" (subfolder \"./packages/<main package name you are designing>/\" (ex. @miadi/relational-repository-mapper and we would consume the @medicine-wheel/developer-repository-mapping package you are creating todo your whole work.\n    •    repository branch (PR) subfolder \"./rispecs/developer-suite/repository-mapping/<RISE framework specs (see repo \"jgwill/llms-txt\") >/<here>.erdf.json (all diagrams from stateloom (jgwill/smcraft) can also be there.\n    •    Also extend \"jgwill/medicine-wheel\" with another layer of inventory for \"platform-features/capabilities\" so that all the \"repository-mapping I am asking will consume that data-structure for true relational database (there the relationality of my early vocabulary on \"relational\" is meaning the same, the @medicine-wheel/ontology-core should contain these realities as you are experimenting a \"researchIsCeremony\" and are part of what is implied in the IAIP platform developped into repo \"miadisabelle/Etuaptmumk-RSM\" (./sources/researchIsCeremony/ contains Theoretical Framework from private repository for referencing your decision as you design your different layers )\n</prompt>\n",
+  "result": {
+    "primary": {
+      "action": "map",
+      "target": "the 114 connected repositories into a relational, machine-readable repository mapping: JSONL in <owner>/<owner>/.miadi/repository-mapping/, a jgwill/jgwill meta-mapping that consumes the owner mappings, RISE specs and stateloom diagrams in jgwill/medicine-wheel, and a minimal CLI and web UI",
+      "urgency": "persistent",
+      "confidence": 0.8
+    },
+    "secondary": [
+      {
+        "action": "decompose",
+        "target": "this prompt into actions, dependencies and classified implicatures, as input for a later miadiRun mission",
+        "implicit": false,
+        "dependency": null,
+        "confidence": 0.95
+      },
+      {
+        "action": "define",
+        "target": "'relational' as kinship and accountability between repositories, read through a cyclical Indigenous paradigm, not as a relational database",
+        "implicit": false,
+        "dependency": null,
+        "confidence": 0.85
+      },
+      {
+        "action": "treat",
+        "target": "[implicature:quality] every generated output as biased by Western training data and pending human revision",
+        "implicit": false,
+        "dependency": null,
+        "confidence": 0.9
+      },
+      {
+        "action": "distrust",
+        "target": "[implicature:quality] repository descriptions written by older models. Prefer git log and code evidence over README claims",
+        "implicit": true,
+        "dependency": null,
+        "confidence": 0.8
+      },
+      {
+        "action": "install",
+        "target": "the @medicine-wheel packages the mapping will live in, in the cloud environment",
+        "implicit": false,
+        "dependency": "study of jgwill/medicine-wheel ontology-core and infra",
+        "confidence": 0.75
+      },
+      {
+        "action": "find",
+        "target": "[presupposition] a recent definition of 'prototype' that binds an episode, a public URL and an editing URL (the implementing agent session, steerable through a browser)",
+        "implicit": true,
+        "dependency": null,
+        "confidence": 0.6
+      },
+      {
+        "action": "prioritize",
+        "target": "[implicature:relation] the author's desk and the Copilot Workspace recreation as reference prototypes",
+        "implicit": true,
+        "dependency": "recent prototype definition search",
+        "confidence": 0.7
+      },
+      {
+        "action": "relate",
+        "target": "[implicature:relation] the Copilot Workspace recreation to the Miadi Factory team building a similar chain of events",
+        "implicit": true,
+        "dependency": "reference prototypes mapped",
+        "confidence": 0.5
+      },
+      {
+        "action": "store",
+        "target": "structured JSONL mapping in <owner>/<owner>/.miadi/repository-mapping/ (miadisabelle/miadisabelle, avadisabelle/avadisabelle, jgwill/jgwill, ...)",
+        "implicit": false,
+        "dependency": "schema defined as stateloom ERD",
+        "confidence": 0.85
+      },
+      {
+        "action": "build",
+        "target": "a jgwill/jgwill meta-mapping that registers owners and consumes their mappings without re-indexing their repositories",
+        "implicit": false,
+        "dependency": "owner-level JSONL mappings exist",
+        "confidence": 0.75
+      },
+      {
+        "action": "curate",
+        "target": "[implicature:relation] a career-facing view in guillaumedescoteauxisabelle/guillaumedescoteauxisabelle for recruiters arriving from a job application",
+        "implicit": true,
+        "dependency": "jgwill/jgwill meta-mapping",
+        "confidence": 0.55
+      },
+      {
+        "action": "add",
+        "target": "[implicature:quantity] a short identity statement inside each repository, with owner-level mapping as the minimum fallback",
+        "implicit": true,
+        "dependency": "Guillaume's consent to write into each repository",
+        "confidence": 0.45
+      },
+      {
+        "action": "derive",
+        "target": "each repository's lifecycle position (prototype or distributed and maintained) from its git log",
+        "implicit": false,
+        "dependency": "inventory of the 114 repositories",
+        "confidence": 0.85
+      },
+      {
+        "action": "locate",
+        "target": "each repository in academic fields, with its past purpose and plausible future direction",
+        "implicit": false,
+        "dependency": "inventory of the 114 repositories",
+        "confidence": 0.8
+      },
+      {
+        "action": "limit",
+        "target": "[implicature:quantity] features to three per prototype, each under 55 words, self-corrected at the limit, with status clear | unclear | undefinable | needs-resolution",
+        "implicit": false,
+        "dependency": "lifecycle classification",
+        "confidence": 0.85
+      },
+      {
+        "action": "design",
+        "target": "the schema as a stateloom (jgwill/smcraft) ERD in .erdf.json, plus a lifecycle state machine (prototype -> concretized implementation) and a sequence diagram",
+        "implicit": false,
+        "dependency": "study of jgwill/smcraft diagram formats",
+        "confidence": 0.8
+      },
+      {
+        "action": "write",
+        "target": "RISE specs and .erdf.json diagrams in rispecs/developer-suite/repository-mapping/ on a feature branch of jgwill/medicine-wheel",
+        "implicit": false,
+        "dependency": "RISE framework read in jgwill/llms-txt",
+        "confidence": 0.85
+      },
+      {
+        "action": "create",
+        "target": "@medicine-wheel/developer-repository-mapping package (schema, JSONL reader, validator)",
+        "implicit": false,
+        "dependency": "RISE specs written",
+        "confidence": 0.8
+      },
+      {
+        "action": "build",
+        "target": "the minimal CLI and small web UI, either in jgwill/medicine-wheel or in jgwill/Miadi packages/ as @miadi/relational-repository-mapper consuming @medicine-wheel/developer-repository-mapping",
+        "implicit": false,
+        "dependency": "@medicine-wheel/developer-repository-mapping package",
+        "confidence": 0.65
+      },
+      {
+        "action": "extend",
+        "target": "jgwill/medicine-wheel with a platform-features/capabilities inventory layer that the repository mapping consumes",
+        "implicit": false,
+        "dependency": "@medicine-wheel/infra inventory pattern",
+        "confidence": 0.75
+      },
+      {
+        "action": "represent",
+        "target": "[presupposition] repository and capability realities in @medicine-wheel/ontology-core as knowledge nodes with metadata.kind, because the NodeType union is closed at eight",
+        "implicit": true,
+        "dependency": "study of ontology-core types.ts",
+        "confidence": 0.6
+      },
+      {
+        "action": "ground",
+        "target": "layer design decisions in miadisabelle/Etuaptmumk-RSM ./sources/researchIsCeremony/ by citation, without copying private text into public repositories",
+        "implicit": false,
+        "dependency": null,
+        "confidence": 0.75
+      },
+      {
+        "action": "follow",
+        "target": "[implicature:relation] RELEASING.md if the new package is published: publish, install globally, run the installed binary",
+        "implicit": true,
+        "dependency": "package and CLI validated",
+        "confidence": 0.7
+      },
+      {
+        "action": "hold",
+        "target": "[implicature:manner] PR opening, repository creation and writes into other owners' repositories until Guillaume consents",
+        "implicit": true,
+        "dependency": null,
+        "confidence": 0.7
+      }
+    ],
+    "context": {
+      "files_needed": [
+        ".pde/repository-mapping-input-prompt.md",
+        "RELEASING.md",
+        "package.json",
+        "src/ontology-core/src/types.ts",
+        "src/ontology-core/src/constants.ts",
+        "src/infra/",
+        "rispecs/ontology-core.spec.md",
+        "rispecs/infrastructure-topology-ui.spec.md",
+        "rispecs/KINSHIP.md",
+        "jgwill/smcraft (stateloom) ERD, state machine and sequence diagram docs and .erdf.json examples",
+        "jgwill/llms-txt llms-rise-framework.txt",
+        "miadisabelle/Etuaptmumk-RSM/sources/researchIsCeremony/",
+        "miadisabelle/Etuaptmumk-RSM/prototypes/artefacts/MiAICo-251203-CopilotWorkspace-N0v2akS7SXyFCRiSpAxDNQ/copilot-workspace-specs.md",
+        "jgwill/Miadi/packages/",
+        "git log of each of the 114 repositories"
+      ],
+      "tools_required": [
+        "gh CLI",
+        "git",
+        "GitHub connection to the 114 repositories",
+        "npm workspaces (jgwill/medicine-wheel)",
+        "stateloom (jgwill/smcraft)",
+        "miadi-run",
+        "miaco / mcp-pde",
+        "QMD or EURY inquiry (recent prototype definition)",
+        "Chrome browser (prototype editing URL, optional)"
+      ],
+      "assumptions": [
+        "[implicature:quantity] 114 repositories are connected and readable from the cloud session",
+        "Every repository belongs to Guillaume, to one of his agents, or is a fork from a community contributor",
+        "About 25% of the repositories are prototypes",
+        "Git log alone can tell a prototype from a distributed, actively maintained repository",
+        "[implicature:quality] Many repositories were written by older, less capable models and carry hallucinated definitions",
+        "Markdown-only mappings are useless because no CLI or application can process them, and JSONL can be",
+        "<owner>/<owner> repositories exist or can be created for each owner (jgwill/jgwill, miadisabelle/miadisabelle, avadisabelle/avadisabelle, guillaumedescoteauxisabelle/guillaumedescoteauxisabelle)",
+        "Stateloom ERD, state machine and sequence diagrams are adequate to define the mapping schema",
+        "@medicine-wheel/infra is the pattern a repository inventory should follow (verified: src/infra exists)",
+        "rispecs/developer-suite/ is to be created (verified 2026-10-18: it does not exist yet)",
+        "The author's desk and the Copilot Workspace recreation are the most important reference prototypes",
+        "A prototype can now be bound to an episode, a public URL and an editing URL",
+        "@medicine-wheel/ontology-core should hold the repository and capability realities",
+        "This model's output is biased by Western-dominant training data and needs revision",
+        "Other, more capable models exist, so this agent should bound its own scope"
+      ]
+    },
+    "outputs": {
+      "artifacts": [
+        "<owner>/<owner>/.miadi/repository-mapping/repositories.jsonl",
+        "<owner>/<owner>/.miadi/repository-mapping/features.jsonl",
+        "<owner>/<owner>/.miadi/repository-mapping/relations.jsonl",
+        "jgwill/jgwill/.miadi/repository-mapping/owners.jsonl (meta-mapping registry)",
+        "rispecs/developer-suite/repository-mapping/*.spec.md (RISE)",
+        "rispecs/developer-suite/repository-mapping/repository-mapping.erdf.json (ERD)",
+        "rispecs/developer-suite/repository-mapping/repository-lifecycle state machine and sequence diagrams (stateloom)",
+        "src/developer-repository-mapping/ (@medicine-wheel/developer-repository-mapping)",
+        "platform-features/capabilities inventory package in jgwill/medicine-wheel",
+        "minimal CLI and web UI (jgwill/Miadi packages/relational-repository-mapper or jgwill/medicine-wheel)",
+        "miadiRun prompt version for the repository-mapping mission"
+      ],
+      "updates": [
+        "package.json workspaces array (topological insertion of the new packages)",
+        "src/ontology-core (metadata.kind values for repository and capability on knowledge nodes)",
+        "rispecs/ontology-core.spec.md",
+        "src/infra/ (sibling relation to the capabilities inventory, if needed)"
+      ],
+      "communications": [
+        "Feature branch and PR on jgwill/medicine-wheel (PR opening held for consent)",
+        "Feature branches and PRs in each <owner>/<owner> repository (held for consent)",
+        "Possible PR on jgwill/Miadi for @miadi/relational-repository-mapper",
+        "miadiRun mission trace (research, preparation, execution, return observations)"
+      ]
+    },
+    "directions": {
+      "east": [
+        {
+          "text": "A repository mapping that shows Guillaume and agents what each of the 114 repositories is, did, and may become",
+          "confidence": 0.85,
+          "implicit": false
+        },
+        {
+          "text": "Relational means kinship and accountability between repositories, seen cyclically, not database tables",
+          "confidence": 0.85,
+          "implicit": false
+        },
+        {
+          "text": "jgwill/jgwill becomes the hub that consumes other owners' mappings",
+          "confidence": 0.75,
+          "implicit": false
+        },
+        {
+          "text": "guillaumedescoteauxisabelle/guillaumedescoteauxisabelle becomes the career-facing entry point that recruiters see",
+          "confidence": 0.55,
+          "implicit": true
+        },
+        {
+          "text": "A prototype is a cycle: episode, public URL, editing URL bound to an agent session, then a transition to implementation",
+          "confidence": 0.6,
+          "implicit": true
+        }
+      ],
+      "south": [
+        {
+          "text": "Study @medicine-wheel/ontology-core and @medicine-wheel/infra, including the closed NodeType rule",
+          "confidence": 0.85,
+          "implicit": false
+        },
+        {
+          "text": "Study stateloom (jgwill/smcraft) ERD, state machine and sequence diagram formats",
+          "confidence": 0.8,
+          "implicit": false
+        },
+        {
+          "text": "Read the RISE framework in jgwill/llms-txt",
+          "confidence": 0.85,
+          "implicit": false
+        },
+        {
+          "text": "Read Etuaptmumk-RSM ./sources/researchIsCeremony/ as the theoretical ground for layer decisions",
+          "confidence": 0.75,
+          "implicit": false
+        },
+        {
+          "text": "Search for a recent prototype definition before writing one",
+          "confidence": 0.6,
+          "implicit": true
+        },
+        {
+          "text": "Read the git log of each repository to find its lifecycle position",
+          "confidence": 0.85,
+          "implicit": false
+        },
+        {
+          "text": "Locate each repository in academic fields",
+          "confidence": 0.8,
+          "implicit": false
+        }
+      ],
+      "west": [
+        {
+          "text": "Mark every record as model-generated, with its evidence source and a pending-revision status",
+          "confidence": 0.85,
+          "implicit": true
+        },
+        {
+          "text": "Check claims against git log and code, not against READMEs written by older models",
+          "confidence": 0.8,
+          "implicit": true
+        },
+        {
+          "text": "Stop each feature definition at 55 words and assign a status instead of continuing",
+          "confidence": 0.85,
+          "implicit": false
+        },
+        {
+          "text": "Validate the CLI and web UI against real JSONL from one owner repository",
+          "confidence": 0.75,
+          "implicit": true
+        },
+        {
+          "text": "Install the published package globally and run the installed binary per RELEASING.md",
+          "confidence": 0.7,
+          "implicit": true
+        },
+        {
+          "text": "Hold PR opening and writes into other repositories for Guillaume's consent",
+          "confidence": 0.7,
+          "implicit": true
+        }
+      ],
+      "north": [
+        {
+          "text": "Write JSONL mappings in <owner>/<owner>/.miadi/repository-mapping/",
+          "confidence": 0.85,
+          "implicit": false
+        },
+        {
+          "text": "Write the jgwill/jgwill meta-mapping that registers owners",
+          "confidence": 0.75,
+          "implicit": false
+        },
+        {
+          "text": "Write RISE specs and .erdf.json diagrams in rispecs/developer-suite/repository-mapping/ on a feature branch",
+          "confidence": 0.85,
+          "implicit": false
+        },
+        {
+          "text": "Create @medicine-wheel/developer-repository-mapping",
+          "confidence": 0.8,
+          "implicit": false
+        },
+        {
+          "text": "Build the minimal CLI and small web UI",
+          "confidence": 0.7,
+          "implicit": false
+        },
+        {
+          "text": "Add the platform-features/capabilities inventory layer to jgwill/medicine-wheel",
+          "confidence": 0.75,
+          "implicit": false
+        }
+      ]
+    },
+    "actionStack": [
+      {
+        "text": "Register this decomposition as the miadiRun mission prompt for the repository-mapping sub-agent",
+        "direction": "east",
+        "dependency": null,
+        "completed": false
+      },
+      {
+        "text": "Confirm scope: cloud sub-agent mapping the 114 connected repositories across their owners",
+        "direction": "east",
+        "dependency": "Register this decomposition as the miadiRun mission prompt for the repository-mapping sub-agent",
+        "completed": false
+      },
+      {
+        "text": "Define relational for this mission as kinship and accountability between repositories, distinct from relational databases",
+        "direction": "east",
+        "dependency": "Confirm scope: cloud sub-agent mapping the 114 connected repositories across their owners",
+        "completed": false
+      },
+      {
+        "text": "Read miadisabelle/Etuaptmumk-RSM ./sources/researchIsCeremony/ and cite the passages that ground each design decision",
+        "direction": "south",
+        "dependency": "Define relational for this mission as kinship and accountability between repositories, distinct from relational databases",
+        "completed": false
+      },
+      {
+        "text": "Study @medicine-wheel/ontology-core and @medicine-wheel/infra, including the closed NodeType rule and the metadata.kind discriminator",
+        "direction": "south",
+        "dependency": "Confirm scope: cloud sub-agent mapping the 114 connected repositories across their owners",
+        "completed": false
+      },
+      {
+        "text": "Install the @medicine-wheel packages the mapping will live in",
+        "direction": "south",
+        "dependency": "Study @medicine-wheel/ontology-core and @medicine-wheel/infra, including the closed NodeType rule and the metadata.kind discriminator",
+        "completed": false
+      },
+      {
+        "text": "Study jgwill/smcraft (stateloom) ERD, state machine and sequence diagram formats",
+        "direction": "south",
+        "dependency": "Confirm scope: cloud sub-agent mapping the 114 connected repositories across their owners",
+        "completed": false
+      },
+      {
+        "text": "Read the RISE framework in jgwill/llms-txt",
+        "direction": "south",
+        "dependency": "Confirm scope: cloud sub-agent mapping the 114 connected repositories across their owners",
+        "completed": false
+      },
+      {
+        "text": "Search for the most recent prototype definition (episode, public URL, editing URL, agent session) before writing a new one",
+        "direction": "south",
+        "dependency": "Confirm scope: cloud sub-agent mapping the 114 connected repositories across their owners",
+        "completed": false
+      },
+      {
+        "text": "Inventory the 114 repositories: owner, fork origin, git log recency and cadence, deployed URLs",
+        "direction": "south",
+        "dependency": "Confirm scope: cloud sub-agent mapping the 114 connected repositories across their owners",
+        "completed": false
+      },
+      {
+        "text": "Map the author's desk and the Copilot Workspace recreation first as reference prototypes",
+        "direction": "south",
+        "dependency": "Search for the most recent prototype definition (episode, public URL, editing URL, agent session) before writing a new one",
+        "completed": false
+      },
+      {
+        "text": "Draft the repository-mapping ERD as .erdf.json with repository, owner, feature, capability, prototype and relation entities",
+        "direction": "north",
+        "dependency": "Study jgwill/smcraft (stateloom) ERD, state machine and sequence diagram formats",
+        "completed": false
+      },
+      {
+        "text": "Draft the lifecycle state machine: prototype, concretized implementation, maintained, dormant, with the events between them",
+        "direction": "north",
+        "dependency": "Draft the repository-mapping ERD as .erdf.json with repository, owner, feature, capability, prototype and relation entities",
+        "completed": false
+      },
+      {
+        "text": "Write RISE specs under rispecs/developer-suite/repository-mapping/ on a feature branch of jgwill/medicine-wheel",
+        "direction": "north",
+        "dependency": "Draft the lifecycle state machine: prototype, concretized implementation, maintained, dormant, with the events between them",
+        "completed": false
+      },
+      {
+        "text": "Specify the platform-features/capabilities inventory layer as a sibling of @medicine-wheel/infra",
+        "direction": "north",
+        "dependency": "Write RISE specs under rispecs/developer-suite/repository-mapping/ on a feature branch of jgwill/medicine-wheel",
+        "completed": false
+      },
+      {
+        "text": "Classify each repository's lifecycle state from git log evidence, not README claims",
+        "direction": "south",
+        "dependency": "Inventory the 114 repositories: owner, fork origin, git log recency and cadence, deployed URLs",
+        "completed": false
+      },
+      {
+        "text": "Name at most three core features per prototype, each under 55 words, with status clear, unclear, undefinable or needs-resolution",
+        "direction": "south",
+        "dependency": "Classify each repository's lifecycle state from git log evidence, not README claims",
+        "completed": false
+      },
+      {
+        "text": "Locate each repository in academic fields and record its past purpose and plausible future",
+        "direction": "south",
+        "dependency": "Classify each repository's lifecycle state from git log evidence, not README claims",
+        "completed": false
+      },
+      {
+        "text": "Relate repositories with typed edges that each cite their evidence",
+        "direction": "south",
+        "dependency": "Name at most three core features per prototype, each under 55 words, with status clear, unclear, undefinable or needs-resolution",
+        "completed": false
+      },
+      {
+        "text": "Mark every record as model-generated, with evidence source and a pending-revision status",
+        "direction": "west",
+        "dependency": "Relate repositories with typed edges that each cite their evidence",
+        "completed": false
+      },
+      {
+        "text": "Implement @medicine-wheel/developer-repository-mapping: schema, JSONL reader, validator",
+        "direction": "north",
+        "dependency": "Specify the platform-features/capabilities inventory layer as a sibling of @medicine-wheel/infra",
+        "completed": false
+      },
+      {
+        "text": "Write JSONL mappings into <owner>/<owner>/.miadi/repository-mapping/ on feature branches",
+        "direction": "north",
+        "dependency": "Mark every record as model-generated, with evidence source and a pending-revision status",
+        "completed": false
+      },
+      {
+        "text": "Write the jgwill/jgwill meta-mapping that registers owners and consumes their mappings without re-indexing them",
+        "direction": "north",
+        "dependency": "Write JSONL mappings into <owner>/<owner>/.miadi/repository-mapping/ on feature branches",
+        "completed": false
+      },
+      {
+        "text": "Implement the minimal CLI and small web UI that load the JSONL and navigate between mappings",
+        "direction": "north",
+        "dependency": "Implement @medicine-wheel/developer-repository-mapping: schema, JSONL reader, validator",
+        "completed": false
+      },
+      {
+        "text": "Validate the CLI and web UI against real JSONL from one owner repository",
+        "direction": "west",
+        "dependency": "Implement the minimal CLI and small web UI that load the JSONL and navigate between mappings",
+        "completed": false
+      },
+      {
+        "text": "Present branches, schema and pilot mapping to Guillaume before opening PRs or writing into the other repositories",
+        "direction": "west",
+        "dependency": "Validate the CLI and web UI against real JSONL from one owner repository",
+        "completed": false
+      },
+      {
+        "text": "Validate the package by publishing, installing globally and running the installed binary per RELEASING.md",
+        "direction": "west",
+        "dependency": "Present branches, schema and pilot mapping to Guillaume before opening PRs or writing into the other repositories",
+        "completed": false
+      }
+    ],
+    "ambiguities": [
+      {
+        "text": "[implicature:manner] 'Not a relational database' conflicts with 'true relational database' for the capabilities layer, which the prompt itself notices",
+        "suggestion": "Name two senses: relational (kinship and accountability edges) and entity-relationship (the ERD schema). The ERD stores the edges, and each edge carries the first meaning."
+      },
+      {
+        "text": "The CLI and web UI could live in jgwill/medicine-wheel or in jgwill/Miadi packages/ as @miadi/relational-repository-mapper",
+        "suggestion": "Keep the data package in medicine-wheel (@medicine-wheel/developer-repository-mapping) and put the CLI and UI in jgwill/Miadi as its consumer, as the prompt's example shows."
+      },
+      {
+        "text": "[implicature:quantity] An identity statement inside each repository versus a minimum of owner-level mappings",
+        "suggestion": "Start with owner-level mappings. Propose per-repository statements as a list for consent, because it means writing into 114 repositories."
+      },
+      {
+        "text": "'Limit yourself' because more capable models exist does not name a bound",
+        "suggestion": "Bound by evidence-only claims, three features per prototype, 55 words per feature, and status flags instead of speculation."
+      },
+      {
+        "text": "[presupposition] A recent prototype definition may or may not exist, and its location is unknown",
+        "suggestion": "Search chronicle episodes, jgwill/miadi-orchestration-kit and QMD first. Write a short definition only if none exists, and record that it is new."
+      },
+      {
+        "text": "ontology-core 'should contain these realities' but the NodeType union is closed at eight",
+        "suggestion": "Use knowledge nodes with metadata.kind 'repository' and 'capability'. A new NodeType needs its own ontology revision issue."
+      },
+      {
+        "text": "'Minimal amount of columns' is not listed",
+        "suggestion": "Propose: id, owner, name, fork_of, lifecycle_state, last_commit, commit_cadence, purpose_past, direction_future, academic_fields, features[], relations[], evidence, review_status."
+      },
+      {
+        "text": "'repository branch (PR)': branch name, and whether to open the PR, are unstated",
+        "suggestion": "Use a feature branch such as feature/repository-mapping. Push it, and hold PR opening for consent."
+      },
+      {
+        "text": "The prompt names jgwill/smcraft, but smcraft is a deprecated package name and stateloom is current",
+        "suggestion": "Use stateloom and confirm the .erdf.json format against its current source."
+      },
+      {
+        "text": "Which repository is the 'author's desk' prototype is not named",
+        "suggestion": "Locate it by search and confirm with Guillaume before treating it as a reference."
+      },
+      {
+        "text": "The factory team building a Copilot Workspace-like chain of events is not named",
+        "suggestion": "Look it up in the Miadi Factory team records, or leave the relation unresolved."
+      },
+      {
+        "text": "researchIsCeremony sits in a private source",
+        "suggestion": "Cite paths and section names in public specs, and do not copy text (OCAP)."
+      },
+      {
+        "text": "What the career-facing repository guillaumedescoteauxisabelle/guillaumedescoteauxisabelle shows is undefined",
+        "suggestion": "Propose a curated subset, such as maintained repositories and selected prototypes, for Guillaume to choose."
+      },
+      {
+        "text": "Whether the <owner>/<owner> repositories exist is unverified",
+        "suggestion": "Check with gh. Creating a missing repository is an outward-facing act and needs consent."
+      },
+      {
+        "text": "The miadiRun name needs a tmuxName and a missionName, and neither is given",
+        "suggestion": "Use miadiRun-<yyMMddHHmm>-<tmuxName>-repository-mapping and take the tmuxName from the launching seat."
+      },
+      {
+        "text": "How capabilities relate to repositories is unspecified",
+        "suggestion": "Model a capability as realized_by one or more repositories, and a repository as provides zero or more capabilities."
+      }
+    ]
+  },
+  "options": {
+    "extractImplicit": true,
+    "mapDependencies": true
+  },
+  "folder_name": "2610182156--872139f0-b71c-4e94-9781-a5546182e3c1",
+  "pde_dir": "/workspace/repos/jgwill/medicine-wheel/.pde/2610182156--872139f0-b71c-4e94-9781-a5546182e3c1"
+}

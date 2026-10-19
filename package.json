@@ -28,6 +28,8 @@
   "workspaces": [
     "src/ontology-core",
     "src/infra",
+    "src/capabilities",
+    "src/developer-repository-mapping",
     "src/events",
     "src/creative-orientation",
     "src/session-reader",

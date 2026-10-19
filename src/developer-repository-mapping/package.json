@@ -1,0 +1,65 @@
+{
+  "name": "@medicine-wheel/developer-repository-mapping",
+  "version": "0.20.0",
+  "description": "Repository mapping for the Medicine Wheel Developer Suite — owner hubs of JSONL rows in <owner>/<owner>/.miadi/repository-mapping/, a lifecycle state machine checked against git, a meta mapping that reads other hubs without copying them, the projection into wheel nodes and edges, and the mw-repomap CLI with a small web page",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "mw-repomap": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "import": "./dist/node/index.js",
+      "require": "./dist/node/index.js",
+      "default": "./dist/node/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('dist/cli.js', 0o755)\"",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "repository-mapping",
+    "developer-suite",
+    "inventory",
+    "relational-ontology",
+    "jsonl",
+    "prototype",
+    "miadi"
+  ],
+  "author": "IAIP Collaborative - Shawinigan, QC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/developer-repository-mapping"
+  },
+  "engines": {
+    "node": ">=19"
+  },
+  "dependencies": {
+    "@medicine-wheel/capabilities": "^0.20.0",
+    "@medicine-wheel/ontology-core": "^0.20.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}

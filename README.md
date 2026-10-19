@@ -53,6 +53,8 @@ Recently landed:
     ├── @medicine-wheel/data-store-postgres  ← PostgreSQL / Neon provider scaffold
     ├── @medicine-wheel/storage-provider     ← Canonical persistence contract (JSONL ⇄ Neon)
     ├── @medicine-wheel/infra                ← Hosts, tenants, services, port bindings as facets
+    ├── @medicine-wheel/capabilities         ← What the platform can do, who provides it, who said so
+    ├── @medicine-wheel/developer-repository-mapping ← Owner hubs of repository rows; mw-repomap
     ├── @medicine-wheel/honcho               ← The wheel's projection into Honcho, memory that reasons
     ├── @medicine-wheel/perception-layer     ← Witness recordings as typed perceptual events
     ├── @medicine-wheel/narrative-cluster    ← Events → clusters → beats → Film Edit Brief
@@ -186,6 +188,16 @@ Typed infrastructure facets — hosts, tenants, services and port bindings — k
 
 - **Dependencies:** `@medicine-wheel/ontology-core`, `zod`
 
+### [@medicine-wheel/capabilities](src/capabilities)
+The platform-features and capabilities layer: a capability rides a `knowledge` node carrying `metadata.kind: "capability"`, says what it does in at most 55 words, and lists the repositories and services that provide it. Every row carries its attribution (who wrote it, when, from what evidence, and whether a person has read it since), and a model's row starts `pending`. `findSharedCapabilities` names a capability more than one provider gives. Pure.
+
+- **Dependencies:** `@medicine-wheel/ontology-core`, `@medicine-wheel/infra`, `zod`
+
+### [@medicine-wheel/developer-repository-mapping](src/developer-repository-mapping)
+Repository mapping: the JSONL rows an owner hub (`<owner>/<owner>/.miadi/repository-mapping/`) holds, the lifecycle state machine checked against git, a meta hub that reads other hubs without copying them, and the projection into wheel nodes and edges. The `mw-repomap` CLI makes, validates, observes and serves a mapping on one small web page.
+
+- **Dependencies:** `@medicine-wheel/ontology-core`, `@medicine-wheel/capabilities`, `zod`
+
 ### [@medicine-wheel/honcho](src/honcho)
 The wheel's projection into [Honcho](https://honcho.dev), memory that reasons. The wheel stays canonical; Honcho holds what the history has come to mean about each peer. A beat becomes a message from its speaker in the session of its ceremony, a speaker's evolving representation is recalled before they speak again, and a derived conclusion returns as a `knowledge` node carrying `metadata.kind: "memory_projection"` with its status and provenance. Zero dependencies, `/v3` only, configured by `HONCHO_URL`. Nothing is filtered here.
 
@@ -258,6 +270,7 @@ RISE framework specifications are in [`rispecs/`](rispecs/). Start with [`medici
 | data-store-postgres | [data-store-postgres.spec.md](rispecs/data-store-postgres.spec.md) |
 | session-reader | [session-reader.spec.md](rispecs/session-reader.spec.md) |
 | infra | [infrastructure-topology-ui.spec.md](rispecs/infrastructure-topology-ui.spec.md) |
+| capabilities · developer-repository-mapping | [developer-suite/repository-mapping/](rispecs/developer-suite/repository-mapping/SPEC.md) |
 | perception-layer | [perception-layer.spec.md](rispecs/perception-layer.spec.md) |
 | narrative-cluster | [narrative-cluster.spec.md](rispecs/narrative-cluster.spec.md) |
 | captures & recordings | [capture-registry.spec.md](rispecs/capture-registry.spec.md) |
