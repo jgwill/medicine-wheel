@@ -1804,3 +1804,1020 @@ Today, different tools can create or reference things like episodes, opus folder
 
 We want one Medicine 
 
+
+## issue #135 - rispecs/workspace: close the decisions the adversarial review of PR 134 left with no owner
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-06T23:43:49Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/135
+
+### Current Reality
+## Context
+
+`jgwill/medicine-wheel#134` was reviewed adversarially on 2026-09-06 in a worktree at
+`/a/ws/jgwill/medicine-wheel/134-workspaces-in-the-wheel-260906`, checked out on
+`claude/workspace-config-erd-lu1qfs`. The method was to verify every factual claim against the
+working tree and the cited sources, rather than reading the folder for internal coherence.
+
+**What held.** Every code claim in the folder is accurate:
+
+- `cli/mwsrv.ts:35` (`DEFAULT_PORT = 8040`), `:117` and `:172` (`path.reso
+
+
+## issue #136 - Decide what a wheel workspace is — the proposed definition contradicts the catalog it was written for
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-06T23:56:41Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/136
+
+### Current Reality
+## Context
+
+**What I failed to do.** Asked to review `jgwill/medicine-wheel#134` adversarially, I reviewed it
+against the codebase, against its own cross-references, and against its external citations. I filed
+`jgwill/medicine-wheel#135` on that. I did not review it against the two `INPUT` files — whether the
+work delivered what was asked. Then I deleted `INPUT.md`'s "How the request was honoured" table and
+`INPUT-02.md`'s "What changed as a result" table as session bookkeeping, without checki
+
+
+## issue #137 - A review becomes a community choice: the door, the chooser, and the offer
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-08T04:22:14Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/137
+
+### Current Reality
+## Context
+
+Measured on the live wheel and in this tree, 2026-09-08.
+
+**Nothing outside this repo can consume the wheel over HTTP.** `grep -rln "fetch(" src/*/src/` across all 27 workspace packages returns nothing. The one working client is `mcp/src/http-store.ts` (745 lines); `@medicine-wheel/mcp` exports `.`, `./all-tools`, `./types` — `http-store` is not among them, and its manifest's `types` field is `undefined`. The repo's own code names the cost at `app/api/nodes/route.ts:26-31`: forgewr
+
+
+## issue #141 - ceremony and circle support
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-21T08:09:30Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/141
+
+### Current Reality
+stuff that claude should have created and commited his work before publishing... hopefully he'll edit this issue and amend its commit that I'll do myself to teach him...
+
+
+## issue #141 - An episode reads its node, ceremonies and circles: client + community-identity 0.15.1
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-21T08:12:46Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/141
+
+### Current Reality
+## Context
+
+The episode room in jgwill/Miadi (`app/chronicle/components/EpisodeRoom.tsx`) ends with a Medicine Wheel card holding three fixed links (`/ceremony`, `/circles`, `/ceremony/ceremonies`). They go to the generic pages whatever the episode holds.
+
+Measured on the chronicle wheel (ilex `127.0.0.1:8040`, 2026-09-21):
+
+- `GET /api/nodes/chronicle:2026-07-30-episode-303-state-diagrams-as-the-design-surface` → 404. The card prints that node id as if it were registered. `GET /api/chronicle/
+
+
+## issue #141 - An episode reads its node, ceremonies and circles: client + community-identity 0.15.1
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-21T08:14:54Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/141
+
+### Current Reality
+## Context
+
+The episode room in jgwill/Miadi (`app/chronicle/components/EpisodeRoom.tsx`) ends with a Medicine Wheel card holding three fixed links (`/ceremony`, `/circles`, `/ceremony/ceremonies`). They go to the generic pages whatever the episode holds.
+
+Measured on the chronicle wheel (ilex `127.0.0.1:8040`, 2026-09-21):
+
+- `GET /api/nodes/chronicle:2026-07-30-episode-303-state-diagrams-as-the-design-surface` → 404. The card prints that node id as if it were registered. `GET /api/chronicle/
+
+
+## issue #141 - An episode reads its node, ceremonies and circles: client + community-identity 0.15.1–0.15.2
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-21T08:55:49Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/141
+
+### Current Reality
+## Context
+
+The episode room in jgwill/Miadi (`app/chronicle/components/EpisodeRoom.tsx`) ends with a Medicine Wheel card holding three fixed links (`/ceremony`, `/circles`, `/ceremony/ceremonies`). They go to the generic pages whatever the episode holds.
+
+Measured on the chronicle wheel (ilex `127.0.0.1:8040`, 2026-09-21):
+
+- `GET /api/nodes/chronicle:2026-07-30-episode-303-state-diagrams-as-the-design-surface` → 404. The card prints that node id as if it were registered. `GET /api/chronicle/
+
+
+## issue #142 - Honcho's memory of a talking circle is measured round by round as William speaks and writes diary entries
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-22T03:35:06Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/142
+
+### Current Reality
+## Context
+
+Since 2026-09-20 02:33Z the chronicle wheel (ilex `127.0.0.1:8040`) projects every stored beat, ceremony and diary entry into the Honcho workspace `medicine-wheel` (jgwill/medicine-wheel#140). Miadi's talking circle stores turns as beats (`origin.producer: "miadi:talking-circle"`) and diary entries as `wheel_kind: diary`, so both reach Honcho with no agent in between.
+
+Round 0, measured 2026-09-22 03:30Z by `mia@eury` on the Episode 339 circle (`circle:1789964509905:ab9tnq`, Honcho s
+
+
+## issue #143 - Name the three readings of an event perspectives, keep 'universe' for what a creator makes
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-22T11:42:34Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/143
+
+### Current Reality
+## Context
+
+William ruled on 2026-09-22 (avadisabelle/coaia-narrative#56, tracked in jgwill/Miadi#676) that the engineer, ceremony and story "universes" are three **perspectives** on one event, and that "universe" stays for a world a creator makes, for Dramatica's "Universe" class, and in dated records. This repository carries the old word: 6 files, 15 hits, including the "Universes" display text in `@medicine-wheel/app`. The survey and proposal for this repository is `foundations/universe-and-p
+
+
+## issue #144 - The MCP's ceremony tools bind to the episode and circle, and a closing names what it closes
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-23T07:03:27Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/144
+
+### Current Reality
+## Context
+
+Since 0.14.0 a ceremony's episode, circle and closing are typed fields on the record: `episode_path`, `circle_id`, `closes` (jgwill/medicine-wheel#141). The server's `POST /api/ceremonies` validates and stores all three. `GET /api/ceremonies?episode_path=|circle_id=|closes=` filters on them.
+
+The MCP's ceremony tools in `mcp/` (4.15.2) predate that:
+
+- `mw_ceremony_open` always writes `type: "opening"`. It accepts neither `episode_path` nor `circle_id`.
+- `mw_ceremony_close` records 
+
+
+## issue #144 - The MCP's ceremony tools bind to the episode and circle, and a closing names what it closes
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-23T07:25:31Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/144
+
+### Current Reality
+## Context
+
+Since 0.14.0 a ceremony's episode, circle and closing are typed fields on the record: `episode_path`, `circle_id`, `closes` (jgwill/medicine-wheel#141). The server's `POST /api/ceremonies` validates and stores all three. `GET /api/ceremonies?episode_path=|circle_id=|closes=` filters on them.
+
+The MCP's ceremony tools in `mcp/` (4.15.2) predate that:
+
+- `mw_ceremony_open` always writes `type: "opening"`. It accepts neither `episode_path` nor `circle_id`.
+- `mw_ceremony_close` records 
+
+
+## issue #145 - An invitation names who it was sent to, expires in 96 hours by default, and has a public view
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-24T03:59:15Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/145
+
+### Current Reality
+## Context
+
+`@medicine-wheel/community-identity` 0.15.3, `src/community-identity/src/invitations.ts`:
+
+- `InvitationRecord.intended_for` is one free-text field ("a name or email"). A consumer that wants to email the code has to parse an address out of it.
+- `JsonlInvitationStore.create()` writes no `expires_at` unless the caller passes one, so a code minted without a date stays open forever.
+- There is no public view of an invitation. `publicCredential()` exists for credentials, but a consumer t
+
+
+## issue #145 - An invitation names who it was sent to, expires in 96 hours by default, and has a public view
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-24T04:27:42Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/145
+
+### Current Reality
+## Context
+
+`@medicine-wheel/community-identity` 0.15.3, `src/community-identity/src/invitations.ts`:
+
+- `InvitationRecord.intended_for` is one free-text field ("a name or email"). A consumer that wants to email the code has to parse an address out of it.
+- `JsonlInvitationStore.create()` writes no `expires_at` unless the caller passes one, so a code minted without a date stays open forever.
+- There is no public view of an invitation. `publicCredential()` exists for credentials, but a consumer t
+
+
+## issue #146 - A ceremony names the node it is held about (subject_id), so a review's talking circle can be found from the review
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-24T10:29:53Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/146
+
+### Current Reality
+## Context
+
+- `CeremonyLog` (`src/ontology-core/src/types.ts`, 0.15.4) binds a ceremony to an episode (`episode_path`), a circle (`circle_id`, a node id) and, for a closing, the ceremony it closes (`closes`). It has no field naming what the ceremony is held about.
+- `POST /api/ceremonies` (`app/api/ceremonies/route.ts`) rebuilds the record from a whitelist, so a field outside it is dropped on write. The JSONL provider (`src/storage-provider/src/jsonl.ts`) rebuilds from a whitelist on read, and t
+
+
+## issue #146 - A ceremony names the node it is held about (subject_id), so a review's talking circle can be found from the review
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-24T10:52:14Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/146
+
+### Current Reality
+## Context
+
+- `CeremonyLog` (`src/ontology-core/src/types.ts`, 0.15.4) binds a ceremony to an episode (`episode_path`), a circle (`circle_id`, a node id) and, for a closing, the ceremony it closes (`closes`). It has no field naming what the ceremony is held about.
+- `POST /api/ceremonies` (`app/api/ceremonies/route.ts`) rebuilds the record from a whitelist, so a field outside it is dropped on write. The JSONL provider (`src/storage-provider/src/jsonl.ts`) rebuilds from a whitelist on read, and t
+
+
+## issue #146 - A ceremony names the node it is held about (subject_id), so a review's talking circle can be found from the review
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-24T11:11:05Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/146
+
+### Current Reality
+## Context
+
+- `CeremonyLog` (`src/ontology-core/src/types.ts`, 0.15.4) binds a ceremony to an episode (`episode_path`), a circle (`circle_id`, a node id) and, for a closing, the ceremony it closes (`closes`). It has no field naming what the ceremony is held about.
+- `POST /api/ceremonies` (`app/api/ceremonies/route.ts`) rebuilds the record from a whitelist, so a field outside it is dropped on write. The JSONL provider (`src/storage-provider/src/jsonl.ts`) rebuilds from a whitelist on read, and t
+
+
+## issue #146 - A ceremony names the node it is held about (subject_id), so a review's talking circle can be found from the review
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-24T11:35:04Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/146
+
+### Current Reality
+## Context
+
+- `CeremonyLog` (`src/ontology-core/src/types.ts`, 0.15.4) binds a ceremony to an episode (`episode_path`), a circle (`circle_id`, a node id) and, for a closing, the ceremony it closes (`closes`). It has no field naming what the ceremony is held about.
+- `POST /api/ceremonies` (`app/api/ceremonies/route.ts`) rebuilds the record from a whitelist, so a field outside it is dropped on write. The JSONL provider (`src/storage-provider/src/jsonl.ts`) rebuilds from a whitelist on read, and t
+
+
+## issue #147 - A turn the river could not carry waits for Honcho instead of being lost
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-25T09:37:09Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/147
+
+### Current Reality
+## What happens now
+
+`lib/honcho-projection.ts` projects every stored beat, ceremony and diary entry into Honcho fire-and-forget. When Honcho is unreachable the failure is written once to stderr and the record is never sent again. The wheel keeps the record; Honcho's memory of the talking circle silently has a hole.
+
+On ilex, with Honcho (eury, tailnet) offline, `medicine-wheel.log` already shows 4 such lines: 1 ceremony and 3 beats that will never reach Honcho.
+
+## What this issue makes true
+
+1
+
+
+## issue #147 - A turn the river could not carry waits for Honcho instead of being lost
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-27T07:29:39Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/147
+
+### Current Reality
+## What happens now
+
+`lib/honcho-projection.ts` projects every stored beat, ceremony and diary entry into Honcho fire-and-forget. When Honcho is unreachable the failure is written once to stderr and the record is never sent again. The wheel keeps the record; Honcho's memory of the talking circle silently has a hole.
+
+On ilex, with Honcho (eury, tailnet) offline, `medicine-wheel.log` already shows 4 such lines: 1 ceremony and 3 beats that will never reach Honcho.
+
+## What this issue makes true
+
+1
+
+
+## issue #148 - An answer from the wheel's memory reaches only the sessions its caller allows
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-27T11:06:19Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/148
+
+### Current Reality
+## Context
+
+- `@medicine-wheel/honcho` 0.15.6 reaches Honcho's dialectic through `peers.chat(id, query, opts)` and a peer's memory through `peers.representation(id, opts)`. Both spread `opts` into the request body. `ChatOptions` names `session_id`, `target`, `reasoning_level`. `RepresentationOptions` names `target`, `session_id`, `search_query`, `max_conclusions`. Neither names a way to confine an answer to a set of sessions.
+- A chat scoped with `session_id` leaks. On 2026-09-27, asked as the p
+
+
+## issue #148 - An answer from the wheel's memory reaches only the sessions its caller allows
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-27T11:55:38Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/148
+
+### Current Reality
+## Context
+
+- `@medicine-wheel/honcho` 0.15.6 reaches Honcho's dialectic through `peers.chat(id, query, opts)` and a peer's memory through `peers.representation(id, opts)`. Both spread `opts` into the request body. `ChatOptions` names `session_id`, `target`, `reasoning_level`. `RepresentationOptions` names `target`, `session_id`, `search_query`, `max_conclusions`. Neither names a way to confine an answer to a set of sessions.
+- A chat scoped with `session_id` leaks. On 2026-09-27, asked as the p
+
+
+## issue #149 - Every memory question goes through the wheel: one contract, /api/memory and memory_* tools, whatever the provider
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-30T14:35:49Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/149
+
+### Current Reality
+## Context
+
+Findings from the "PDE Memory Loop" proposal (https://claude.ai/artifact/UKRMj3Pz4yj8MwaB859fHW, revision 3, 2026-09-30, from the miaco session `miadi-miaco-enhancements-260930`), checked against `main` at `a5dc648` and the live wheel on ilex:
+
+- **F1, a defect.** The MCP's `honcho_recall`, asked within one ceremony (`session_id: ceremony-1789980083587-4wfw3`, a test ceremony whose only intention is "Test ceremony opening"), listed 10 intentions, including Episode 345's purpose and a
+
+
+## issue #149 - Every memory question goes through the wheel: one contract, /api/memory and memory_* tools, whatever the provider
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-30T14:36:11Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/149
+
+### Current Reality
+## Context
+
+Findings from the "PDE Memory Loop" proposal (https://claude.ai/artifact/UKRMj3Pz4yj8MwaB859fHW, revision 3, 2026-09-30, from the miaco session `miadi-miaco-enhancements-260930`), checked against `main` at `a5dc648` and the live wheel on ilex:
+
+- **F1, a defect.** The MCP's `honcho_recall`, asked within one ceremony (`session_id: ceremony-1789980083587-4wfw3`, a test ceremony whose only intention is "Test ceremony opening"), listed 10 intentions, including Episode 345's purpose and a
+
+
+## issue #149 - Every memory question goes through the wheel: one contract, /api/memory and memory_* tools, whatever the provider
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-30T15:45:25Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/149
+
+### Current Reality
+## Context
+
+Findings from the "PDE Memory Loop" proposal (https://claude.ai/artifact/UKRMj3Pz4yj8MwaB859fHW, revision 3, 2026-09-30, from the miaco session `miadi-miaco-enhancements-260930`), checked against `main` at `a5dc648` and the live wheel on ilex:
+
+- **F1, a defect.** The MCP's `honcho_recall`, asked within one ceremony (`session_id: ceremony-1789980083587-4wfw3`, a test ceremony whose only intention is "Test ceremony opening"), listed 10 intentions, including Episode 345's purpose and a
+
+
+## issue #150 - A relation keeps the words that say why it holds (edge description)
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-30T16:13:21Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/150
+
+### Current Reality
+## Context
+
+A relation between two nodes carries a type (`relationship_type`) but no text saying why it holds. Callers already send one: Miadi's chronicle posts `description` with every episode→episode edge (`packages/inquiry-weave/src/lineage-edge.ts` in jgwill/Miadi). The wheel drops it in two places:
+
+- `app/api/edges/route.ts`: `EdgeCreateSchema` and `EdgePatchSchema` have no `description`, so zod strips it.
+- `src/storage-provider/src/jsonl.ts` `parseEdge`, `neon.ts` `parseEdge`/`createEd
+
+
+## issue #150 - A relation keeps the words that say why it holds (edge description)
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-30T16:43:28Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/150
+
+### Current Reality
+## Context
+
+A relation between two nodes carries a type (`relationship_type`) but no text saying why it holds. Callers already send one: Miadi's chronicle posts `description` with every episode→episode edge (`packages/inquiry-weave/src/lineage-edge.ts` in jgwill/Miadi). The wheel drops it in two places:
+
+- `app/api/edges/route.ts`: `EdgeCreateSchema` and `EdgePatchSchema` have no `description`, so zod strips it.
+- `src/storage-provider/src/jsonl.ts` `parseEdge`, `neon.ts` `parseEdge`/`createEd
+
+
+## issue #151 - A stateloom system and its drawings can be nodes on the wheel, riding knowledge like the production, infrastructure and academic kinds
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-30T21:16:07Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/151
+
+### Current Reality
+## Context
+
+- `NodeType` in `src/ontology-core/src/types.ts` is closed at seven (`human`, `land`, `spirit`, `ancestor`, `future`, `knowledge`, `circle`). New beings ride existing nodes with a `metadata.kind` discriminator: `ProductionEntityKind`, `INFRA_ENTITY_BINDING` (host, tenant, service) and `ACADEMIC_ENTITY_BINDING` (faculty, research field, program, institution), each with a direction binding. ontology-core is at 0.16.1 (`fa458f8`).
+- On 2026-09-30 jgwill/smcraft gained a **system** docum
+
+
+## issue #152 - Only people are human on the wheel: an agent that holds a seat is recorded as an agent, and memory says whose words it rests on
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-30T22:13:34Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/152
+
+### Current Reality
+## Context
+
+- On the chronicle wheel (ilex, 2026-09-30) six seat-holders are `human` nodes with `metadata.kind: "person"`: Guillaume (`admin`), Mia (`ceremony_facilitator`), Miette (`participant`), Kherix (`participant`), Ava (`companion_ai`), and the probe fixture "Memory probe" (`participant`). Guillaume is the only human among them. The others are agents, each holding a seat with its own token. Guillaume, 2026-09-30: "just Guillaume on the wheel is human".
+- `personFromNode` (`src/community-i
+
+
+## issue #152 - Only people are human on the wheel: an agent that holds a seat is recorded as an agent, and memory says whose words it rests on
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-09-30T22:55:43Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/152
+
+### Current Reality
+## Context
+
+- On the chronicle wheel (ilex, 2026-09-30) six seat-holders are `human` nodes with `metadata.kind: "person"`: Guillaume (`admin`), Mia (`ceremony_facilitator`), Miette (`participant`), Kherix (`participant`), Ava (`companion_ai`), and the probe fixture "Memory probe" (`participant`). Guillaume is the only human among them. The others are agents, each holding a seat with its own token. Guillaume, 2026-09-30: "just Guillaume on the wheel is human".
+- `personFromNode` (`src/community-i
+
+
+## issue #153 - The Episodes tab opens an episode: its files, and what the wheel holds for it
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-03T22:43:37Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/153
+
+### Current Reality
+## Context
+
+The Episodes tab (`app/episodes/[id]/page.tsx`) shows an episode's name, its open attention and its relations, and nothing else. The wheel holds far more about each episode, and the page never asks for it:
+
+- ceremonies bound by `episode_path` (`/api/ceremonies?episode_path=`)
+- diary entries spoken in its circle (`/api/diary?chronicle=<node id>`)
+- inquiry weaves and plan perspectives (`?episode_path=` on both)
+- captures (`/api/captures?episode_path=`)
+
+Every episode node also carr
+
+
+## 2026-10-03 — jgwill/medicine-wheel#153 (🌿 Mino-Bimaadizi-Daa, `stcissue`)
+
+- **Verdict:** enhancement. The Episodes tab opens files and holdings.
+- **Recommendations:** pin episode-vessel, show the human record first, keep inquiry weaves read-only and linked to the Miadi room (jgwill/Miadi#722), add a symlink containment test. The npm release waits on William.
+
+## issue #153 - The Episodes tab opens an episode: its files, and what the wheel holds for it
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-03T22:58:32Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/153
+
+### Current Reality
+## Context
+
+The Episodes tab (`app/episodes/[id]/page.tsx`) shows an episode's name, its open attention and its relations, and nothing else. The wheel holds far more about each episode, and the page never asks for it:
+
+- ceremonies bound by `episode_path` (`/api/ceremonies?episode_path=`)
+- diary entries spoken in its circle (`/api/diary?chronicle=<node id>`)
+- inquiry weaves and plan perspectives (`?episode_path=` on both)
+- captures (`/api/captures?episode_path=`)
+
+Every episode node also carr
+
+
+## 2026-10-03 23:00 — jgwill/medicine-wheel#153, five steps ticked (`stcissue`)
+
+- **Verified live on the wheel:** 339 lists 27 files with no `ceremonies/`, `?path=../x` answers 400, and the wheel is healthy. episode-vessel is pinned at 0.2.1, as Miadi does, and a linked-directory test is in. Only the npm release remains, and it is William's. No comment was posted.
+
+## issue #153 - The Episodes tab opens an episode: its files, and what the wheel holds for it
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-03T23:32:01Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/153
+
+### Current Reality
+## Context
+
+The Episodes tab (`app/episodes/[id]/page.tsx`) shows an episode's name, its open attention and its relations, and nothing else. The wheel holds far more about each episode, and the page never asks for it:
+
+- ceremonies bound by `episode_path` (`/api/ceremonies?episode_path=`)
+- diary entries spoken in its circle (`/api/diary?chronicle=<node id>`)
+- inquiry weaves and plan perspectives (`?episode_path=` on both)
+- captures (`/api/captures?episode_path=`)
+
+Every episode node also carr
+
+
+## 2026-10-03 23:35 — jgwill/medicine-wheel#153, released (`stcissue`)
+
+- All steps are done. v0.17.1 was released from ilex (1b4b69e), with the registry checked. The release no longer waits on William.
+
+## issue #154 - Say Wilson's words as he says them, and count NodeType as it is: obvious corrections from the Wilson ledger
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-03T23:41:25Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/154
+
+### Current Reality
+## Context
+
+On 2026-10-03, Guillaume's photographs of *Research Is Ceremony* (Wilson, 2008; pp. 43–58 and 108–132), the partial extraction already held in `miadisabelle/Etuaptmumk-RSM` (`prototypes/artefacts/sources/wilson/`, same print pagination), and a research pass over published citations were used to check what this repository says Wilson says. The full ledger, with every claim, file and page, is private: `miadisabelle/Etuaptmumk-RSM` → `sources/wilson-2008-research-is-ceremony/LEDGE
+
+
+## 2026-10-03 23:45 — jgwill/medicine-wheel#154 (🌿 Mino-Bimaadizi-Daa, `stcissue`)
+
+- **Verdict:** hotfix of wording. Sentences attributed to Wilson that his pages do not say, and NodeType counted wrong (it has eight values).
+- **Recommendations:** one citation block linked from every file; keep the keeper principle as the wheel's own; Episode 550 W5 cross-checks p. 58. MINO §7 corrected from six to eight.
+
+## issue #155 - Numbers in Wilson's name: stop gating on them, name them for what they measure, keep stored data readable
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-03T23:54:26Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/155
+
+### Current Reality
+## Context
+
+Read 2026-10-03, after #154 corrected the wording around them. Wilson describes no score: "value judgements lose their meaning", and what matters is "fulfilling a role and obligations in the research relationship" (2008, p. 77, through Wulff 2010); the method "refuses a single category or any other formula" (Hermes, quoted p. 53). The suite nonetheless carries several numbers under his name, and some of them decide.
+
+**Numbers that block or decide**
+
+| Where | What it does | What it 
+
+
+## 2026-10-03 23:58 — jgwill/medicine-wheel#155 (🌿 Mino-Bimaadizi-Daa, `stcissue`)
+
+- **Verdict:** hotfix. Verified that `gating.ts:102-104/130` blocks by default and that `keeper.ts:313` hard-codes OCAP as true.
+- **Recommended order:** the gate out of the defaults and OCAP made unknown; stored names kept; displays renamed; the ranking dropped; people asked, with answers kept in the circle diary.
+
+## issue #155 - Numbers in Wilson's name: stop gating on them, name them for what they measure, keep stored data readable
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-04T00:06:45Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/155
+
+### Current Reality
+## Context
+
+Read 2026-10-03, after #154 corrected the wording around them. Wilson describes no score: "value judgements lose their meaning", and what matters is "fulfilling a role and obligations in the research relationship" (2008, p. 77, through Wulff 2010). He also says it is not his intention to judge any one paradigm "as being better or worse than another" (p. 35). The suite nonetheless carries several numbers under his name, and some of them decide.
+
+> Corrected 2026-10-04: an earlier vers
+
+
+- 2026-10-04 00:06Z: #155 edited by its author, a citation correction (p. 35 replaces Hermes p. 53). No move.
+
+## issue #155 - Numbers in Wilson's name: stop gating on them, name them for what they measure, keep stored data readable
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-04T00:17:36Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/155
+
+### Current Reality
+## Context
+
+Read 2026-10-03, after #154 corrected the wording around them. Wilson describes no score: "value judgements lose their meaning", and what matters is "fulfilling a role and obligations in the research relationship" (2008, p. 77, through Wulff 2010). He also says it is not his intention to judge any one paradigm "as being better or worse than another" (p. 35). The suite nonetheless carries several numbers under his name, and some of them decide.
+
+> Corrected 2026-10-04: an earlier vers
+
+- 2026-10-04 00:17Z: author corrections (epistemicWeight stored; Elder requirement in consensus.ts). Extended: keep the weight readable, stop rewriting it; make the Elder requirement a per-circle setting.
+
+## issue #156 - The Episodes tab shows the lineage: each relation read from where you stand, with its words
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-04T00:20:51Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/156
+
+### Current Reality
+## Context
+
+Miadi's chronicle opens on its lineage: episodes along time, in their direction's band, with the relations between them drawn and each relation carrying the words that say why it holds. The wheel holds the same relations. On the chronicle wheel (ilex:8040) there are 126 episode↔episode edges, 109 with a `description`, touching 76 of 101 episodes. The Episodes tab shows none of it as lineage:
+
+- the episode page lists neighbours with a raw `relationship_type` and no words, and canno
+
+
+## 2026-10-04 — jgwill/medicine-wheel#156 (🌿 Mino-Bimaadizi-Daa, `stcissue`)
+
+- **Verdict:** enhancement. Lineage on the wheel's Episodes tab.
+- **Recommended:** reverse sentences before labels; one shared either-end reader offered to inquiry-weave; chronicle order from `buildChronicleCatalog`; keyboard access.
+
+## issue #156 - The Episodes tab shows the lineage: each relation read from where you stand, with its words
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-04T01:06:41Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/156
+
+### Current Reality
+## Context
+
+Miadi's chronicle opens on its lineage: episodes along time, in their direction's band, with the relations between them drawn and each relation carrying the words that say why it holds. The wheel holds the same relations. On the chronicle wheel (ilex:8040) there are 126 episode↔episode edges, 109 with a `description`, touching 76 of 101 episodes. The Episodes tab shows none of it as lineage:
+
+- the episode page lists neighbours with a raw `relationship_type` and no words, and canno
+
+- 2026-10-04 01:07Z: #156 all steps done. Verified 0.17.3 on npm, `/episodes?view=lineage` 200, and two-way relations keep both descriptions. No comment.
+
+## issue #157 - web test adding an action
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-04T09:57:18Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/157
+
+### Current Reality
+web test adding an action...
+
+A step of jgwill/medicine-wheel#61 (release.sh leaves workspace package-lock.json files uncommitted), added in Asterion: https://asterion.jgwill.com/tensions/234e782e-95c7-4e39-9c06-16dd643e59fb
+
+
+### Triage 2026-10-04 (`stcissue`, Mino) — jgwill/medicine-wheel#157
+
+- A web test: adding an action in Asterion created #157, linked as a sub-issue of #61, with a back-link to the tension. It worked.
+- Finding: #61's outcome exists since `35e538e` (2026-06-03). The v0.17.3 commit `bd267a9` carried 18 lockfiles; none are left modified.
+- Recommended: close #61 as completed and #157 as not planned when the test is done; Asterion names who added an action.
+- Comment: https://github.com/jgwill/medicine-wheel/issues/157#issuecomment-5978763597 · Key: `stc:triage:jgwill-medicine-wheel:stcissue:157`
+
+## issue #158 - One invitation code opens one or more circles
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-07T13:38:37Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/158
+
+### Current Reality
+## Context
+
+`InvitationRecord` in `@medicine-wheel/community-identity` 0.17.4 binds one code to one `circle_id`. Miadi's admin "Bring a person in" form (`/admin`) therefore lets an admin pick one circle per invitation. Bringing someone into three circles today means three codes, three mails, and three registrations or acceptances.
+
+## Desired State
+
+One invitation code opens one or more circles. `circle_id` stays the first circle, so every existing record and consumer reads as before. A new opti
+
+
+### 2026-10-07 (`stcissue`, Mino) — jgwill/medicine-wheel#158
+
+- One code for several circles. Recommended checking the issuer against every circle the code names, not only the first.
+
+## issue #159 - An agent's working session has a place in the ontology, beside the agent that holds it
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-12T15:13:54Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/159
+
+### Current Reality
+<!-- miadi-seat:mino-261012a-fork1-mw-sessions -->
+## Context
+
+`agent` became a NodeType in 0.17.0 (jgwill/medicine-wheel#152): a being that holds a seat through software. What that being does in time has no term. An agent works in **sessions**: one conversation, identified by a session id that survives a resume and a rename. A fork starts a new session with a parent. The capture under `_sessiondata/<session id>/` holds each session's hook lines and its binding line (terminal, name history, team
+
+
+## issue #160 - Closing a session is a person's decision, and the session's record stays
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-12T15:13:55Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/160
+
+### Current Reality
+<!-- miadi-seat:mino-261012a-fork1-mw-sessions -->
+## Context
+
+On 2026-10-12, at the facilitator's word, six agent sessions were closed one at a time (miadi-chronicle://554). Each closing had five steps:
+
+1. The agent ends itself (`/exit`).
+2. The session end is checked on its binding line.
+3. The empty terminal is removed.
+4. The person's decision goes into the session's record.
+5. The record stays.
+
+Before that, seven reader agents proposed an ending for each of 58 sessions: close, finish then
+
+
+## issue #161 - Agent-made work links its question, trace, evidence, criteria and a person's judgment, mapped to W3C PROV
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-12T15:13:57Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/161
+
+### Current Reality
+<!-- miadi-seat:mino-261012a-fork1-mw-sessions -->
+## Context
+
+Miadi Factory states its intention as making agent-made work inspectable and revisitable. It does this by connecting five things: the originating question, the session trace, the interface evidence, explicit criteria, and a person's judgment. The session inventory (miadi-chronicle://554) has a `links` field for each of the five. Measured on its 58 records on 2026-10-12:
+
+| link | records with it |
+|------|-----------------|
+| questio
+
+
+## issue #159 - An agent's working session has a place in the ontology, beside the agent that holds it
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-12T15:14:07Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/159
+
+### Current Reality
+<!-- miadi-seat:mino-261012a-fork1-mw-sessions -->
+## Context
+
+`agent` became a NodeType in 0.17.0 (jgwill/medicine-wheel#152): a being that holds a seat through software. What that being does in time has no term. An agent works in **sessions**: one conversation, identified by a session id that survives a resume and a rename. A fork starts a new session with a parent. The capture under `_sessiondata/<session id>/` holds each session's hook lines and its binding line (terminal, name history, team
+
+
+## issue #160 - Closing a session is a person's decision, and the session's record stays
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-12T15:14:10Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/160
+
+### Current Reality
+<!-- miadi-seat:mino-261012a-fork1-mw-sessions -->
+## Context
+
+On 2026-10-12, at the facilitator's word, six agent sessions were closed one at a time (miadi-chronicle://554). Each closing had five steps:
+
+1. The agent ends itself (`/exit`).
+2. The session end is checked on its binding line.
+3. The empty terminal is removed.
+4. The person's decision goes into the session's record.
+5. The record stays.
+
+Before that, seven reader agents proposed an ending for each of 58 sessions: close, finish then
+
+
+## issue #161 - Agent-made work links its question, trace, evidence, criteria and a person's judgment, mapped to W3C PROV
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-12T15:14:12Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/161
+
+### Current Reality
+<!-- miadi-seat:mino-261012a-fork1-mw-sessions -->
+## Context
+
+Miadi Factory states its intention as making agent-made work inspectable and revisitable. It does this by connecting five things: the originating question, the session trace, the interface evidence, explicit criteria, and a person's judgment. The session inventory (miadi-chronicle://554) has a `links` field for each of the five. Measured on its 58 records on 2026-10-12:
+
+| link | records with it |
+|------|-----------------|
+| questio
+
+
+### 2026-10-12 15:30 UTC · `stcissue` triage of jgwill/medicine-wheel#159 (Mino, `stcbot`)
+
+- **Verdict:** enhancement · **chart:** chart_1791818032337 · **execute:** self
+- **Matter:** the inventory measured session relations (held by, forked from, served) that the wheel cannot hold, because a session is not a node.
+- **Move:** comment https://github.com/jgwill/medicine-wheel/issues/159#issuecomment-6127171822. Recommends `knowledge` + `metadata.kind: 'agent-session'` (a PROV activity, not the agent being), `held-by`, `forked-from` and `served` with `grounding`, and fixture `dddf5ee3`. Two traps: `SessionBinding.agent` is the engine, and a declared episode is not evidence for `served`.
+- **Owner:** the names wait on the owner. The types-only PR belongs to `mino-261012a-fork1-mw-sessions`, which opened the issue.
+- **Key:** `stc:triage:jgwill-medicine-wheel:stcissue:159`
+
+### 2026-10-12 15:30 UTC · `stcissue` triage of jgwill/medicine-wheel#160 (Mino, `stcbot`)
+
+- **Verdict:** enhancement · **chart:** chart_1791818033310 · **execute:** self
+- **Matter:** six session endings a person decided on 2026-10-12 live only in inventory JSON. The wheel records neither the proposed nor the decided ending.
+- **Move:** comment https://github.com/jgwill/medicine-wheel/issues/160#issuecomment-6127172207. The step-by-step comparison with the ceremony closing: the wheel records steps 2, 4 and 5. Recommends its own closing record, proposals as a list, the `disposition` name kept, one session per closing with a `human` decider. Found that `team-fit` names `c` "record only" while the issue reads it as "keep open" (38 of 58 sessions).
+- **Owner:** the ending names belong to the owner and the community.
+- **Key:** `stc:triage:jgwill-medicine-wheel:stcissue:160`
+
+### 2026-10-12 15:40 UTC · `stcissue` triage of jgwill/medicine-wheel#161 (Mino, `stcbot`)
+
+- **Verdict:** enhancement · **chart:** chart_1791818034915 · **execute:** self
+- **Matter:** the factory's five links (question, trace, evidence, criteria, judgment) have no typed home on the wheel, and the inventory records leave most of them empty.
+- **Move:** comment https://github.com/jgwill/medicine-wheel/issues/161#issuecomment-6127223635. Maps question → `prov:wasStartedBy`, trace → `prov:generated`, evidence → `prov:generated` or `prov:used`. Criteria have no PROV term (`prov:Plan` rejected). Judgment is an entity `wasAttributedTo` the person (`oa:assessing`), kept as its own record that points to the turn. Recommends a `WorkLinks` sibling type with optional `links` on `BeatOrigin`.
+- **Found:** the six decided endings carry no judgment link, and no PROV term is used anywhere in the repo yet (`PROV_NS` is declared only).
+- **Key:** `stc:triage:jgwill-medicine-wheel:stcissue:161`
+
+## issue #162 - One lineage web in graph-viz, reused by the wheel and Miadi, with view options and a search that keeps relatives
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-13T22:00:38Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/162
+
+### Current Reality
+## Context
+
+The lineage web (episodes on a time spine, one band per direction, relations drawn as arcs) exists twice, and neither copy can be reused:
+
+- **Miadi** `app/chronicle/components/LineageWeb.tsx`: colours by direction, thread chains, an inspector chip. Every arc rises a fixed 40px above its higher end, so the arcs between East episodes stack into one band along the top edge of the canvas. When a search narrows the chronicle, the matching episodes are drawn without the episodes they rela
+
+
+## issue #162 - One lineage web in graph-viz, reused by the wheel and Miadi, with view options and a search that keeps relatives
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-14T00:26:08Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/162
+
+### Current Reality
+## Context
+
+The lineage web (episodes on a time spine, one band per direction, relations drawn as arcs) exists twice, and neither copy can be reused:
+
+- **Miadi** `app/chronicle/components/LineageWeb.tsx`: colours by direction, thread chains, an inspector chip. Every arc rises a fixed 40px above its higher end, so the arcs between East episodes stack into one band along the top edge of the canvas. When a search narrows the chronicle, the matching episodes are drawn without the episodes they rela
+
+
+## issue #163 - The lineage web is moved and read by hand: drag along time, zoom, a relation's words, keys
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-14T02:43:33Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/163
+
+### Current Reality
+## Context
+
+`LineageWeb` (`@medicine-wheel/graph-viz` 0.17.10, jgwill/medicine-wheel#162) draws the chronicle in Miadi's `/chronicle`, Miadi's episode rooms, the wheel's Episodes tab and the wheel's episode pages. Its only interactions are hovering a dot, tapping a dot, and the options bar. Measured on the 200-episode chronicle at :3335:
+
+- The canvas is 3,904px wide in a box about 1,100px wide. Moving along time takes the scrollbar or shift+wheel. Pressing on the empty canvas does nothing, and 
+
+
+## issue #163 - The lineage web is moved and read by hand: drag along time, zoom, a relation's words, keys
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-14T03:29:37Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/163
+
+### Current Reality
+## Context
+
+`LineageWeb` (`@medicine-wheel/graph-viz` 0.17.10, jgwill/medicine-wheel#162) draws the chronicle in Miadi's `/chronicle`, Miadi's episode rooms, the wheel's Episodes tab and the wheel's episode pages. Its only interactions are hovering a dot, tapping a dot, and the options bar. Measured on the 200-episode chronicle at :3335:
+
+- The canvas is 3,904px wide in a box about 1,100px wide. Moving along time takes the scrollbar or shift+wheel. Pressing on the empty canvas does nothing, and 
+
+
+## issue #164 - The wheel writes what happened to an event log beside its store, ready for the broker Episode 548 chooses
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-14T22:57:26Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/164
+
+### Current Reality
+## Context
+
+- When the wheel commits a write, it keeps no record that the write happened. There is no emitter, outbox, `events.jsonl` or outbound webhook in `app/`, `lib/`, `src/*/src`, `mcp/src` or `cli/`.
+- **Saving a narrative cycle.** `POST /api/narrative/cycles` calls `createCycle` / `upsertCycle` (`lib/store.ts:237`, `:264`), which writes `cycles.jsonl`. That write is an upsert by id with no history, and a cycle carries only `start_date`. Opening a cycle and amending it leave the same trac
+
+
+## issue #164 - The wheel writes what happened to an event log beside its store, ready for the broker Episode 548 chooses
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-15T02:57:24Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/164
+
+### Current Reality
+## Context
+
+- When the wheel commits a write, it keeps no record that the write happened. There is no emitter, outbox, `events.jsonl` or outbound webhook in `app/`, `lib/`, `src/*/src`, `mcp/src` or `cli/`.
+- **Saving a narrative cycle.** `POST /api/narrative/cycles` calls `createCycle` / `upsertCycle` (`lib/store.ts:237`, `:264`), which writes `cycles.jsonl`. That write is an upsert by id with no history, and a cycle carries only `start_date`. Opening a cycle and amending it leave the same trac
+
+
+## issue #165 - The wheel's events reach a broker through adapters that say what they guarantee
+
+- **Repository**: jgwill/medicine-wheel
+- **Surface**: issue
+- **State**: open
+- **Category**: technical
+- **Logged**: 2026-10-17T02:33:57Z
+- **Link**: https://github.com/jgwill/medicine-wheel/issues/165
+
+### Current Reality
+## Context
+
+- The wheel writes every committed write to `events.jsonl`. As of 2026-10-17 on ilex :8040 it holds 137 events, including nine `chronicle.lineage.made`. They travel by git to gaia (`mw-data`), and `mw-events follow` reads them anywhere (jgwill/medicine-wheel#164).
+- `@medicine-wheel/events/publish` has one port, `Publisher`, and one adapter, `httpPublisher`. Each publisher keeps its own cursor and receipts. The wheel configures a single one, through `MW_EVENTS_PUBLISH_URL`.
+- Bug: `h
+
