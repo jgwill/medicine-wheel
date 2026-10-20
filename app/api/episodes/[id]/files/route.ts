@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { EpisodePathError } from "@miadi/episode-vessel";
+import { EpisodePathError } from "@medicine-wheel/episode-vessel";
 import { episodeFolderOf, openEpisodeRoom, readEpisodeRoomText } from "@/lib/episode-files";
 
 /**
@@ -7,9 +7,10 @@ import { episodeFolderOf, openEpisodeRoom, readEpisodeRoomText } from "@/lib/epi
  *
  *   GET /api/episodes/<chronicle:folder>/files              the room's listing
  *   GET /api/episodes/<chronicle:folder>/files?path=<file>  one text file, whole
+ *   GET /api/episodes/<chronicle:folder>/files/<file>       one file, by kind (`[...path]/route.ts`)
  *
  * The rules — containment, the room, the audience — are `lib/episode-files.ts`
- * and, beneath it, `@miadi/episode-vessel`. This file only says them in HTTP.
+ * and, beneath it, `@medicine-wheel/episode-vessel`. This file only says them in HTTP.
  * Every answer carries a `state`, so a page can tell "this host has no
  * chronicle" from "this episode is not on this host" from "this episode is for
  * the community" — three empty lists that mean three different things.

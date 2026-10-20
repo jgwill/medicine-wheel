@@ -8,10 +8,12 @@
  * Episodes tab could show an episode's name and nothing it contains.
  *
  * The rules for what an episode folder holds and what may be read from it are
- * not written here. They live in `@miadi/episode-vessel`, published from
- * jgwill/Miadi and used by every other surface that opens a vessel — the Miadi
- * room and its file routes, the terminal browser, the phone. A second copy of
- * them here is how two surfaces come to disagree about what is private.
+ * not written here. They live in `@medicine-wheel/episode-vessel`, published
+ * from this repo's `src/episode-vessel`, and every other surface that opens a
+ * vessel takes them from there: the Miadi room through `@miadi/episode-vessel`,
+ * which re-exports it, the terminal browser, the phone. A second copy of them
+ * here is how two surfaces come to disagree about what is private
+ * (jgwill/medicine-wheel#166).
  *
  * Two of those rules decide what the wheel shows. Both are applied as for a
  * visitor, because the wheel has no signed-in reader:
@@ -38,7 +40,7 @@ import {
   resolveEpisodeFile,
   type EpisodeFile,
   type FileRevision,
-} from "@miadi/episode-vessel";
+} from "@medicine-wheel/episode-vessel";
 
 export type { EpisodeFile };
 
@@ -114,6 +116,19 @@ function gate(folder: string, root: string | null): EpisodeRoomClosed | null {
     return { state: "community", episode_path: folder };
   }
   return null;
+}
+
+/**
+ * Whether one episode's room opens on this host, and from which chronicle root.
+ * The gate a listing and a read pass through, for a route that hands the read
+ * itself to `@medicine-wheel/episode-vessel/http`.
+ */
+export function openEpisodeGate(
+  folder: string,
+  options: EpisodeRootOptions = {},
+): { state: "open"; root: string } | EpisodeRoomClosed {
+  const root = rootOf(options);
+  return gate(folder, root) ?? { state: "open", root: root! };
 }
 
 /** The files of one episode's room: everything the vessel lists except what is outside the room. */

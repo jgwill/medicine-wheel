@@ -6,7 +6,7 @@
  *
  * What this is, from the node itself, with the episodes before and after it in
  * the chronicle. What it holds, from its folder — read-only, through the rules
- * `@miadi/episode-vessel` states for every surface that opens one (see
+ * `@medicine-wheel/episode-vessel` states for every surface that opens one (see
  * `components/episode-files-panel.tsx`). What was said and gathered for it —
  * ceremonies, diary, inquiry weaves, plan perspectives, captures — from routes
  * that filtered by episode long before any page asked them

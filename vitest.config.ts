@@ -24,11 +24,19 @@ export default defineConfig({
   // Vitest has no Next in front of it and cannot parse a preserved `.tsx`, so a
   // test that renders a component fails on its first `<`. Tests transform JSX
   // with the automatic runtime; the Next build is unchanged. Added with
-  // tests/episode-file-tree.test.ts, the first test to render a component.
+  // tests/episode-file-tree.test.ts, the first test to render a component (that
+  // test went into `@medicine-wheel/episode-ui` with the tree, #166).
   // Vite 8 transforms with oxc, not esbuild.
   oxc: { jsx: { runtime: 'automatic' } },
   test: {
-    include: ['mcp/tests/**/*.test.ts', 'tests/**/*.test.ts'],
+    include: [
+      'mcp/tests/**/*.test.ts',
+      'tests/**/*.test.ts',
+      // The episode packages keep their tests beside them, against their built `dist/`,
+      // as they had in jgwill/Miadi before they moved here (#166).
+      'src/episode-vessel/test/**/*.test.mjs',
+      'src/episode-ui/test/**/*.test.mjs',
+    ],
     testTimeout: 15000,
     // The MCP store writes over HTTP whenever MW_API_URL is set (mcp/src/store.ts).
     // A shell that exports it for daily work turned `npx vitest run` into writes

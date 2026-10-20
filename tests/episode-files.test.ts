@@ -15,10 +15,11 @@
  *  4. **Three empties are told apart** — no chronicle on this host, an episode
  *     not on this host, and an open room with files are different answers.
  *
- * The rules themselves are `@miadi/episode-vessel`'s; these tests prove the
+ * The rules themselves are `@medicine-wheel/episode-vessel`'s; these tests prove the
  * wheel applies them, not that the package is right.
  *
  * @see app/api/episodes/[id]/files/route.ts
+ * @see app/api/episodes/[id]/files/[...path]/route.ts
  * @see lib/episode-files.ts
  */
 
@@ -27,6 +28,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { GET } from "../app/api/episodes/[id]/files/route";
+import { GET as GET_FILE } from "../app/api/episodes/[id]/files/[...path]/route";
 
 const PUBLIC_EPISODE = "2026-09-17-episode-349-a-circle-its-people-can-enter";
 const COMMUNITY_EPISODE = "2026-09-18-episode-350-held-for-the-community";
@@ -126,9 +128,72 @@ describe("the room", () => {
   });
 
   it("refuses a ceremony's notes reached through a linked directory", async () => {
+    // Since `@medicine-wheel/episode-vessel` (from `@miadi/episode-vessel` 0.4.1,
+    // jgwill/Miadi#767) a path through a linked folder is refused as a path,
+    // before the room is asked: 400, not the 403 the room would give.
     const res = await get(`chronicle:${PUBLIC_EPISODE}`, "circle/c63c657a/notes.md");
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(400);
+    expect(res.body.state).toBe("refused");
     expect(res.text).not.toContain("participants");
+  });
+});
+
+describe("one file, by kind (the address the workspace reads from)", () => {
+  async function file(id: string, relative: string) {
+    const segments = relative.split("/").map(encodeURIComponent);
+    const url = `http://localhost/api/episodes/${encodeURIComponent(id)}/files/${segments.join("/")}`;
+    const res = await GET_FILE(new Request(url), {
+      params: Promise.resolve({ id: encodeURIComponent(id), path: segments }),
+    });
+    return { status: res.status, type: res.headers.get("content-type") ?? "", text: await res.text() };
+  }
+
+  it("serves a text file as JSON with its revision", async () => {
+    const res = await file(`chronicle:${PUBLIC_EPISODE}`, "review-claude-1.md");
+    expect(res.status).toBe(200);
+    const body = JSON.parse(res.text);
+    expect(body.content).toBe("# Review\n\nThe pages hold.\n");
+    expect(body.revision.sha256).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("serves a nested file", async () => {
+    const res = await file(`chronicle:${PUBLIC_EPISODE}`, "held/issue-draft.md");
+    expect(res.status).toBe(200);
+    expect(JSON.parse(res.text).content).toBe("draft\n");
+  });
+
+  it("serves an image inline", async () => {
+    write(`${PUBLIC_EPISODE}/images/cover.png`, "\x89PNG\r\n\x1a\n");
+    const res = await file(`chronicle:${PUBLIC_EPISODE}`, "images/cover.png");
+    expect(res.status).toBe(200);
+    expect(res.type).toBe("image/png");
+  });
+
+  it("refuses ceremonies/ and captures/, and a linked folder into them", async () => {
+    for (const relative of ["ceremonies/c63c657a/notes.md", "captures/260920/transcript.txt", "circle/c63c657a/notes.md"]) {
+      const res = await file(`chronicle:${PUBLIC_EPISODE}`, relative);
+      expect(res.status, relative).toBeGreaterThanOrEqual(400);
+      expect(res.text, relative).not.toContain("participants");
+      expect(res.text, relative).not.toContain("a recording's words");
+    }
+  });
+
+  it("keeps a community episode closed", async () => {
+    const res = await file(`chronicle:${COMMUNITY_EPISODE}`, "notes.md");
+    expect(res.status).toBe(403);
+    expect(JSON.parse(res.text).state).toBe("community");
+    expect(res.text).not.toContain(COMMUNITY_SECRET);
+  });
+
+  it("refuses a path that climbs out of the folder", async () => {
+    const res = await file(`chronicle:${PUBLIC_EPISODE}`, `../${COMMUNITY_EPISODE}/notes.md`);
+    expect(res.status).toBe(400);
+    expect(res.text).not.toContain(COMMUNITY_SECRET);
+  });
+
+  it("has no PUT", async () => {
+    const route = await import("../app/api/episodes/[id]/files/[...path]/route");
+    expect("PUT" in route).toBe(false);
   });
 });
 
