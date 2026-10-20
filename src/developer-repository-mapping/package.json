@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/developer-repository-mapping",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "description": "Repository mapping for the Medicine Wheel Developer Suite — owner hubs of JSONL rows in <owner>/<owner>/.miadi/repository-mapping/, a lifecycle state machine checked against git, a meta mapping that reads other hubs without copying them, the projection into wheel nodes and edges, and the mw-repomap CLI with a small web page",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -54,8 +54,8 @@
     "node": ">=19"
   },
   "dependencies": {
-    "@medicine-wheel/capabilities": "^0.23.0",
-    "@medicine-wheel/ontology-core": "^0.23.0",
+    "@medicine-wheel/capabilities": "^0.24.0",
+    "@medicine-wheel/ontology-core": "^0.24.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
