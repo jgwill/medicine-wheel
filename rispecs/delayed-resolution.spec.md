@@ -2,9 +2,9 @@
 
 > An action step on a structural tension chart can record that someone strategically chose to delay its resolution, list such delays by the date resolution is wanted, link the agent session to rehydrate, and end the delay. The chart tools also gain read-back, per-step due dates, and the chart edits coaia-narrative already had.
 
-**Version:** 0.22.0 (`@medicine-wheel/mcp` 4.22.0)
+**Version:** 0.23.0 (`@medicine-wheel/mcp` 4.23.0). Delayed resolution, read-back, step due dates and chart edits landed in 0.22.0; chart-level links and the `/api/charts` field list in 0.23.0.
 **Status:** Implemented
-**Package boundary:** `@medicine-wheel/mcp` (tools, HTTP store), `@medicine-wheel/ontology-core` (types and schemas), `@medicine-wheel/app` (`mw chart` CLI)
+**Package boundary:** `@medicine-wheel/mcp` (tools, HTTP store), `@medicine-wheel/ontology-core` (types and schemas), `@medicine-wheel/app` (`/api/charts`, `mw chart` CLI)
 **Design source:** Miadi Chronicle Episode 297, `2026-07-24-episode-297-mino-bimaadizi-daa-stc-bot-ceremony/delayed-resolution-design-261019.md` (the contract shared with `coaia-narrative` and `coaiajs`), and `delayed-resolution-parity-261019.md` in the same vessel (the parity map this work follows).
 
 ---
@@ -111,6 +111,13 @@ A delay is **open** while `ended_at` is absent. An open delay is **owed** when `
 - Step ids are one past the highest `<chart_id>_action_<n>` index in use, so an id is never reused after a removal.
 - Every chart save is awaited, so a failed HTTP write is reported as `status: "error"`.
 
+### Chart-level links (0.23.0)
+
+- `link_chart_to_github_issue(chart_id, github_issue)` accepts only the full `owner/repo#number` (a bare `#number` is refused as `github_issue_invalid`) and stores `github_issue: { ref, owner, repo, number, url }` on the chart. It reads the chart back after saving and answers `status: "not_persisted"` when the store did not keep the field, which is what a wheel app older than 0.23.0 does.
+- `telescope_action_step` writes the sub-chart's backlink: `parent_chart_id`, `parent_action_step_id`, and `level` (the parent's level plus one; a top-level chart is 0).
+- `list_structural_tension_charts` shows `github_issue` (as its `ref`), `status`, and the backlink when present.
+- `/api/charts` POST keeps `github_issue`, `status` (`active`, `paused`, `resolved`, `archived` in the types), `parent_chart_id`, `parent_action_step_id`, `level` and `due_date_history` in addition to its earlier field list. Other unknown chart fields are still dropped. This ships in `@medicine-wheel/app`; a running wheel keeps its old route until its app is upgraded and restarted.
+
 ### HTTP store
 
 `HttpStore.getAllCharts` keeps one copy per chart id: the latest `updated_at`, and on a tie the copy that comes later in the response (the route's sort is stable, so a later line was written later). The direction filter applies after de-duplication. `getChart` reads through it. The route itself is unchanged and still appends.
@@ -124,7 +131,8 @@ A delay is **open** while `ended_at` is absent. An open delay is **owed** when `
 ## Exportation
 
 - Tests: `mcp/tests/structural-tension.test.ts` covers the three delay operations, rule 4b, read-back, due dates, the parity operations, the awaited saves, and HTTP de-duplication against an append-only stand-in for `/api/charts`.
-- Out of scope for 0.22.0: the clock that steers a session before `resolve_by` (who runs it is undecided); writing these fields from the session inventory; a `/api/charts` that updates in place; chart-level fields that the route drops in HTTP mode. `due_date_history` is one of them: it persists in JSONL mode and is dropped by the deployed route until the route's field list accepts it.
+- `tests/charts-route.test.ts` covers the `/api/charts` field list.
+- Out of scope: the clock that steers a session before `resolve_by` (who runs it is undecided); writing these fields from the session inventory; a `/api/charts` that updates in place instead of appending; a tool to set a chart's `status`; redeploying any running wheel. Until the wheel serving `/api/charts` runs app 0.23.0, HTTP mode drops `github_issue`, `status`, the sub-chart backlink and `due_date_history`; step-level fields, including every delay field, persist on any version of the route.
 
 ## Implementation Evidence Appendix
 
@@ -134,3 +142,4 @@ A delay is **open** while `ended_at` is absent. An open delay is **owed** when `
 | de-duplication | `mcp/src/http-store.ts` `getAllCharts` |
 | types and schemas | `src/ontology-core/src/types.ts`, `src/ontology-core/src/schemas.ts` |
 | CLI | `cli/mw.ts` `cmdChart` |
+| chart field list | `app/api/charts/route.ts` POST |

@@ -312,6 +312,15 @@ export interface StructuralTensionChart {
   direction?: DirectionName;
   /** When the desired outcome is wanted (ISO). */
   due_date?: string;
+  /** Each move of due_date, oldest first. */
+  due_date_history?: Array<{ from: string | null; to: string; at: string }>;
+  /** The GitHub issue the chart is linked to, always as the full owner/repo#number. */
+  github_issue?: { ref: string; owner: string; repo: string; number: number; url: string };
+  status?: 'active' | 'paused' | 'resolved' | 'archived';
+  /** On a sub-chart: the chart and step it telescopes from, and its depth (top level is 0). */
+  parent_chart_id?: string;
+  parent_action_step_id?: string;
+  level?: number;
   created_at: string;
   updated_at: string;
 }

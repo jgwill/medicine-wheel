@@ -63,6 +63,16 @@ export async function POST(request: Request) {
       ceremonies_linked: body.ceremonies_linked ?? [],
       wilson_alignment: body.wilson_alignment,
       cycle_id: body.cycle_id,
+      // Chart-level fields the structural tension tools write since 0.23.0
+      // (rispecs/delayed-resolution.spec.md). Before, every field outside the
+      // list above was dropped here, so in HTTP mode an issue link, a status or
+      // a sub-chart's backlink to its parent never reached the store.
+      ...(body.github_issue !== undefined ? { github_issue: body.github_issue } : {}),
+      ...(body.status !== undefined ? { status: body.status } : {}),
+      ...(body.parent_chart_id !== undefined ? { parent_chart_id: body.parent_chart_id } : {}),
+      ...(body.parent_action_step_id !== undefined ? { parent_action_step_id: body.parent_action_step_id } : {}),
+      ...(body.level !== undefined ? { level: body.level } : {}),
+      ...(body.due_date_history !== undefined ? { due_date_history: body.due_date_history } : {}),
     };
 
     appendJsonl(getChartsFile(), chart);

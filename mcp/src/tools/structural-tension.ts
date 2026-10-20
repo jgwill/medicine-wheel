@@ -69,6 +69,15 @@ interface DueDateChange {
   at: string;
 }
 
+/** A GitHub issue a chart is linked to, always as the full owner/repo#number. */
+interface GithubIssueRef {
+  ref: string;
+  owner: string;
+  repo: string;
+  number: number;
+  url: string;
+}
+
 interface Chart {
   id: string;
   desired_outcome: string;
@@ -77,6 +86,12 @@ interface Chart {
   action_steps: ActionStep[];
   due_date?: string;
   due_date_history?: DueDateChange[];
+  github_issue?: GithubIssueRef;
+  status?: 'active' | 'paused' | 'resolved' | 'archived';
+  /** On a sub-chart: the chart and step it telescopes from, and its depth (top level is 0). */
+  parent_chart_id?: string;
+  parent_action_step_id?: string;
+  level?: number;
   created_at: string;
   updated_at: string;
   phase: string;
@@ -198,6 +213,18 @@ function settlePhase(chart: Chart): { completed: number; total: number } {
 
 function appendReality(chart: Chart, line: string): void {
   chart.current_reality = chart.current_reality ? `${chart.current_reality}\n${line}` : line;
+}
+
+/**
+ * The full `owner/repo#number` form, or null. A bare `#number` resolves against
+ * whichever repository the reader happens to be in, so it is refused.
+ */
+function parseGithubIssue(spec: unknown): GithubIssueRef | null {
+  if (typeof spec !== 'string') return null;
+  const match = /^([A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+)#(\d+)$/.exec(spec.trim());
+  if (!match) return null;
+  const [, owner, repo, number] = match;
+  return { ref: `${owner}/${repo}#${number}`, owner, repo, number: Number(number), url: `https://github.com/${owner}/${repo}/issues/${number}` };
 }
 
 function shellQuote(value: string): string {
@@ -625,6 +652,9 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
           updated_at: new Date().toISOString(),
           phase: 'germination',
           ceremonies_linked: [] as string[],
+          parent_chart_id: parentChart.id,
+          parent_action_step_id: actionStep.id,
+          level: (typeof parentChart.level === 'number' ? parentChart.level : 0) + 1,
         };
 
         await store.saveChart(subChart);
@@ -638,6 +668,7 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
           sub_chart_id: subChartId,
           parent_chart_id: args.chart_id,
           action_step_id: args.action_step_id,
+          level: subChart.level,
           desired_outcome: actionStep.title,
           sub_action_steps: subActionSteps.length,
           teaching: "Each action step can become its own structural tension chart. The hierarchy maintains tension at every level.",
@@ -1297,6 +1328,9 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
             ...openDelayCounts(c, now),
             due_date: c.due_date,
             updated_at: c.updated_at,
+            ...(c.github_issue ? { github_issue: c.github_issue.ref } : {}),
+            ...(c.status ? { status: c.status } : {}),
+            ...(c.parent_chart_id ? { parent_chart_id: c.parent_chart_id, parent_action_step_id: c.parent_action_step_id, level: c.level } : {}),
             action_steps: c.action_steps.map(s => {
               const delay = isOpen(s.delayed_resolution) ? s.delayed_resolution : undefined;
               return {
@@ -1451,6 +1485,56 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         return { status: "error", message: `Failed to link ceremony: ${errorMsg}` };
+      }
+    },
+  },
+  {
+    name: "link_chart_to_github_issue",
+    description: "Link a structural tension chart to a GitHub issue, given as the full 'owner/repo#number' (a bare '#number' is refused). The chart is read back after saving to confirm the link was kept.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        chart_id: { type: "string", description: "ID of the chart" },
+        github_issue: { type: "string", description: "The issue as owner/repo#number, e.g. jgwill/medicine-wheel#170" },
+      },
+      required: ["chart_id", "github_issue"],
+    },
+    handler: async (args) => {
+      try {
+        const issue = parseGithubIssue(args.github_issue);
+        if (!issue) {
+          return refuse("github_issue_invalid", `Invalid GitHub issue reference: ${JSON.stringify(args.github_issue)}. Use the full path 'owner/repo#number'; a bare '#number' resolves against the wrong repository as soon as the chart is read somewhere else.`);
+        }
+        const chart = await loadChart(args.chart_id);
+        if (!chart) {
+          return { status: "not_found", message: `Chart ${args.chart_id} not found` };
+        }
+        const previous = chart.github_issue ?? null;
+        chart.github_issue = issue;
+        chart.updated_at = new Date().toISOString();
+        await store.saveChart(chart);
+
+        // A wheel whose /api/charts predates 0.23.0 drops chart fields outside
+        // its fixed list. Say so instead of reporting a link that was not kept.
+        const reread = await loadChart(chart.id);
+        if (reread?.github_issue?.ref !== issue.ref) {
+          return {
+            status: "not_persisted",
+            chart_id: chart.id,
+            github_issue: issue,
+            message: "The chart was saved but the store did not keep github_issue. A wheel app older than 0.23.0 drops chart fields outside its fixed list; upgrade the app serving /api/charts.",
+          };
+        }
+
+        return {
+          chart_id: chart.id,
+          github_issue: issue,
+          previous_github_issue: previous,
+          teaching: "A chart linked to its issue can be found from either side; the full owner/repo#number keeps that link true wherever it is read.",
+        };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        return { status: "error", message: `Failed to link chart to GitHub issue: ${errorMsg}` };
       }
     },
   },

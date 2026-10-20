@@ -288,6 +288,18 @@ export const StructuralTensionChartSchema = z.object({
   phase: TensionPhaseSchema,
   direction: DirectionNameSchema.optional(),
   due_date: z.string().optional(),
+  due_date_history: z.array(z.object({ from: z.string().nullable(), to: z.string(), at: z.string() })).optional(),
+  github_issue: z.object({
+    ref: z.string().regex(/^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+#\d+$/),
+    owner: z.string(),
+    repo: z.string(),
+    number: z.number().int().positive(),
+    url: z.string(),
+  }).optional(),
+  status: z.enum(['active', 'paused', 'resolved', 'archived']).optional(),
+  parent_chart_id: z.string().optional(),
+  parent_action_step_id: z.string().optional(),
+  level: z.number().int().min(0).optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });

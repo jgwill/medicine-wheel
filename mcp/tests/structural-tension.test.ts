@@ -433,6 +433,32 @@ describe("chart operations brought to parity", () => {
   });
 });
 
+describe("chart-level links: GitHub issue and sub-chart backlink", () => {
+  it("link_chart_to_github_issue keeps the full owner/repo#number and refuses a bare number", async () => {
+    const chartId = await chartWithSteps();
+    const linked = await call("link_chart_to_github_issue", { chart_id: chartId, github_issue: " jgwill/medicine-wheel#170 " });
+    expect(linked.github_issue).toEqual({
+      ref: "jgwill/medicine-wheel#170", owner: "jgwill", repo: "medicine-wheel", number: 170,
+      url: "https://github.com/jgwill/medicine-wheel/issues/170",
+    });
+    expect((store.getChart(chartId) as any).github_issue.ref).toBe("jgwill/medicine-wheel#170");
+    await expect(call("link_chart_to_github_issue", { chart_id: chartId, github_issue: "#170" }))
+      .resolves.toMatchObject({ status: "refused", refusal: "github_issue_invalid" });
+    const listed = await call("list_structural_tension_charts", {});
+    expect(listed.charts.find((c: any) => c.id === chartId).github_issue).toBe("jgwill/medicine-wheel#170");
+  });
+
+  it("a telescoped sub-chart carries its parent chart, parent step and level", async () => {
+    const chartId = await chartWithSteps(["a"]);
+    const first = await call("telescope_action_step", { chart_id: chartId, action_step_id: `${chartId}_action_0`, new_current_reality: "r", initial_action_steps: ["deeper"] });
+    expect(first.level).toBe(1);
+    vi.setSystemTime(Date.now() + 1);
+    const second = await call("telescope_action_step", { chart_id: first.sub_chart_id, action_step_id: `${first.sub_chart_id}_action_0`, new_current_reality: "r" });
+    const sub = store.getChart(second.sub_chart_id) as any;
+    expect(sub).toMatchObject({ parent_chart_id: first.sub_chart_id, parent_action_step_id: `${first.sub_chart_id}_action_0`, level: 2 });
+  });
+});
+
 // ── Over the HTTP store, as production runs ──────────────────────────────────
 
 /**
@@ -487,6 +513,24 @@ describe("over the HTTP store", () => {
     expect(delays.delays.map((d: any) => d.reason)).toEqual(["r", "r2"]);
     const got = await call("get_chart", { chart_id: chartId });
     expect(got.chart.action_steps.map((s: any) => s.status)).toEqual(["delayed", "delayed"]);
+  });
+
+  it("says not_persisted when a wheel's /api/charts drops github_issue", async () => {
+    const lines: any[] = [];
+    // A route from before 0.23.0: chart fields outside its fixed list are dropped.
+    const KEPT = ["id", "desired_outcome", "current_reality", "direction", "action_steps", "due_date", "created_at", "updated_at", "phase", "ceremonies_linked", "wilson_alignment", "cycle_id"];
+    globalThis.fetch = (async (_input: any, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        const body = JSON.parse(String(init.body));
+        lines.push({ ...Object.fromEntries(KEPT.filter(k => k in body).map(k => [k, body[k]])), updated_at: new Date().toISOString() });
+        return new Response("{}", { status: 201, headers: { "content-type": "application/json" } });
+      }
+      return new Response(JSON.stringify([...lines].reverse()), { status: 200, headers: { "content-type": "application/json" } });
+    }) as typeof fetch;
+    tools = createStructuralTensionTools(new HttpStore("http://mw.test"));
+    const chartId = await chartWithSteps(["a"]);
+    await expect(call("link_chart_to_github_issue", { chart_id: chartId, github_issue: "jgwill/medicine-wheel#170" }))
+      .resolves.toMatchObject({ status: "not_persisted" });
   });
 
   it("reports a failed write from link_ceremony_to_chart and honor_relation_in_action_step instead of success", async () => {
