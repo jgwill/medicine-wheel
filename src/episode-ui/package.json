@@ -1,0 +1,100 @@
+{
+  "name": "@medicine-wheel/episode-ui",
+  "version": "0.25.0",
+  "description": "The episode-vessel files workspace — browse, read, preview markdown, edit in CodeMirror with a full-screen mode and a conflict that never loses the draft — framework-free so a plain page and a React app mount the same one. Plus React components for a ceremony's notes and attachments and the episode shelf. No component holds a URL, a token or a chronicle root.",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "style": "./src/episode-ui.css",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./chronicle-theme": {
+      "types": "./dist/chronicle-theme.d.ts",
+      "import": "./dist/chronicle-theme.js",
+      "default": "./dist/chronicle-theme.js"
+    },
+    "./styles.css": "./src/episode-ui.css",
+    "./package.json": "./package.json",
+    "./browser": "./dist/browser/episode-files.js"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.json && esbuild src/browser.ts --bundle --preserve-symlinks --format=esm --minify --target=es2020 --outfile=dist/browser/episode-files.js",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/lang-yaml": "^6.1.3",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/state": "^6.7.5",
+    "@codemirror/theme-one-dark": "^6.1.3",
+    "@codemirror/view": "^6.43.12",
+    "codemirror": "^6.0.2",
+    "dompurify": "^3.4.15",
+    "marked": "^18.0.13"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@medicine-wheel/episode-vessel": "^0.25.0",
+    "@playwright/test": "1.58.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "react": "^19",
+    "react-dom": "^19",
+    "typescript": "^5.4.0",
+    "esbuild": "^0.28.2"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "medicine-wheel",
+    "chronicle",
+    "episode",
+    "vessel",
+    "react",
+    "headless",
+    "file-browser",
+    "ceremony",
+    "codemirror",
+    "editor"
+  ],
+  "author": "IAIP Collaborative - Shawinigan, QC",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jgwill/medicine-wheel.git",
+    "directory": "src/episode-ui"
+  },
+  "bugs": {
+    "url": "https://github.com/jgwill/medicine-wheel/issues"
+  }
+}

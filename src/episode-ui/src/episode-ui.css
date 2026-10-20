@@ -1,0 +1,889 @@
+/**
+ * One stylesheet, plain class names, every colour a custom property the host
+ * sets through `themeVars(theme)`. A surface that wants a different look
+ * overrides the properties or the classes; nothing here is !important and
+ * nothing assumes a framework.
+ *
+ * Touch targets are 44px because the first surface this runs on is a phone.
+ * That is the platform convention (Apple HIG 44, Material 48), not a WCAG
+ * floor — WCAG 2.2 SC 2.5.8 is 24px at AA, and 44px is SC 2.5.5 at AAA. The
+ * device lane measured gmtermux's 34px mode switcher as the hardest control to
+ * hit on a real phone (miadisabelle/gmtermux#86), so both surfaces use 44.
+ */
+
+.episode-files,
+.ceremony-note-editor,
+.ceremony-attachments,
+.episode-shelf {
+  color: var(--episode-text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ---------- shared list and filter ---------- */
+
+.episode-shelf-count {
+  font-family: var(--episode-mono);
+  font-size: 11px;
+  color: var(--episode-muted);
+}
+
+.episode-shelf-filter {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: var(--episode-bg);
+  color: var(--episode-text);
+  border: 1px solid var(--episode-border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.episode-shelf-list,
+.ceremony-attachments-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.episode-shelf-entry:hover {
+  background: var(--episode-card);
+  border-color: var(--episode-border);
+}
+
+.ceremony-attachment-meta {
+  flex: none;
+  font-family: var(--episode-mono);
+  font-size: 10.5px;
+  color: var(--episode-muted);
+}
+
+.ceremony-attachment-detach {
+  min-height: 44px;
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--episode-text-dim);
+  border: 1px solid var(--episode-border);
+  border-radius: 999px;
+  font-family: var(--episode-mono);
+  font-size: 10.5px;
+  cursor: pointer;
+}
+
+.ceremony-attachments-empty {
+  margin: 6px 0 0;
+  color: var(--episode-muted);
+  font-size: 12px;
+}
+
+/* ---------- ceremony note field ---------- */
+
+.ceremony-note-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.ceremony-note-field {
+  width: 100%;
+  min-height: 220px;
+  padding: 10px;
+  background: var(--episode-bg);
+  color: var(--episode-text);
+  border: 1px solid var(--episode-border);
+  border-radius: 8px;
+  font-family: var(--episode-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.ceremony-note-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.ceremony-note-actions button {
+  min-height: 44px;
+  padding: 6px 14px;
+  background: var(--episode-accent);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ceremony-note-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---------- ceremony ---------- */
+
+.ceremony-note-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--episode-text-dim);
+}
+
+.ceremony-note-state {
+  font-family: var(--episode-mono);
+  font-size: 10.5px;
+  color: var(--episode-muted);
+}
+
+.ceremony-note-state.is-saved {
+  color: var(--episode-success);
+}
+
+.ceremony-note-message.is-error {
+  color: var(--episode-warning);
+}
+
+.ceremony-attachments {
+  margin-top: 10px;
+}
+
+.ceremony-attachments-title {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--episode-muted);
+  margin-bottom: 5px;
+}
+
+.ceremony-attachment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ceremony-attachment-open {
+  min-height: 44px;
+  padding: 2px 0;
+  background: none;
+  border: none;
+  color: var(--episode-accent);
+  font-family: var(--episode-mono);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.ceremony-attachment-open:disabled {
+  color: var(--episode-text-dim);
+  cursor: default;
+}
+
+.ceremony-attachment-note {
+  width: 100%;
+  color: var(--episode-text-dim);
+  font-size: 12px;
+}
+
+/* ---------- shelf ---------- */
+
+.episode-shelf-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  background: transparent;
+  color: inherit;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.episode-shelf-number {
+  flex: none;
+  font-family: var(--episode-mono);
+  font-weight: 700;
+  color: var(--episode-accent);
+}
+
+.episode-shelf-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.episode-shelf-body small {
+  font-family: var(--episode-mono);
+  font-size: 10.5px;
+  color: var(--episode-muted);
+}
+
+.episode-shelf-entry:focus-visible,
+.ceremony-attachment-open:focus-visible,
+.ceremony-note-actions button:focus-visible {
+  outline: 2px solid var(--episode-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- files workspace (mountEpisodeFiles) ---------- */
+
+.episode-files-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.episode-files-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--episode-text-dim);
+}
+
+.episode-files-count {
+  font-family: var(--episode-mono);
+  font-size: 11px;
+  color: var(--episode-muted);
+}
+
+.episode-files-filter {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  background: var(--episode-bg);
+  color: var(--episode-text);
+  border: 1px solid var(--episode-border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.episode-files-body {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 2fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.episode-files-body:has(> .episode-files-viewer[hidden]) {
+  grid-template-columns: 1fr;
+}
+
+/* layout: "single" — the host opened one file; the viewer takes the width. */
+.episode-files.is-single .episode-files-body {
+  grid-template-columns: 1fr;
+}
+
+/* The workspace sits in a phone page and in a narrow room column alike, so
+   it stacks by its own width, not the viewport's. */
+.episode-files {
+  container-type: inline-size;
+}
+
+@container (max-width: 720px) {
+  .episode-files-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.episode-files-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.episode-files-open,
+.episode-files-folder-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 6px 9px;
+  background: transparent;
+  color: inherit;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.episode-files-open:hover:not(:disabled),
+.episode-files-folder-toggle:hover {
+  background: var(--episode-card);
+  border-color: var(--episode-border);
+}
+
+.episode-files-open:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.episode-files-row.is-selected .episode-files-open {
+  background: var(--episode-card);
+  border-color: var(--episode-accent);
+}
+
+.episode-files-row.is-guidance .episode-files-path {
+  color: var(--episode-muted);
+}
+
+.episode-files-icon {
+  flex: none;
+  font-size: 14px;
+}
+
+.episode-files-path {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.episode-files-meta {
+  flex: none;
+  font-family: var(--episode-mono);
+  font-size: 10.5px;
+  color: var(--episode-muted);
+}
+
+/* The tree: a folder is a row that opens its children, which sit one step in
+   behind a guide line, so a file's folder reads from the left edge. */
+.episode-files-folder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.episode-files-folder-toggle {
+  font-weight: 600;
+}
+
+.episode-files-folder-toggle[aria-disabled="true"] {
+  cursor: default;
+}
+
+.episode-files-chevron {
+  flex: none;
+  width: 1ch;
+  color: var(--episode-muted);
+}
+
+.episode-files-folder-name {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.episode-files-children {
+  list-style: none;
+  margin: 0 0 0 17px;
+  padding: 0 0 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 1px solid var(--episode-border);
+}
+
+.episode-files-fold {
+  margin-left: auto;
+  min-height: 36px;
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--episode-text-dim);
+  border: 1px solid var(--episode-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Fold and Add sit together on the right. */
+.episode-files-fold:not([hidden]) ~ .episode-files-add {
+  margin-left: 0;
+}
+
+.episode-files-fold:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.episode-files-empty,
+.episode-files-notice {
+  padding: 8px 9px;
+  font-size: 12px;
+  color: var(--episode-muted);
+}
+
+.episode-files-viewer {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--episode-card);
+  border: 1px solid var(--episode-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.episode-files-viewer.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  height: 100dvh;
+  border: 0;
+  border-radius: 0;
+}
+
+body.episode-files-locked {
+  overflow: hidden;
+}
+
+.episode-files-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 6px 8px 6px 12px;
+  border-bottom: 1px solid var(--episode-border);
+}
+
+.episode-files-name {
+  flex: 1 1 160px;
+  min-width: 0;
+  font-family: var(--episode-mono);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.episode-files-status {
+  font-family: var(--episode-mono);
+  font-size: 11px;
+  color: var(--episode-muted);
+}
+
+.episode-files-status[data-state="dirty"] {
+  color: var(--episode-warning);
+}
+
+.episode-files-status[data-state="saved"] {
+  color: var(--episode-success);
+}
+
+.episode-files-status[data-state="conflict"],
+.episode-files-status[data-state="error"] {
+  color: var(--episode-warning);
+}
+
+.episode-files-tools {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.episode-files-tools button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 12px;
+  background: transparent;
+  color: var(--episode-text-dim);
+  border: 1px solid var(--episode-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.episode-files-tools button[aria-pressed="true"] {
+  color: var(--episode-accent);
+  border-color: var(--episode-accent);
+}
+
+.episode-files-tools .episode-files-save {
+  background: var(--episode-accent);
+  color: #111;
+  border-color: var(--episode-accent);
+  font-weight: 700;
+}
+
+.episode-files-tools .episode-files-save:disabled {
+  background: transparent;
+  color: var(--episode-muted);
+  border-color: var(--episode-border);
+  font-weight: 400;
+  cursor: default;
+}
+
+.episode-files-tools .episode-files-full {
+  font-size: 16px;
+}
+
+.episode-files-message {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--episode-text-dim);
+  border-bottom: 1px solid var(--episode-border);
+}
+
+.episode-files-message[data-tone="warning"] {
+  color: var(--episode-warning);
+}
+
+.episode-files-editor {
+  height: min(65vh, 720px);
+  min-height: 240px;
+}
+
+.episode-files-viewer.is-fullscreen .episode-files-editor,
+.episode-files-viewer.is-fullscreen .episode-files-preview {
+  flex: 1;
+  height: auto;
+  max-height: none;
+  min-height: 0;
+}
+
+.episode-files-preview {
+  max-height: min(65vh, 720px);
+  overflow: auto;
+  padding: 4px 16px 16px;
+  background: var(--episode-bg);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* A host's CSS reset (Tailwind preflight) flattens headings and lists, so the
+   preview carries its own minimal typography. */
+.episode-files-preview h1,
+.episode-files-preview h2,
+.episode-files-preview h3,
+.episode-files-preview h4 {
+  margin: 1.1em 0 0.45em;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.episode-files-preview h1 { font-size: 1.6em; }
+.episode-files-preview h2 { font-size: 1.3em; }
+.episode-files-preview h3 { font-size: 1.12em; }
+
+.episode-files-preview p,
+.episode-files-preview ul,
+.episode-files-preview ol,
+.episode-files-preview blockquote,
+.episode-files-preview table {
+  margin: 0 0 0.8em;
+}
+
+.episode-files-preview ul,
+.episode-files-preview ol {
+  padding-left: 1.4em;
+}
+
+.episode-files-preview ul { list-style: disc; }
+.episode-files-preview ol { list-style: decimal; }
+
+.episode-files-preview blockquote {
+  padding-left: 0.9em;
+  border-left: 3px solid var(--episode-border);
+  color: var(--episode-text-dim);
+}
+
+.episode-files-preview code {
+  font-family: var(--episode-mono);
+  font-size: 0.92em;
+}
+
+.episode-files-preview th,
+.episode-files-preview td {
+  padding: 4px 8px;
+  border: 1px solid var(--episode-border);
+}
+
+.episode-files-preview hr {
+  border: 0;
+  border-top: 1px solid var(--episode-border);
+}
+
+.episode-files-preview pre {
+  overflow-x: auto;
+  padding: 10px;
+  background: var(--episode-card);
+  border-radius: 6px;
+}
+
+.episode-files-preview a {
+  color: var(--episode-accent);
+}
+
+.episode-files-preview img {
+  max-width: 100%;
+}
+
+.episode-files-media {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+
+.episode-files-media audio,
+.episode-files-media video {
+  width: 100%;
+}
+
+.episode-files-download {
+  color: var(--episode-accent);
+}
+
+.episode-files-open:focus-visible,
+.episode-files-folder-toggle:focus-visible,
+.episode-files-fold:focus-visible,
+.episode-files-tools button:focus-visible,
+.episode-files-filter:focus-visible {
+  outline: 2px solid var(--episode-accent);
+  outline-offset: 2px;
+}
+
+.episode-files [hidden] {
+  display: none;
+}
+
+.episode-files-add {
+  min-height: 36px;
+  margin-left: auto;
+  padding: 4px 12px;
+  background: transparent;
+  color: var(--episode-accent);
+  border: 1px solid var(--episode-accent);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.episode-files-add:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.episode-files-add:focus-visible {
+  outline: 2px solid var(--episode-accent);
+  outline-offset: 2px;
+}
+
+.episode-files-add-status {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--episode-text-dim);
+  overflow-wrap: anywhere;
+}
+
+.episode-files-add-status[data-tone="warning"] {
+  color: var(--episode-warning);
+}
+
+.episode-files.is-dropping {
+  outline: 2px dashed var(--episode-accent);
+  outline-offset: 4px;
+}
+
+.episode-files-media .episode-files-image {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 6px;
+  background: var(--episode-bg);
+}
+
+.episode-files-viewer.is-fullscreen .episode-files-image {
+  max-height: calc(100vh - 120px);
+}
+
+.episode-files-figure {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.episode-files-record {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  font-size: 12.5px;
+  color: var(--episode-text-dim);
+}
+
+.episode-files-caption {
+  color: var(--episode-text);
+  font-weight: 600;
+}
+
+.episode-files-role {
+  font-family: var(--episode-mono);
+  font-size: 11px;
+  border: 1px solid var(--episode-border);
+  border-radius: 999px;
+  padding: 0 8px;
+}
+
+.episode-files-credit {
+  flex-basis: 100%;
+  font-size: 11.5px;
+  color: var(--episode-muted);
+}
+
+.episode-files-record-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.episode-files-record-actions button,
+.episode-files-describe-actions button {
+  min-height: 36px;
+  padding: 4px 12px;
+  background: transparent;
+  color: var(--episode-text-dim);
+  border: 1px solid var(--episode-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.episode-files-describe-form {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--episode-border);
+  border-radius: 8px;
+  background: var(--episode-bg);
+}
+
+.episode-files-field {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--episode-text-dim);
+}
+
+.episode-files-field input,
+.episode-files-field textarea,
+.episode-files-field select {
+  min-height: 36px;
+  padding: 6px 8px;
+  background: var(--episode-card);
+  color: var(--episode-text);
+  border: 1px solid var(--episode-border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.episode-files-field textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+
+.episode-files-describe-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.episode-files-describe-actions .episode-files-describe-save {
+  background: var(--episode-accent);
+  color: #111;
+  border-color: var(--episode-accent);
+}
+
+.episode-files-record-actions button:focus-visible,
+.episode-files-describe-actions button:focus-visible,
+.episode-files-field input:focus-visible,
+.episode-files-field textarea:focus-visible,
+.episode-files-field select:focus-visible {
+  outline: 2px solid var(--episode-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- the room's masthead, lineage and source issues ---------- */
+
+.episode-masthead {
+  color: var(--episode-text);
+  border-left: 3px solid var(--episode-direction, var(--episode-accent));
+  padding-left: 14px;
+  margin: 12px 0 20px;
+}
+
+.episode-masthead-number {
+  color: var(--episode-accent);
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.episode-masthead-title {
+  margin: 4px 0 6px;
+  font-size: 26px;
+  line-height: 1.2;
+  color: var(--episode-text);
+}
+
+.episode-masthead-goal {
+  margin: 0 0 8px;
+  color: var(--episode-text-dim);
+}
+
+.episode-masthead-facts {
+  color: var(--episode-muted);
+  font-size: 13px;
+}
+
+.episode-masthead-cover {
+  display: block;
+  margin-top: 14px;
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: 8px;
+}
+
+.episode-lineage,
+.episode-source-issues {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.7;
+  color: var(--episode-text-dim);
+}
+
+.episode-lineage a,
+.episode-source-issues a {
+  color: var(--episode-accent);
+}
+
+.episode-lineage-text {
+  color: var(--episode-muted);
+}
