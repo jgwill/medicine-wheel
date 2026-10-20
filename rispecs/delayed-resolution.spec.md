@@ -1,9 +1,9 @@
 # delayed-resolution - RISE Specification
 
-> An action step on a structural tension chart can record that someone strategically chose to delay its resolution, list such delays by the date resolution is wanted, link the agent session to rehydrate, and end the delay. The chart tools also gain read-back, per-step due dates, and the chart edits coaia-narrative already had.
+> An action step on a structural tension chart can record that someone strategically chose to delay its resolution, list such delays by the date resolution is wanted, link the agent session to rehydrate (with its LLMOps trace and the prompt version that rehydrates it), and end the delay. The chart tools also gain read-back, per-step due dates, and the chart edits coaia-narrative already had.
 
-**Version:** 0.23.0 (`@medicine-wheel/mcp` 4.23.0). Delayed resolution, read-back, step due dates and chart edits landed in 0.22.0; chart-level links and the `/api/charts` field list in 0.23.0.
-**Status:** Implemented and published on 2026-10-19: `@medicine-wheel/app` 0.23.0, `@medicine-wheel/mcp` 4.23.0 and `@medicine-wheel/ontology-core` 0.23.0 on npm (commits `1e2e462`, `442aa56` v0.22.0, `22d54ed`, `49f1afc` v0.23.0); vitest 744 of 744; a consumer installing the published packages passed 8 checks (Episode 297 `validation/medicine-wheel/output-261019.txt`). The live chronicle wheel (`ilex:8040`) is **not redeployed** and still runs an older app, so it drops the 0.23.0 chart-level fields (see Exportation).
+**Version:** 0.24.1 (`@medicine-wheel/mcp` 4.24.1). Delayed resolution, read-back, step due dates and chart edits landed in 0.22.0; chart-level links and the `/api/charts` field list in 0.23.0; the session's `trace` and `rehydrate_with`, and `mw` one-shot commands that print (F1 fixed), in 0.24.0; a globally installed `mw` that finds the globally installed server in 0.24.1.
+**Status:** Implemented and published on 2026-10-20: `@medicine-wheel/app` 0.24.0 and 0.24.1, `@medicine-wheel/mcp` 4.24.0 and 4.24.1, `@medicine-wheel/ontology-core` 0.24.0 and 0.24.1 on npm (commits `cadc230`, `c90e051`, `1f05da2` v0.24.0, `8978357`, `b0971a9` v0.24.1); vitest 756 of 756. 0.24.1 exists because the installed 0.24.0 `mw` could not find the installed server (RELEASING.md step 7, see CLI). A consumer installing `@medicine-wheel/mcp` 4.24.0 and `@miadi/llmops` 0.1.0 from npm carried llmops's printed `trace` and `rehydrate_with` through delay, list and a `rehydrated` end and got both back unchanged, 9 checks (Episode 297 `validation/medicine-wheel/output-261020.txt`). The globally installed 0.24.1 `mw chart create` and `mw chart list` print and exit 0. Earlier: 0.22.0 and 0.23.0 published on 2026-10-19 (commits `1e2e462`, `442aa56` v0.22.0, `22d54ed`, `49f1afc` v0.23.0; `validation/medicine-wheel/output-261019.txt`, 8 checks). The live chronicle wheel (`ilex:8040`) is **not redeployed** and still runs an older app, so it drops the 0.23.0 chart-level fields (see Exportation).
 **Package boundary:** `@medicine-wheel/mcp` (tools, HTTP store), `@medicine-wheel/ontology-core` (types and schemas), `@medicine-wheel/app` (`/api/charts`, `mw chart` CLI)
 **Origin:** Miadi Chronicle Episode 297 (`miadi-chronicle://297`), `2026-07-24-episode-297-mino-bimaadizi-daa-stc-bot-ceremony/delayed-resolution-design-261019.md` (the contract shared with `coaia-narrative` and `coaiajs`), and `delayed-resolution-parity-261019.md` in the same vessel (the parity map this work follows). The episode's own cross-lineage spec is its `rispecs/delayed-resolution/`.
 **Relational context:** `delayed-resolution.kin.md` beside this file.
@@ -27,6 +27,11 @@
 
 **Desired State:** every step can carry an open or ended delayed resolution with its date, reason, primary choice, event cues and session; listings show what is owed; ending a delay rehydrates the session or releases the step; the chart operations match coaia-narrative's in the wheel's own terms.
 
+### Current Reality (before 0.24.0)
+
+- A delay's `session` could name how to resume an agent (`resume_command`) but not the session's LLMOps record or the pinned prompt version that rehydrates it. `@miadi/llmops` 0.1.0 (jgwill/Miadi#829) prints both as `miadi-` addresses.
+- Every `mw chart` command printed nothing and exited 0 (finding F1). `mcpRaw` in `cli/mw.ts` wrote one JSON-RPC request to the server's stdin with no `initialize` before it and no newline after it. The SDK's stdio transport reads newline-delimited messages, so the request was never read. The newline was the cause that decided it: the same request with a newline and no handshake was answered.
+
 ---
 
 ## Intent
@@ -42,11 +47,12 @@ Fritz: "Part of the maturation process is to learn how to delay resolution in fa
 **User Intent**: A person or seat sets aside the agent session that holds a step's work, and wants it back on a chosen date with its reason intact.
 **Current Reality**: The step sits on a wheel chart with a due date. The session that was working on it is idle, and nothing on the chart says why it stopped or how to resume it.
 **Natural Progression Steps**:
-  1. `delay_resolution` records the choice on the step: `resolve_by`, `reason`, `chosen_by`, what the delay serves, the event cues, and the session with its `cwd` or `resume_command`. The step's status becomes `delayed` and its due date becomes `resolve_by`.
-  2. `list_delayed_resolutions` and `get_chart_progress` place the step among the other delays by date, with `days_remaining`, and mark it `owed` once the date passes.
-  3. On the date, or when a cue happens, `end_delayed_resolution` with `outcome: "rehydrated"` closes the record and returns the session's `resume_command`.
-**Achieved Outcome**: The session comes back with the reason it was set aside, and the chart keeps the closed delay as part of its history.
-**Supporting Features**: `delay_resolution`, `list_delayed_resolutions`, `end_delayed_resolution`, status `delayed`, `AgentSessionRef`.
+  1. `npx @miadi/llmops rehydrate --domain <d> --trace <T> --mission <miadiRun-name>.v<N>` prints the session's `trace` and the `rehydrate_with` prompt version.
+  2. `delay_resolution` records the choice on the step: `resolve_by`, `reason`, `chosen_by`, what the delay serves, the event cues, and the session with its `cwd` or `resume_command`, and with `trace` and `rehydrate_with` as llmops printed them. The step's status becomes `delayed` and its due date becomes `resolve_by`.
+  3. `list_delayed_resolutions` and `get_chart_progress` place the step among the other delays by date, with `days_remaining`, and mark it `owed` once the date passes.
+  4. On the date, or when a cue happens, `end_delayed_resolution` with `outcome: "rehydrated"` closes the record and returns the session's `resume_command`, `trace` and `rehydrate_with`.
+**Achieved Outcome**: The session comes back with the reason it was set aside and the prompt version that rehydrates it, and the chart keeps the closed delay as part of its history.
+**Supporting Features**: `delay_resolution`, `list_delayed_resolutions`, `end_delayed_resolution`, status `delayed`, `AgentSessionRef` with `trace` and `rehydrate_with`.
 
 **Creative Advancement Scenario**: A delayed step is completed before its date
 
@@ -82,6 +88,8 @@ interface AgentSessionRef {
   agent?: string;                // "claude" when not given
   host?: string; cwd?: string; tmux?: string;
   resume_command?: string; inventory_record?: string;
+  trace?: string;                // 0.24.0: the session's LLMOps record, e.g. miadi-tracing:ceremony/session/<id>
+  rehydrate_with?: string;       // 0.24.0: the pinned prompt version, e.g. miadi-tracing:ceremony/prompt/<name>@<N>
 }
 
 interface DelayedResolution {
@@ -102,6 +110,8 @@ delayed_resolution?: DelayedResolution;           // the current delay, open or 
 delayed_resolution_history?: DelayedResolution[]; // earlier records, oldest first
 ```
 
+`trace` and `rehydrate_with` are what `npx @miadi/llmops rehydrate --domain <d> --trace <T> --mission <miadiRun-name>.v<N>` prints (`@miadi/llmops` 0.1.0). The wheel accepts any string that begins with `miadi-` for either, stores it exactly as given (no trimming), and never resolves it: resolving an address is the LLMOps package's work. `AgentSessionRefSchema` checks the same prefix.
+
 A delay is **open** while `ended_at` is absent. An open delay is **owed** when `resolve_by` is at or before now. `ontology-core` exports these types and their Zod schemas (`ActionStepStatusSchema`, `AgentSessionRefSchema`, `DelayedResolutionSchema`); `ActionStepSchema` accepts the new fields as optional.
 
 ### Rules
@@ -111,20 +121,21 @@ A delay is **open** while `ended_at` is absent. An open delay is **owed** when `
 3. Delaying a step that already carries a delay record, open or ended, moves that record to `delayed_resolution_history` and writes the new one. Nothing is overwritten.
 4. Ending a delay keeps the record with `ended_at`, `ended_by`, `outcome`. A step whose status is `delayed` returns to `in_progress` when its `progress` is above 0, else `pending`. `due_date` keeps the `resolve_by` value.
 4b. Completing a delayed step (`mark_action_complete`) ends its open delay with `outcome: "resolved"`, `ended_by` = the optional `completed_by` argument or `"mark_action_complete"`, and `end_note: "completed"`. `end_delayed_resolution` accepts only `rehydrated` and `released`.
-5. Refusals are returned as `{ status: "refused", refusal, message }`; nothing is written. The codes are `step_completed`, `resolve_by_invalid`, `resolve_by_past`, `reason_missing`, `chosen_by_missing`, `session_invalid` (a `session` that is not an object carrying `session_id`), `no_open_delay`, `outcome_invalid`, `ended_by_missing` and `due_within_days_invalid` for the delay operations, and `due_date_invalid`, `desired_outcome_missing` and `github_issue_invalid` for the chart operations.
+5. Refusals are returned as `{ status: "refused", refusal, message }`; nothing is written. The codes are `step_completed`, `resolve_by_invalid`, `resolve_by_past`, `reason_missing`, `chosen_by_missing`, `session_invalid` (a `session` that is not an object carrying `session_id`, or whose `trace` or `rehydrate_with` is not a string beginning with `miadi-`), `no_open_delay`, `outcome_invalid`, `ended_by_missing` and `due_within_days_invalid` for the delay operations, and `due_date_invalid`, `desired_outcome_missing` and `github_issue_invalid` for the chart operations.
 
 ### Operations (MCP tools)
 
 | tool | input | result |
 |---|---|---|
-| `delay_resolution` | `chart_id`, `step_id`, `resolve_by`, `reason`, `chosen_by`, optional `primary_choice`, `wake_on[]`, `session` | the step, its open delay, `days_remaining`, `redelayed`, `history_length` |
+| `delay_resolution` | `chart_id`, `step_id`, `resolve_by`, `reason`, `chosen_by`, optional `primary_choice`, `wake_on[]`, `session` (its `trace` and `rehydrate_with` advertised with `pattern: "^miadi-"`) | the step, its open delay, `days_remaining`, `redelayed`, `history_length` |
 | `list_delayed_resolutions` | optional `due_within_days` (≥ 0), `include_ended` (default false) | rows sorted by `resolve_by` ascending: chart, step, `state` (`open`, `ended`, `superseded`), `resolve_by`, `days_remaining`, `owed`, `reason`, `chosen_by`, `primary_choice`, `wake_on`, `session`; plus `count`, `open_count`, `owed_count`, `as_of` |
-| `end_delayed_resolution` | `chart_id`, `step_id`, `ended_by`, `outcome` (`rehydrated` or `released`), optional `end_note` | the closed record and the step's status; when `rehydrated`, the session's `resume_command` |
+| `end_delayed_resolution` | `chart_id`, `step_id`, `ended_by`, `outcome` (`rehydrated` or `released`), optional `end_note` | the closed record and the step's status; when `rehydrated`, the session's `resume_command`, `trace` and `rehydrate_with` |
 
 - `days_remaining` is `ceil((resolve_by - now) / 1 day)`: negative once owed, 0 within the last day.
 - `due_within_days: N` keeps rows whose `resolve_by` is at or before now + N days, so owed delays are always included.
 - With `include_ended`, history records appear as `ended` when they carry `ended_at`, else as `superseded` (replaced by a later delay).
 - `resume_command`: the stored one (`resume_command_derived: false`); for a `claude` session without one, `claude --resume <session_id>`, prefixed by `cd <cwd> &&` when `cwd` is known (`resume_command_derived: true`); otherwise `null` with a note.
+- `trace` and `rehydrate_with` (0.24.0): returned beside `resume_command` when `rehydrated`, each as stored on the session, or `null` when the session carried none. A `released` answer carries neither; the closed record keeps them.
 
 ### Read-back
 
@@ -154,9 +165,9 @@ A delay is **open** while `ended_at` is absent. An open delay is **owed** when `
 - `list_structural_tension_charts` shows `github_issue` (as its `ref`), `status`, and the backlink when present.
 - `/api/charts` POST keeps `github_issue`, `status` (`active`, `paused`, `resolved`, `archived` in the types), `parent_chart_id`, `parent_action_step_id`, `level` and `due_date_history` in addition to its earlier field list. Other unknown chart fields are still dropped. This ships in `@medicine-wheel/app`; a running wheel keeps its old route until its app is upgraded and restarted.
 
-### The structural tension tool set at 4.23.0
+### The structural tension tool set at 4.24.0
 
-`mcp/src/tools/structural-tension.ts` registers 21 tools. Before 0.22.0 there were 12.
+`mcp/src/tools/structural-tension.ts` registers 21 tools. Before 0.22.0 there were 12. 0.24.0 adds no tool; it widens `delay_resolution`'s `session` and `end_delayed_resolution`'s answer.
 
 | tool | since | role |
 |---|---|---|
@@ -190,15 +201,18 @@ No tool sets a chart's `status`, although `/api/charts` keeps the field from 0.2
 
 ### CLI
 
-`mw chart get <id>`, `mw chart delay <chart> <step> <resolve_by> <reason> --by <who> [--primary] [--wake-on] [--session --cwd --resume --host]`, `mw chart delayed [--within <days>] [--all]`, `mw chart end-delay <chart> <step> <rehydrated|released> --by <who> [--note]`. Missing arguments exit 2.
+`mw chart get <id>`, `mw chart delay <chart> <step> <resolve_by> <reason> --by <who> [--primary] [--wake-on] [--session --cwd --resume --host] [--trace <miadi-...> --rehydrate-with <miadi-...>]`, `mw chart delayed [--within <days>] [--all]`, `mw chart end-delay <chart> <step> <rehydrated|released> --by <who> [--note]`. Missing arguments exit 2, and so do `--trace` or `--rehydrate-with` without `--session`.
 
-**Known defect at 0.23.0, not fixed:** `mw` sends a single `tools/call` request to the MCP server over stdin without `initialize` first (`cli/mw.ts` `mcpRaw`). The server expects `initialize`, so every `mw chart` command, old and new, prints nothing. The commands are wired and their argument checks work; their output does not reach the terminal until `mcpRaw` opens the session first.
+**F1, fixed in 0.24.0.** Each `mw` command that reaches the MCP server (`mw chart`, `tools`, `edge`, `web`, `mmot`, `arc`, `validate`, `memory`, and the MCP fallback of `ceremony`, `cycle`, `node`, `beat`, `direction` and `events` when no HTTP server answers) opens one MCP session over the server's stdio: `initialize`, the `notifications/initialized` notification, then the request, each on its own line. `mcpRaw` returns the response line whose `id` matches the request. When no response comes back it prints `MCP error: no response to <method>` with the server's last stderr lines and exits 1. Up to 0.23.0 the request went alone and without a newline, the transport never read it, and every such command printed nothing and exited 0.
+
+**Fixed in 0.24.1.** With `@medicine-wheel/app` and `@medicine-wheel/mcp` installed globally side by side, `mw` looks for the server by resolving the package `@medicine-wheel/mcp` (its `"."` export is `./dist/index.js`, the server). Up to 0.24.0 it resolved the subpath `@medicine-wheel/mcp/dist/index.js`, which the package's `exports` map does not export, so every installed `mw chart` answered "MCP server path not found" and exited 1. `MW_MCP_PATH` still overrides the search.
 
 ---
 
 ## Exportation
 
-- Tests: `mcp/tests/structural-tension.test.ts` covers the three delay operations, rule 4b, read-back, due dates, the parity operations, the awaited saves, and HTTP de-duplication against an append-only stand-in for `/api/charts`.
+- Tests: `mcp/tests/structural-tension.test.ts` covers the three delay operations, rule 4b, read-back, due dates, the parity operations, the awaited saves, HTTP de-duplication against an append-only stand-in for `/api/charts`, and (0.24.0) the session's `trace` and `rehydrate_with`: stored as given, refused without the `miadi-` prefix, returned when rehydrated, advertised in the schema, and checked by `AgentSessionRefSchema`.
+- `mcp/tests/mw-chart-cli.test.ts` (0.24.0) runs the built `dist/cli/mw.js` against a temporary `MW_DATA_DIR` with no wheel URL or Honcho variable: chart create, list, delay with `--trace` and `--rehydrate-with`, delayed, end-delay, a refusal, a usage exit 2, and `mw tools`. It needs `npm run build:packages && npm run build:cli` first and fails with that instruction when the build is missing.
 - `tests/charts-route.test.ts` covers the `/api/charts` field list.
 - Out of scope: the clock that steers a session before `resolve_by` (who runs it is undecided); writing these fields from the session inventory; a `/api/charts` that updates in place instead of appending; a tool to set a chart's `status`; redeploying any running wheel. Until the wheel serving `/api/charts` runs app 0.23.0, HTTP mode drops `github_issue`, `status`, the sub-chart backlink and `due_date_history`; step-level fields, including every delay field, persist on any version of the route.
 
@@ -210,4 +224,6 @@ No tool sets a chart's `status`, although `/api/charts` keeps the field from 0.2
 | de-duplication | `mcp/src/http-store.ts` `getAllCharts` |
 | types and schemas | `src/ontology-core/src/types.ts`, `src/ontology-core/src/schemas.ts` |
 | CLI | `cli/mw.ts` `cmdChart` |
+| one-shot MCP session (F1) | `cli/mw.ts` `mcpRaw` |
+| finding the installed server | `cli/mw.ts` `resolveMcpPath` |
 | chart field list | `app/api/charts/route.ts` POST |
