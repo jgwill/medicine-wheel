@@ -236,6 +236,32 @@ export const MedicineWheelCycleSchema = z.object({
 
 // ── Structural Tension Schemas ──────────────────────────────────────────────
 
+export const ActionStepStatusSchema = z.enum(['pending', 'in_progress', 'completed', 'delayed']);
+
+export const AgentSessionRefSchema = z.object({
+  session_id: z.string().min(1),
+  agent: z.string().optional(),
+  host: z.string().optional(),
+  cwd: z.string().optional(),
+  tmux: z.string().optional(),
+  resume_command: z.string().optional(),
+  inventory_record: z.string().optional(),
+});
+
+export const DelayedResolutionSchema = z.object({
+  chosen_at: z.string(),
+  chosen_by: z.string().min(1),
+  resolve_by: z.string(),
+  reason: z.string().min(1),
+  primary_choice: z.string().optional(),
+  wake_on: z.array(z.string()).optional(),
+  session: AgentSessionRefSchema.optional(),
+  ended_at: z.string().optional(),
+  ended_by: z.string().optional(),
+  outcome: z.enum(['rehydrated', 'released', 'resolved']).optional(),
+  end_note: z.string().optional(),
+});
+
 export const ActionStepSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -243,6 +269,15 @@ export const ActionStepSchema = z.object({
   completed: z.boolean(),
   direction: DirectionNameSchema.optional(),
   due_date: z.string().optional(),
+  status: ActionStepStatusSchema.optional(),
+  progress: z.number().min(0).max(100).optional(),
+  current_reality: z.string().optional(),
+  sub_chart_id: z.string().optional(),
+  completed_at: z.string().optional(),
+  ceremonies_honored: z.array(z.string()).optional(),
+  relations_honored: z.array(z.string()).optional(),
+  delayed_resolution: DelayedResolutionSchema.optional(),
+  delayed_resolution_history: z.array(DelayedResolutionSchema).optional(),
 });
 
 export const StructuralTensionChartSchema = z.object({
@@ -252,6 +287,7 @@ export const StructuralTensionChartSchema = z.object({
   action_steps: z.array(ActionStepSchema),
   phase: TensionPhaseSchema,
   direction: DirectionNameSchema.optional(),
+  due_date: z.string().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });

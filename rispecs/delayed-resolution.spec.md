@@ -1,0 +1,136 @@
+# delayed-resolution - RISE Specification
+
+> An action step on a structural tension chart can record that someone strategically chose to delay its resolution, list such delays by the date resolution is wanted, link the agent session to rehydrate, and end the delay. The chart tools also gain read-back, per-step due dates, and the chart edits coaia-narrative already had.
+
+**Version:** 0.22.0 (`@medicine-wheel/mcp` 4.22.0)
+**Status:** Implemented
+**Package boundary:** `@medicine-wheel/mcp` (tools, HTTP store), `@medicine-wheel/ontology-core` (types and schemas), `@medicine-wheel/app` (`mw chart` CLI)
+**Design source:** Miadi Chronicle Episode 297, `2026-07-24-episode-297-mino-bimaadizi-daa-stc-bot-ceremony/delayed-resolution-design-261019.md` (the contract shared with `coaia-narrative` and `coaiajs`), and `delayed-resolution-parity-261019.md` in the same vessel (the parity map this work follows).
+
+---
+
+## Reverse Engineering
+
+### Current Reality (before 0.22.0)
+
+- A wheel step (`mcp/src/tools/structural-tension.ts`) had `status: pending | in_progress | completed` and an optional `due_date` stored as sent: not validated, never inherited from the chart, never given to steps written with the chart.
+- Nothing recorded a *chosen* delay. A due date says when; it does not say that someone chose to wait, why, or for what.
+- Nothing linked a step to an agent session.
+- There was no tool to read a chart or a step whole; `get_chart_progress` is a projection.
+- In HTTP mode (`MW_API_URL` set), `/api/charts` appends a full copy of a chart on every save and returns every copy, so `list_structural_tension_charts` listed a chart once per save.
+- `mark_action_complete` said "Completion flows into current reality" and wrote nothing there. Step ids were the array length, which collides once a step can be removed. `link_ceremony_to_chart` and `honor_relation_in_action_step` did not await their save, so a failed HTTP write reported success.
+
+### Structural Tension
+
+**Current Reality:** the wheel holds a step's date but not the choice to wait, and cannot hand back the session that was waiting.
+
+**Desired State:** every step can carry an open or ended delayed resolution with its date, reason, primary choice, event cues and session; listings show what is owed; ending a delay rehydrates the session or releases the step; the chart operations match coaia-narrative's in the wheel's own terms.
+
+---
+
+## Intent
+
+Fritz: "Part of the maturation process is to learn how to delay resolution in favor of longer-term goals." A delay is a secondary choice made for a primary choice. The wheel records that choice on the step itself, so a listing can say which delays have come due, and the person or agent that ends one gets back the command that resumes the waiting session. The medicine wheel is its own lineage: it implements the shared design in its own snake_case terms and depends on neither coaia package.
+
+---
+
+## Specifications
+
+### The record, on `ActionStep`
+
+```typescript
+type ActionStepStatus = 'pending' | 'in_progress' | 'completed' | 'delayed';
+
+interface AgentSessionRef {
+  session_id: string;            // required
+  agent?: string;                // "claude" when not given
+  host?: string; cwd?: string; tmux?: string;
+  resume_command?: string; inventory_record?: string;
+}
+
+interface DelayedResolution {
+  chosen_at: string;             // ISO, set by the tool
+  chosen_by: string;
+  resolve_by: string;            // ISO, in the future when chosen
+  reason: string;
+  primary_choice?: string;       // defaults to the chart's desired outcome, copied when chosen
+  wake_on?: string[];            // event cues, in words
+  session?: AgentSessionRef;
+  ended_at?: string; ended_by?: string;
+  outcome?: 'rehydrated' | 'released' | 'resolved';
+  end_note?: string;
+}
+
+// on ActionStep:
+delayed_resolution?: DelayedResolution;           // the current delay, open or ended
+delayed_resolution_history?: DelayedResolution[]; // earlier records, oldest first
+```
+
+A delay is **open** while `ended_at` is absent. An open delay is **owed** when `resolve_by` is at or before now. `ontology-core` exports these types and their Zod schemas (`ActionStepStatusSchema`, `AgentSessionRefSchema`, `DelayedResolutionSchema`); `ActionStepSchema` accepts the new fields as optional.
+
+### Rules
+
+1. Choosing a delay sets the step's `due_date` to `resolve_by` and its `status` to `delayed`.
+2. A completed step cannot be delayed (`refusal: "step_completed"`). `resolve_by` must parse as a date (`resolve_by_invalid`) and lie in the future (`resolve_by_past`). `reason` and `chosen_by` are required.
+3. Delaying a step that already carries a delay record, open or ended, moves that record to `delayed_resolution_history` and writes the new one. Nothing is overwritten.
+4. Ending a delay keeps the record with `ended_at`, `ended_by`, `outcome`. A step whose status is `delayed` returns to `in_progress` when its `progress` is above 0, else `pending`. `due_date` keeps the `resolve_by` value.
+4b. Completing a delayed step (`mark_action_complete`) ends its open delay with `outcome: "resolved"`, `ended_by` = the optional `completed_by` argument or `"mark_action_complete"`, and `end_note: "completed"`. `end_delayed_resolution` accepts only `rehydrated` and `released`.
+5. Refusals are returned as `{ status: "refused", refusal, message }`; nothing is written.
+
+### Operations (MCP tools)
+
+| tool | input | result |
+|---|---|---|
+| `delay_resolution` | `chart_id`, `step_id`, `resolve_by`, `reason`, `chosen_by`, optional `primary_choice`, `wake_on[]`, `session` | the step, its open delay, `days_remaining`, `redelayed`, `history_length` |
+| `list_delayed_resolutions` | optional `due_within_days` (≥ 0), `include_ended` (default false) | rows sorted by `resolve_by` ascending: chart, step, `state` (`open`, `ended`, `superseded`), `resolve_by`, `days_remaining`, `owed`, `reason`, `chosen_by`, `primary_choice`, `wake_on`, `session`; plus `count`, `open_count`, `owed_count`, `as_of` |
+| `end_delayed_resolution` | `chart_id`, `step_id`, `ended_by`, `outcome` (`rehydrated` or `released`), optional `end_note` | the closed record and the step's status; when `rehydrated`, the session's `resume_command` |
+
+- `days_remaining` is `ceil((resolve_by - now) / 1 day)`: negative once owed, 0 within the last day.
+- `due_within_days: N` keeps rows whose `resolve_by` is at or before now + N days, so owed delays are always included.
+- With `include_ended`, history records appear as `ended` when they carry `ended_at`, else as `superseded` (replaced by a later delay).
+- `resume_command`: the stored one (`resume_command_derived: false`); for a `claude` session without one, `claude --resume <session_id>`, prefixed by `cd <cwd> &&` when `cwd` is known (`resume_command_derived: true`); otherwise `null` with a note.
+
+### Read-back
+
+- `get_chart(chart_id)`: the chart as stored, plus `delayed_steps` and `owed_delays`.
+- `get_action_step(chart_id, step_id)`: the step, its delay as a listing row (or `null`), and the sub-chart it telescopes into (`sub_chart`), following `sub_chart_id`; `sub_chart_missing` names an id that no longer resolves.
+
+### Due dates per step
+
+- `create_structural_tension_chart` refuses a `due_date` that is not a date and stores it in ISO form. Steps written with the chart get due dates spread evenly between now and the chart's date, one interval short of it; a chart already past its date gives each step that date; a chart without a date gives none. `telescope_action_step` does the same for the sub-chart's initial steps.
+- `add_action_step` refuses an unparseable `due_date`, stores it in ISO form, and otherwise inherits the chart's due date (`due_date_inherited: true`).
+- `get_chart_progress` reports each step's `due_date` and, for an open delay, `delayed: { resolve_by, days_remaining, owed }`; counts `delayed` steps; and names `next_action`, the open, not-delayed step due soonest.
+- `list_structural_tension_charts` lists each chart's steps with `status`, `due_date`, and for open delays `resolve_by` and `owed`, plus `delayed_steps` and `owed_delays`.
+
+### Chart operations at parity with coaia-narrative
+
+- `update_chart_due_date(chart_id, due_date, redistribute_action_steps?)`: ISO-normalizes, appends `{ from, to, at }` to the chart's `due_date_history`, optionally respreads open steps that are not in an open delay, and reports `action_steps_past_due_date` (open steps due after the new date, delayed ones included).
+- `update_desired_outcome(chart_id, new_desired_outcome)`: replaces the outcome and returns the previous one.
+- `mark_action_complete` appends `Completed: <title>` to the chart's `current_reality` the first time a step completes.
+- `remove_action_step(chart_id, step_id)`: removes the step and returns it; a sub-chart it telescoped into is left in place and named in `sub_chart_left` (`/api/charts` has no DELETE).
+- Step ids are one past the highest `<chart_id>_action_<n>` index in use, so an id is never reused after a removal.
+- Every chart save is awaited, so a failed HTTP write is reported as `status: "error"`.
+
+### HTTP store
+
+`HttpStore.getAllCharts` keeps one copy per chart id: the latest `updated_at`, and on a tie the copy that comes later in the response (the route's sort is stable, so a later line was written later). The direction filter applies after de-duplication. `getChart` reads through it. The route itself is unchanged and still appends.
+
+### CLI
+
+`mw chart get <id>`, `mw chart delay <chart> <step> <resolve_by> <reason> --by <who> [--primary] [--wake-on] [--session --cwd --resume --host]`, `mw chart delayed [--within <days>] [--all]`, `mw chart end-delay <chart> <step> <rehydrated|released> --by <who> [--note]`. Missing arguments exit 2.
+
+---
+
+## Exportation
+
+- Tests: `mcp/tests/structural-tension.test.ts` covers the three delay operations, rule 4b, read-back, due dates, the parity operations, the awaited saves, and HTTP de-duplication against an append-only stand-in for `/api/charts`.
+- Out of scope for 0.22.0: the clock that steers a session before `resolve_by` (who runs it is undecided); writing these fields from the session inventory; a `/api/charts` that updates in place; chart-level fields that the route drops in HTTP mode. `due_date_history` is one of them: it persists in JSONL mode and is dropped by the deployed route until the route's field list accepts it.
+
+## Implementation Evidence Appendix
+
+| behaviour | file |
+|---|---|
+| record, rules, tools | `mcp/src/tools/structural-tension.ts` (`createStructuralTensionTools(store)`) |
+| de-duplication | `mcp/src/http-store.ts` `getAllCharts` |
+| types and schemas | `src/ontology-core/src/types.ts`, `src/ontology-core/src/schemas.ts` |
+| CLI | `cli/mw.ts` `cmdChart` |

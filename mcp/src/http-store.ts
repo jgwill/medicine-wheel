@@ -656,6 +656,7 @@ export class HttpStore {
   }
 
   async getChart(id: string): Promise<StoredChart | undefined> {
+    // getAllCharts keeps only the newest copy per id, so this is the chart as last saved.
     const all = await this.getAllCharts();
     return all.find(c => c.id === id);
   }
@@ -670,8 +671,20 @@ export class HttpStore {
       console.error(`[http-store] getAllCharts: ${url} not available`);
       return [];
     }
-    const result = direction ? charts.filter(c => c.direction === direction) : [...charts];
-    return result.sort((a, b) => Date.parse(b.updated_at) - Date.parse(a.updated_at));
+    // /api/charts appends a full copy of the chart on every save and its GET
+    // returns every copy. Read as-is, a chart is listed once per save and each
+    // of its steps is counted once per copy. Keep the newest copy per id: the
+    // latest updated_at, and on a tie the copy that comes later in the
+    // response (the route's sort is stable, so a later line was written later).
+    const newest = new Map<string, StoredChart>();
+    const stamp = (c: StoredChart) => Date.parse(c.updated_at ?? c.created_at) || 0;
+    for (const chart of charts) {
+      const kept = newest.get(chart.id);
+      if (!kept || stamp(chart) >= stamp(kept)) newest.set(chart.id, chart);
+    }
+    const unique = [...newest.values()];
+    const result = direction ? unique.filter(c => c.direction === direction) : unique;
+    return result.sort((a, b) => stamp(b) - stamp(a));
   }
 
   // === MMOT ===

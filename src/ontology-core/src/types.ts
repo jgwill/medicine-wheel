@@ -310,8 +310,55 @@ export interface StructuralTensionChart {
   action_steps: ActionStep[];
   phase: TensionPhase;
   direction?: DirectionName;
+  /** When the desired outcome is wanted (ISO). */
+  due_date?: string;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * Status of an action step as the MCP writes it. `delayed` means someone
+ * strategically chose to delay the step's resolution (see DelayedResolution).
+ */
+export type ActionStepStatus = 'pending' | 'in_progress' | 'completed' | 'delayed';
+
+/** The agent session a delayed step brings back (rehydrates) when its delay ends. */
+export interface AgentSessionRef {
+  /** Claude Code session id, or another agent's. */
+  session_id: string;
+  /** Agent kind; "claude" when not given. */
+  agent?: string;
+  host?: string;
+  cwd?: string;
+  /** tmux session or pane. */
+  tmux?: string;
+  /** e.g. `cd <cwd> && claude --resume <id>` */
+  resume_command?: string;
+  /** Path of the session's record in the session inventory. */
+  inventory_record?: string;
+}
+
+/**
+ * A strategic choice to delay a step's resolution in favour of a longer-term
+ * (primary) choice. Kept after it ends, with ended_at, ended_by and outcome.
+ * Design: Miadi Chronicle Episode 297, delayed-resolution-design-261019.md.
+ */
+export interface DelayedResolution {
+  chosen_at: string;
+  chosen_by: string;
+  /** When resolution is wanted (ISO, in the future when chosen). */
+  resolve_by: string;
+  reason: string;
+  /** What the delay serves; defaults to the chart's desired outcome at the time of choosing. */
+  primary_choice?: string;
+  /** Event cues, in words. */
+  wake_on?: string[];
+  session?: AgentSessionRef;
+  ended_at?: string;
+  ended_by?: string;
+  /** rehydrated or released by end_delayed_resolution; resolved when the step is completed. */
+  outcome?: 'rehydrated' | 'released' | 'resolved';
+  end_note?: string;
 }
 
 export interface ActionStep {
@@ -321,6 +368,18 @@ export interface ActionStep {
   completed: boolean;
   direction?: DirectionName;
   due_date?: string;
+  /** Fields the MCP's structural tension tools write on a step. */
+  status?: ActionStepStatus;
+  progress?: number;
+  current_reality?: string;
+  sub_chart_id?: string;
+  completed_at?: string;
+  ceremonies_honored?: string[];
+  relations_honored?: string[];
+  /** The current delay, open or ended. */
+  delayed_resolution?: DelayedResolution;
+  /** Earlier delays, oldest first. Nothing is overwritten. */
+  delayed_resolution_history?: DelayedResolution[];
 }
 
 // ── Direction Response (from MCP tools) ─────────────────────────────────────

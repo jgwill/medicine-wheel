@@ -257,6 +257,12 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
     mw chart create <outcome> <reality> <dir>        Create STC
     mw chart list [--direction east]                  List charts
     mw chart progress <id>                            Get progress
+    mw chart get <id>                                 The chart, whole
+    mw chart delay <chart> <step> <resolve_by> <reason> --by <who>
+      [--primary <text>] [--wake-on <cue>]            Choose to delay a step's resolution
+      [--session <id> --cwd <dir> --resume <cmd>]     ...with the session to rehydrate
+    mw chart delayed [--within <days>] [--all]        Delays by resolve_by, owed first
+    mw chart end-delay <chart> <step> <rehydrated|released> --by <who> [--note <text>]
     mw mmot <chart_id> <expected> <actual> <analysis> MMOT review
 
   RELATIONS
@@ -662,7 +668,20 @@ function cmdWeb(positional: string[]): void {
 }
 
 // ── Chart / STC ───────────────────────────────────────────────────
-function cmdChart(positional: string[]): void {
+function chartUsage(line: string): void {
+  console.error(`${C.south}Usage: ${line}${C.reset}`);
+  process.exitCode = EXIT_USAGE;
+}
+
+function flagText(flags: Record<string, string | boolean>, ...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const v = flags[key];
+    if (typeof v === 'string' && v.trim() !== '') return v;
+  }
+  return undefined;
+}
+
+function cmdChart(positional: string[], flags: Record<string, string | boolean> = {}): void {
   const sub = positional[0] ?? 'list';
 
   switch (sub) {
@@ -679,8 +698,65 @@ function cmdChart(positional: string[]): void {
     case 'progress':
       mcpCall('get_chart_progress', { chart_id: positional[1] ?? '' });
       break;
+    case 'get':
+      mcpCall('get_chart', { chart_id: positional[1] ?? '' });
+      break;
+    case 'delay': {
+      const [, chartId, stepId, resolveBy, reason] = positional;
+      const by = flagText(flags, 'by');
+      if (!chartId || !stepId || !resolveBy || !reason || !by) {
+        chartUsage('mw chart delay <chart_id> <step_id> <resolve_by> <reason> --by <who> [--primary <text>] [--wake-on <cue>] [--session <id>] [--cwd <dir>] [--resume <command>]');
+        return;
+      }
+      const sessionId = flagText(flags, 'session');
+      const wakeOn = flagText(flags, 'wake-on');
+      mcpCall('delay_resolution', {
+        chart_id: chartId,
+        step_id: stepId,
+        resolve_by: resolveBy,
+        reason,
+        chosen_by: by,
+        ...(flagText(flags, 'primary') ? { primary_choice: flagText(flags, 'primary') } : {}),
+        ...(wakeOn ? { wake_on: [wakeOn] } : {}),
+        ...(sessionId
+          ? {
+              session: {
+                session_id: sessionId,
+                ...(flagText(flags, 'cwd') ? { cwd: flagText(flags, 'cwd') } : {}),
+                ...(flagText(flags, 'resume') ? { resume_command: flagText(flags, 'resume') } : {}),
+                ...(flagText(flags, 'host') ? { host: flagText(flags, 'host') } : {}),
+              },
+            }
+          : {}),
+      });
+      break;
+    }
+    case 'delayed': {
+      const within = flagText(flags, 'within');
+      mcpCall('list_delayed_resolutions', {
+        ...(within !== undefined ? { due_within_days: Number(within) } : {}),
+        ...(flags['all'] === true ? { include_ended: true } : {}),
+      });
+      break;
+    }
+    case 'end-delay': {
+      const [, chartId, stepId, outcome] = positional;
+      const by = flagText(flags, 'by');
+      if (!chartId || !stepId || (outcome !== 'rehydrated' && outcome !== 'released') || !by) {
+        chartUsage('mw chart end-delay <chart_id> <step_id> <rehydrated|released> --by <who> [--note <text>]');
+        return;
+      }
+      mcpCall('end_delayed_resolution', {
+        chart_id: chartId,
+        step_id: stepId,
+        outcome,
+        ended_by: by,
+        ...(flagText(flags, 'note') ? { end_note: flagText(flags, 'note') } : {}),
+      });
+      break;
+    }
     default:
-      unknownSub('chart', sub, ['create', 'list', 'progress']);
+      unknownSub('chart', sub, ['create', 'list', 'progress', 'get', 'delay', 'delayed', 'end-delay']);
   }
 }
 
@@ -883,7 +959,7 @@ async function main(): Promise<void> {
     case 'beat': case 'b':          await cmdBeat(rest, flags); break;
     case 'edge': case 'e':                cmdEdge(rest, flags); break;
     case 'web': case 'w':                 cmdWeb(rest); break;
-    case 'chart': case 'stc':             cmdChart(rest); break;
+    case 'chart': case 'stc':             cmdChart(rest, flags); break;
     case 'mmot':                          cmdMmot(rest); break;
     case 'validate': case 'v':            cmdValidate(rest); break;
     case 'memory': case 'mem':            cmdMemory(rest); break;
