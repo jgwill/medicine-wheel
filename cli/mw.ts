@@ -158,24 +158,61 @@ async function checkApi(): Promise<boolean> {
 }
 
 // ── MCP JSON-RPC ──────────────────────────────────────────────────
+// One MCP session per command, over the server's stdio. The stdio transport
+// reads newline-delimited JSON-RPC messages, and a client opens the session
+// with `initialize` and the `notifications/initialized` notification before
+// any request.
+//
+// Until 0.24.0 this sent a lone request with no handshake and no trailing
+// newline. The server never read a complete message, answered nothing, and
+// every `mw chart` and `mw tools` command printed nothing and exited 0
+// (Miadi Chronicle Episode 297, finding F1).
+const MCP_PROTOCOL_VERSION = '2025-06-18';
+const MCP_REQUEST_ID = 2;
+
 function mcpRaw(rpcMethod: string, params: Record<string, unknown>): string {
   if (!MW_MCP_PATH) {
     console.error('Error: MCP server path not found. Set MW_MCP_PATH or use the HTTP server via MW_API_URL.');
     process.exit(1);
   }
 
-  const req = JSON.stringify({ jsonrpc: '2.0', method: rpcMethod, params, id: 1 });
+  const messages = [
+    {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'initialize',
+      params: { protocolVersion: MCP_PROTOCOL_VERSION, capabilities: {}, clientInfo: { name: 'mw', version: '1' } },
+    },
+    { jsonrpc: '2.0', method: 'notifications/initialized' },
+    { jsonrpc: '2.0', id: MCP_REQUEST_ID, method: rpcMethod, params },
+  ];
   const result = spawnSync('node', [MW_MCP_PATH], {
-    input: req,
+    input: messages.map((m) => JSON.stringify(m) + '\n').join(''),
     encoding: 'utf8',
     timeout: 10000,
+    maxBuffer: 64 * 1024 * 1024,
   });
 
   if (result.error) {
     console.error('MCP error:', result.error.message);
+    process.exitCode = 1;
     return '';
   }
-  return result.stdout?.trim() ?? '';
+
+  // One JSON line per response; keep the one that answers the request.
+  for (const line of (result.stdout ?? '').split('\n')) {
+    const text = line.trim();
+    if (!text) continue;
+    try {
+      if (JSON.parse(text)?.id === MCP_REQUEST_ID) return text;
+    } catch { /* not a JSON-RPC line */ }
+  }
+
+  const stderrTail = (result.stderr ?? '').trim().split('\n').slice(-5).join('\n');
+  console.error(`MCP error: no response to ${rpcMethod} from ${MW_MCP_PATH} (exit ${result.status ?? result.signal})`);
+  if (stderrTail) console.error(stderrTail);
+  process.exitCode = 1;
+  return '';
 }
 
 function mcpCall(toolName: string, args: Record<string, unknown>): void {
