@@ -261,6 +261,7 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
     mw chart delay <chart> <step> <resolve_by> <reason> --by <who>
       [--primary <text>] [--wake-on <cue>]            Choose to delay a step's resolution
       [--session <id> --cwd <dir> --resume <cmd>]     ...with the session to rehydrate
+      [--trace <miadi-...> --rehydrate-with <miadi-...>]  ...its LLMOps trace and rehydrating prompt
     mw chart delayed [--within <days>] [--all]        Delays by resolve_by, owed first
     mw chart end-delay <chart> <step> <rehydrated|released> --by <who> [--note <text>]
     mw mmot <chart_id> <expected> <actual> <analysis> MMOT review
@@ -704,11 +705,13 @@ function cmdChart(positional: string[], flags: Record<string, string | boolean> 
     case 'delay': {
       const [, chartId, stepId, resolveBy, reason] = positional;
       const by = flagText(flags, 'by');
-      if (!chartId || !stepId || !resolveBy || !reason || !by) {
-        chartUsage('mw chart delay <chart_id> <step_id> <resolve_by> <reason> --by <who> [--primary <text>] [--wake-on <cue>] [--session <id>] [--cwd <dir>] [--resume <command>]');
+      const sessionId = flagText(flags, 'session');
+      const trace = flagText(flags, 'trace');
+      const rehydrateWith = flagText(flags, 'rehydrate-with');
+      if (!chartId || !stepId || !resolveBy || !reason || !by || ((trace || rehydrateWith) && !sessionId)) {
+        chartUsage('mw chart delay <chart_id> <step_id> <resolve_by> <reason> --by <who> [--primary <text>] [--wake-on <cue>] [--session <id>] [--cwd <dir>] [--resume <command>] [--host <host>] [--trace <miadi-...>] [--rehydrate-with <miadi-...>]  (--trace and --rehydrate-with need --session)');
         return;
       }
-      const sessionId = flagText(flags, 'session');
       const wakeOn = flagText(flags, 'wake-on');
       mcpCall('delay_resolution', {
         chart_id: chartId,
@@ -725,6 +728,8 @@ function cmdChart(positional: string[], flags: Record<string, string | boolean> 
                 ...(flagText(flags, 'cwd') ? { cwd: flagText(flags, 'cwd') } : {}),
                 ...(flagText(flags, 'resume') ? { resume_command: flagText(flags, 'resume') } : {}),
                 ...(flagText(flags, 'host') ? { host: flagText(flags, 'host') } : {}),
+                ...(trace ? { trace } : {}),
+                ...(rehydrateWith ? { rehydrate_with: rehydrateWith } : {}),
               },
             }
           : {}),

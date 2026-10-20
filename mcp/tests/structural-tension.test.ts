@@ -13,6 +13,7 @@ import { JsonlStore } from "../src/jsonl-store.js";
 import { HttpStore } from "../src/http-store.js";
 import { createStructuralTensionTools } from "../src/tools/structural-tension.js";
 import type { Tool } from "../src/types.js";
+import { AgentSessionRefSchema, DelayedResolutionSchema } from "../../src/ontology-core/src/schemas";
 
 const DAY = 86_400_000;
 const T0 = Date.parse("2026-10-20T12:00:00.000Z");
@@ -268,6 +269,115 @@ describe("end_delayed_resolution", () => {
     await expect(call("end_delayed_resolution", { chart_id: chartId, step_id: stepId, ended_by: "W", outcome: "resolved" }))
       .resolves.toMatchObject({ status: "refused", refusal: "outcome_invalid" });
     expect(store.getChart(chartId)!.action_steps[0].status).toBe("delayed");
+  });
+});
+
+describe("the session's LLMOps trace and rehydrate_with (0.24.0)", () => {
+  // As `npx @miadi/llmops rehydrate --domain ceremony --trace <uuid> --mission miadiRun-<name>.v3` prints them.
+  const TRACE = "miadi-tracing:ceremony/session/3f2a9c1e-5b7d-4e8f-9a0b-1c2d3e4f5a6b";
+  const WITH = "miadi-tracing:ceremony/prompt/miadiRun-2610200900-ep297-delayed-resolution@3";
+
+  it("delay_resolution stores both exactly as given, and listings carry them in the session", async () => {
+    const chartId = await chartWithSteps();
+    const stepId = `${chartId}_action_0`;
+    const result = await call("delay_resolution", {
+      chart_id: chartId, step_id: stepId, resolve_by: iso(T0 + 4 * DAY), reason: "r", chosen_by: "W",
+      session: { session_id: "sess-llmops", cwd: "/srv/miadi/episodes", trace: TRACE, rehydrate_with: WITH },
+    });
+    expect(result.status).toBe("delayed");
+    expect(result.delayed_resolution.session).toEqual({
+      session_id: "sess-llmops", agent: "claude", cwd: "/srv/miadi/episodes", trace: TRACE, rehydrate_with: WITH,
+    });
+
+    const stored = store.getChart(chartId)!.action_steps[0].delayed_resolution.session;
+    expect(stored.trace).toBe(TRACE);
+    expect(stored.rehydrate_with).toBe(WITH);
+
+    const listed = await call("list_delayed_resolutions", {});
+    expect(listed.delays[0].session).toMatchObject({ trace: TRACE, rehydrate_with: WITH });
+  });
+
+  it("accepts any string beginning with miadi-, and either field alone", async () => {
+    const chartId = await chartWithSteps();
+    const stepId = `${chartId}_action_0`;
+    const result = await call("delay_resolution", {
+      chart_id: chartId, step_id: stepId, resolve_by: iso(T0 + DAY), reason: "r", chosen_by: "W",
+      session: { session_id: "s", trace: "miadi-trace:engineering/abc" },
+    });
+    expect(result.delayed_resolution.session).toEqual({ session_id: "s", agent: "claude", trace: "miadi-trace:engineering/abc" });
+    expect(result.delayed_resolution.session).not.toHaveProperty("rehydrate_with");
+  });
+
+  it("refuses a trace or rehydrate_with that does not begin with miadi-, and writes nothing", async () => {
+    const chartId = await chartWithSteps();
+    const base = { chart_id: chartId, step_id: `${chartId}_action_0`, reason: "r", chosen_by: "W", resolve_by: iso(T0 + DAY) };
+    for (const session of [
+      { session_id: "s", trace: "langfuse:trace/abc" },
+      { session_id: "s", trace: " miadi-tracing:ceremony/session/x" },
+      { session_id: "s", trace: 42 },
+      { session_id: "s", rehydrate_with: "miadiRun-2610200900-x.v3" },
+      { session_id: "s", trace: TRACE, rehydrate_with: "prompt@3" },
+    ]) {
+      const refused = await call("delay_resolution", { ...base, session });
+      expect(refused).toMatchObject({ status: "refused", refusal: "session_invalid" });
+      expect(refused.message).toContain("miadi-");
+    }
+    const step = store.getChart(chartId)!.action_steps[0];
+    expect(step.status).toBe("pending");
+    expect(step.delayed_resolution).toBeUndefined();
+  });
+
+  it("end_delayed_resolution as rehydrated returns them beside resume_command", async () => {
+    const chartId = await chartWithSteps();
+    const stepId = `${chartId}_action_0`;
+    await call("delay_resolution", {
+      chart_id: chartId, step_id: stepId, resolve_by: iso(T0 + 2 * DAY), reason: "r", chosen_by: "W",
+      session: { session_id: "sess-llmops", cwd: "/srv/miadi/episodes", trace: TRACE, rehydrate_with: WITH },
+    });
+    const ended = await call("end_delayed_resolution", { chart_id: chartId, step_id: stepId, ended_by: "Mia", outcome: "rehydrated" });
+    expect(ended).toMatchObject({
+      outcome: "rehydrated",
+      resume_command: "cd /srv/miadi/episodes && claude --resume sess-llmops",
+      trace: TRACE,
+      rehydrate_with: WITH,
+    });
+    expect(ended.delayed_resolution.session).toMatchObject({ trace: TRACE, rehydrate_with: WITH });
+  });
+
+  it("rehydrated without them returns null for both; released returns neither", async () => {
+    const chartId = await chartWithSteps();
+    const [first, second] = [`${chartId}_action_0`, `${chartId}_action_1`];
+    const delay = (stepId: string, session: Record<string, unknown>) => call("delay_resolution", {
+      chart_id: chartId, step_id: stepId, resolve_by: iso(T0 + 2 * DAY), reason: "r", chosen_by: "W", session,
+    });
+    await delay(first, { session_id: "plain" });
+    await delay(second, { session_id: "traced", trace: TRACE, rehydrate_with: WITH });
+
+    const plain = await call("end_delayed_resolution", { chart_id: chartId, step_id: first, ended_by: "W", outcome: "rehydrated" });
+    expect(plain.trace).toBeNull();
+    expect(plain.rehydrate_with).toBeNull();
+    expect(plain.resume_command).toBe("claude --resume plain");
+
+    const released = await call("end_delayed_resolution", { chart_id: chartId, step_id: second, ended_by: "W", outcome: "released" });
+    expect(released).not.toHaveProperty("trace");
+    expect(released).not.toHaveProperty("rehydrate_with");
+    expect(released.delayed_resolution.session).toMatchObject({ trace: TRACE, rehydrate_with: WITH });
+  });
+
+  it("advertises both in delay_resolution's session schema with the miadi- pattern", () => {
+    const session = (tool("delay_resolution").inputSchema as any).properties.session;
+    expect(session.properties.trace).toMatchObject({ type: "string", pattern: "^miadi-" });
+    expect(session.properties.rehydrate_with).toMatchObject({ type: "string", pattern: "^miadi-" });
+  });
+
+  it("ontology-core's AgentSessionRefSchema accepts miadi- addresses and refuses others", () => {
+    expect(AgentSessionRefSchema.safeParse({ session_id: "s", trace: TRACE, rehydrate_with: WITH }).success).toBe(true);
+    expect(AgentSessionRefSchema.safeParse({ session_id: "s", trace: "langfuse:abc" }).success).toBe(false);
+    expect(AgentSessionRefSchema.safeParse({ session_id: "s", rehydrate_with: "prompt@3" }).success).toBe(false);
+    expect(DelayedResolutionSchema.safeParse({
+      chosen_at: iso(T0), chosen_by: "W", resolve_by: iso(T0 + DAY), reason: "r",
+      session: { session_id: "s", trace: TRACE },
+    }).success).toBe(true);
   });
 });
 

@@ -30,6 +30,10 @@ export interface AgentSessionRef {
   tmux?: string;
   resume_command?: string;
   inventory_record?: string;
+  /** The session's LLMOps record as `@miadi/llmops` writes it, e.g. `miadi-tracing:ceremony/session/<id>`. */
+  trace?: string;
+  /** The pinned prompt version that rehydrates the session, e.g. `miadi-tracing:ceremony/prompt/<name>@<N>`. */
+  rehydrate_with?: string;
 }
 
 /** A strategic choice to delay a step's resolution, kept after it ends. */
@@ -245,6 +249,9 @@ function resumeCommandFor(session: AgentSessionRef | undefined): { resume_comman
   return { resume_command: null };
 }
 
+/** Every LLMOps address a session carries (trace, rehydrate_with) begins with this. */
+const LLMOPS_PREFIX = 'miadi-';
+
 function parseMaybeJson(value: unknown): unknown {
   if (typeof value !== 'string') return value;
   try { return JSON.parse(value); } catch { return value; }
@@ -263,6 +270,16 @@ function normalizeSession(input: unknown): { session?: AgentSessionRef; error?: 
   for (const key of ['host', 'cwd', 'tmux', 'resume_command', 'inventory_record'] as const) {
     const v = nonEmpty(s[key]);
     if (v) session[key] = v;
+  }
+  // LLMOps addresses (`@miadi/llmops`): any string beginning with `miadi-`,
+  // stored exactly as given. Resolving the address is the LLMOps package's work.
+  for (const key of ['trace', 'rehydrate_with'] as const) {
+    const v = s[key];
+    if (v === undefined || v === null || v === '') continue;
+    if (typeof v !== 'string' || !v.startsWith(LLMOPS_PREFIX)) {
+      return { error: `session.${key} must be a string beginning with '${LLMOPS_PREFIX}', as @miadi/llmops prints it (e.g. ${key === 'trace' ? 'miadi-tracing:ceremony/session/<id>' : 'miadi-tracing:ceremony/prompt/<name>@<N>'}); got ${JSON.stringify(v)}` };
+    }
+    session[key] = v;
   }
   return { session };
 }
@@ -836,7 +853,7 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
   },
   {
     name: "delay_resolution",
-    description: "Record on an action step that someone strategically chose to delay its resolution: when resolution is wanted (resolve_by, in the future), why waiting serves the work now, what the delay serves (defaults to the chart's desired outcome), event cues to wake on, and the agent session to rehydrate. Sets the step's due date to resolve_by and its status to 'delayed'. Re-delaying keeps the earlier record in delayed_resolution_history. A completed step cannot be delayed.",
+    description: "Record on an action step that someone strategically chose to delay its resolution: when resolution is wanted (resolve_by, in the future), why waiting serves the work now, what the delay serves (defaults to the chart's desired outcome), event cues to wake on, and the agent session to rehydrate (optionally with its LLMOps trace and the pinned prompt version that rehydrates it, both beginning with 'miadi-'). Sets the step's due date to resolve_by and its status to 'delayed'. Re-delaying keeps the earlier record in delayed_resolution_history. A completed step cannot be delayed.",
     inputSchema: {
       type: "object",
       properties: {
@@ -862,6 +879,16 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
             tmux: { type: "string", description: "tmux session or pane" },
             resume_command: { type: "string", description: "Command that resumes it, e.g. `cd <cwd> && claude --resume <id>`" },
             inventory_record: { type: "string", description: "Path of its record in the session inventory" },
+            trace: {
+              type: "string",
+              pattern: "^miadi-",
+              description: "The session's LLMOps record, as @miadi/llmops prints it (e.g. miadi-tracing:ceremony/session/<id>). Must begin with 'miadi-'; stored as given.",
+            },
+            rehydrate_with: {
+              type: "string",
+              pattern: "^miadi-",
+              description: "The pinned prompt version that rehydrates the session, as @miadi/llmops prints it (e.g. miadi-tracing:ceremony/prompt/<name>@<N>). Must begin with 'miadi-'; stored as given.",
+            },
           },
           required: ["session_id"],
         },
@@ -1011,7 +1038,7 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
   },
   {
     name: "end_delayed_resolution",
-    description: "End a step's open delayed resolution, either by rehydrating its agent session or by releasing the step. The record is kept with ended_at, ended_by and outcome, and the step returns to pending or in_progress. When rehydrated, returns the session's resume_command.",
+    description: "End a step's open delayed resolution, either by rehydrating its agent session or by releasing the step. The record is kept with ended_at, ended_by and outcome, and the step returns to pending or in_progress. When rehydrated, returns the session's resume_command, with its LLMOps trace and rehydrate_with beside it (null when the session carried none).",
     inputSchema: {
       type: "object",
       properties: {
@@ -1072,6 +1099,8 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
             ? {
                 session: delay.session ?? null,
                 ...resume,
+                trace: delay.session?.trace ?? null,
+                rehydrate_with: delay.session?.rehydrate_with ?? null,
                 ...(resume.resume_command === null
                   ? { note: delay.session ? `No resume command is known for agent '${delay.session.agent}'.` : 'This delay carried no session to rehydrate.' }
                   : {}),

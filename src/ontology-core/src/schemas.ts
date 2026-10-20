@@ -246,6 +246,10 @@ export const AgentSessionRefSchema = z.object({
   tmux: z.string().optional(),
   resume_command: z.string().optional(),
   inventory_record: z.string().optional(),
+  /** The session's LLMOps record (`@miadi/llmops`), e.g. `miadi-tracing:ceremony/session/<id>`. */
+  trace: z.string().startsWith('miadi-').optional(),
+  /** The pinned prompt version that rehydrates the session, e.g. `miadi-tracing:ceremony/prompt/<name>@<N>`. */
+  rehydrate_with: z.string().startsWith('miadi-').optional(),
 });
 
 export const DelayedResolutionSchema = z.object({
