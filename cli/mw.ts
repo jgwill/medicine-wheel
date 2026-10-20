@@ -50,8 +50,15 @@ function resolveMcpPath(): string {
   );
   if (fs.existsSync(fromModules)) return fromModules;
 
+  // The package itself, not a file inside it. @medicine-wheel/mcp has an
+  // `exports` map whose "." is ./dist/index.js (the server) and which does not
+  // export "./dist/index.js", so resolving that subpath throws
+  // ERR_PACKAGE_PATH_NOT_EXPORTED. A global install of app and mcp side by side
+  // (`npm i -g @medicine-wheel/app @medicine-wheel/mcp`) therefore found no
+  // server, and every installed `mw chart` said "MCP server path not found"
+  // until 0.24.1. Found by RELEASING.md step 7 on 0.24.0.
   try {
-    return require.resolve('@medicine-wheel/mcp/dist/index.js', {
+    return require.resolve('@medicine-wheel/mcp', {
       paths: [packageRoot, process.cwd()],
     });
   } catch {
