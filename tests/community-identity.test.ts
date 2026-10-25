@@ -250,3 +250,71 @@ describe("status, circle fields, audit and config (0.14.1)", () => {
     expect(validateConfigPatch({ default_api_access: "yes" }).errors.length).toBe(1);
   });
 });
+
+describe("an episode's main circle and ceremony (0.26.1, #168)", () => {
+  const ep = "2026-10-25-episode-563-an-episode-is-born-with-its-talking-circle";
+  const episode = { path: ep, number: 563, title: "An episode is born with its talking circle" };
+
+  it("names the main circle by default and offers distinct variations, the default first", async () => {
+    const { episodeCircleNames } = await import("../src/community-identity/src/index");
+    expect(episodeCircleNames(episode)).toEqual([
+      { key: "plain", name: "Episode 563 circle" },
+      { key: "main", name: "Episode 563 main circle" },
+      { key: "talking", name: "Episode 563 talking circle" },
+      { key: "titled", name: "Episode 563 · An episode is born with its talking circle" },
+    ]);
+    expect(episodeCircleNames(episode, { first: "main" }).map((n) => n.key)).toEqual(["main", "plain", "talking", "titled"]);
+    expect(episodeCircleNames({ path: ep }).map((n) => n.name)).toEqual([`${ep} circle`, `${ep} main circle`, `${ep} talking circle`]);
+    expect(episodeCircleNames({ path: ep, number: 60 })[0].name).toBe("Episode 60 circle");
+    const long = episodeCircleNames({ path: ep, number: 7, title: "a ".repeat(50) + "end" }).find((n) => n.key === "titled")!.name;
+    expect(long.length).toBeLessThanOrEqual("Episode 7 · ".length + 61);
+    expect(long.endsWith("…")).toBe(true);
+  });
+
+  it("a main circle is typed on its node, read back, and a patch can release it", async () => {
+    const { circleNode, circleFromNode, circleNodePatch, CirclePatchSchema, NewCircleSchema, episodeMainCircle } = await import("../src/community-identity/src/index");
+    const input = NewCircleSchema.parse(episodeMainCircle(episode, "g"));
+    expect(input).toMatchObject({ name: "Episode 563 circle", episode_path: ep, episode_role: "main", direction: "east", circle_type: "ongoing" });
+    expect(input.intention).toContain("Episode 563");
+    const c = circleNode(input);
+    expect(c.metadata!.episode_role).toBe("main");
+    expect(circleFromNode(c)!.episode_role).toBe("main");
+    expect(circleFromNode({ ...c, metadata: { ...c.metadata, episode_role: "other" } })!.episode_role).toBeUndefined();
+    const released = circleFromNode({ ...c, metadata: circleNodePatch(c, CirclePatchSchema.parse({ episode_role: null })).metadata })!;
+    expect(released.episode_role).toBeUndefined();
+    expect(released.episode_path).toBe(ep);
+    expect(() => NewCircleSchema.parse({ ...input, episode_role: "side" })).toThrow();
+    expect(episodeMainCircle(episode, "g", { name: " Our circle ", first: "talking" }).name).toBe("Our circle");
+    expect(episodeMainCircle(episode, "g", { first: "talking" }).name).toBe("Episode 563 talking circle");
+  });
+
+  it("finds the episode's one active main circle, the earliest when there are several", async () => {
+    const { circleNode, circleFromNode, mainCircleOf } = await import("../src/community-identity/src/index");
+    const at = (iso: string, meta: Record<string, unknown>, id: string) =>
+      circleFromNode({ ...circleNode({ id, name: id, intention: "i", facilitator_id: "g", episode_path: ep }, iso), metadata: { ...circleNode({ id, name: id, intention: "i", facilitator_id: "g", episode_path: ep }, iso).metadata, ...meta } })!;
+    const review = at("2026-10-25T01:00:00.000Z", {}, "circle:review");
+    const later = at("2026-10-25T03:00:00.000Z", { episode_role: "main" }, "circle:later");
+    const first = at("2026-10-25T02:00:00.000Z", { episode_role: "main" }, "circle:first");
+    const closed = at("2026-10-25T00:00:00.000Z", { episode_role: "main", active: false }, "circle:closed");
+    expect(mainCircleOf(ep, [review, later, first, closed])!.id).toBe("circle:first");
+    expect(mainCircleOf(ep, [review])).toBeNull();
+    expect(mainCircleOf("2026-01-01-episode-001-x", [first])).toBeNull();
+  });
+
+  it("the main ceremony is the open talking circle held about the episode in its main circle", async () => {
+    const { mainCeremonyOf, episodeSubjectId } = await import("../src/community-identity/src/index");
+    expect(episodeSubjectId(ep)).toBe(`chronicle:${ep}`);
+    expect(episodeSubjectId(`chronicle:${ep}`)).toBe(`chronicle:${ep}`);
+    expect(() => episodeSubjectId(" ")).toThrow();
+    const subject = `chronicle:${ep}`;
+    const records = [
+      { id: "review", type: "talking_circle" as const, timestamp: "2026-10-25T01:00:00Z", circle_id: "c", subject_id: "review:abc" },
+      { id: "old", type: "talking_circle" as const, timestamp: "2026-10-25T02:00:00Z", circle_id: "c", subject_id: subject },
+      { id: "closing-old", type: "closing" as const, timestamp: "2026-10-25T02:30:00Z", circle_id: "c", closes: "old" },
+      { id: "main", type: "talking_circle" as const, timestamp: "2026-10-25T03:00:00Z", circle_id: "c", subject_id: subject },
+      { id: "elsewhere", type: "talking_circle" as const, timestamp: "2026-10-25T00:00:00Z", circle_id: "other", subject_id: subject },
+    ];
+    expect(mainCeremonyOf(records, { episode_path: ep, circle_id: "c" })!.id).toBe("main");
+    expect(mainCeremonyOf(records.slice(0, 1), { episode_path: ep, circle_id: "c" })).toBeNull();
+  });
+});

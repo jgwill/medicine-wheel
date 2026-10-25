@@ -9,7 +9,9 @@
  * in `circle_id` (ontology-core 0.14.0). A circle opened for a chronicle
  * episode carries the episode's folder name in `episode_path` (0.15.1), the
  * same typed binding a ceremony carries, so the episode can name the circles
- * gathered for it before any of them has held a ceremony.
+ * gathered for it before any of them has held a ceremony. One of them may be
+ * the episode's main circle, `episode_role: 'main'` (0.26.1), where its people
+ * and agent-spirits talk as the episode develops (`episode-circle.ts`).
  */
 
 import type { DirectionName, RelationalEdge, RelationalNode } from '@medicine-wheel/ontology-core';
@@ -38,6 +40,10 @@ export const DEFAULT_CONTAINER: CircleContainer = {
 export type CircleType = 'ongoing' | 'seasonal' | 'one_time';
 export const CIRCLE_TYPES: readonly CircleType[] = ['ongoing', 'seasonal', 'one_time'] as const;
 
+/** What a circle is to the episode it was opened for. `main`: the episode's own circle, one per episode (0.26.1). */
+export type EpisodeRole = 'main';
+export const EPISODE_ROLES: readonly EpisodeRole[] = ['main'] as const;
+
 export interface Circle {
   /** The node id on the wheel. */
   id: string;
@@ -54,6 +60,8 @@ export interface Circle {
   container: CircleContainer;
   /** The chronicle episode this circle was opened for (its folder name), when it was opened for one. */
   episode_path?: string;
+  /** What the circle is to that episode: `main` for the episode's own circle. Absent: one circle among others. */
+  episode_role?: EpisodeRole;
   created_at: string;
   updated_at: string;
 }
@@ -75,6 +83,7 @@ export const NewCircleSchema = z.object({
     })
     .optional(),
   episode_path: z.string().trim().min(1).optional(),
+  episode_role: z.enum(['main']).optional(),
 });
 
 export type NewCircle = z.infer<typeof NewCircleSchema>;
@@ -99,6 +108,7 @@ export function circleNode(input: NewCircle, now = new Date().toISOString()): Re
       active: true,
       container: { ...DEFAULT_CONTAINER, ...(input.container ?? {}) },
       ...(input.episode_path ? { episode_path: input.episode_path } : {}),
+      ...(input.episode_role ? { episode_role: input.episode_role } : {}),
     },
     created_at: now,
     updated_at: now,
@@ -122,6 +132,7 @@ export function circleFromNode(node: RelationalNode | null | undefined): Circle 
     active: meta.active !== false,
     container: { ...DEFAULT_CONTAINER, ...container },
     ...(typeof meta.episode_path === 'string' && meta.episode_path ? { episode_path: meta.episode_path } : {}),
+    ...((EPISODE_ROLES as readonly string[]).includes(String(meta.episode_role)) ? { episode_role: meta.episode_role as EpisodeRole } : {}),
     created_at: node.created_at,
     updated_at: node.updated_at,
   };
@@ -194,6 +205,8 @@ export const CirclePatchSchema = z
       .optional(),
     /** Bind the circle to an episode, or `null` to release it from one. */
     episode_path: z.string().trim().min(1).nullable().optional(),
+    /** Make the circle the episode's main one, or `null` to release it from that role. */
+    episode_role: z.enum(['main']).nullable().optional(),
   })
   .strict();
 
@@ -212,6 +225,10 @@ export function circleNodePatch(node: RelationalNode, patch: CirclePatch): { nam
   if (patch.episode_path !== undefined) {
     if (patch.episode_path === null) delete meta.episode_path;
     else meta.episode_path = patch.episode_path;
+  }
+  if (patch.episode_role !== undefined) {
+    if (patch.episode_role === null) delete meta.episode_role;
+    else meta.episode_role = patch.episode_role;
   }
   if (patch.is_public !== undefined) meta.is_public = patch.is_public;
   if (patch.active !== undefined) {
