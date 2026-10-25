@@ -258,14 +258,15 @@ describe("an episode's main circle and ceremony (0.26.1, #168)", () => {
   it("names the main circle by default and offers distinct variations, the default first", async () => {
     const { episodeCircleNames } = await import("../src/community-identity/src/index");
     expect(episodeCircleNames(episode)).toEqual([
+      { key: "root", name: "Episode 563 Root Circle" },
       { key: "plain", name: "Episode 563 circle" },
       { key: "main", name: "Episode 563 main circle" },
       { key: "talking", name: "Episode 563 talking circle" },
       { key: "titled", name: "Episode 563 · An episode is born with its talking circle" },
     ]);
-    expect(episodeCircleNames(episode, { first: "main" }).map((n) => n.key)).toEqual(["main", "plain", "talking", "titled"]);
-    expect(episodeCircleNames({ path: ep }).map((n) => n.name)).toEqual([`${ep} circle`, `${ep} main circle`, `${ep} talking circle`]);
-    expect(episodeCircleNames({ path: ep, number: 60 })[0].name).toBe("Episode 60 circle");
+    expect(episodeCircleNames(episode, { first: "main" }).map((n) => n.key)).toEqual(["main", "root", "plain", "talking", "titled"]);
+    expect(episodeCircleNames({ path: ep }).map((n) => n.name)).toEqual([`${ep} Root Circle`, `${ep} circle`, `${ep} main circle`, `${ep} talking circle`]);
+    expect(episodeCircleNames({ path: ep, number: 60 })[0].name).toBe("Episode 60 Root Circle");
     const long = episodeCircleNames({ path: ep, number: 7, title: "a ".repeat(50) + "end" }).find((n) => n.key === "titled")!.name;
     expect(long.length).toBeLessThanOrEqual("Episode 7 · ".length + 61);
     expect(long.endsWith("…")).toBe(true);
@@ -274,7 +275,7 @@ describe("an episode's main circle and ceremony (0.26.1, #168)", () => {
   it("a main circle is typed on its node, read back, and a patch can release it", async () => {
     const { circleNode, circleFromNode, circleNodePatch, CirclePatchSchema, NewCircleSchema, episodeMainCircle } = await import("../src/community-identity/src/index");
     const input = NewCircleSchema.parse(episodeMainCircle(episode, "g"));
-    expect(input).toMatchObject({ name: "Episode 563 circle", episode_path: ep, episode_role: "main", direction: "east", circle_type: "ongoing" });
+    expect(input).toMatchObject({ name: "Episode 563 Root Circle", episode_path: ep, episode_role: "main", direction: "east", circle_type: "ongoing" });
     expect(input.intention).toContain("Episode 563");
     const c = circleNode(input);
     expect(c.metadata!.episode_role).toBe("main");

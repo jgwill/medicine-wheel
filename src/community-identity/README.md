@@ -25,11 +25,11 @@ const inv = await invites.create({ circle_id: circle.id, invited_by: node.id, in
 publicInvitation(inv, { circle_name: 'Ep349 circle', invited_by_name: 'Guillaume' });  // { code, role, state, circle_name, …, has_email: true }
 ```
 
-An episode's main circle (0.26.1, jgwill/medicine-wheel#168) is the circle opened for the episode with `episode_role: 'main'`: the one place its people and agent-spirits talk as the episode develops. Its main ceremony is the `talking_circle` in it whose `subject_id` is the episode's node. `episodeCircleNames` gives the default name and its variations for the person to choose from; opening stays the consumer's act, because a person opens a circle.
+An episode's main circle (0.26.1, jgwill/medicine-wheel#168) is the circle opened for the episode with `episode_role: 'main'`: the one place its people and agent-spirits talk as the episode develops. Its main ceremony is the `talking_circle` in it whose `subject_id` is the episode's node. `episodeCircleNames` gives the default name, "Episode <N> Root Circle" since 0.26.2, and its variations for the person to choose from; opening stays the consumer's act, because a person opens a circle.
 
 ```ts
 const episode = { path: '2026-10-25-episode-563-an-episode-is-born-with-its-talking-circle', number: 563, title: 'An episode is born with its talking circle' };
-episodeCircleNames(episode);          // Episode 563 circle · Episode 563 main circle · Episode 563 talking circle · Episode 563 · An episode is born…
+episodeCircleNames(episode);          // Episode 563 Root Circle · Episode 563 circle · Episode 563 main circle · Episode 563 talking circle · Episode 563 · An episode is born…
 const main = circleNode(episodeMainCircle(episode, person.id));          // episode_role: 'main', east, ongoing, private
 mainCircleOf(episode.path, circles);                                     // the episode's active main circle, or null
 mainCeremonyOf(records, { episode_path: episode.path, circle_id: main.id });  // its open talking circle about chronicle:<folder>

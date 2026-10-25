@@ -41,8 +41,8 @@ export function episodeHead(episode: EpisodeRef): string {
 }
 
 /** The kinds of name an episode's main circle may carry. */
-export type EpisodeCircleNameKey = 'plain' | 'main' | 'talking' | 'titled';
-export const EPISODE_CIRCLE_NAME_KEYS: readonly EpisodeCircleNameKey[] = ['plain', 'main', 'talking', 'titled'] as const;
+export type EpisodeCircleNameKey = 'root' | 'plain' | 'main' | 'talking' | 'titled';
+export const EPISODE_CIRCLE_NAME_KEYS: readonly EpisodeCircleNameKey[] = ['root', 'plain', 'main', 'talking', 'titled'] as const;
 
 export interface EpisodeCircleName {
   key: EpisodeCircleNameKey;
@@ -63,6 +63,8 @@ function shorten(text: string, max: number): string {
  * The default name of an episode's main circle and its variations, the
  * default first, every name distinct:
  *
+ * - `root`    "Episode 563 Root Circle", the default: Root is the word for the
+ *             episode's own circle, what the rest grows from (Guillaume, Episode 563, 0.26.2)
  * - `plain`   "Episode 563 circle"
  * - `main`    "Episode 563 main circle"
  * - `talking` "Episode 563 talking circle"
@@ -75,6 +77,7 @@ export function episodeCircleNames(episode: EpisodeRef, options: { first?: Episo
   const head = episodeHead(episode);
   const title = episode.title?.trim().replace(/\s+/g, ' ');
   const names: EpisodeCircleName[] = [
+    { key: 'root', name: `${head} Root Circle` },
     { key: 'plain', name: `${head} circle` },
     { key: 'main', name: `${head} main circle` },
     { key: 'talking', name: `${head} talking circle` },
