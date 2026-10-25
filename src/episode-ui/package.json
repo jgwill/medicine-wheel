@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/episode-ui",
-  "version": "0.26.0",
+  "version": "0.26.1",
   "description": "The episode-vessel files workspace — browse, read, preview markdown, edit in CodeMirror with a full-screen mode and a conflict that never loses the draft — framework-free so a plain page and a React app mount the same one. Plus React components for a ceremony's notes and attachments and the episode shelf. No component holds a URL, a token or a chronicle root.",
   "type": "module",
   "sideEffects": [
@@ -63,7 +63,7 @@
     }
   },
   "devDependencies": {
-    "@medicine-wheel/episode-vessel": "^0.26.0",
+    "@medicine-wheel/episode-vessel": "^0.26.1",
     "@playwright/test": "1.58.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
