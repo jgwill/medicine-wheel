@@ -14,6 +14,10 @@
  * strategically chose to delay its resolution — when resolution is wanted, why
  * waiting serves the work, and which agent session to rehydrate when the time
  * or the event comes. Contract: rispecs/delayed-resolution.spec.md.
+ *
+ * The follow-up prompt (0.26.0, Episode 297 feedback map V1 and V2): a delay
+ * can name the prompt composed when it was chosen. At the date a talking circle
+ * takes it up; what is rehydrated is that prompt, potentially with the session.
  */
 
 import type { Tool } from "../types.js";
@@ -36,6 +40,18 @@ export interface AgentSessionRef {
   rehydrate_with?: string;
 }
 
+/** The follow-up prompt composed when a delay was chosen (0.26.0). */
+export interface FollowUpPrompt {
+  /** e.g. `miadi-prompt:ceremony/<name>@<v>`. Begins with `miadi-`; stored as given. */
+  address: string;
+  /** The prompt's text as composed, so a circle can read it without the provider. */
+  text?: string;
+  /** The delay's chosen_at, set by the tool; a caller's value is ignored. */
+  composed_at: string;
+  /** The person or seat that composed it (an agent may propose it). */
+  composed_by?: string;
+}
+
 /** A strategic choice to delay a step's resolution, kept after it ends. */
 export interface DelayedResolution {
   chosen_at: string;
@@ -45,6 +61,7 @@ export interface DelayedResolution {
   primary_choice?: string;
   wake_on?: string[];
   session?: AgentSessionRef;
+  follow_up_prompt?: FollowUpPrompt;
   ended_at?: string;
   ended_by?: string;
   /** rehydrated and released come from end_delayed_resolution; resolved from completing the step. */
@@ -284,6 +301,35 @@ function normalizeSession(input: unknown): { session?: AgentSessionRef; error?: 
   return { session };
 }
 
+/**
+ * The follow-up prompt a delay names (0.26.0). The address is required, must
+ * begin with `miadi-` and is stored exactly as given, like a session's LLMOps
+ * addresses. `composed_at` is the delay's `chosen_at`; a caller's value is ignored.
+ */
+function normalizeFollowUpPrompt(input: unknown, chosenAt: string): { followUpPrompt?: FollowUpPrompt; error?: string } {
+  const value = parseMaybeJson(input);
+  if (value === undefined || value === null || value === '') return {};
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    return { error: `follow_up_prompt must be an object carrying address (e.g. { "address": "miadi-prompt:ceremony/<name>@<v>" }); got ${JSON.stringify(value)}` };
+  }
+  const f = value as Record<string, unknown>;
+  const address = f.address;
+  if (typeof address !== 'string' || !address.startsWith(LLMOPS_PREFIX)) {
+    return { error: `follow_up_prompt.address is required and must be a string beginning with '${LLMOPS_PREFIX}' (e.g. miadi-prompt:ceremony/<name>@<v>); got ${JSON.stringify(address)}` };
+  }
+  const followUpPrompt: FollowUpPrompt = { address, composed_at: chosenAt };
+  if (f.text !== undefined && f.text !== null && f.text !== '') {
+    if (typeof f.text !== 'string') return { error: `follow_up_prompt.text must be a string; got ${JSON.stringify(f.text)}` };
+    followUpPrompt.text = f.text;
+  }
+  if (f.composed_by !== undefined && f.composed_by !== null && f.composed_by !== '') {
+    const by = nonEmpty(f.composed_by);
+    if (!by) return { error: `follow_up_prompt.composed_by must be a non-empty string; got ${JSON.stringify(f.composed_by)}` };
+    followUpPrompt.composed_by = by;
+  }
+  return { followUpPrompt };
+}
+
 function normalizeWakeOn(input: unknown): string[] | undefined {
   const value = parseMaybeJson(input);
   if (value === undefined || value === null || value === '') return undefined;
@@ -312,6 +358,7 @@ function delayRow(chart: Chart, step: ActionStep, delay: DelayedResolution, stat
     primary_choice: delay.primary_choice,
     wake_on: delay.wake_on ?? [],
     session: delay.session ?? null,
+    follow_up_prompt: delay.follow_up_prompt ?? null,
     ...(delay.ended_at
       ? { ended_at: delay.ended_at, ended_by: delay.ended_by, outcome: delay.outcome, end_note: delay.end_note }
       : {}),
@@ -853,7 +900,7 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
   },
   {
     name: "delay_resolution",
-    description: "Record on an action step that someone strategically chose to delay its resolution: when resolution is wanted (resolve_by, in the future), why waiting serves the work now, what the delay serves (defaults to the chart's desired outcome), event cues to wake on, and the agent session to rehydrate (optionally with its LLMOps trace and the pinned prompt version that rehydrates it, both beginning with 'miadi-'). Sets the step's due date to resolve_by and its status to 'delayed'. Re-delaying keeps the earlier record in delayed_resolution_history. A completed step cannot be delayed.",
+    description: "Record on an action step that someone strategically chose to delay its resolution: when resolution is wanted (resolve_by, in the future), why waiting serves the work now, what the delay serves (defaults to the chart's desired outcome), event cues to wake on, the agent session to rehydrate (optionally with its LLMOps trace and the pinned prompt version that rehydrates it, both beginning with 'miadi-'), and the follow-up prompt composed now for the talking circle at the date (its address begins with 'miadi-'). Sets the step's due date to resolve_by and its status to 'delayed'. Re-delaying keeps the earlier record in delayed_resolution_history. A completed step cannot be delayed.",
     inputSchema: {
       type: "object",
       properties: {
@@ -892,6 +939,20 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
           },
           required: ["session_id"],
         },
+        follow_up_prompt: {
+          type: "object",
+          description: "The follow-up prompt composed when the delay is chosen. At the date a talking circle takes it up: what is rehydrated is this prompt, potentially with the session. composed_at is set to the delay's chosen_at.",
+          properties: {
+            address: {
+              type: "string",
+              pattern: "^miadi-",
+              description: "The prompt's address, e.g. miadi-prompt:ceremony/<name>@<v>. Must begin with 'miadi-'; stored as given.",
+            },
+            text: { type: "string", description: "The prompt's text as composed, so a circle can read it without the provider" },
+            composed_by: { type: "string", description: "The person or seat that composed it (an agent may propose it)" },
+          },
+          required: ["address"],
+        },
       },
       required: ["chart_id", "step_id", "resolve_by", "reason", "chosen_by"],
     },
@@ -913,6 +974,9 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
 
         const { session, error: sessionError } = normalizeSession(args.session);
         if (sessionError) return refuse("session_invalid", sessionError);
+        const chosenAt = new Date(now).toISOString();
+        const { followUpPrompt, error: followUpError } = normalizeFollowUpPrompt(args.follow_up_prompt, chosenAt);
+        if (followUpError) return refuse("follow_up_prompt_invalid", followUpError);
 
         const chart = await loadChart(args.chart_id);
         if (!chart) {
@@ -927,7 +991,7 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
         }
 
         const record: DelayedResolution = {
-          chosen_at: new Date(now).toISOString(),
+          chosen_at: chosenAt,
           chosen_by: chosenBy,
           resolve_by: resolveBy,
           reason,
@@ -936,6 +1000,7 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
         const wakeOn = normalizeWakeOn(args.wake_on);
         if (wakeOn) record.wake_on = wakeOn;
         if (session) record.session = session;
+        if (followUpPrompt) record.follow_up_prompt = followUpPrompt;
 
         // Nothing is overwritten: an earlier record, open or ended, moves to history.
         const previous = step.delayed_resolution;
@@ -969,7 +1034,7 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
   },
   {
     name: "list_delayed_resolutions",
-    description: "List open delayed resolutions across all charts, sorted by resolve_by (soonest first), with days_remaining and owed (resolve_by has passed). Each row names the step, its chart, the primary choice, wake_on cues and the session to rehydrate.",
+    description: "List open delayed resolutions across all charts, sorted by resolve_by (soonest first), with days_remaining and owed (resolve_by has passed). Each row names the step, its chart, the primary choice, wake_on cues, the session to rehydrate and the follow-up prompt (its address and text) composed when the delay was chosen.",
     inputSchema: {
       type: "object",
       properties: {
@@ -1038,7 +1103,7 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
   },
   {
     name: "end_delayed_resolution",
-    description: "End a step's open delayed resolution, either by rehydrating its agent session or by releasing the step. The record is kept with ended_at, ended_by and outcome, and the step returns to pending or in_progress. When rehydrated, returns the session's resume_command, with its LLMOps trace and rehydrate_with beside it (null when the session carried none).",
+    description: "End a step's open delayed resolution, either by rehydrating it or by releasing the step. The record is kept with ended_at, ended_by and outcome, and the step returns to pending or in_progress. What is rehydrated is the follow-up prompt composed when the delay was chosen, potentially with the session: when rehydrated, returns follow_up_prompt beside the session's resume_command, trace and rehydrate_with (each null when the delay carried none). A delay with a follow-up prompt and no session can end as rehydrated; one with neither is refused (nothing_to_rehydrate).",
     inputSchema: {
       type: "object",
       properties: {
@@ -1048,7 +1113,7 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
         outcome: {
           type: "string",
           enum: ["rehydrated", "released"],
-          description: "rehydrated: the session is being resumed; released: the step is let go from the wait",
+          description: "rehydrated: the follow-up prompt is taken up, potentially with the session; released: the step is let go from the wait",
         },
         end_note: { type: "string", description: "Optional note on how the delay ended" },
       },
@@ -1074,6 +1139,11 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
         if (!isOpen(delay)) {
           return refuse("no_open_delay", `Action step ${step.id} has no open delayed resolution to end.`);
         }
+        // What is rehydrated is the follow-up prompt, potentially with the session.
+        // Up to 0.25.0 a delay with no session ended as rehydrated with resume_command null.
+        if (args.outcome === 'rehydrated' && !delay.session && !delay.follow_up_prompt) {
+          return refuse("nothing_to_rehydrate", `The delay on action step ${step.id} carries neither a session nor a follow-up prompt, so there is nothing to rehydrate. End it as 'released', or delay it again with a session or a follow_up_prompt.`);
+        }
 
         const now = new Date().toISOString();
         delay.ended_at = now;
@@ -1097,17 +1167,18 @@ export function createStructuralTensionTools(targetStore: StructuralTensionStore
           delayed_resolution: delay,
           ...(resume
             ? {
+                follow_up_prompt: delay.follow_up_prompt ?? null,
                 session: delay.session ?? null,
                 ...resume,
                 trace: delay.session?.trace ?? null,
                 rehydrate_with: delay.session?.rehydrate_with ?? null,
                 ...(resume.resume_command === null
-                  ? { note: delay.session ? `No resume command is known for agent '${delay.session.agent}'.` : 'This delay carried no session to rehydrate.' }
+                  ? { note: delay.session ? `No resume command is known for agent '${delay.session.agent}'.` : 'This delay carried no session; what is rehydrated is its follow-up prompt.' }
                   : {}),
               }
             : {}),
           teaching: args.outcome === 'rehydrated'
-            ? "Rehydrating brings the waiting session back with its state, so the work resumes where the choice to wait left it."
+            ? "What is rehydrated is the follow-up prompt composed when the delay was chosen, potentially with the session. A circle at the date takes it up; resuming a session is not an instant or flawless restoration of its context."
             : "Releasing ends the wait. The step returns to the structure as an ordinary secondary choice.",
         };
       } catch (error) {

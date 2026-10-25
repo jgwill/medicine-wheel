@@ -117,6 +117,45 @@ describe("mw chart through the built CLI (F1)", () => {
     expect(usage.stderr).toContain("--session");
   }, 30_000);
 
+  it("mw chart delay carries --follow-up-prompt with its text and author; delayed shows it; end-delay rehydrates it without a session (0.26.0)", () => {
+    const address = "miadi-prompt:ceremony/ep297-follow-up-cli@1";
+    const text = "At the date, open a circle and read the lane's last words before resuming";
+    const resolveBy = new Date(Date.now() + 5 * DAY).toISOString();
+    const delayed = mw(
+      "chart", "delay", chartId, stepId, resolveBy, "The circle decides at the date",
+      "--by", "William", "--follow-up-prompt", address, "--follow-up-text", text, "--follow-up-by", "Mia",
+    );
+    expect(delayed.status).toBe(0);
+    const d = JSON.parse(delayed.stdout);
+    expect(d.delayed_resolution.follow_up_prompt).toEqual({ address, text, composed_by: "Mia", composed_at: d.delayed_resolution.chosen_at });
+    expect(d.delayed_resolution).not.toHaveProperty("session");
+
+    const listed = JSON.parse(mw("chart", "delayed").stdout);
+    expect(listed.count).toBe(1);
+    expect(listed.delays[0].follow_up_prompt.address).toBe(address);
+
+    const ended = mw("chart", "end-delay", chartId, stepId, "rehydrated", "--by", "William");
+    expect(ended.status).toBe(0);
+    expect(JSON.parse(ended.stdout)).toMatchObject({
+      outcome: "rehydrated",
+      follow_up_prompt: { address, text },
+      session: null,
+      resume_command: null,
+    });
+  }, 60_000);
+
+  it("refuses a follow-up address without miadi-, and exits 2 for --follow-up-text or --follow-up-by without --follow-up-prompt", () => {
+    const resolveBy = new Date(Date.now() + 7 * DAY).toISOString();
+    const refused = mw("chart", "delay", chartId, stepId, resolveBy, "r", "--by", "Mia", "--follow-up-prompt", "prompt:ceremony/x@1");
+    expect(JSON.parse(refused.stdout)).toMatchObject({ status: "refused", refusal: "follow_up_prompt_invalid" });
+
+    for (const flag of ["--follow-up-text", "--follow-up-by"]) {
+      const usage = mw("chart", "delay", chartId, stepId, resolveBy, "r", "--by", "Mia", flag, "x");
+      expect(usage.status).toBe(2);
+      expect(usage.stderr).toContain("--follow-up-prompt");
+    }
+  }, 30_000);
+
   it("mw tools lists the server's tools through the same handshake", () => {
     const r = mw("tools");
     expect(r.status).toBe(0);

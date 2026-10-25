@@ -252,6 +252,16 @@ export const AgentSessionRefSchema = z.object({
   rehydrate_with: z.string().startsWith('miadi-').optional(),
 });
 
+/** The follow-up prompt composed when a delay was chosen (0.26.0). */
+export const FollowUpPromptSchema = z.object({
+  /** e.g. `miadi-prompt:ceremony/<name>@<v>`; stored as given. */
+  address: z.string().startsWith('miadi-'),
+  text: z.string().optional(),
+  /** The delay's chosen_at, set by the tool. */
+  composed_at: z.string(),
+  composed_by: z.string().optional(),
+});
+
 export const DelayedResolutionSchema = z.object({
   chosen_at: z.string(),
   chosen_by: z.string().min(1),
@@ -260,6 +270,7 @@ export const DelayedResolutionSchema = z.object({
   primary_choice: z.string().optional(),
   wake_on: z.array(z.string()).optional(),
   session: AgentSessionRefSchema.optional(),
+  follow_up_prompt: FollowUpPromptSchema.optional(),
   ended_at: z.string().optional(),
   ended_by: z.string().optional(),
   outcome: z.enum(['rehydrated', 'released', 'resolved']).optional(),

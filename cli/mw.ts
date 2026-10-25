@@ -306,6 +306,8 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
       [--primary <text>] [--wake-on <cue>]            Choose to delay a step's resolution
       [--session <id> --cwd <dir> --resume <cmd>]     ...with the session to rehydrate
       [--trace <miadi-...> --rehydrate-with <miadi-...>]  ...its LLMOps trace and rehydrating prompt
+      [--follow-up-prompt <miadi-...> --follow-up-text <text> --follow-up-by <who>]
+                                                      ...the follow-up prompt composed now
     mw chart delayed [--within <days>] [--all]        Delays by resolve_by, owed first
     mw chart end-delay <chart> <step> <rehydrated|released> --by <who> [--note <text>]
     mw mmot <chart_id> <expected> <actual> <analysis> MMOT review
@@ -752,8 +754,15 @@ function cmdChart(positional: string[], flags: Record<string, string | boolean> 
       const sessionId = flagText(flags, 'session');
       const trace = flagText(flags, 'trace');
       const rehydrateWith = flagText(flags, 'rehydrate-with');
-      if (!chartId || !stepId || !resolveBy || !reason || !by || ((trace || rehydrateWith) && !sessionId)) {
-        chartUsage('mw chart delay <chart_id> <step_id> <resolve_by> <reason> --by <who> [--primary <text>] [--wake-on <cue>] [--session <id>] [--cwd <dir>] [--resume <command>] [--host <host>] [--trace <miadi-...>] [--rehydrate-with <miadi-...>]  (--trace and --rehydrate-with need --session)');
+      const followUpPrompt = flagText(flags, 'follow-up-prompt');
+      const followUpText = flagText(flags, 'follow-up-text');
+      const followUpBy = flagText(flags, 'follow-up-by');
+      if (
+        !chartId || !stepId || !resolveBy || !reason || !by
+        || ((trace || rehydrateWith) && !sessionId)
+        || ((followUpText || followUpBy) && !followUpPrompt)
+      ) {
+        chartUsage('mw chart delay <chart_id> <step_id> <resolve_by> <reason> --by <who> [--primary <text>] [--wake-on <cue>] [--session <id>] [--cwd <dir>] [--resume <command>] [--host <host>] [--trace <miadi-...>] [--rehydrate-with <miadi-...>] [--follow-up-prompt <miadi-...>] [--follow-up-text <text>] [--follow-up-by <who>]  (--trace and --rehydrate-with need --session; --follow-up-text and --follow-up-by need --follow-up-prompt)');
         return;
       }
       const wakeOn = flagText(flags, 'wake-on');
@@ -774,6 +783,15 @@ function cmdChart(positional: string[], flags: Record<string, string | boolean> 
                 ...(flagText(flags, 'host') ? { host: flagText(flags, 'host') } : {}),
                 ...(trace ? { trace } : {}),
                 ...(rehydrateWith ? { rehydrate_with: rehydrateWith } : {}),
+              },
+            }
+          : {}),
+        ...(followUpPrompt
+          ? {
+              follow_up_prompt: {
+                address: followUpPrompt,
+                ...(followUpText ? { text: followUpText } : {}),
+                ...(followUpBy ? { composed_by: followUpBy } : {}),
               },
             }
           : {}),

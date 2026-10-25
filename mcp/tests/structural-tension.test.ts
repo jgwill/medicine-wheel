@@ -13,7 +13,7 @@ import { JsonlStore } from "../src/jsonl-store.js";
 import { HttpStore } from "../src/http-store.js";
 import { createStructuralTensionTools } from "../src/tools/structural-tension.js";
 import type { Tool } from "../src/types.js";
-import { AgentSessionRefSchema, DelayedResolutionSchema } from "../../src/ontology-core/src/schemas";
+import { AgentSessionRefSchema, DelayedResolutionSchema, FollowUpPromptSchema } from "../../src/ontology-core/src/schemas";
 
 const DAY = 86_400_000;
 const T0 = Date.parse("2026-10-20T12:00:00.000Z");
@@ -378,6 +378,165 @@ describe("the session's LLMOps trace and rehydrate_with (0.24.0)", () => {
       chosen_at: iso(T0), chosen_by: "W", resolve_by: iso(T0 + DAY), reason: "r",
       session: { session_id: "s", trace: TRACE },
     }).success).toBe(true);
+  });
+});
+
+describe("the follow-up prompt (0.26.0)", () => {
+  // Episode 297 feedback map V1, V2: the delay names the prompt composed when it was chosen.
+  const ADDRESS = "miadi-prompt:ceremony/ep297-follow-up-delayed-resolution@1";
+  const TEXT = "At the date, open a circle: read what the lane left, then decide to resume, or to start a new context.";
+
+  it("rule 1: delay_resolution stores the address as given, text and composed_by; composed_at is chosen_at and a caller's value is ignored", async () => {
+    const chartId = await chartWithSteps();
+    const stepId = `${chartId}_action_0`;
+    const result = await call("delay_resolution", {
+      chart_id: chartId, step_id: stepId, resolve_by: iso(T0 + 4 * DAY), reason: "r", chosen_by: "William",
+      follow_up_prompt: { address: ADDRESS, text: TEXT, composed_by: "Mia", composed_at: "1999-01-01T00:00:00.000Z" },
+    });
+    expect(result.status).toBe("delayed");
+    expect(result.delayed_resolution.follow_up_prompt).toEqual({
+      address: ADDRESS, text: TEXT, composed_at: iso(T0), composed_by: "Mia",
+    });
+    expect(result.delayed_resolution.chosen_at).toBe(iso(T0));
+    expect(store.getChart(chartId)!.action_steps[0].delayed_resolution.follow_up_prompt.address).toBe(ADDRESS);
+  });
+
+  it("rule 1: accepts an address alone, and a JSON string as MCP clients sometimes send it", async () => {
+    const chartId = await chartWithSteps();
+    const [a, b] = [`${chartId}_action_0`, `${chartId}_action_1`];
+    const base = { chart_id: chartId, reason: "r", chosen_by: "W", resolve_by: iso(T0 + DAY) };
+    const alone = await call("delay_resolution", { ...base, step_id: a, follow_up_prompt: { address: "miadi-x" } });
+    expect(alone.delayed_resolution.follow_up_prompt).toEqual({ address: "miadi-x", composed_at: iso(T0) });
+    const asJson = await call("delay_resolution", { ...base, step_id: b, follow_up_prompt: JSON.stringify({ address: ADDRESS }) });
+    expect(asJson.delayed_resolution.follow_up_prompt.address).toBe(ADDRESS);
+  });
+
+  it("rule 1: refuses an address that does not begin with miadi-, a missing address, or a bad text, and writes nothing", async () => {
+    const chartId = await chartWithSteps();
+    const base = { chart_id: chartId, step_id: `${chartId}_action_0`, reason: "r", chosen_by: "W", resolve_by: iso(T0 + DAY) };
+    for (const follow_up_prompt of [
+      { address: "langfuse:prompt/abc@1" },
+      { address: " miadi-prompt:ceremony/x@1" },
+      { address: 42 },
+      { text: TEXT },
+      "miadi-prompt:ceremony/x@1",
+      [ADDRESS],
+      { address: ADDRESS, text: 7 },
+      { address: ADDRESS, composed_by: "  " },
+    ]) {
+      const refused = await call("delay_resolution", { ...base, follow_up_prompt });
+      expect(refused).toMatchObject({ status: "refused", refusal: "follow_up_prompt_invalid" });
+    }
+    const step = store.getChart(chartId)!.action_steps[0];
+    expect(step.status).toBe("pending");
+    expect(step.delayed_resolution).toBeUndefined();
+  });
+
+  it("rule 2: a re-delay moves the open record, with its follow-up prompt, into history", async () => {
+    const chartId = await chartWithSteps();
+    const stepId = `${chartId}_action_0`;
+    await call("delay_resolution", { chart_id: chartId, step_id: stepId, resolve_by: iso(T0 + 2 * DAY), reason: "first", chosen_by: "W", follow_up_prompt: { address: ADDRESS, text: TEXT } });
+    vi.setSystemTime(T0 + DAY);
+    const again = await call("delay_resolution", { chart_id: chartId, step_id: stepId, resolve_by: iso(T0 + 5 * DAY), reason: "second", chosen_by: "W", follow_up_prompt: { address: "miadi-prompt:ceremony/ep297-follow-up@2" } });
+    expect(again.redelayed).toBe(true);
+    const step = store.getChart(chartId)!.action_steps[0];
+    expect(step.delayed_resolution_history).toHaveLength(1);
+    expect(step.delayed_resolution_history[0].follow_up_prompt).toEqual({ address: ADDRESS, text: TEXT, composed_at: iso(T0) });
+    expect(step.delayed_resolution.follow_up_prompt).toEqual({ address: "miadi-prompt:ceremony/ep297-follow-up@2", composed_at: iso(T0 + DAY) });
+
+    const all = await call("list_delayed_resolutions", { include_ended: true });
+    expect(all.delays.map((d: any) => [d.state, d.follow_up_prompt?.address])).toEqual([
+      ["superseded", ADDRESS],
+      ["open", "miadi-prompt:ceremony/ep297-follow-up@2"],
+    ]);
+  });
+
+  it("rule 3: list_delayed_resolutions and get_action_step show the address; a delay without one shows null", async () => {
+    const chartId = await chartWithSteps();
+    const [a, b] = [`${chartId}_action_0`, `${chartId}_action_1`];
+    await call("delay_resolution", { chart_id: chartId, step_id: a, resolve_by: iso(T0 + DAY), reason: "r", chosen_by: "W", follow_up_prompt: { address: ADDRESS, text: TEXT } });
+    await call("delay_resolution", { chart_id: chartId, step_id: b, resolve_by: iso(T0 + 2 * DAY), reason: "r", chosen_by: "W", session: { session_id: "s" } });
+
+    const listed = await call("list_delayed_resolutions", {});
+    expect(listed.delays.map((d: any) => d.follow_up_prompt?.address ?? null)).toEqual([ADDRESS, null]);
+    expect(listed.delays[0].follow_up_prompt).toMatchObject({ address: ADDRESS, text: TEXT });
+
+    const got = await call("get_action_step", { chart_id: chartId, step_id: a });
+    expect(got.delay.follow_up_prompt.address).toBe(ADDRESS);
+    expect(got.step.delayed_resolution.follow_up_prompt.address).toBe(ADDRESS);
+  });
+
+  it("rule 4: rehydrated returns follow_up_prompt beside resume_command; released returns none and the record keeps it", async () => {
+    const chartId = await chartWithSteps();
+    const [a, b] = [`${chartId}_action_0`, `${chartId}_action_1`];
+    for (const stepId of [a, b]) {
+      await call("delay_resolution", {
+        chart_id: chartId, step_id: stepId, resolve_by: iso(T0 + 2 * DAY), reason: "r", chosen_by: "W",
+        session: { session_id: "sess-fu", cwd: "/srv/miadi/episodes" },
+        follow_up_prompt: { address: ADDRESS, text: TEXT, composed_by: "Mia" },
+      });
+    }
+    const ended = await call("end_delayed_resolution", { chart_id: chartId, step_id: a, ended_by: "William", outcome: "rehydrated" });
+    expect(ended).toMatchObject({
+      outcome: "rehydrated",
+      resume_command: "cd /srv/miadi/episodes && claude --resume sess-fu",
+      follow_up_prompt: { address: ADDRESS, text: TEXT, composed_by: "Mia", composed_at: iso(T0) },
+    });
+    expect(ended).not.toHaveProperty("note");
+
+    const released = await call("end_delayed_resolution", { chart_id: chartId, step_id: b, ended_by: "W", outcome: "released" });
+    expect(released).not.toHaveProperty("follow_up_prompt");
+    expect(released.delayed_resolution.follow_up_prompt.address).toBe(ADDRESS);
+  });
+
+  it("rule 4: a delay with a follow-up prompt and no session ends as rehydrated", async () => {
+    const chartId = await chartWithSteps();
+    const stepId = `${chartId}_action_0`;
+    await call("delay_resolution", { chart_id: chartId, step_id: stepId, resolve_by: iso(T0 + 2 * DAY), reason: "r", chosen_by: "W", follow_up_prompt: { address: ADDRESS } });
+    const ended = await call("end_delayed_resolution", { chart_id: chartId, step_id: stepId, ended_by: "W", outcome: "rehydrated" });
+    expect(ended).toMatchObject({
+      status: "pending",
+      outcome: "rehydrated",
+      follow_up_prompt: { address: ADDRESS },
+      session: null,
+      resume_command: null,
+      trace: null,
+      rehydrate_with: null,
+    });
+    expect(ended.note).toContain("follow-up prompt");
+    expect(store.getChart(chartId)!.action_steps[0].delayed_resolution.outcome).toBe("rehydrated");
+  });
+
+  it("rule 4: a delay with neither a session nor a follow-up prompt is refused as rehydrated (up to 0.25.0 it ended with resume_command null), and can still be released", async () => {
+    const chartId = await chartWithSteps();
+    const stepId = `${chartId}_action_0`;
+    await call("delay_resolution", { chart_id: chartId, step_id: stepId, resolve_by: iso(T0 + 2 * DAY), reason: "r", chosen_by: "W" });
+    const refused = await call("end_delayed_resolution", { chart_id: chartId, step_id: stepId, ended_by: "W", outcome: "rehydrated" });
+    expect(refused).toMatchObject({ status: "refused", refusal: "nothing_to_rehydrate" });
+    const step = store.getChart(chartId)!.action_steps[0];
+    expect(step.status).toBe("delayed");
+    expect(step.delayed_resolution.ended_at).toBeUndefined();
+
+    const released = await call("end_delayed_resolution", { chart_id: chartId, step_id: stepId, ended_by: "W", outcome: "released" });
+    expect(released.outcome).toBe("released");
+  });
+
+  it("advertises follow_up_prompt in delay_resolution's schema, its address required with the miadi- pattern", () => {
+    const fu = (tool("delay_resolution").inputSchema as any).properties.follow_up_prompt;
+    expect(fu).toMatchObject({ type: "object", required: ["address"] });
+    expect(fu.properties.address).toMatchObject({ type: "string", pattern: "^miadi-" });
+    expect(fu.properties).toHaveProperty("text");
+    expect(fu.properties).toHaveProperty("composed_by");
+    expect(fu.properties).not.toHaveProperty("composed_at");
+  });
+
+  it("ontology-core's FollowUpPromptSchema and DelayedResolutionSchema accept a miadi- address and refuse others", () => {
+    expect(FollowUpPromptSchema.safeParse({ address: ADDRESS, text: TEXT, composed_at: iso(T0), composed_by: "Mia" }).success).toBe(true);
+    expect(FollowUpPromptSchema.safeParse({ address: "langfuse:abc", composed_at: iso(T0) }).success).toBe(false);
+    expect(FollowUpPromptSchema.safeParse({ composed_at: iso(T0) }).success).toBe(false);
+    const record = { chosen_at: iso(T0), chosen_by: "W", resolve_by: iso(T0 + DAY), reason: "r" };
+    expect(DelayedResolutionSchema.safeParse({ ...record, follow_up_prompt: { address: ADDRESS, composed_at: iso(T0) } }).success).toBe(true);
+    expect(DelayedResolutionSchema.safeParse({ ...record, follow_up_prompt: { address: "prompt@1", composed_at: iso(T0) } }).success).toBe(false);
   });
 });
 

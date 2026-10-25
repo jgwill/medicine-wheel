@@ -18,7 +18,7 @@ This folder contains RISE framework specifications for Medicine Wheel packages, 
 | `prompt-decomposition.spec.md` | prompt-decomposition | Intent extraction, Four Directions PDE |
 | `decomposition-strategies.spec.md` | prompt-decomposition capability | Depth-on-demand strategies over the deterministic foundation |
 | `ui-components.spec.md` | ui-components | React components |
-| `delayed-resolution.spec.md` (+ `.kin.md`) | mcp + ontology-core + app | A step records a chosen delay of its resolution, the session to rehydrate with its LLMOps `trace` and `rehydrate_with`; chart read-back, step due dates, coaia-narrative chart parity, the 21 structural tension tools at 4.24.1, `mw chart` output (F1 fixed) (Episode 297) |
+| `delayed-resolution.spec.md` (+ `.kin.md`) | mcp + ontology-core + app | A step records a chosen delay of its resolution, the session to rehydrate with its LLMOps `trace` and `rehydrate_with`, and the follow-up prompt composed when it was chosen (0.26.0); chart read-back, step due dates, coaia-narrative chart parity, the 21 structural tension tools at 4.26.0, `mw chart` output (F1 fixed) (Episode 297) |
 | `capture-registry.spec.md` | storage-provider + app | Capture records + URIs, canonical `/api/captures`, deprecated `/api/recordings` alias |
 | `reading-layer.spec.md` | unassigned | Standings registry, read-time composition, refusal as return type, read-as-event |
 | `council-record.spec.md` | unassigned | Contributions on a matter, recognized patterns, advance-with-divergence |

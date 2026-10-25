@@ -6,7 +6,7 @@
 **Package:** `@medicine-wheel/ontology-core`  
 **Document ID:** rispec-ontology-core-v2  
 **Parity Baseline:** 2026-08-19  
-**Section revised:** Structural Tension Model, against 0.23.0 on 2026-10-20 and against 0.24.0 the same day (`AgentSessionRef.trace` and `rehydrate_with`), from Miadi Chronicle Episode 297 (`miadi-chronicle://297`, design `delayed-resolution-design-261019.md`). The rest of this document keeps its 2026-08-19 baseline.
+**Section revised:** Structural Tension Model, against 0.23.0 on 2026-10-20, against 0.24.0 the same day (`AgentSessionRef.trace` and `rehydrate_with`), and against 0.26.0 on 2026-10-25 (`DelayedResolution.follow_up_prompt`), from Miadi Chronicle Episode 297 (`miadi-chronicle://297`, design `delayed-resolution-design-261019.md`). The rest of this document keeps its 2026-08-19 baseline.
 
 ---
 
@@ -261,11 +261,12 @@ type ActionStepStatus = 'pending' | 'in_progress' | 'completed' | 'delayed';
 
 `delayed` means someone strategically chose to delay the step's resolution in favour of a longer-term choice. The step then holds the choice itself:
 
-- `delayed_resolution`: a `DelayedResolution` (`chosen_at`, `chosen_by`, `resolve_by`, `reason`, optional `primary_choice`, `wake_on[]`, `session`; and when it ends, `ended_at`, `ended_by`, `outcome` of `rehydrated`, `released` or `resolved`, `end_note`);
+- `delayed_resolution`: a `DelayedResolution` (`chosen_at`, `chosen_by`, `resolve_by`, `reason`, optional `primary_choice`, `wake_on[]`, `session`, and since 0.26.0 `follow_up_prompt`; and when it ends, `ended_at`, `ended_by`, `outcome` of `rehydrated`, `released` or `resolved`, `end_note`);
 - `delayed_resolution_history`: earlier records, oldest first, so a new delay never overwrites an old one;
 - `session`: an `AgentSessionRef` (`session_id`, and optional `agent`, `host`, `cwd`, `tmux`, `resume_command`, `inventory_record`, and since 0.24.0 `trace` and `rehydrate_with`), the agent session to rehydrate when the delay ends. `trace` is the session's LLMOps record and `rehydrate_with` the pinned prompt version that rehydrates it, as `@miadi/llmops` 0.1.0 prints them; `AgentSessionRefSchema` accepts each only as a string beginning with `miadi-`.
+- `follow_up_prompt` (0.26.0): a `FollowUpPrompt` (`address`, optional `text`, `composed_at`, optional `composed_by`), the follow-up prompt composed when the delay was chosen. At the date a talking circle takes it up: what is rehydrated is this prompt, potentially with the session. `address` (e.g. `miadi-prompt:ceremony/<name>@<v>`) is stored as given; `FollowUpPromptSchema` accepts it only as a string beginning with `miadi-`. `composed_at` is the delay's `chosen_at`, set by the tool.
 
-Zod schemas exist for each: `ActionStepStatusSchema`, `AgentSessionRefSchema`, `DelayedResolutionSchema`, and the widened `ActionStepSchema` and `StructuralTensionChartSchema` (the `github_issue.ref` is checked against `owner/repo#number`). The rules for choosing, listing and ending a delay belong to the MCP tools and are specified in `delayed-resolution.spec.md`.
+Zod schemas exist for each: `ActionStepStatusSchema`, `AgentSessionRefSchema`, `FollowUpPromptSchema`, `DelayedResolutionSchema`, and the widened `ActionStepSchema` and `StructuralTensionChartSchema` (the `github_issue.ref` is checked against `owner/repo#number`). The rules for choosing, listing and ending a delay belong to the MCP tools and are specified in `delayed-resolution.spec.md`.
 
 ---
 
