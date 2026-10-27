@@ -9,9 +9,10 @@ including its own multiple-choice options:
 
 > **Is there a prior state you are restoring?**
 
-**Yes.** The option is describing a repair, and
+**Yes.** The option is describing a repair.
 [`@medicine-wheel/gap-analysis`](https://www.npmjs.com/package/@medicine-wheel/gap-analysis)
-is the instrument for it.
+looks for what is missing against the prior state, and the turn to the creative
+orientation follows it.
 
 **No.** Then an option phrased as removing something is aiming at a list of
 known failures rather than at the state you want — and the moment of speaking is
@@ -85,11 +86,12 @@ connection drops.
 ## Where it sits
 
 ```
-creative-orientation ......... the gate
-    ├── gap-analysis ......... the fire path
-    └── structural-tension ... the advancing path
+creative-orientation ......... the question asked first
+    ├── gap-analysis ......... a prior state is being restored: looks for what is missing
+    │     └── turnToCreativeOrientation ... findings become current reality
+    └── structural-tension ... desired outcome, current reality stated as fact, action steps
 
-brainstorming ................ calls the gate on everything it says
+brainstorming ................ asks the question of everything it says
 ```
 
 ## Status

@@ -82,7 +82,7 @@
 
 @medicine-wheel/creative-orientation          ← The question asked before the work
     ├── @medicine-wheel/creative-problem-solving ← Signpost — re-exports the above
-    ├── @medicine-wheel/gap-analysis             ← The fire path
+    ├── @medicine-wheel/gap-analysis             ← Looks for what is missing; the turn follows
     └── @medicine-wheel/brainstorming            ← Idea → design, through human gates
 
 @medicine-wheel/app                           ← Next.js visual layer + `mw` / `mwsrv` CLIs
@@ -2320,7 +2320,7 @@ npm install @medicine-wheel/creative-orientation
 
 The orientation question, asked before the work: **is there a prior state you are restoring?**
 
-Two situations look identical under pressure and are not. Something worked and stopped is a fire — there is a baseline to return to, and elimination is the right shape. Something has never existed and is wanted is a creating act — there is no baseline, and elimination framing aims the work at a list of known failures instead of at the outcome. This package holds the question and the routing signals; it holds none of the instruments.
+Two situations look identical under pressure and are not. Something worked and stopped: there is a baseline to return to, and a gap analysis, which looks for what is missing against it, can be useful. Something has never existed and is wanted: that is a creating act, there is no baseline, and elimination framing aims the work at a list of known failures instead of at the outcome. Gap analysis is not part of the creative orientation; after one, the turn in `gap-analysis` brings the work back to a structural tension chart. This package holds the question and the routing signals; it holds none of the instruments.
 
 Urgency is not evidence. Under pressure every situation feels like a fire.
 
@@ -2345,15 +2345,18 @@ npm install @medicine-wheel/gap-analysis
 
 ### Overview
 
-Problem-solving built properly for the case where it genuinely applies: something worked and stopped. Root cause, incidents, regressions, troubleshooting.
+A gap analysis looks for what is missing. It can be useful when something worked and stopped: root cause, incidents, regressions, troubleshooting. It is not part of the creative orientation.
 
-The structure requires an evidenced baseline, an observation of the present, the difference between them, and elimination steps that can be verified. The baseline requirement is not bureaucracy — it is exactly what separates a fire from a creating act, and it is why this instrument cannot be quietly used for work that has no prior state.
+The structure requires an evidenced baseline, an observation of the present, the difference between them, and elimination steps that can be verified. The baseline requirement separates a restore from a creating act.
+
+The package's main job is to teach the model using it. A model that has found what is missing is pulled toward filling each missing item. `turnToCreativeOrientation` follows the analysis: it keeps the findings as current reality (never as tasks), names that pull and says it is not what we are doing, and points to `create_structural_tension_chart`, which needs a desired outcome named on its own terms. Given a desired outcome, it returns a draft chart input with no action steps taken from the findings.
 
 ### Exports
 
 -   `openGapAnalysis`, `addStep`, `markDone`, `isClosed` — the analysis lifecycle
 -   `doorAdvice` — what to say at the door when the situation does not fit this instrument
--   types — `Baseline`, `Observation`, `GapAnalysis`, `EliminationStep`, `OpenGapOptions`
+-   `turnToCreativeOrientation`, `DESIRED_OUTCOME_QUESTION` — the turn after an analysis
+-   types — `Baseline`, `Observation`, `GapAnalysis`, `EliminationStep`, `OpenGapOptions`, `CurrentRealityFact`, `TurnOptions`, `TurnNextStep`, `ChartDraft`, `CreativeOrientationTurn`
 
 ### Dependencies
 
@@ -2371,7 +2374,7 @@ npm install @medicine-wheel/creative-problem-solving
 
 A signpost, not a door. It holds no logic of its own and never will — it carries one question and then sends the caller one of two ways.
 
-Name a prior state that genuinely existed, and this is a fire: `gap-analysis` is the right instrument, and that work is correct work with nothing to apologise for and nothing to rename. Name none, and you are creating: structural tension is the instrument.
+Name a prior state that genuinely existed: `gap-analysis` looks for what is missing against it, and the turn to the creative orientation follows the analysis. Name none, and you are creating: structural tension is the instrument.
 
 ### Exports
 

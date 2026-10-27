@@ -4,11 +4,14 @@ You arrived here looking for creative problem solving. One question first:
 
 > **Is there a prior state you are restoring?**
 
-**Yes — you can name it and it genuinely existed.** This is a fire, and
-[`@medicine-wheel/gap-analysis`](https://www.npmjs.com/package/@medicine-wheel/gap-analysis)
-is the right instrument: baseline with evidence, observation, the difference
-between them, and elimination steps you can verify. That is correct work for
-this situation. It carries no apology and needs no other name.
+**Yes — you can name it and it genuinely existed.** Something worked and
+stopped. A gap analysis
+([`@medicine-wheel/gap-analysis`](https://www.npmjs.com/package/@medicine-wheel/gap-analysis))
+looks for what is missing against it: baseline with evidence, observation, the
+difference between them, and elimination steps you can verify. It can be
+useful, and it is not part of the creative orientation. After it comes the
+turn: the findings become current reality, and a structural tension chart
+follows.
 
 **No — nothing existed that you are returning to.** You are creating, and
 structural tension is the instrument. Difference-closing language will mislead
@@ -41,7 +44,7 @@ readOrientation({
   outcome: 'the published image matches the published packages',
   restores: 'true in the previously tagged release',
   evidence: 'tagged 2026-07-17',
-}).route;       // 'gap-analysis' — a named, evidenced baseline
+}).route;       // 'gap-analysis' — a named, evidenced baseline; the turn follows the analysis
 ```
 
 The baseline claim decides the route. Vocabulary only ever contributes signals,

@@ -3,12 +3,18 @@
  *
  * Which orientation does this situation call for?
  *
- * Problem-solving is not the degraded case. It is the correct case for a
- * specific situation: something worked, it stopped working, restore it.
- * Creating is the correct case for a different one: bring into being a state
- * that has never existed. They produce different structures — one oscillates
- * back to a baseline, one advances toward an outcome — and using the wrong
- * one is how rigorous work goes in circles.
+ * Two situations look alike under pressure. In one, something worked and
+ * stopped, and the work is to restore it. A gap analysis, which looks for what
+ * is missing against that prior state, can be useful there. In the other, a
+ * state that has never existed is wanted: that is a creating act. They produce
+ * different structures. Restoring oscillates back to a baseline; creating
+ * advances toward an outcome. Using the wrong one is how rigorous work goes in
+ * circles.
+ *
+ * Gap analysis is not part of the creative orientation. After an analysis,
+ * `turnToCreativeOrientation` (in `@medicine-wheel/gap-analysis`) keeps the
+ * findings as current reality and asks for the desired outcome, so that a
+ * structural tension chart can follow.
  *
  * This module answers the routing question and nothing else. It does not
  * decide, it does not block. A caller that disagrees proceeds, because
@@ -102,10 +108,10 @@ function mentions(haystack: string, needle: string): boolean {
  * Read a situation and say which orientation it calls for.
  *
  * The baseline claim decides the route; vocabulary only ever contributes
- * signals. A caller who names a real prior state gets routed to gap analysis
- * even if they phrased the outcome beautifully — and a caller who names none
- * gets routed to structural tension even if every word they used was
- * elimination-shaped.
+ * signals. A caller who names a real prior state gets routed to a gap analysis
+ * (with the turn to the creative orientation after it) even if they phrased the
+ * outcome as a state that will exist, and a caller who names none gets routed
+ * to structural tension even if every word they used was elimination-shaped.
  */
 export function readOrientation(claim: SituationClaim): OrientationReading {
   const signals: OrientationSignal[] = [];

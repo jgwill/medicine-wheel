@@ -1,15 +1,20 @@
 /**
  * @medicine-wheel/gap-analysis
  *
- * The fire path, built properly and without apology.
+ * A gap analysis looks for what is missing. It measures an observation against
+ * a baseline that existed, names the difference, and lists elimination steps
+ * that can be verified. That technique can be useful, for instance when
+ * something worked and stopped. It is not part of the creative orientation.
  *
- * When something worked and stopped working, closing the difference between
- * current and prior state is the correct move. Oscillation back to a baseline
- * is the goal when you are below the baseline. This package exists so that
- * work has a real instrument instead of a euphemism.
+ * The package has a second job, and it is the main one: to teach the model
+ * using it. A model that has found what is missing is pulled toward filling
+ * each missing item. `turnToCreativeOrientation` comes after the analysis. It
+ * keeps the findings as current reality, names that pull, and asks for the
+ * desired outcome on its own terms, so that a structural tension chart can
+ * follow.
  *
- * It carries one question at its door — is a prior state actually being
- * restored? — and asks it through `@medicine-wheel/creative-orientation`.
+ * It carries one question at its door (is a prior state actually being
+ * restored?) and asks it through `@medicine-wheel/creative-orientation`.
  * It **advises and proceeds**. It never refuses. A package that blocks you is
  * a package you learn to route around.
  *
@@ -143,4 +148,155 @@ export function isClosed(analysis: GapAnalysis): boolean {
  */
 export function doorAdvice(analysis: GapAnalysis): string | null {
   return worthSaying(analysis.orientation) ? analysis.orientation.advice ?? null : null;
+}
+
+// ─── The turn to the creative orientation ─────────────────────────
+
+/** One finding of an analysis, kept as a fact about today. */
+export interface CurrentRealityFact {
+  /** The part of the analysis the fact comes from. */
+  from: 'observation' | 'baseline' | 'difference' | 'root-cause' | 'step-done' | 'steps-open';
+  /** The fact, stated about today. Never phrased as a task. */
+  fact: string;
+}
+
+export interface TurnOptions {
+  /**
+   * What we want to create, stated as something that will exist. It is named
+   * on its own terms and is not derived from the findings. Without it, the
+   * turn asks for it.
+   */
+  desiredOutcome?: string;
+}
+
+/**
+ * Input for `create_structural_tension_chart`, except the direction, which
+ * the caller chooses.
+ */
+export interface ChartDraft {
+  desired_outcome: string;
+  current_reality: string;
+  /** Always empty: no action step is taken from the findings. */
+  action_steps: string[];
+}
+
+export interface TurnNextStep {
+  tool: 'create_structural_tension_chart';
+  /** What the chart still needs before it can be created. */
+  needs: Array<'desired_outcome' | 'direction'>;
+  /** The question the desired outcome answers. */
+  question: string;
+}
+
+export interface CreativeOrientationTurn {
+  analysisId: string;
+  /** The findings, as facts about today. */
+  currentReality: CurrentRealityFact[];
+  /** Names the pull to fill each missing item, and says that is not what we are doing. */
+  reflection: string;
+  nextStep: TurnNextStep;
+  /** Present only when a desired outcome was given. */
+  chartDraft?: ChartDraft;
+  /** Present when the desired outcome given is phrased as removing something. */
+  desiredOutcomeAdvice?: string;
+}
+
+export const DESIRED_OUTCOME_QUESTION =
+  'What do we want to create, stated as something that will exist?' as const;
+
+function asSentence(text: string): string {
+  const trimmed = text.trim();
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+function withNote(text: string, label: string, note?: string): string {
+  const base = text.trim().replace(/[.]$/, '');
+  return note?.trim() ? `${base} (${label}: ${note.trim()}).` : `${base}.`;
+}
+
+function findingsAsFacts(analysis: GapAnalysis): CurrentRealityFact[] {
+  const facts: CurrentRealityFact[] = [
+    { from: 'observation', fact: `Observed now: ${withNote(analysis.current.description, 'source', analysis.current.source)}` },
+    { from: 'baseline', fact: `Before: ${withNote(analysis.baseline.description, 'evidence', analysis.baseline.evidence)}` },
+    { from: 'difference', fact: `The analysis found: ${asSentence(analysis.difference)}` },
+  ];
+  if (analysis.rootCause?.trim()) {
+    facts.push({ from: 'root-cause', fact: `Named cause: ${asSentence(analysis.rootCause)}` });
+  }
+  const steps = analysis.steps ?? [];
+  for (const step of steps.filter(s => s.done === true)) {
+    facts.push({ from: 'step-done', fact: `Done: ${withNote(step.action, 'verified by', step.verifiedBy)}` });
+  }
+  const open = steps.filter(s => s.done !== true).length;
+  if (open > 0) {
+    facts.push({
+      from: 'steps-open',
+      fact: `The analysis lists ${open} open elimination step${open === 1 ? '' : 's'}. They stay with the analysis and are not carried into a chart.`,
+    });
+  }
+  return facts;
+}
+
+function reflectionFor(analysis: GapAnalysis): string {
+  return [
+    `This gap analysis found what is missing: ${asSentence(analysis.difference)}`,
+    'The pull now is to fill each missing item, one task per item, until nothing is missing. That is not what we are doing.',
+    'The findings are kept as current reality, stated as fact. They are not a list of tasks.',
+    `Next comes the desired outcome, named on its own terms. ${DESIRED_OUTCOME_QUESTION} It does not come from the findings.`,
+    'Then a structural tension chart holds current reality and the desired outcome, and its action steps resolve the tension toward that outcome. Some findings will matter to it, and others will not.',
+  ].join(' ');
+}
+
+/**
+ * The turn after a gap analysis.
+ *
+ * Returns the findings as current-reality facts (never as tasks), the
+ * reflection that names the pull to fill each missing item, and the next step:
+ * `create_structural_tension_chart`, which needs a desired outcome. With a
+ * desired outcome, it also returns a draft chart input whose action steps are
+ * empty, because no action step is taken from the findings.
+ *
+ * It advises and proceeds. A desired outcome phrased as removing something is
+ * still placed in the draft, with advice beside it.
+ */
+export function turnToCreativeOrientation(
+  analysis: GapAnalysis,
+  options: TurnOptions = {},
+): CreativeOrientationTurn {
+  if (
+    !analysis ||
+    typeof analysis.difference !== 'string' ||
+    !analysis.current?.description?.trim() ||
+    !analysis.baseline?.description?.trim()
+  ) {
+    throw new Error(
+      'The turn needs a gap analysis as openGapAnalysis returns it: baseline, current and difference.',
+    );
+  }
+
+  const currentReality = findingsAsFacts(analysis);
+  const desiredOutcome = options.desiredOutcome?.trim() || undefined;
+
+  const turn: CreativeOrientationTurn = {
+    analysisId: analysis.id,
+    currentReality,
+    reflection: reflectionFor(analysis),
+    nextStep: {
+      tool: 'create_structural_tension_chart',
+      needs: desiredOutcome ? ['direction'] : ['desired_outcome', 'direction'],
+      question: DESIRED_OUTCOME_QUESTION,
+    },
+  };
+
+  if (desiredOutcome) {
+    turn.chartDraft = {
+      desired_outcome: desiredOutcome,
+      current_reality: currentReality.map(f => f.fact).join(' '),
+      action_steps: [],
+    };
+    const reading = readOrientation({ outcome: desiredOutcome, restores: null });
+    if (worthSaying(reading)) turn.desiredOutcomeAdvice = reading.advice;
+  }
+
+  return turn;
 }

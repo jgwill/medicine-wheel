@@ -13,9 +13,9 @@
 
 - [app](.): Medicine Wheel app (`@medicine-wheel/app`) — the Next.js visual layer plus two CLIs: `mwsrv` (starts the server against a `.mw/store`, local or Docker) and `mw` (talks to the running server — status, orientation, directions, node/edge/ceremony/beat ops, charts, validators, skills); installs and runs without `@medicine-wheel/mcp`
 - [ontology-core](src/ontology-core): Foundational ontology layer for the Medicine Wheel Developer Suite — unified types, RDF vocabulary, Zod schemas, constants, semantic query helpers grounded in Indigenous relational ontology
-- [creative-orientation](src/creative-orientation): The orientation question, asked before the work — is there a prior state you are restoring? Yes routes to gap analysis (a fire); no routes to structural tension (a creating act). Holds the routing signals, not the instruments
-- [gap-analysis](src/gap-analysis): Problem-solving built properly for when something worked and stopped — evidenced baseline, observation, difference, verifiable elimination steps. The baseline requirement is what separates a fire from a creating act
-- [creative-problem-solving](src/creative-problem-solving): A signpost, not a door — carries the routing question and re-exports `@medicine-wheel/creative-orientation`. Named a prior state? gap-analysis. Named none? structural tension
+- [creative-orientation](src/creative-orientation): The orientation question, asked before the work — is there a prior state you are restoring? Yes routes to a gap analysis, which looks for what is missing and is not part of the creative orientation (the turn follows it); no routes to structural tension (a creating act). Holds the routing signals, not the instruments
+- [gap-analysis](src/gap-analysis): A gap analysis looks for what is missing — evidenced baseline, observation, difference, verifiable elimination steps — and can be useful when something worked and stopped. It is not part of the creative orientation: `turnToCreativeOrientation` follows it, keeps the findings as current reality, names the pull to fill each missing item, and asks for the desired outcome of a structural tension chart
+- [creative-problem-solving](src/creative-problem-solving): A signpost, not a door — carries the routing question and re-exports `@medicine-wheel/creative-orientation`. Named a prior state? gap-analysis, then the turn. Named none? structural tension
 - [brainstorming](src/brainstorming): Idea into committed design through approval gates a human holds — phased sessions where every emitted outcome, including the tool's own multiple-choice questions, passes the orientation check before it is spoken
 - [ceremony-protocol](src/ceremony-protocol): Ceremony lifecycle protocol — manages ceremony state, phase transitions, governance enforcement, and ceremonial review workflows
 - [fire-keeper](src/fire-keeper): Fire Keeper coordination agent — tends the ceremony fire through gating conditions (consent, ceremony phase, trajectory confidence) and brings value conflicts to people; it does not measure relational accountability (#155)
@@ -120,7 +120,7 @@ The Next.js app surfaces that relational state as REST endpoints (also consumed 
 - **OCAP®**: Ownership, Control, Access, Possession — Indigenous data sovereignty
 - **Structural Tension**: Germination → Assimilation → Completion creative cycle
 - **Ceremonial Inquiry**: opening → council → integration → closure phase progression
-- **Orientation**: the question asked before an instrument is chosen — a named prior state is a fire (gap analysis); no prior state is a creating act (structural tension)
+- **Orientation**: the question asked before an instrument is chosen — a named prior state routes to a gap analysis, which looks for what is missing and is followed by the turn to the creative orientation; no prior state is a creating act (structural tension)
 
 ## Cross-Repository Links
 

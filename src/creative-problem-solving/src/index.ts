@@ -7,10 +7,12 @@
  *
  *   **Is there a prior state you are restoring?**
  *
- * Name it and it genuinely existed — this is a fire, and `gap-analysis` is the
- * right instrument. Baseline, observation, difference, elimination steps you
- * can verify. That work is correct work; there is nothing to apologise for and
- * nothing to rename.
+ * Name it and it genuinely existed: something worked and stopped, and
+ * `gap-analysis` looks for what is missing against it. Baseline, observation,
+ * difference, elimination steps you can verify. That technique can be useful,
+ * and it is not part of the creative orientation. After it comes the turn
+ * (`turnToCreativeOrientation`): the findings become current reality, and a
+ * structural tension chart follows.
  *
  * Name none — you are creating, and structural tension is the instrument.
  * Difference-closing language will mislead you here, because there is no

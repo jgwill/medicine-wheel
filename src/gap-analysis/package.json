@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/gap-analysis",
   "version": "0.26.2",
-  "description": "Problem-solving built properly for when something worked and stopped: evidenced baseline, observation, difference, verifiable elimination steps. Root cause, incidents, regressions, troubleshooting. The baseline requirement is what separates a fire from a creating act.",
+  "description": "A gap analysis looks for what is missing: evidenced baseline, observation, difference, verifiable elimination steps. Useful when something worked and stopped (root cause, incidents, regressions, troubleshooting). It is not part of the creative orientation: turnToCreativeOrientation follows the analysis, keeps its findings as current reality, names the pull to fill each missing item, and asks for the desired outcome of a structural tension chart.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

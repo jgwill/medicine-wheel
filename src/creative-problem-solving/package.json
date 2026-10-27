@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/creative-problem-solving",
   "version": "0.26.2",
-  "description": "Creative problem solving, routed at the door: name the prior state you are restoring. Named one — this is a fire, and gap analysis is the right instrument. Named none — you are creating, and structural tension is. Re-exports @medicine-wheel/creative-orientation.",
+  "description": "Creative problem solving, routed at the door: name the prior state you are restoring. Named one: a gap analysis looks for what is missing against it, and the turn to the creative orientation follows. Named none: you are creating, and structural tension is the instrument. Re-exports @medicine-wheel/creative-orientation.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

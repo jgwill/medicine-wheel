@@ -64,13 +64,15 @@ Recently landed:
 
 @medicine-wheel/creative-orientation      ← The question asked before the work
     ├── @medicine-wheel/creative-problem-solving ← Signpost — re-exports the above
-    ├── @medicine-wheel/gap-analysis        ← The fire path
+    ├── @medicine-wheel/gap-analysis        ← Looks for what is missing; the turn follows
     └── @medicine-wheel/brainstorming       ← Idea → design, through human gates
 ```
 
-> **Is there a prior state you are restoring?** Named one — this is a fire, and
-> gap analysis is the right instrument. Named none — you are creating, and
-> structural tension is. `mw orient "<outcome>"` asks it from the command line.
+> **Is there a prior state you are restoring?** Named one: a gap analysis looks
+> for what is missing against it. It can be useful, and it is not part of the
+> creative orientation; after it, the turn keeps its findings as current reality
+> and asks for the desired outcome. Named none: you are creating, and structural
+> tension is the instrument. `mw orient "<outcome>"` asks it from the command line.
 
 ## Methodology: [RISE Framework](https://llms.jgwill.com/docs/rise-framework.html)
 
@@ -224,7 +226,7 @@ Witness GitHub webhook events (issues, pull requests, merges, commits) through a
 - **Dependencies:** `@medicine-wheel/ontology-core`, `@medicine-wheel/storage-provider`
 
 ### [@medicine-wheel/creative-orientation](src/creative-orientation)
-The orientation question, asked before the work: *is there a prior state you are restoring?* Yes — this is a fire, route to gap analysis. No — you are creating, route to structural tension. Reads the claim the caller supplies; advises where phrasing and situation disagree, and never refuses.
+The orientation question, asked before the work: *is there a prior state you are restoring?* Yes: route to a gap analysis, which looks for what is missing against that state and is not part of the creative orientation; the turn follows it. No: you are creating, route to structural tension. Reads the claim the caller supplies; advises where phrasing and situation disagree, and never refuses.
 
 - **Dependencies:** None (Node.js built-ins only)
 
@@ -234,7 +236,7 @@ Signpost package — re-exports `@medicine-wheel/creative-orientation` and adds 
 - **Dependencies:** `@medicine-wheel/creative-orientation`
 
 ### [@medicine-wheel/gap-analysis](src/gap-analysis)
-Problem-solving built properly for when something worked and stopped — evidenced baseline, observation, difference, verifiable elimination steps. Root cause, incidents, regressions, troubleshooting. The baseline requirement is what separates a fire from a creating act.
+A gap analysis looks for what is missing: evidenced baseline, observation, difference, verifiable elimination steps. Useful when something worked and stopped (root cause, incidents, regressions, troubleshooting). It is not part of the creative orientation. `turnToCreativeOrientation` follows the analysis: the findings become current reality (never tasks), the pull to fill each missing item is named, and the desired outcome of a structural tension chart is asked for on its own terms.
 
 - **Dependencies:** `@medicine-wheel/creative-orientation`
 

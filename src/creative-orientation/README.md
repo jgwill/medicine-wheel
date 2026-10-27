@@ -4,13 +4,16 @@ Before the work, one question:
 
 > **Is there a prior state you are restoring?**
 
-**Yes, and you can name it.** This is a fire. Route to
-[`@medicine-wheel/gap-analysis`](https://www.npmjs.com/package/@medicine-wheel/gap-analysis)
-— evidenced baseline, observation, difference, verifiable steps.
+**Yes, and you can name it.** Something worked and stopped. A gap analysis
+([`@medicine-wheel/gap-analysis`](https://www.npmjs.com/package/@medicine-wheel/gap-analysis))
+looks for what is missing against that prior state: evidenced baseline,
+observation, difference, verifiable steps. It can be useful, and it is not part
+of the creative orientation. After it comes the turn: the findings become
+current reality, and the desired outcome is asked for on its own terms.
 
 **No, nothing existed that you are returning to.** You are creating. Route to
-structural tension — the outcome named as a state that will exist, held against
-current reality.
+structural tension: the outcome named as a state that will exist, current
+reality stated as fact, and action steps that resolve the tension between them.
 
 Looking for creative problem solving? It lands here first, then goes one way or
 the other. The package that carries that name
@@ -25,16 +28,20 @@ is a signpost pointing at this one.
 
 ## Why it exists
 
-Problem-solving is not the degraded case. It is the **correct** case for a
-specific situation: something worked, it stopped working, restore it. Creating
-is correct for a different one: bring into being a state that has never
-existed.
+Two situations look alike under pressure. In one, something worked and
+stopped, and the work is to restore it. In the other, a state that has never
+existed is wanted.
 
-They produce different structures. Problem-solving oscillates back to a
-baseline — which is exactly right when you are below the baseline. Creating
-advances toward an outcome. Using the wrong one is how rigorous work goes in
-circles: chart an oscillating goal and you build a very careful machine for
+They produce different structures. Restoring oscillates back to a baseline.
+Creating advances toward an outcome. Using the wrong one is how rigorous work
+goes in circles: chart an oscillating goal and you build a careful machine for
 returning to where you started.
+
+A gap analysis looks for what is missing, and it can be useful when something
+worked and stopped. It is not part of the creative orientation. A model that
+has found what is missing is pulled toward filling each missing item; the turn
+in `@medicine-wheel/gap-analysis` (`turnToCreativeOrientation`) names that pull
+and brings the work back to a structural tension chart.
 
 This package answers the routing question and nothing else.
 
@@ -45,9 +52,10 @@ a fire. One question separates them:
 
 > **Is there a prior state you are restoring?**
 
-If you can name it and it genuinely existed — fire. Gap analysis is the right
-instrument. If you cannot, you are creating, and difference-closing language
-will mislead you, because there is no baseline to close toward.
+If you can name it and it genuinely existed, a gap analysis can measure what
+is missing against it, and the turn follows the analysis. If you cannot, you
+are creating, and difference-closing language will mislead you, because there
+is no baseline to measure against.
 
 ## Usage
 
@@ -83,9 +91,10 @@ sometimes the caller knows something the check does not.
 ## Where it sits
 
 ```
-creative-orientation ......... the gate
-    ├── gap-analysis ......... the fire path
-    └── structural-tension ... the advancing path
+creative-orientation ......... the question asked first
+    ├── gap-analysis ......... a prior state is being restored: looks for what is missing
+    │     └── turnToCreativeOrientation ... findings become current reality
+    └── structural-tension ... desired outcome, current reality stated as fact, action steps
 ```
 
 `@medicine-wheel/brainstorming` calls this on every outcome statement it emits,

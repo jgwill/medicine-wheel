@@ -263,8 +263,9 @@ ${C.bold}🌿 mw — Medicine Wheel CLI${C.reset}
     Ask before problem-solving, debugging, fixing, troubleshooting, root-cause
     or creative-problem-solving work. It reads the claim you supply:
 
-      --restores named  → a fire; gap analysis is the right instrument
-      --restores absent → you are creating; structural tension is
+      --restores named  → a restore; a gap analysis looks for what is missing,
+                          then the turn to the creative orientation follows
+      --restores absent → you are creating; structural tension is the instrument
 
     Urgency is not evidence — under pressure every situation feels like a fire.
     It reports and offers a restatement; it never refuses.

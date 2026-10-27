@@ -52,7 +52,7 @@ Workspace order is dependency-sensitive. The architecture is better read as laye
 
 - `@medicine-wheel/ontology-core` — relational types, schemas, kinship vocabulary, constants, queries, RDF interop.
 - `@medicine-wheel/infra` — typed infrastructure facets and reconciliation over existing ontology nodes.
-- `@medicine-wheel/creative-orientation` — distinguishes creative orientation from reactive problem solving.
+- `@medicine-wheel/creative-orientation` — asks the orientation question before the work (is a prior state being restored?) and routes to a gap analysis or to structural tension.
 - `@medicine-wheel/session-reader` — session parsing and reading utilities.
 
 ### Ceremony and persistence
@@ -77,12 +77,19 @@ Workspace order is dependency-sensitive. The architecture is better read as laye
 ### Orientation, review, and governance
 
 - `@medicine-wheel/brainstorming` — generative exploration capability.
-- `@medicine-wheel/gap-analysis` — reactive/problem-oriented gap analysis.
-- `@medicine-wheel/creative-problem-solving` — orientation/signpost surface that routes users toward the appropriate creative or reactive capability.
+- `@medicine-wheel/gap-analysis` — a gap analysis looks for what is missing against an evidenced baseline. It can be useful and is not part of the creative orientation; `turnToCreativeOrientation` follows it.
+- `@medicine-wheel/creative-problem-solving` — signpost that re-exports `creative-orientation` under the name people search for.
 - `@medicine-wheel/community-review` — ceremonial/community review.
 - `@medicine-wheel/consent-lifecycle` — consent as a changing relationship.
 - `@medicine-wheel/fire-keeper` — active relational gating and stewardship.
 - `@medicine-wheel/transformation-tracker` — transformation and research-impact tracking.
+
+#### The orientation question, the two paths, and the turn
+
+- **The question.** `creative-orientation` reads the caller's claim: is a prior state being restored, with evidence? The baseline claim decides the route; phrasing only contributes signals. It advises and never refuses.
+- **A prior state is named.** The route is `gap-analysis`. A gap analysis looks for what is missing: baseline, observation, difference, verifiable elimination steps. It is a technique the creative orientation does not include.
+- **No prior state is named.** The route is `structural-tension`: a desired outcome stated as something that will exist, current reality stated as fact, and action steps that resolve the tension between them.
+- **The turn after an analysis.** A model that has found what is missing is pulled toward filling each missing item. `turnToCreativeOrientation(analysis, { desiredOutcome? })` (MCP: `turn_to_creative_orientation`, after `open_gap_analysis`) keeps the findings as current-reality facts and never as tasks, returns a reflection that names that pull and says it is not what we are doing, and points to `create_structural_tension_chart`, which needs a desired outcome named on its own terms. Given a desired outcome, it returns a draft chart input whose action steps are empty: none is taken from the findings. Some findings will matter to the chart, and others will not.
 
 ### Ceremony adapters and agent surfaces
 
