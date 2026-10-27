@@ -9,6 +9,10 @@
  * be in place before the research continues, and points to
  * turn_to_creative_orientation with arguments ready to pass. Status values and
  * field names consumers may branch on are unchanged.
+ *
+ * Lane K9f (suite 0.27.0, mcp 4.27.0) changed one status value on purpose:
+ * accountability_validator's audit_status reads "HELD" for any plan it holds,
+ * whatever its score.
  */
 import { describe, it, expect } from 'vitest';
 import { allTools } from '../src/all-tools.js';
@@ -48,9 +52,9 @@ describe('accountability_validator', () => {
     },
   };
 
-  it('states each finding as a fact about the plan, under the same field and status', async () => {
+  it('states each finding as a fact about the plan, under the same field, and reads HELD', async () => {
     const result = await tool.handler(extractive);
-    expect(result.audit_status).toBe('CRITICAL GAPS');
+    expect(result.audit_status).toBe('HELD');
     expect(result.critical_gaps).toHaveLength(7);
     expectFacts(result.critical_gaps);
     expect(result.critical_gaps[0]).toMatch(/^CRITICAL: The plan has no pre-relationship phase/);
@@ -98,7 +102,7 @@ describe('accountability_validator', () => {
         reb_status: 'institutional',
       },
     });
-    expect(onlyReb.audit_status).toBe('ALIGNED');
+    expect(onlyReb.audit_status).toBe('HELD');
     expect(onlyReb.recommendations[0]).toBe(
       "Hold the research while the community's REB (dual review, TCPS2 Chapter 9) is part of the plan.",
     );
@@ -158,6 +162,59 @@ describe('accountability_validator', () => {
     expect(aligned.wilson_paradigm_alignment).toBe('100%');
     expect(aligned.recommendations[0]).not.toMatch(/^Hold the research/);
     expect(aligned.next_steps).toBe('Proceed with ongoing community oversight');
+  });
+
+  // Lane K9f, 2026-10-27: audit_status follows the hold at any score. A plan
+  // scoring 95 with only the community's REB missing used to read "ALIGNED"
+  // beside next_steps "CANNOT PROCEED".
+  const full = {
+    pre_relationship_phase: 'two seasons',
+    advisory_board_members: 5,
+    elder_investigators: 2,
+    ceremony_integration: 'throughout',
+    community_benefit: 'land-based programme',
+    data_storage: 'on-premise community server',
+    reb_status: 'community REB and institutional',
+  };
+  const without: Record<string, unknown> = {
+    pre_relationship_phase: 'none',
+    advisory_board_members: 0,
+    elder_investigators: 0,
+    ceremony_integration: 'none planned',
+    community_benefit: 'Academic publication only',
+    data_storage: 'university cloud',
+    reb_status: 'institutional',
+  };
+
+  it('reads HELD with next_steps CANNOT PROCEED when only the community REB is missing, at 95%', async () => {
+    const onlyReb = await tool.handler({ research_plan: { ...full, reb_status: 'institutional' } });
+    expect(onlyReb.wilson_paradigm_alignment).toBe('95%');
+    expect(onlyReb.audit_status).toBe('HELD');
+    expect(onlyReb.next_steps).toBe(
+      "CANNOT PROCEED: the research holds while the community's REB (dual review, TCPS2 Chapter 9) is part of the plan, reached with the community.",
+    );
+  });
+
+  it('keeps the score-based value, ALIGNED, for a plan with nothing held', async () => {
+    const aligned = await tool.handler({ research_plan: full });
+    expect(aligned.wilson_paradigm_alignment).toBe('100%');
+    expect(aligned.audit_status).toBe('ALIGNED');
+    expect(aligned.next_steps).toBe('Proceed with ongoing community oversight');
+  });
+
+  it('reads HELD exactly when something is held, so only HELD and ALIGNED occur', async () => {
+    const keys = Object.keys(full) as (keyof typeof full)[];
+    const seen = new Set<string>();
+    for (let mask = 0; mask < 1 << keys.length; mask++) {
+      const plan: Record<string, unknown> = { ...full };
+      keys.forEach((k, i) => { if (mask & (1 << i)) plan[k] = without[k]; });
+      const result = await tool.handler({ research_plan: plan });
+      const held = result.critical_gaps.length > 0;
+      expect(result.audit_status).toBe(held ? 'HELD' : 'ALIGNED');
+      expect(result.next_steps.startsWith('CANNOT PROCEED')).toBe(held);
+      seen.add(result.audit_status);
+    }
+    expect([...seen].sort()).toEqual(['ALIGNED', 'HELD']);
   });
 });
 

@@ -31,7 +31,7 @@ function inWords(items: string[]): string {
 export const validators: Tool[] = [
   {
     name: "accountability_validator",
-    description: "Audit research plan for relational accountability alignment with Wilson's Indigenous paradigm. Checks ontology, epistemology, axiology, and relational obligations. Each finding is stated as a fact about the plan today. When something is missing, the research holds while it is part of the plan, reached with the community; the answer names that hold and points to turn_to_creative_orientation (next_tool, next_tool_args) for the desired outcome.",
+    description: "Audit research plan for relational accountability alignment with Wilson's Indigenous paradigm. Checks ontology, epistemology, axiology, and relational obligations. Each finding is stated as a fact about the plan today. When something is missing, the research holds while it is part of the plan, reached with the community; the answer names that hold and points to turn_to_creative_orientation (next_tool, next_tool_args) for the desired outcome. audit_status is \"HELD\" whenever the research holds, at any score, and next_steps then begins \"CANNOT PROCEED\"; a plan with nothing held reads \"ALIGNED\".",
     inputSchema: {
       type: "object",
       properties: {
@@ -133,7 +133,14 @@ export const validators: Tool[] = [
       const holdManner =
         "The hold is met with the community, its Elders and its leaders: the plan is revised with them, under an OCAP® data governance agreement, with ceremony throughout the research and not only at its end. It is not filled in from this list.";
 
-      const status = score >= 70 ? "ALIGNED" : score >= 40 ? "NEEDS IMPROVEMENT" : "CRITICAL GAPS";
+      // audit_status follows the hold, like next_steps: a held plan reads
+      // "HELD" at any score, so "ALIGNED" never stands beside "CANNOT PROCEED".
+      // A plan with nothing held keeps the score-based value. Every check that
+      // passes adds to the score and every check that fails is held, so a plan
+      // with nothing held scores 100 and reads "ALIGNED"; "NEEDS IMPROVEMENT"
+      // and "CRITICAL GAPS" stay in the expression and cannot occur today.
+      const scoreStatus = score >= 70 ? "ALIGNED" : score >= 40 ? "NEEDS IMPROVEMENT" : "CRITICAL GAPS";
+      const status = hold ? "HELD" : scoreStatus;
 
       return {
         audit_status: status,
