@@ -170,7 +170,7 @@ A research cycle follows the Four Directions, with each direction representing a
 **Focus:** Integration, synthesis, honoring what has been received.
 
 - Spirit feeding ceremonies (`type: 'spirit_feeding'`) honor ancestors and past teachings
-- Structural tension charts track the gap between desired outcome and current reality
+- Structural tension charts hold the tension between current reality and the desired outcome, which their action steps resolve
 - Narrative beats weave insights into coherent story
 - `wilson_alignment` score reflects how well the cycle honors respect, reciprocity and responsibility
 

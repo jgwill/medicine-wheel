@@ -47,7 +47,7 @@ Before using a spec as implementation authority, check:
 7. **Vocabulary changes** — distinguish a canonical rename from a compatibility alias; never infer drift from a filename alone.
 8. **Recent commits** — read commit intent when a change altered an invariant without changing the package name.
 
-When code and an old rispec disagree about **what currently exists**, current shipped behavior is the evidence baseline and the rispec should be revised. When they disagree about **what ought to exist**, preserve the desired outcome as desired state and label the implementation gap explicitly instead of rewriting aspiration into false present tense.
+When code and an old rispec disagree about **what currently exists**, current shipped behavior is the evidence baseline and the rispec should be revised. When they disagree about **what ought to exist**, preserve the desired outcome as desired state and state what the implementation does today as current reality, instead of rewriting aspiration into false present tense.
 
 ## Parity Baseline — 2026-08-19
 

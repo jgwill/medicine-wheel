@@ -1,8 +1,8 @@
 /**
  * Discovery Tools - Enable browsing and searching of medicine wheel data
  *
- * These tools address the gap: users couldn't find ceremonies, nodes, beats, or cycles
- * without already knowing IDs. Discovery enables relational exploration.
+ * These tools let users find ceremonies, nodes, beats, or cycles without already
+ * knowing their IDs. Discovery enables relational exploration.
  *
  * Adapted to use in-memory store instead of Redis/NCP.
  */

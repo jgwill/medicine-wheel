@@ -144,7 +144,7 @@ For each RISE spec:
 5. test canonical vocabulary against aliases and compatibility windows;
 6. capture load-bearing semantics such as paging, totals, filtering, merge/upsert, refusal, provenance, consent, and migration behavior;
 7. revise current-reality claims when code has advanced;
-8. preserve aspirational behavior explicitly as desired outcome or gap when code has not reached it.
+8. preserve aspirational behavior explicitly as desired outcome, with what the code does today stated as current reality, when code has not reached it.
 
 The goal is not to make specs imitate source files line by line. The goal is to keep the **behavioral lattice** synchronized: what exists, what owns it, what is invariant, and what remains desired.
 
