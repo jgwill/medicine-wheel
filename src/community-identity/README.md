@@ -17,6 +17,13 @@ const { token } = await creds.issue(node.id, 'laptop');                  // show
 const record = await creds.verify(token);                                // who is calling
 ```
 
+A person may carry a `github_handle` (0.27.1, jgwill/medicine-wheel#170): the GitHub login the seat answers to, stored in `metadata.github_handle` without the `@`. `NewPersonSchema` accepts it, `normalizeGithubHandle(input)` returns the login or `null` when GitHub would not accept it, and `githubHandlePatch(handle, metadata)` sets it, or removes it with `null`. Keeping one handle to one person is the consumer's check, as it is for `email`.
+
+```ts
+personNode(NewPersonSchema.parse({ name: 'Mia', role: 'ceremony_facilitator', github_handle: '@miadisabelle' }));  // metadata.github_handle = 'miadisabelle'
+await wheel.nodes.patch(id, { metadata: githubHandlePatch('miadisabelle', node.metadata) });
+```
+
 An invitation code opens one circle, `circle_id`, or several: `circle_ids` holds the circles after the first (0.17.5), and `invitationCircles(record)` lists them all in order. A code minted without `expires_at` lives `DEFAULT_INVITATION_TTL_HOURS` (96). `intended_email` records where it was sent. `publicInvitation()` is what a code holder may see before registering: no address, no acceptances.
 
 ```ts

@@ -39,6 +39,8 @@ export interface Person {
   /** May this person issue their own tokens? An admin turns it on (STPB's `api_access_enabled`). Default off. */
   api_access: boolean;
   email?: string;
+  /** The GitHub login this seat answers to, without the `@`. */
+  github_handle?: string;
   direction?: DirectionName;
   created_at: string;
   updated_at: string;
@@ -49,6 +51,14 @@ export const NewPersonSchema = z.object({
   name: z.string().trim().min(1),
   role: z.string().refine(isRole, 'unknown role'),
   email: z.string().trim().email().optional(),
+  github_handle: z
+    .string()
+    .transform((value, ctx) => {
+      const handle = normalizeGithubHandle(value);
+      if (handle === null) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'not a GitHub handle' });
+      return handle ?? '';
+    })
+    .optional(),
   direction: z.enum(['east', 'south', 'west', 'north']).optional(),
   api_access: z.boolean().optional(),
   /** Software holds this seat: the node is created as an `agent`. */
@@ -56,6 +66,15 @@ export const NewPersonSchema = z.object({
 });
 
 export type NewPerson = z.infer<typeof NewPersonSchema>;
+
+/** A GitHub login: letters, digits and single hyphens inside, at most 39 characters. */
+const GITHUB_HANDLE = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
+
+/** The handle as stored, without a leading `@`, or null when GitHub would not accept it as a login. */
+export function normalizeGithubHandle(input: string): string | null {
+  const handle = input.trim().replace(/^@/, '');
+  return GITHUB_HANDLE.test(handle) ? handle : null;
+}
 
 export function personNodeId(being: Being = 'human'): string {
   return `node:${being}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
@@ -73,6 +92,7 @@ export function personNode(input: NewPerson, now = new Date().toISOString()): Re
       role: input.role,
       api_access: input.api_access === true,
       ...(input.email ? { email: input.email } : {}),
+      ...(input.github_handle ? { github_handle: input.github_handle } : {}),
     },
     created_at: now,
     updated_at: now,
@@ -92,6 +112,7 @@ export function personFromNode(node: RelationalNode | null | undefined): Person 
     status: meta.status === 'deactivated' ? 'deactivated' : 'active',
     api_access: meta.api_access === true,
     ...(typeof meta.email === 'string' ? { email: meta.email } : {}),
+    ...(typeof meta.github_handle === 'string' ? { github_handle: meta.github_handle } : {}),
     ...(node.direction ? { direction: node.direction } : {}),
     created_at: node.created_at,
     updated_at: node.updated_at,
@@ -117,6 +138,15 @@ export function reactivatePatch(current: Record<string, unknown> = {}): Record<s
 /** The metadata patch that grants or withdraws API access (the right to issue one's own tokens). */
 export function apiAccessPatch(enabled: boolean, current: Record<string, unknown> = {}): Record<string, unknown> {
   return { ...current, api_access: enabled };
+}
+
+/** The metadata patch that sets a person's GitHub handle, or removes it with null. The handle is normalised first. */
+export function githubHandlePatch(handle: string | null, current: Record<string, unknown> = {}): Record<string, unknown> {
+  const { github_handle: _gone, ...rest } = current;
+  if (handle === null) return rest;
+  const normalized = normalizeGithubHandle(handle);
+  if (normalized === null) throw new Error(`not a GitHub handle: ${handle}`);
+  return { ...rest, github_handle: normalized };
 }
 
 /**

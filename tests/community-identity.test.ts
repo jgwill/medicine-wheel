@@ -91,6 +91,38 @@ describe("people and circles on the wheel", () => {
   });
 });
 
+describe("a GitHub handle on a person (#170)", () => {
+  it("is accepted without its @, written to metadata and read back", async () => {
+    const { NewPersonSchema } = await import("../src/community-identity/src/index");
+    const input = NewPersonSchema.parse({ name: "Mia", role: "ceremony_facilitator", github_handle: " @miadisabelle " });
+    expect(input.github_handle).toBe("miadisabelle");
+    const node = personNode(input);
+    expect(node.metadata?.github_handle).toBe("miadisabelle");
+    expect(personFromNode(node)?.github_handle).toBe("miadisabelle");
+    expect(personFromNode(personNode({ name: "Iris", role: "participant" }))).not.toHaveProperty("github_handle");
+  });
+
+  it("refuses what GitHub would not accept as a login", async () => {
+    const { NewPersonSchema, normalizeGithubHandle } = await import("../src/community-identity/src/index");
+    for (const bad of ["", "-lead", "trail-", "two--hyphens", "has space", "a".repeat(40), "https://github.com/x"]) {
+      expect(normalizeGithubHandle(bad)).toBeNull();
+    }
+    expect(normalizeGithubHandle("tushellframe")).toBe("tushellframe");
+    expect(normalizeGithubHandle("a".repeat(39))).toBe("a".repeat(39));
+    expect(NewPersonSchema.safeParse({ name: "X", role: "participant", github_handle: "no way" }).success).toBe(false);
+  });
+
+  it("is set, replaced and removed by githubHandlePatch, keeping the rest of the metadata", async () => {
+    const { githubHandlePatch } = await import("../src/community-identity/src/index");
+    const meta = { kind: "person", role: "admin", email: "g@example.org" };
+    const set = githubHandlePatch("@guillaumedescoteauxisabelle", meta);
+    expect(set).toEqual({ ...meta, github_handle: "guillaumedescoteauxisabelle" });
+    expect(githubHandlePatch("jgwill", set).github_handle).toBe("jgwill");
+    expect(githubHandlePatch(null, set)).toEqual(meta);
+    expect(() => githubHandlePatch("not a handle", meta)).toThrow(/not a GitHub handle/);
+  });
+});
+
 describe("credentials (never on the wheel)", () => {
   it("issues a token once, verifies by hash, lists without the hash, revokes", async () => {
     const store = new JsonlCredentialStore(path.join(tempDir, "creds.jsonl"));
