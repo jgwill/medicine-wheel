@@ -25,7 +25,10 @@ export interface AccountabilityGap {
   unitId: string;
   /** Description of the gap */
   description: string;
-  /** Suggested link type to address the gap */
+  /**
+   * The link type whose absence this finding names. The field keeps its name;
+   * it reads what is absent today and is not a task.
+   */
   suggestedLinkType: AccountabilityLinkType;
 }
 
@@ -90,6 +93,11 @@ export function resolveLinks(
  * - Units with no accountability links at all
  * - Units with no 'accountable-to' link
  * - Units with high epistemic weight but no 'deepens' or 'circles-back-to' links
+ *
+ * Each finding is a fact about the units today. The pull is to add each
+ * missing link, one task per finding; that is not what we are doing. What to
+ * create is named as a desired outcome on its own terms, through
+ * turn_to_creative_orientation (pass the descriptions as a check's findings).
  *
  * @param units - Collection of ImportanceUnits to analyze
  * @returns Array of identified gaps

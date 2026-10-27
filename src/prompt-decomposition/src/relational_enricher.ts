@@ -48,6 +48,11 @@ export interface EnrichmentResult {
   accountabilityGaps: AccountabilityGap[];
   /** Overall relational health score (0-1) */
   relationalHealth: number;
+  /**
+   * Present when accountability findings exist. They are current reality, not
+   * tasks; the desired outcome is named on its own terms through this tool.
+   */
+  next_tool?: 'turn_to_creative_orientation';
 }
 
 export interface IntentNodeMapping {
@@ -61,7 +66,9 @@ export interface IntentNodeMapping {
 export interface AccountabilityGap {
   intentId: string;
   direction: DirectionName;
+  /** The finding, a fact about the graph today. */
   gap: string;
+  /** What the graph records about it, and who to ask. Not a task (the field keeps its name). */
   suggestion: string;
 }
 
@@ -110,7 +117,7 @@ export class RelationalEnricher {
           intentId: relatedIntent.id,
           direction: relatedIntent.direction,
           gap: `Relation "${rel.relationship_type}" (${rel.from_id} → ${rel.to_id}) has low Wilson alignment (${Math.round(wilson * 100)}%)`,
-          suggestion: `Address accountability in: respect=${rel.accountability.respect}, reciprocity=${rel.accountability.reciprocity}, responsibility=${rel.accountability.responsibility}`,
+          suggestion: `Recorded accountability: respect=${rel.accountability.respect}, reciprocity=${rel.accountability.reciprocity}, responsibility=${rel.accountability.responsibility}. Ask the people in this relation about respect, reciprocity and responsibility.`,
         });
       }
     }
@@ -123,7 +130,7 @@ export class RelationalEnricher {
             intentId: intent.id,
             direction: intent.direction,
             gap: `Intent "${intent.action}" has no relational grounding in the graph`,
-            suggestion: 'Consider creating a relational node to track accountability for this action.',
+            suggestion: 'No relational node in the graph tracks accountability for this action.',
           });
         }
       }
@@ -146,6 +153,7 @@ export class RelationalEnricher {
       mappings,
       accountabilityGaps,
       relationalHealth,
+      ...(accountabilityGaps.length > 0 ? { next_tool: 'turn_to_creative_orientation' as const } : {}),
     };
   }
 

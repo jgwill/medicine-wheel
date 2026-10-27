@@ -1,7 +1,10 @@
 /**
  * Metrics — health, balance, and coverage assessment for the relational index.
  *
- * Provides composite scores and actionable recommendations.
+ * Provides composite scores, and what the reading found, stated as facts
+ * about the index today. A finding is current reality, not a task: when there
+ * is one, `next_tool` names turn_to_creative_orientation, where the desired
+ * outcome is named on its own terms.
  */
 import type { RelationalIndex, IndexHealth, DimensionGap, EpistemicSource } from './types.js';
 import { dimensionBalance as computeDimensionBalance } from './dimensions.js';
@@ -31,6 +34,8 @@ export function indexHealth(index: RelationalIndex): IndexHealth {
   ));
 
   const recommendations = generateRecommendations(balance, gaps, entryCount, convergenceCount);
+  const found =
+    entryCount === 0 || balance < 0.5 || gapCount > 0 || (convergenceCount === 0 && entryCount > 4);
 
   return {
     score,
@@ -40,6 +45,7 @@ export function indexHealth(index: RelationalIndex): IndexHealth {
     tensionCount,
     gapCount,
     recommendations,
+    ...(found ? { next_tool: 'turn_to_creative_orientation' as const } : {}),
   };
 }
 
@@ -70,20 +76,20 @@ function generateRecommendations(
   const recs: string[] = [];
 
   if (entryCount === 0) {
-    recs.push('Index is empty — add entries across all four epistemic sources to begin.');
+    recs.push('The index is empty: it holds no entries from any of the four epistemic sources.');
     return recs;
   }
 
   if (balance < 0.5) {
-    recs.push('Dimension balance is low — consider adding entries to underrepresented sources.');
+    recs.push('Dimension balance is below 0.5: the entries are spread unevenly across the four sources.');
   }
 
   for (const gap of gaps) {
-    recs.push(`Address '${gap.source}' dimension gap: ${gap.description}`);
+    recs.push(`The ${gap.description}.`);
   }
 
   if (convergenceCount === 0 && entryCount > 4) {
-    recs.push('No cross-dimensional convergences detected — use shared tags to bridge epistemic sources.');
+    recs.push('No cross-dimensional convergence is detected: no tag is shared by entries from two sources.');
   }
 
   if (recs.length === 0) {

@@ -24,6 +24,7 @@ import {
 } from "@medicine-wheel/transformation-tracker";
 import type { Tool } from "../types.js";
 import { store } from "../store.js";
+import { TURN_SENTENCE, turnPointer } from "../validators/index.js";
 
 export const governanceTransformationTools: Tool[] = [
   {
@@ -143,7 +144,7 @@ export const governanceTransformationTools: Tool[] = [
   },
   {
     name: "mw_snapshot_transformation",
-    description: "Capture a snapshot of researcher understanding and perform a Wilson validity audit. Tracks growth, community impact, and relational shifts.",
+    description: "Capture a snapshot of researcher understanding and perform a Wilson validity audit. Tracks growth, community impact, and relational shifts. What the audit finds is stated as fact about the log today; when a dimension is not met, the answer points to turn_to_creative_orientation (next_tool, next_tool_args) for the desired outcome.",
     inputSchema: {
       type: "object",
       properties: {
@@ -192,8 +193,12 @@ export const governanceTransformationTools: Tool[] = [
           wilson_validity: validity,
           overall_valid: validity.overallValid,
           score: validity.score,
-          recommendations: validity.recommendations,
-          teaching: "If research doesn't change you as a person, then you haven't done it right. (A co-researcher's lesson that Wilson quotes, 2008, p. 135.)"
+          // The recommendations are findings, stated as facts about this log today.
+          recommendations: validity.overallValid
+            ? validity.recommendations
+            : [...validity.recommendations, TURN_SENTENCE],
+          teaching: "If research doesn't change you as a person, then you haven't done it right. (A co-researcher's lesson that Wilson quotes, 2008, p. 135.)",
+          ...(validity.overallValid ? {} : turnPointer("mw_snapshot_transformation", validity.recommendations)),
         };
       } catch (error) {
         return { status: "error", message: String(error) };

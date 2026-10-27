@@ -1,10 +1,37 @@
 import type { Tool } from "../types.js";
 import { store } from "../store.js";
 
+/**
+ * What a check returns after it finds something missing. The findings are
+ * current reality: facts about the plan or the graph today. The pull after a
+ * check is to fill each missing item, one task per item, and that is not what
+ * we are doing. A hold stays as the check states it: what must be in place
+ * before the research continues, reached with the community and never turned
+ * into a task. The desired outcome is named on its own terms, through
+ * turn_to_creative_orientation.
+ */
+export const TURN_TOOL = "turn_to_creative_orientation" as const;
+
+export const TURN_SENTENCE =
+  "These findings are current reality: facts about the plan as it is today. The pull is to fill each one, one task per item; that is not what we are doing. Pass next_tool_args to turn_to_creative_orientation to name the desired outcome on its own terms. Any hold above stays while that happens.";
+
+export function turnPointer(check: string, findings: string[], holds: string[] = []) {
+  return {
+    next_tool: TURN_TOOL,
+    next_tool_args: { analysis: { check, findings, holds } },
+  };
+}
+
+/** "a", "a and b", "a, b and c". */
+function inWords(items: string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
 export const validators: Tool[] = [
   {
     name: "accountability_validator",
-    description: "Audit research plan for relational accountability alignment with Wilson's Indigenous paradigm. Checks ontology, epistemology, axiology, and relational obligations.",
+    description: "Audit research plan for relational accountability alignment with Wilson's Indigenous paradigm. Checks ontology, epistemology, axiology, and relational obligations. Each finding is stated as a fact about the plan today. When something is missing, the research holds while it is part of the plan, reached with the community; the answer names that hold and points to turn_to_creative_orientation (next_tool, next_tool_args) for the desired outcome.",
     inputSchema: {
       type: "object",
       properties: {
@@ -30,7 +57,10 @@ export const validators: Tool[] = [
     handler: async (args) => {
       const plan = args.research_plan;
       
-      const gaps = [];
+      // Findings, each a fact about the plan today. `missing` names, for the
+      // hold, what must be part of the plan before the research continues.
+      const gaps: string[] = [];
+      const missing: string[] = [];
       const strengths = [];
       let score = 0;
 
@@ -39,7 +69,8 @@ export const validators: Tool[] = [
         strengths.push("Pre-relationship phase planned");
         score += 15;
       } else {
-        gaps.push("CRITICAL: No pre-relationship phase; must build trust before data collection");
+        gaps.push("CRITICAL: The plan has no pre-relationship phase; data collection would begin before trust is built");
+        missing.push("a pre-relationship phase in which trust is built");
       }
 
       // Check advisory board
@@ -47,7 +78,8 @@ export const validators: Tool[] = [
         strengths.push(`Community advisory board with ${plan.advisory_board_members} members`);
         score += 20;
       } else {
-        gaps.push("CRITICAL: No community advisory board; research cannot proceed without community governance");
+        gaps.push("CRITICAL: The plan has no community advisory board; research does not proceed without community governance");
+        missing.push("community governance through an advisory board");
       }
 
       // Check Elder co-investigators
@@ -55,7 +87,8 @@ export const validators: Tool[] = [
         strengths.push(`${plan.elder_investigators} Elder co-investigators`);
         score += 20;
       } else {
-        gaps.push("CRITICAL: No Elder co-investigators; Elder wisdom essential for cultural validity");
+        gaps.push("CRITICAL: The plan has no Elder co-investigators; its cultural validity rests on Elder knowledge it does not include");
+        missing.push("Elder co-investigators");
       }
 
       // Check ceremony integration
@@ -63,7 +96,8 @@ export const validators: Tool[] = [
         strengths.push("Ceremony integrated into research process");
         score += 15;
       } else {
-        gaps.push("CRITICAL: No ceremony integration; research is ceremony, not just methods");
+        gaps.push("CRITICAL: The plan does not integrate ceremony; research is ceremony, not just methods");
+        missing.push("ceremony throughout the research");
       }
 
       // Check community benefit
@@ -71,7 +105,8 @@ export const validators: Tool[] = [
         strengths.push("Reciprocal community benefit defined");
         score += 15;
       } else {
-        gaps.push("CRITICAL: No reciprocal benefit; extractive approach; community must gain from research");
+        gaps.push("CRITICAL: The plan names no reciprocal benefit for the community; as written, the research is extractive");
+        missing.push("a benefit the community receives from the research");
       }
 
       // Check data storage (OCAP)
@@ -79,7 +114,8 @@ export const validators: Tool[] = [
         strengths.push("Data sovereignty honored (on-premise storage)");
         score += 10;
       } else {
-        gaps.push("CRITICAL: Data not stored on-premise; OCAP® violation; community must possess data");
+        gaps.push("CRITICAL: The plan does not store the data on-premise or with the community; under OCAP® the community possesses its data");
+        missing.push("community possession of the data (OCAP®)");
       }
 
       // Check REB
@@ -87,8 +123,15 @@ export const validators: Tool[] = [
         strengths.push("Community REB involved");
         score += 5;
       } else {
-        gaps.push("IMPORTANT: Community REB not identified; dual review required (TCPS2 Chapter 9)");
+        gaps.push("IMPORTANT: The plan identifies no community REB; TCPS2 Chapter 9 requires dual review");
+        missing.push("the community's REB (dual review, TCPS2 Chapter 9)");
       }
+
+      const hold = missing.length > 0
+        ? `Hold the research while ${inWords(missing)} ${missing.length === 1 ? "is" : "are"} part of the plan.`
+        : null;
+      const holdManner =
+        "The hold is met with the community, its Elders and its leaders: the plan is revised with them, under an OCAP® data governance agreement, with ceremony throughout the research and not only at its end. It is not filled in from this list.";
 
       const status = score >= 70 ? "ALIGNED" : score >= 40 ? "NEEDS IMPROVEMENT" : "CRITICAL GAPS";
 
@@ -115,24 +158,25 @@ export const validators: Tool[] = [
         },
         critical_gaps: gaps,
         strengths: strengths,
-        recommendations: gaps.length > 0 ? [
-          "Pause research until gaps addressed",
-          "Consult with Elders and community leaders",
-          "Revise research plan with community input",
-          "Establish OCAP® data governance agreement",
-          "Integrate ceremony throughout (not just at end)",
+        recommendations: hold ? [
+          hold,
+          holdManner,
+          TURN_SENTENCE,
         ] : [
           "Research plan is well-aligned with Indigenous paradigm",
           "Continue with community oversight",
           "Regular accountability audits recommended",
         ],
-        next_steps: score < 70 ? "CANNOT PROCEED until critical gaps addressed" : "Proceed with ongoing community oversight",
+        next_steps: score < 70
+          ? `CANNOT PROCEED: the research holds while ${inWords(missing)} ${missing.length === 1 ? "is" : "are"} part of the plan, reached with the community.`
+          : "Proceed with ongoing community oversight",
+        ...(hold ? turnPointer("accountability_validator", gaps, [hold, holdManner]) : {}),
       };
     },
   },
   {
     name: "ocap_compliance_checker",
-    description: "Verify OCAP® (Ownership, Control, Access, Possession) data sovereignty compliance. Ensures First Nations principles are honored.",
+    description: "Verify OCAP® (Ownership, Control, Access, Possession) data sovereignty compliance. Ensures First Nations principles are honored. Each violation is stated as a fact about the data plan today, beside the OCAP® principle it meets. On a violation the research holds while the community's agreement, custody and oversight are part of the data plan; the answer names that hold and points to turn_to_creative_orientation (next_tool, next_tool_args) for the desired outcome.",
     inputSchema: {
       type: "object",
       properties: {
@@ -159,21 +203,21 @@ export const validators: Tool[] = [
       if (plan.ownership_statement && plan.ownership_statement.includes("community")) {
         compliant.push("✓ OWNERSHIP: Community ownership explicitly stated");
       } else {
-        violations.push("✗ OWNERSHIP: Data ownership must belong to community, not researcher/institution");
+        violations.push("✗ OWNERSHIP: The plan does not state community ownership; under OCAP® the data belongs to the community, not the researcher or institution");
       }
 
       // Control
       if (plan.community_approval) {
         compliant.push("✓ CONTROL: Community approval required for data use");
       } else {
-        violations.push("✗ CONTROL: Community must control data collection, use, and sharing");
+        violations.push("✗ CONTROL: The plan does not require community approval; under OCAP® the community controls collection, use and sharing");
       }
 
       // Access
       if (plan.access_controls && plan.access_controls !== "open") {
         compliant.push("✓ ACCESS: Access controls defined");
       } else {
-        violations.push("✗ ACCESS: Community must determine who accesses data; cannot be open access without permission");
+        violations.push("✗ ACCESS: The plan sets no access controls, or sets open access; under OCAP® the community determines who accesses the data, and open access needs its permission");
       }
 
       // Possession
@@ -188,13 +232,23 @@ export const validators: Tool[] = [
         possessionConditional = true;
         compliant.push("⚠ POSSESSION: Hybrid/encrypted cloud — conditional pass pending sovereignty verification");
       } else {
-        violations.push("✗ POSSESSION: Data must be physically/digitally possessed by community (on-premise)");
+        violations.push("✗ POSSESSION: The plan stores the data outside community custody; under OCAP® the community possesses the data, physically or digitally (on-premise)");
       }
 
       const isCompliant = violations.length === 0;
       const isConditional = isCompliant && possessionConditional;
 
       const possessionStatus = isOnPremise ? "✓" : isHybridCloud ? "⚠" : "✗";
+
+      // The holds, as what must be in place before the research continues.
+      const conditionalPossession =
+        "POSSESSION passes only on condition that the community holds every encryption key (not the cloud provider), the data resides in a jurisdiction the community's governance approved, the community can extract or delete all data without vendor lock-in, its data stewards see the access logs, and sovereignty audits run under community oversight. Until the community confirms each condition, the pass stays conditional.";
+      const conditionalManner =
+        "These conditions are confirmed with the community, not assumed and not filled in from this list.";
+      const violationHold =
+        "Hold the research while an OCAP® data governance agreement with the community, community custody of the data (on-premise or community-controlled) and community oversight are part of the data plan.";
+      const violationManner =
+        "That agreement is reached with the community, not filled in; consent is the community's to give.";
 
       const result: Record<string, unknown> = {
         ocap_status: isConditional ? "CONDITIONAL — CLOUD SOVEREIGNTY" : isCompliant ? "COMPLIANT" : "VIOLATIONS DETECTED",
@@ -223,20 +277,18 @@ export const validators: Tool[] = [
           },
         },
         recommendations: isConditional ? [
-          "Verify community holds all encryption keys — not the cloud provider",
-          "Confirm data residency jurisdiction is approved by community governance",
-          "Ensure community can extract/delete all data without vendor lock-in",
-          "Establish access log visibility for community data stewards",
-          "Schedule regular sovereignty audits with community oversight",
+          conditionalPossession,
+          conditionalManner,
+          TURN_SENTENCE,
         ] : isCompliant ? [
           "OCAP® compliance confirmed",
           "Maintain community governance throughout research",
           "Regular audits to ensure ongoing compliance",
         ] : [
           "STOP: Cannot proceed with current data plan",
-          "Develop OCAP®-compliant data governance agreement with community",
-          "Revise storage to on-premise/community controlled",
-          "Establish community oversight mechanisms",
+          violationHold,
+          violationManner,
+          TURN_SENTENCE,
         ],
         tcps2_chapter9: {
           note: "Canadian institutions require TCPS2 Chapter 9 compliance",
@@ -261,6 +313,20 @@ export const validators: Tool[] = [
           ],
           note: "Cloud storage can honor OCAP® Possession when community retains effective control through encryption and governance. This is a recognized path, not an exception.",
         };
+      }
+
+      if (!isCompliant) {
+        Object.assign(result, turnPointer("ocap_compliance_checker", violations, [
+          "STOP: Cannot proceed with current data plan",
+          violationHold,
+          violationManner,
+        ]));
+      } else if (isConditional) {
+        Object.assign(result, turnPointer(
+          "ocap_compliance_checker",
+          compliant.filter((c) => c.startsWith("⚠")),
+          [conditionalPossession, conditionalManner],
+        ));
       }
 
       return result;
@@ -405,7 +471,7 @@ export const validators: Tool[] = [
   },
   {
     name: "wilson_paradigm_checker",
-    description: "Assess research alignment with Shawn Wilson's Indigenous research paradigm: ontology (relational reality), epistemology (ceremony as knowledge-making), axiology (relational accountability).",
+    description: "Assess research alignment with Shawn Wilson's Indigenous research paradigm: ontology (relational reality), epistemology (ceremony as knowledge-making), axiology (relational accountability). What the description and the store show is stated as fact. When something is not shown, the answer keeps the hold (ask the community what its own protocol requires before proceeding) and points to turn_to_creative_orientation (next_tool, next_tool_args) for the desired outcome.",
     inputSchema: {
       type: "object",
       properties: {
@@ -449,6 +515,23 @@ export const validators: Tool[] = [
       const hasRelational = hasRelational_text || hasRelationsInStore;
       const hasCeremony = hasCeremony_text || hasCeremonyInStore;
       const hasAccountability = hasAccountability_text || hasAccountabilityNodes;
+
+      // What the description and the store show, one fact per dimension.
+      const allShown = hasRelational && hasCeremony && hasAccountability;
+      const dimensionFacts = [
+        hasRelational
+          ? "Relational framing is shown in the description or in the store"
+          : "The description and the store show no relational framing (CRITICAL)",
+        hasCeremony
+          ? "Ceremony is shown in the description or in the store"
+          : "The description and the store show no ceremony (CRITICAL)",
+        hasAccountability
+          ? "Reciprocity and accountability are shown in the description or in the store"
+          : "The description and the store show no reciprocity or accountability (CRITICAL)",
+      ];
+      // The hold, kept as Wilson's sources give it.
+      const protocolHold =
+        "Before proceeding, ask the community whose knowledge this concerns what its own protocol requires (p. 54; p. 136)";
 
       return {
         framework: "Shawn Wilson's Indigenous Research Paradigm",
@@ -511,16 +594,20 @@ export const validators: Tool[] = [
           source: "medicine-wheel://wilson/framework",
         },
         note: "This check matches keywords in a description: the suite's own heuristic, not a judgement Wilson makes. His book 'is not intended to impose conclusions on other people or to be a manual of techniques for their research' (Wilson 2008, p. 136); and in the Indigenous world 'you are recognized by your deeds… Not by what you say on paper' (Lewis Cardinal, p. 91). Read the relations actually made, or ask people (#65).",
-        recommendations: hasRelational && hasCeremony && hasAccountability ? [
+        recommendations: allShown ? [
           "The keywords of relational framing, ceremony and accountability are present",
           "Ask the people involved Wilson's six questions (p. 77; medicine-wheel://wilson/framework, researcher_questions)",
           "Follow the community's own protocol for who is consulted (Atkinson, quoted p. 54)",
         ] : [
-          "Strengthen relational framing" + (!hasRelational ? " (CRITICAL)" : ""),
-          "Integrate ceremony throughout" + (!hasCeremony ? " (CRITICAL)" : ""),
-          "Define reciprocal benefits" + (!hasAccountability ? " (CRITICAL)" : ""),
-          "Before proceeding, ask the community whose knowledge this concerns what its own protocol requires (p. 54; p. 136)",
+          ...dimensionFacts,
+          protocolHold,
+          TURN_SENTENCE,
         ],
+        ...(allShown ? {} : turnPointer(
+          "wilson_paradigm_checker",
+          dimensionFacts.filter((f) => f.endsWith("(CRITICAL)")),
+          [protocolHold],
+        )),
       };
     },
   },

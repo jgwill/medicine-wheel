@@ -31,7 +31,10 @@ import { balanceCheck } from './reciprocity-ledger.js';
  * 5. Seven-generation consideration — are future generations honored?
  *
  * Returns a WilsonValidity assessment with boolean flags, a composite
- * score, and actionable recommendations.
+ * score, and what it found, each stated as a fact about the log today. When a
+ * dimension is not met, `next_tool` names turn_to_creative_orientation: the
+ * findings are current reality, and the desired outcome is named on its own
+ * terms rather than derived from them.
  */
 export function wilsonValidityCheck(log: TransformationLog): WilsonValidity {
   const recommendations: string[] = [];
@@ -41,7 +44,7 @@ export function wilsonValidityCheck(log: TransformationLog): WilsonValidity {
   const researcherTransformed = growth.detected;
   if (!researcherTransformed) {
     recommendations.push(
-      'No researcher transformation detected. Deepen reflective practice and engage with challenging perspectives.',
+      'No researcher transformation is detected in this log.',
     );
   }
 
@@ -51,11 +54,11 @@ export function wilsonValidityCheck(log: TransformationLog): WilsonValidity {
   if (!communityBenefited) {
     if (voice.totalImpacts === 0) {
       recommendations.push(
-        'No community impacts recorded. Research must benefit the community to be valid.',
+        'No community impacts are recorded in this log. Research must benefit the community to be valid.',
       );
     } else {
       recommendations.push(
-        'Community impacts lack measurability. Work with the community to define measurable outcomes.',
+        'The community impacts recorded carry no measurable outcome. What counts as a measure is the community\'s to define.',
       );
     }
   }
@@ -66,11 +69,11 @@ export function wilsonValidityCheck(log: TransformationLog): WilsonValidity {
   if (!relationsStrengthened) {
     if (delta.totalShifts === 0) {
       recommendations.push(
-        'No relational shifts tracked. Begin documenting how your relations are changing.',
+        'No relational shifts are tracked in this log.',
       );
     } else {
       recommendations.push(
-        'More relations weakened than strengthened. Investigate and restore declining relations.',
+        'More relations weakened than strengthened in this log.',
       );
     }
   }
@@ -88,7 +91,7 @@ export function wilsonValidityCheck(log: TransformationLog): WilsonValidity {
   const sevenGenerationsConsidered = sevenGen.score >= 0.4;
   if (!sevenGenerationsConsidered) {
     recommendations.push(
-      'Seven-generation score is low. Consider how this research affects future generations.',
+      'The seven-generation score is below 0.4: this log records little about how the research affects future generations.',
     );
   }
 
@@ -121,5 +124,6 @@ export function wilsonValidityCheck(log: TransformationLog): WilsonValidity {
     overallValid,
     score,
     recommendations,
+    ...(overallValid ? {} : { next_tool: 'turn_to_creative_orientation' as const }),
   };
 }

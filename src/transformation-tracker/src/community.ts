@@ -55,8 +55,8 @@ export function reciprocityBalance(log: TransformationLog): ReciprocityBalanceRe
     summary: balanced
       ? `Reciprocity is balanced: ${givingCount} giving, ${receivingCount} receiving.`
       : ratio < 0.5
-        ? `More receiving than giving (${receivingCount} received, ${givingCount} given). Consider what you can give back.`
-        : `More giving than receiving (${givingCount} given, ${receivingCount} received). Ensure you are also open to receiving.`,
+        ? `More receiving than giving (${receivingCount} received, ${givingCount} given). That obligation is held in these relations.`
+        : `More giving than receiving (${givingCount} given, ${receivingCount} received).`,
   };
 }
 

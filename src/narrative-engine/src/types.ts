@@ -86,7 +86,13 @@ export interface ArcValidationResult {
   valid: boolean;
   completeness: ArcCompleteness;
   violations: ArcViolation[];
+  /** What the validation found, each a fact about the arc today (the field keeps its name). */
   recommendations: string[];
+  /**
+   * Present when there is a finding. The findings are current reality, not
+   * tasks; the desired outcome is named on its own terms through this tool.
+   */
+  next_tool?: 'turn_to_creative_orientation';
 }
 
 // ─── Timeline ─────────────────────────────────────────────────

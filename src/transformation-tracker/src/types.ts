@@ -151,6 +151,15 @@ export interface WilsonValidity {
   overallValid: boolean;
   /** Composite validity score (0–1) */
   score: number;
-  /** Recommendations for deeper Wilson alignment */
+  /**
+   * What the check found, each stated as a fact about the log today (the field
+   * keeps its name). When all five dimensions are met it carries one line
+   * saying so.
+   */
   recommendations: string[];
+  /**
+   * Present when a dimension is not met. The findings are current reality, not
+   * tasks; the desired outcome is named on its own terms through this tool.
+   */
+  next_tool?: 'turn_to_creative_orientation';
 }

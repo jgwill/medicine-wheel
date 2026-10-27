@@ -146,7 +146,10 @@ export function relationalHealthReview(circle: ReviewCircle): {
     accountability: number;
     elderPresence: number;
   };
+  /** What the review found, each a fact about the circle today (the field keeps its name). */
   recommendations: string[];
+  /** Present when there is a finding: the desired outcome is named on its own terms through this tool. */
+  next_tool?: 'turn_to_creative_orientation';
 } {
   const recommendations: string[] = [];
 
@@ -157,7 +160,7 @@ export function relationalHealthReview(circle: ReviewCircle): {
   const uniqueRoles = new Set(circle.reviewers.map((r) => r.role)).size;
   const diversity = Math.min(1, (uniqueDirections + uniqueRoles) / 8);
   if (diversity < 0.5) {
-    recommendations.push('Invite reviewers from underrepresented directions and roles');
+    recommendations.push(`The circle's reviewers span ${uniqueDirections} direction(s) and ${uniqueRoles} role(s)`);
   }
 
   // Participation: What fraction of reviewers have spoken?
@@ -166,7 +169,7 @@ export function relationalHealthReview(circle: ReviewCircle): {
     ? [...new Set(circle.reviewers.map((r) => r.id))].filter((id) => spoke.has(id)).length / circle.reviewers.length
     : 0;
   if (participation < 0.75) {
-    recommendations.push('Not all reviewers have been heard — invite remaining voices');
+    recommendations.push('Not all reviewers have been heard yet');
   }
 
   // Accountability: Do all reviewers have stated accountability?
@@ -181,7 +184,7 @@ export function relationalHealthReview(circle: ReviewCircle): {
   // Elder presence
   const elderPresence = circle.elderValidator ? 1 : 0;
   if (!elderPresence) {
-    recommendations.push('Consider requesting Elder validation');
+    recommendations.push('No Elder has validated this review');
   }
 
   const score = (diversity + participation + accountability + elderPresence) / 4;
@@ -191,5 +194,6 @@ export function relationalHealthReview(circle: ReviewCircle): {
     score,
     dimensions: { diversity, participation, accountability, elderPresence },
     recommendations,
+    ...(recommendations.length > 0 ? { next_tool: 'turn_to_creative_orientation' as const } : {}),
   };
 }

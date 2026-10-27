@@ -93,7 +93,7 @@ export function validateArc(
       message: `Direction '${dir}' has no beats`,
       severity: 'error',
     });
-    recommendations.push(`Add at least one beat in the ${dir} direction`);
+    recommendations.push(`The ${dir} direction has no beat`);
   }
 
   // Directions without ceremonies
@@ -105,7 +105,7 @@ export function validateArc(
         message: `Direction '${dir}' has beats but no ceremony`,
         severity: 'warning',
       });
-      recommendations.push(`Consider conducting a ceremony in the ${dir} direction`);
+      recommendations.push(`The ${dir} direction has beats and no ceremony`);
     }
   }
 
@@ -117,7 +117,7 @@ export function validateArc(
       message: `Relations' recorded accountability averages ${(completeness.wilsonAlignment * 100).toFixed(0)}% (below 50%)`,
       severity: 'warning',
     });
-    recommendations.push('Strengthen relational accountability — review obligations and reciprocity');
+    recommendations.push(`Relations' recorded accountability averages ${(completeness.wilsonAlignment * 100).toFixed(0)}% — ask the people in these relations about respect, reciprocity and responsibility`);
   }
 
   // OCAP compliance gaps
@@ -127,7 +127,7 @@ export function validateArc(
       message: 'Not all relations are OCAP®-compliant',
       severity: 'error',
     });
-    recommendations.push('Review data sovereignty flags on all relations — ensure ownership, control, access, and possession');
+    recommendations.push('Not every relation is OCAP®-compliant: ownership, control, access and possession are not confirmed on each one. They are confirmed with the community, not filled in');
   }
 
   // Balance check
@@ -144,7 +144,7 @@ export function validateArc(
       message: `Beats are unbalanced: '${maxDir}' has ${completeness.beatsPerDirection[maxDir]}, '${minDir}' has ${completeness.beatsPerDirection[minDir]}`,
       severity: 'info',
     });
-    recommendations.push(`Balance the arc — add beats in '${minDir}' direction`);
+    recommendations.push(`The arc is unbalanced: '${minDir}' has the fewest beats (${completeness.beatsPerDirection[minDir]})`);
   }
 
   const errorCount = violations.filter(v => v.severity === 'error').length;
@@ -154,6 +154,7 @@ export function validateArc(
     completeness,
     violations,
     recommendations,
+    ...(recommendations.length > 0 ? { next_tool: 'turn_to_creative_orientation' as const } : {}),
   };
 }
 

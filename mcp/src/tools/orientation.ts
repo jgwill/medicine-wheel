@@ -29,6 +29,7 @@ import {
   doorAdvice,
   turnToCreativeOrientation,
   type GapAnalysis,
+  type CheckFindings,
 } from "@medicine-wheel/gap-analysis";
 
 export const orientationTools: Tool[] = [
@@ -154,13 +155,13 @@ export const orientationTools: Tool[] = [
   },
   {
     name: "turn_to_creative_orientation",
-    description: "Call this after open_gap_analysis. A gap analysis looks for what is missing, and the pull after one is to fill each missing item, one task per item. That is not what we are doing. This tool keeps the analysis's findings as current reality, stated as fact and never as tasks, and returns a reflection that names that pull. The next step is create_structural_tension_chart, which needs a desired outcome named on its own terms: what do we want to create, stated as something that will exist? Give desired_outcome and the tool also returns a draft chart input whose action_steps are empty, because no action step is taken from the findings; add a direction and pass it to create_structural_tension_chart. This tool reads what you supply, stores nothing, and never refuses.",
+    description: "Call this after open_gap_analysis, or after a check that reports what it did not find (accountability_validator, ocap_compliance_checker, wilson_paradigm_checker, mw_snapshot_transformation answer next_tool: turn_to_creative_orientation and next_tool_args to pass here). A gap analysis looks for what is missing, and the pull after one is to fill each missing item, one task per item. That is not what we are doing. This tool keeps the analysis's findings as current reality, stated as fact and never as tasks, and returns a reflection that names that pull. The next step is create_structural_tension_chart, which needs a desired outcome named on its own terms: what do we want to create, stated as something that will exist? Give desired_outcome and the tool also returns a draft chart input whose action_steps are empty, because no action step is taken from the findings; add a direction and pass it to create_structural_tension_chart. This tool reads what you supply, stores nothing, and never refuses.",
     inputSchema: {
       type: "object",
       properties: {
         analysis: {
           type: "object",
-          description: "The analysis returned by open_gap_analysis (its `analysis` field): id, baseline, current, difference, steps.",
+          description: "The analysis returned by open_gap_analysis (its `analysis` field): id, baseline, current, difference, steps. Or a check's findings, as a check returns them in next_tool_args.analysis: { check, findings, holds? }. Holds (what must be in place before the work continues) are kept as current reality, as the check states them.",
         },
         desired_outcome: {
           type: "string",
@@ -174,7 +175,7 @@ export const orientationTools: Tool[] = [
         const { desired_outcome } = args;
         // Some clients send an object argument as its JSON text.
         const analysis = typeof args.analysis === "string" ? JSON.parse(args.analysis) : args.analysis;
-        const turn = turnToCreativeOrientation(analysis as GapAnalysis, {
+        const turn = turnToCreativeOrientation(analysis as GapAnalysis | CheckFindings, {
           desiredOutcome: typeof desired_outcome === "string" ? desired_outcome : undefined,
         });
 

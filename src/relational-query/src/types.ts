@@ -174,5 +174,11 @@ export interface AccountabilityReport {
   ceremoniedRelations: number;
   unceremoniedRelations: number;
   obligationsOutstanding: number;
+  /** What the audit found, each a fact about the relational web today (the field keeps its name). */
   recommendations: string[];
+  /**
+   * Present when there is a finding. The findings are current reality, not
+   * tasks; the desired outcome is named on its own terms through this tool.
+   */
+  next_tool?: 'turn_to_creative_orientation';
 }

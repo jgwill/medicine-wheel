@@ -76,10 +76,10 @@ export function balanceCheck(log: TransformationLog): BalanceCheckResult {
     summary: overallBalanced
       ? 'Reciprocity is balanced overall.'
       : totalGiving === 0 && totalReceiving === 0
-        ? 'No reciprocity entries. Begin tracking what you give and receive.'
+        ? 'No reciprocity entries are recorded.'
         : totalGiving < totalReceiving
-          ? 'Reciprocity imbalance: receiving more than giving. Consider what you can return.'
-          : 'Reciprocity imbalance: giving more than receiving. Be open to receiving.',
+          ? 'Reciprocity imbalance: receiving more than giving. That obligation is held in these relations.'
+          : 'Reciprocity imbalance: giving more than receiving.',
   };
 }
 
@@ -104,7 +104,7 @@ export function reciprocityDebt(log: TransformationLog): ReciprocityDebtResult {
         category,
         deficit: receiving.length - giving.length,
         receivedFrom: [...new Set(receiving.map((e) => e.relatedTo))],
-        suggestion: `You have received ${receiving.length} time(s) from ${category} relations but given back only ${giving.length} time(s). Consider ways to reciprocate.`,
+        suggestion: `You have received ${receiving.length} time(s) from ${category} relations and given back ${giving.length} time(s). That obligation is held in those relations.`,
       });
     }
   }

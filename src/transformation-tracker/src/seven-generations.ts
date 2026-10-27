@@ -90,7 +90,8 @@ export function sustainabilityCheck(log: TransformationLog): SustainabilityResul
       growingRelations: 0,
       stableRelations: 0,
       decliningRelations: 0,
-      recommendations: ['Begin tracking relational shifts to assess sustainability.'],
+      recommendations: ['No relational shifts are tracked, so sustainability cannot be read from this log.'],
+      next_tool: 'turn_to_creative_orientation',
     };
   }
 
@@ -122,13 +123,13 @@ export function sustainabilityCheck(log: TransformationLog): SustainabilityResul
   const recommendations: string[] = [];
 
   if (declining > 0) {
-    recommendations.push(`${declining} relation(s) declining — investigate and restore.`);
+    recommendations.push(`${declining} relation(s) are declining.`);
   }
   if (growing === 0) {
-    recommendations.push('No relations actively growing — seek new ways to deepen connection.');
+    recommendations.push('No relation is growing.');
   }
   if (log.reciprocityLedger.filter((e) => e.category === 'future').length === 0) {
-    recommendations.push('No future-generation reciprocity — consider obligations to those not yet born.');
+    recommendations.push('No reciprocity toward future generations is recorded. Obligations to those not yet born are held all the same.');
   }
 
   return {
@@ -137,6 +138,7 @@ export function sustainabilityCheck(log: TransformationLog): SustainabilityResul
     stableRelations: stable,
     decliningRelations: declining,
     recommendations,
+    ...(recommendations.length > 0 ? { next_tool: 'turn_to_creative_orientation' as const } : {}),
   };
 }
 
@@ -168,7 +170,10 @@ export interface SustainabilityResult {
   growingRelations: number;
   stableRelations: number;
   decliningRelations: number;
+  /** What the check found, each a fact about the log today (the field keeps its name). */
   recommendations: string[];
+  /** Present when there is a finding: the desired outcome is named through this tool. */
+  next_tool?: 'turn_to_creative_orientation';
 }
 
 // ── Internal Scoring Helpers ────────────────────────────────────────────────

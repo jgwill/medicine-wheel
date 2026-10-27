@@ -102,6 +102,29 @@ with `desiredOutcomeAdvice` beside it.
 The MCP server (`@medicine-wheel/mcp`) carries the same turn as the tool
 `turn_to_creative_orientation`, called after `open_gap_analysis`.
 
+### After a check
+
+A check (a validator, an audit, a coverage reading) has no baseline that
+existed. It reads a plan or a graph as it is and says what it does not find.
+Its findings turn the same way:
+
+```ts
+const turn = turnToCreativeOrientation({
+  check: 'accountability_validator',
+  findings: ['CRITICAL: The plan has no Elder co-investigators; …'],
+  holds: ['Hold the research while Elder co-investigators are part of the plan.'],
+});
+turn.currentReality;   // each finding as { from: 'finding' }, each hold as { from: 'hold' }
+turn.reflection;       // names the pull, and says the holds stay as the check states them
+```
+
+A hold says what must be in place before the research continues: community
+review, consent, governance. It is kept as current reality, reached with the
+community, and never turned into a task. The MCP checks
+(`accountability_validator`, `ocap_compliance_checker`, `wilson_paradigm_checker`,
+`mw_snapshot_transformation`) answer `next_tool: "turn_to_creative_orientation"`
+with `next_tool_args` ready to pass.
+
 ## It advises; it never refuses
 
 If you open an analysis without evidence for the baseline, you get the analysis
@@ -129,7 +152,8 @@ work back to a structural tension chart.
 
 ## Status
 
-Small on purpose. `turnToCreativeOrientation` arrived in 0.26.3.
+Small on purpose. `turnToCreativeOrientation` arrived in 0.26.3, and took a
+check's findings in 0.26.4.
 
 ## License
 

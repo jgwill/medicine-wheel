@@ -103,6 +103,7 @@ export const WilsonValiditySchema = z.object({
   overallValid: z.boolean(),
   score: z.number().min(0).max(1),
   recommendations: z.array(z.string()),
+  next_tool: z.literal('turn_to_creative_orientation').optional(),
 });
 
 // ── Inferred Types ──────────────────────────────────────────────────────────

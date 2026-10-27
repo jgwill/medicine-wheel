@@ -166,6 +166,14 @@ export interface IndexHealth {
   tensionCount: number;
   /** Number of dimension gaps */
   gapCount: number;
-  /** Recommendations for improving index health */
+  /**
+   * What the reading found, each stated as a fact about the index today (the
+   * field keeps its name). A healthy index carries one line saying so.
+   */
   recommendations: string[];
+  /**
+   * Present when there is a finding. The findings are current reality, not
+   * tasks; the desired outcome is named on its own terms through this tool.
+   */
+  next_tool?: 'turn_to_creative_orientation';
 }

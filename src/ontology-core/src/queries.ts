@@ -146,7 +146,9 @@ export function cycleWilsonAlignment(
 
 /**
  * Identify relations with low Wilson alignment (below threshold).
- * These represent accountability gaps requiring ceremonial attention.
+ * Each returned relation's recorded accountability is below the threshold
+ * today. That is a fact about the relation, not a task; the attention it asks
+ * for is ceremonial, with the people in the relation.
  */
 export function findAccountabilityGaps(
   relations: Relation[],

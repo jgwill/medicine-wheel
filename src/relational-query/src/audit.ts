@@ -57,7 +57,7 @@ export function auditAccountability(
 
   // Recommendations
   if (ocapNonCompliant > 0) {
-    recommendations.push(`${ocapNonCompliant} relation(s) lack full OCAP® compliance — review ownership, control, access, and possession flags`);
+    recommendations.push(`${ocapNonCompliant} relation(s) lack full OCAP® compliance: ownership, control, access or possession is not confirmed. They are confirmed with the community, not filled in`);
   }
 
   if (averageWilsonAlignment < 0.5) {
@@ -69,15 +69,15 @@ export function auditAccountability(
     .filter(([, count]) => count === 0)
     .map(([dir]) => dir);
   if (emptyDirections.length > 0) {
-    recommendations.push(`No nodes in ${emptyDirections.join(', ')} direction(s) — consider expanding relational awareness`);
+    recommendations.push(`No node is in the ${emptyDirections.join(', ')} direction(s)`);
   }
 
   if (unceremoniedRelations > ceremoniedRelations && edges.length > 0) {
-    recommendations.push(`${unceremoniedRelations} of ${edges.length} relations lack ceremony — consider honoring these connections`);
+    recommendations.push(`${unceremoniedRelations} of ${edges.length} relations are not honored in ceremony`);
   }
 
   if (obligationsOutstanding > 0) {
-    recommendations.push(`${obligationsOutstanding} obligation(s) outstanding — attend to relational responsibilities`);
+    recommendations.push(`${obligationsOutstanding} obligation(s) are outstanding; they are held in these relations`);
   }
 
   return {
@@ -90,6 +90,7 @@ export function auditAccountability(
     unceremoniedRelations,
     obligationsOutstanding,
     recommendations,
+    ...(recommendations.length > 0 ? { next_tool: 'turn_to_creative_orientation' as const } : {}),
   };
 }
 

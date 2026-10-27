@@ -154,10 +154,50 @@ export function doorAdvice(analysis: GapAnalysis): string | null {
 
 /** One finding of an analysis, kept as a fact about today. */
 export interface CurrentRealityFact {
-  /** The part of the analysis the fact comes from. */
-  from: 'observation' | 'baseline' | 'difference' | 'root-cause' | 'step-done' | 'steps-open';
+  /**
+   * The part of the analysis the fact comes from. A check's findings arrive as
+   * `finding`, and the holds it keeps as `hold`.
+   */
+  from:
+    | 'observation'
+    | 'baseline'
+    | 'difference'
+    | 'root-cause'
+    | 'step-done'
+    | 'steps-open'
+    | 'finding'
+    | 'hold';
   /** The fact, stated about today. Never phrased as a task. */
   fact: string;
+}
+
+/**
+ * What a check found, as the check returns it: a validator, an audit, a
+ * coverage reading. A check has no baseline that existed; it reads a plan or a
+ * graph as it is today and says what it does not find there.
+ */
+export interface CheckFindings {
+  /** The check that produced the findings, e.g. `accountability_validator`. */
+  check: string;
+  /** Each finding, stated as a fact about the plan or the graph today. */
+  findings: string[];
+  /**
+   * What must be in place before the work continues, as the check states it:
+   * community review, consent, governance. A hold is kept as it is. It is
+   * reached with the community, not filled in, and it is never turned into a
+   * task.
+   */
+  holds?: string[];
+}
+
+/** True when the input is a check's findings rather than a gap analysis. */
+export function isCheckFindings(input: unknown): input is CheckFindings {
+  return (
+    !!input &&
+    typeof input === 'object' &&
+    typeof (input as CheckFindings).check === 'string' &&
+    Array.isArray((input as CheckFindings).findings)
+  );
 }
 
 export interface TurnOptions {
@@ -189,6 +229,7 @@ export interface TurnNextStep {
 }
 
 export interface CreativeOrientationTurn {
+  /** The analysis's id, or `check:<name>` when the input was a check's findings. */
   analysisId: string;
   /** The findings, as facts about today. */
   currentReality: CurrentRealityFact[];
@@ -237,6 +278,31 @@ function findingsAsFacts(analysis: GapAnalysis): CurrentRealityFact[] {
   return facts;
 }
 
+function checkFindingsAsFacts(input: CheckFindings): CurrentRealityFact[] {
+  const facts: CurrentRealityFact[] = input.findings
+    .filter(f => typeof f === 'string' && f.trim())
+    .map(f => ({ from: 'finding' as const, fact: asSentence(f) }));
+  for (const hold of input.holds ?? []) {
+    if (typeof hold === 'string' && hold.trim()) facts.push({ from: 'hold', fact: asSentence(hold) });
+  }
+  return facts;
+}
+
+function reflectionForCheck(input: CheckFindings): string {
+  const n = input.findings.filter(f => typeof f === 'string' && f.trim()).length;
+  const holds = (input.holds ?? []).some(h => typeof h === 'string' && h.trim());
+  return [
+    `The check ${input.check} found what is missing: ${n} finding${n === 1 ? '' : 's'}, each a fact about the plan or the graph today.`,
+    'The pull now is to fill each missing item, one task per item, until nothing is missing. That is not what we are doing.',
+    'The findings are kept as current reality, stated as fact. They are not a list of tasks.',
+    ...(holds
+      ? ['The holds stay as the check states them: they say what must be in place before the work continues. They are reached with the community, not filled in, and consent is the community\'s to give.']
+      : []),
+    `Next comes the desired outcome, named on its own terms. ${DESIRED_OUTCOME_QUESTION} It does not come from the findings.`,
+    'Then a structural tension chart holds current reality and the desired outcome, and its action steps resolve the tension toward that outcome. Some findings will matter to it, and others will not.',
+  ].join(' ');
+}
+
 function reflectionFor(analysis: GapAnalysis): string {
   return [
     `This gap analysis found what is missing: ${asSentence(analysis.difference)}`,
@@ -248,7 +314,8 @@ function reflectionFor(analysis: GapAnalysis): string {
 }
 
 /**
- * The turn after a gap analysis.
+ * The turn after a gap analysis, or after a check that reports what it did
+ * not find.
  *
  * Returns the findings as current-reality facts (never as tasks), the
  * reflection that names the pull to fill each missing item, and the next step:
@@ -256,31 +323,49 @@ function reflectionFor(analysis: GapAnalysis): string {
  * desired outcome, it also returns a draft chart input whose action steps are
  * empty, because no action step is taken from the findings.
  *
+ * A check's findings (`CheckFindings`) turn the same way. Its holds are kept
+ * as current reality beside the findings, as the check states them.
+ *
  * It advises and proceeds. A desired outcome phrased as removing something is
  * still placed in the draft, with advice beside it.
  */
 export function turnToCreativeOrientation(
-  analysis: GapAnalysis,
+  analysis: GapAnalysis | CheckFindings,
   options: TurnOptions = {},
 ): CreativeOrientationTurn {
-  if (
-    !analysis ||
-    typeof analysis.difference !== 'string' ||
-    !analysis.current?.description?.trim() ||
-    !analysis.baseline?.description?.trim()
-  ) {
-    throw new Error(
-      'The turn needs a gap analysis as openGapAnalysis returns it: baseline, current and difference.',
-    );
+  let analysisId: string;
+  let currentReality: CurrentRealityFact[];
+  let reflection: string;
+
+  if (isCheckFindings(analysis)) {
+    if (!analysis.check.trim() || !analysis.findings.some(f => typeof f === 'string' && f.trim())) {
+      throw new Error('The turn needs a check\'s findings: the check\'s name and at least one finding.');
+    }
+    analysisId = `check:${analysis.check.trim()}`;
+    currentReality = checkFindingsAsFacts(analysis);
+    reflection = reflectionForCheck(analysis);
+  } else {
+    if (
+      !analysis ||
+      typeof analysis.difference !== 'string' ||
+      !analysis.current?.description?.trim() ||
+      !analysis.baseline?.description?.trim()
+    ) {
+      throw new Error(
+        'The turn needs a gap analysis as openGapAnalysis returns it: baseline, current and difference.',
+      );
+    }
+    analysisId = analysis.id;
+    currentReality = findingsAsFacts(analysis);
+    reflection = reflectionFor(analysis);
   }
 
-  const currentReality = findingsAsFacts(analysis);
   const desiredOutcome = options.desiredOutcome?.trim() || undefined;
 
   const turn: CreativeOrientationTurn = {
-    analysisId: analysis.id,
+    analysisId,
     currentReality,
-    reflection: reflectionFor(analysis),
+    reflection,
     nextStep: {
       tool: 'create_structural_tension_chart',
       needs: desiredOutcome ? ['direction'] : ['desired_outcome', 'direction'],

@@ -118,7 +118,7 @@ Please call these tools in sequence:
 2. ocap_compliance_checker - Verify data sovereignty
 3. wilson_paradigm_checker - Assess ontology/epistemology/axiology
 
-After audits, synthesize findings and recommend next steps. Be honest about gaps - this serves community protection.`,
+After the audits, state what they found as current reality: facts about the plan today. Keep every hold they name (what must be in place before the research continues, reached with the community) as they state it. The pull is to fill each missing item, one task per item; that is not what we are doing. Pass each audit's next_tool_args to turn_to_creative_orientation to name the desired outcome on its own terms. Saying plainly what the audits found serves community protection.`,
           },
         },
       ];

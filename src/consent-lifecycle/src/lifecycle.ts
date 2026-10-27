@@ -145,12 +145,13 @@ export function checkConsentHealth(record: ConsentRecord): ConsentHealthResult {
       issues: ['Consent has been withdrawn.'],
       daysUntilExpiry: null,
       needsRenewal: false,
-      recommendations: ['A new consent must be created if the relationship is to continue.'],
+      recommendations: ['The relationship continues only under a new consent, reached with the grantor.'],
+      next_tool: 'turn_to_creative_orientation',
     };
   }
 
   if (record.state === 'expired') {
-    issues.push('Consent has expired and must be renewed.');
+    issues.push('Consent has expired. Use under it holds until the grantor renews it.');
   }
 
   if (record.state === 'pending') {
@@ -186,9 +187,9 @@ export function checkConsentHealth(record: ConsentRecord): ConsentHealthResult {
 
   const healthy = issues.length === 0 && record.state === 'active';
   const recommendations: string[] = [];
-  if (needsRenewal) recommendations.push('Schedule a consent renewal ceremony.');
-  if (!record.ocapFlags.compliant) recommendations.push('Verify OCAP® compliance.');
-  if (record.ceremonies.length === 0) recommendations.push('Conduct a consent ceremony.');
+  if (needsRenewal) recommendations.push('Renewal is due. Consent is renewed with the grantor, in ceremony; it is not filled in.');
+  if (!record.ocapFlags.compliant) recommendations.push('OCAP® compliance is not verified. It is confirmed with the community, not assumed.');
+  if (record.ceremonies.length === 0) recommendations.push('No consent ceremony is recorded. A ceremony is held with the grantor, when the grantor chooses.');
 
   return {
     healthy,
@@ -197,6 +198,7 @@ export function checkConsentHealth(record: ConsentRecord): ConsentHealthResult {
     daysUntilExpiry,
     needsRenewal,
     recommendations,
+    ...(healthy ? {} : { next_tool: 'turn_to_creative_orientation' as const }),
   };
 }
 
@@ -209,5 +211,15 @@ export interface ConsentHealthResult {
   issues: string[];
   daysUntilExpiry: number | null;
   needsRenewal: boolean;
+  /**
+   * What the check found and the holds it keeps, stated as facts (the field
+   * keeps its name). Consent is reached with the grantor, never filled in.
+   */
   recommendations: string[];
+  /**
+   * Present when the consent is not healthy. The findings are current
+   * reality, not tasks, and the holds stay; the desired outcome is named on
+   * its own terms through this tool.
+   */
+  next_tool?: 'turn_to_creative_orientation';
 }

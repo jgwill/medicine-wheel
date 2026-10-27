@@ -488,12 +488,14 @@ export class MedicineWheelDecomposer {
 
   private generateCeremonyGuidance(neglectedDirections: DirectionName[]): CeremonyGuidance {
     const directionGuide = neglectedDirections.map(d =>
-      `${OJIBWE_NAMES[d]} (${d}): address the ${d === 'east' ? 'vision' : d === 'south' ? 'analysis' : d === 'west' ? 'reflection' : 'action'} dimension`
+      `${OJIBWE_NAMES[d]} (${d}): the ${d === 'east' ? 'vision' : d === 'south' ? 'analysis' : d === 'west' ? 'reflection' : 'action'} dimension holds few insights`
     ).join('; ');
 
+    // The neglected directions are current reality, acknowledged as they are;
+    // the intention does not turn them into work to fill.
     return {
       opening_practice: 'Acknowledge the Four Directions before proceeding.',
-      intention: `Attend to neglected directions: ${directionGuide || 'all directions need balance'}.`,
+      intention: `Acknowledge the directions as they are held now: ${directionGuide || 'east and west together hold few of the insights'}.`,
       protocol: 'Pause for relational check-in. Consider who this work serves and what obligations it carries.',
       medicines_used: [],
     };
