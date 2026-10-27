@@ -119,6 +119,46 @@ describe('accountability_validator', () => {
     expect(aligned.next_steps).toBe('Proceed with ongoing community oversight');
     expect(aligned.next_tool).toBeUndefined();
   });
+
+  // Lane K9e, 2026-10-27: next_steps follows the hold at any score. A plan
+  // scoring 95 with only the community's REB missing used to answer "Proceed
+  // with ongoing community oversight" beside a recommendation to hold.
+  it('holds next_steps when only the community REB is missing, at a score of 70 or more', async () => {
+    const onlyReb = await tool.handler({
+      research_plan: {
+        pre_relationship_phase: 'two seasons',
+        advisory_board_members: 5,
+        elder_investigators: 2,
+        ceremony_integration: 'throughout',
+        community_benefit: 'land-based programme',
+        data_storage: 'on-premise community server',
+        reb_status: 'institutional',
+      },
+    });
+    expect(parseInt(onlyReb.wilson_paradigm_alignment, 10)).toBeGreaterThanOrEqual(70);
+    expect(onlyReb.next_steps).toBe(
+      "CANNOT PROCEED: the research holds while the community's REB (dual review, TCPS2 Chapter 9) is part of the plan, reached with the community.",
+    );
+    expect(onlyReb.next_steps).not.toMatch(/Proceed with ongoing community oversight/);
+    expect(onlyReb.recommendations[0]).toMatch(/^Hold the research while /);
+  });
+
+  it('answers "Proceed with ongoing community oversight" only when nothing is held', async () => {
+    const aligned = await tool.handler({
+      research_plan: {
+        pre_relationship_phase: 'two seasons',
+        advisory_board_members: 5,
+        elder_investigators: 2,
+        ceremony_integration: 'throughout',
+        community_benefit: 'land-based programme',
+        data_storage: 'on-premise community server',
+        reb_status: 'community REB and institutional',
+      },
+    });
+    expect(aligned.wilson_paradigm_alignment).toBe('100%');
+    expect(aligned.recommendations[0]).not.toMatch(/^Hold the research/);
+    expect(aligned.next_steps).toBe('Proceed with ongoing community oversight');
+  });
 });
 
 describe('ocap_compliance_checker', () => {

@@ -167,7 +167,9 @@ export const validators: Tool[] = [
           "Continue with community oversight",
           "Regular accountability audits recommended",
         ],
-        next_steps: score < 70
+        // next_steps follows the hold, not the score: a plan can score 95 with
+        // the community's REB missing, and the research still holds.
+        next_steps: hold
           ? `CANNOT PROCEED: the research holds while ${inWords(missing)} ${missing.length === 1 ? "is" : "are"} part of the plan, reached with the community.`
           : "Proceed with ongoing community oversight",
         ...(hold ? turnPointer("accountability_validator", gaps, [hold, holdManner]) : {}),
