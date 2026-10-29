@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/gap-analysis",
-  "version": "0.27.1",
+  "version": "0.27.2",
   "description": "A gap analysis looks for what is missing: evidenced baseline, observation, difference, verifiable elimination steps. Useful when something worked and stopped (root cause, incidents, regressions, troubleshooting). It is not part of the creative orientation: turnToCreativeOrientation follows the analysis, keeps its findings as current reality, names the pull to fill each missing item, and asks for the desired outcome of a structural tension chart.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -45,7 +45,7 @@
     "directory": "src/gap-analysis"
   },
   "dependencies": {
-    "@medicine-wheel/creative-orientation": "^0.27.1"
+    "@medicine-wheel/creative-orientation": "^0.27.2"
   },
   "devDependencies": {
     "typescript": "^5.7.0"

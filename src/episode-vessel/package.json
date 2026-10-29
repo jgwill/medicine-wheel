@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/episode-vessel",
-  "version": "0.27.1",
+  "version": "0.27.2",
   "description": "The file law of a chronicle episode folder, written once: bounded contained listing, text read and revision-guarded atomic write, ceremony notes and ceremony file attachments. No HTTP, no React, no service URL — a phone, a Next.js route and a test open the same vessel the same way.",
   "type": "module",
   "main": "./dist/index.js",

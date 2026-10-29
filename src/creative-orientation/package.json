@@ -1,6 +1,6 @@
 {
   "name": "@medicine-wheel/creative-orientation",
-  "version": "0.27.1",
+  "version": "0.27.2",
   "description": "The orientation question, asked before the work: is there a prior state you are restoring? Yes: a gap analysis, which looks for what is missing, can be useful; it is not part of the creative orientation, and the turn after it leads to a structural tension chart. No: you are creating, route to structural tension. Creative problem solving lands here first.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
