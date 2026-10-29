@@ -115,6 +115,12 @@ describe("/api/memory (#149)", () => {
 
   it("refuses what is not a question or not a scope", async () => {
     const route = await import("../app/api/memory/ask/route");
+    expect((await post(route, { question: "x", prompt: 7, scope: { circle_id: "circle:a" } })).status).toBe(400);
+    expect((await post(route, { question: "x", prompt: "p".repeat(20001), scope: { circle_id: "circle:a" } })).status).toBe(400);
+    const prompted = await post(route, { question: "What colour is the lantern?", prompt: "Wrapped: What colour is the lantern?", scope: { circle_id: "circle:a" } });
+    expect(prompted.status).toBe(200);
+    expect(prompted.body.sources.map((s: any) => s.wheel_id)).toContain(ids.beat);
+
     expect((await post(route, { question: " ", scope: { circle_id: "circle:a" } })).status).toBe(400);
     expect((await post(route, { question: "x", scope: "circle:a" })).status).toBe(400);
     expect((await post(route, { question: "x", scope: { circle: "circle:a" } })).body.error).toContain("does not know circle");

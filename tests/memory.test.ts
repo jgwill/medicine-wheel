@@ -149,6 +149,21 @@ describe("createMemory (#149 W1, W5, W12)", () => {
     expect(listed.sources[0].excerpt).toContain("Participants: Mia, Guillaume");
   });
 
+  it("asks the provider with the host's prompt and matches the wheel's records on the person's question (#171)", async () => {
+    const queries: string[] = [];
+    const p = provider({ ask: async (q) => { queries.push(q.query); return { provider: "stub", mode: "dialectic", answer: "teal", sources: [] }; } });
+    const out = await createMemory({ wheel: wheel(), providers: [p] }).ask({ question: "lantern colour", prompt: "You are the memory of Guillaume's circles. Name who said it.\n\nGuillaume asks: lantern colour", scope: { circle_id: "circle:a" } });
+    expect(queries).toEqual(["You are the memory of Guillaume's circles. Name who said it.\n\nGuillaume asks: lantern colour"]);
+    expect(out.prompted).toBe(true);
+    expect(out.sources.map((s) => s.wheel_id)).toEqual(["diary:1", "beat:1"]);
+    const plain = await createMemory({ wheel: wheel(), providers: [p] }).ask({ question: "lantern colour", scope: { circle_id: "circle:a" } });
+    expect(queries.at(-1)).toBe("lantern colour");
+    expect(plain.prompted).toBeUndefined();
+    const fallback = await createMemory({ wheel: wheel() }).ask({ question: "lantern colour", prompt: "wrapped", scope: { circle_id: "circle:a" } });
+    expect(fallback.mode).toBe("matched");
+    expect(fallback.prompted).toBeUndefined();
+  });
+
   it("falls back to the wheel's own records when every provider fails, and says why", async () => {
     const out = await createMemory({ wheel: wheel(), providers: [provider({ ask: async () => { throw new Error("honcho unreachable"); } })] }).ask({ question: "lantern colour", scope: { circle_id: "circle:a" } });
     expect(out).toMatchObject({ provider: "wheel", mode: "matched" });

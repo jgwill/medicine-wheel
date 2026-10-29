@@ -99,6 +99,8 @@ export interface MemoryAnswer {
   reach: Reach;
   /** Why the answer came from a fallback, when it did. */
   note?: string;
+  /** True when a provider answered a question asked with `AskInput.prompt`. Absent otherwise. */
+  prompted?: boolean;
 }
 
 /** A question as a provider receives it: the reach is already resolved. */
@@ -293,7 +295,14 @@ export interface MemoryWheel {
 }
 
 export interface AskInput {
+  /** The person's own words. The wheel's records are matched on these. */
   question: string;
+  /**
+   * What the memory provider is asked, when a host wraps the question in its
+   * own template (who asks, what the answer may draw on, how to cite). The
+   * records match keeps `question`. jgwill/medicine-wheel#171
+   */
+  prompt?: string;
   scope: MemoryScope;
   peer?: string;
   reasoning_level?: string;
@@ -427,7 +436,9 @@ export function createMemory(opts: { wheel: MemoryWheel; providers?: MemoryProvi
       if (isEmpty(r)) return empty(r);
       const limit = input.limit ?? 12;
       const matched = matchRecords(input.question, await wheel.records(r), { limit });
-      return answer(r, matched, limit, (p) => p.ask({ query: input.question, reach: r, peer: input.peer, reasoning_level: input.reasoning_level, limit }));
+      const prompt = input.prompt?.trim();
+      const out = await answer(r, matched, limit, (p) => p.ask({ query: prompt || input.question, reach: r, peer: input.peer, reasoning_level: input.reasoning_level, limit }));
+      return prompt && out.mode !== 'matched' && out.mode !== 'empty' ? { ...out, prompted: true } : out;
     },
     async search(input) {
       const r = await reach(input.scope);

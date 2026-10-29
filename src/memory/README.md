@@ -68,6 +68,12 @@ await memory.about({ person: 'node:human:…', scope: { participant: 'node:human
 
 Providers are tried in order. The first that answers gives the answer, and the wheel's own matches are added after its sources. When every provider fails, the wheel's records answer in `matched` mode with a `note`.
 
+A host that wraps the person's question in its own template (who asks, what the answer may draw on, how to cite) passes it as `prompt`: the provider is asked the prompt, the wheel's records are still matched on `question`, and the answer carries `prompted: true` when a provider answered it (jgwill/medicine-wheel#171).
+
+```ts
+await memory.ask({ question: 'What is still unresolved?', prompt: renderedTemplate, scope: { participant: 'node:human:…' } });
+```
+
 Everyone else asks a wheel over HTTP (`POST /api/memory/ask`, `/search`, `/about`, `GET /api/memory`), through `@medicine-wheel/client` (`wheel.memory.ask(…)`), or through the MCP tools `memory_ask`, `memory_search`, `memory_about`, `memory_status`, `memory_conclude` and `memory_resend`.
 
 Also exported: `resolveReach` (scope to ceremonies), `matchRecords` and `queryTerms` (the text match), `excerptAround`, `isEmptyScope`.
