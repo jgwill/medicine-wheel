@@ -123,6 +123,39 @@ describe("a GitHub handle on a person (#170)", () => {
   });
 });
 
+describe("local accounts on a person, and what an invitation was proposed with (#172)", () => {
+  it("records the accounts that act for a person, normalised and without repeats", async () => {
+    const { NewPersonSchema, localAccountsPatch, normalizeLocalAccount } = await import("../src/community-identity/src/index");
+    const input = NewPersonSchema.parse({ name: "Ava", role: "companion_ai", local_accounts: [{ host: " Gaia ", user: "ava" }, { host: "gaia", user: "ava" }] });
+    expect(input.local_accounts).toEqual([{ host: "gaia", user: "ava" }]);
+    const node = personNode(input);
+    expect(personFromNode(node)?.local_accounts).toEqual([{ host: "gaia", user: "ava" }]);
+    expect(NewPersonSchema.safeParse({ name: "X", role: "participant", local_accounts: [{ host: "gaia", user: "Not Valid" }] }).success).toBe(false);
+    expect(normalizeLocalAccount({ host: "ilex.tail3b11eb.ts.net", user: "u0_a123" })).toEqual({ host: "ilex.tail3b11eb.ts.net", user: "u0_a123" });
+    expect(normalizeLocalAccount({ host: "-bad", user: "ava" })).toBeNull();
+
+    const meta = { kind: "person", role: "admin" };
+    const set = localAccountsPatch([{ host: "gaia", user: "guillaume" }, { host: "gaia", user: "jgi" }], meta);
+    expect(set.local_accounts).toEqual([{ host: "gaia", user: "guillaume" }, { host: "gaia", user: "jgi" }]);
+    expect(localAccountsPatch(null, set)).toEqual(meta);
+    expect(localAccountsPatch([], set)).toEqual(meta);
+    expect(() => localAccountsPatch([{ host: "gaia", user: "root user" }], meta)).toThrow(/not a local account/);
+    // A stored entry that is not an account is not read back.
+    expect(personFromNode({ ...node, metadata: { ...node.metadata, local_accounts: [{ host: "gaia" }, "x"] } })).not.toHaveProperty("local_accounts");
+  });
+
+  it("keeps the handle, the local account and the role an invitation was proposed with, out of the public view", async () => {
+    const { publicInvitation } = await import("../src/community-identity/src/index");
+    const store = new JsonlInvitationStore(path.join(tempDir, "inv.jsonl"));
+    const inv = await store.create({ circle_id: "circle:1", invited_by: "node:human:1", intended_for: "Jerry", intended_email: "g@example.org", intended_github_handle: "Gerico1007", intended_local_account: { host: "gaia", user: "gmusic" }, person_role: "participant" });
+    expect(await store.get(inv.code)).toMatchObject({ intended_github_handle: "Gerico1007", intended_local_account: { host: "gaia", user: "gmusic" }, person_role: "participant" });
+    const view = publicInvitation(inv, { circle_name: "C" });
+    expect(view).not.toHaveProperty("intended_github_handle");
+    expect(view).not.toHaveProperty("intended_local_account");
+    expect(view).not.toHaveProperty("person_role");
+  });
+});
+
 describe("credentials (never on the wheel)", () => {
   it("issues a token once, verifies by hash, lists without the hash, revokes", async () => {
     const store = new JsonlCredentialStore(path.join(tempDir, "creds.jsonl"));

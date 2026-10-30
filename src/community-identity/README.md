@@ -24,7 +24,9 @@ personNode(NewPersonSchema.parse({ name: 'Mia', role: 'ceremony_facilitator', gi
 await wheel.nodes.patch(id, { metadata: githubHandlePatch('miadisabelle', node.metadata) });
 ```
 
-An invitation code opens one circle, `circle_id`, or several: `circle_ids` holds the circles after the first (0.17.5), and `invitationCircles(record)` lists them all in order. A code minted without `expires_at` lives `DEFAULT_INVITATION_TTL_HOURS` (96). `intended_email` records where it was sent. `publicInvitation()` is what a code holder may see before registering: no address, no acceptances.
+A person may record the accounts on a host that act for them in `local_accounts` (0.27.3, jgwill/medicine-wheel#172): a list of `{ host, user }`, a host name and a POSIX user name. `normalizeLocalAccount` returns the stored form or `null`, `sameLocalAccount` compares two, and `localAccountsPatch(list, metadata)` sets the whole list, or removes it with `null` or `[]`. Which person holds an account is the consumer's check, as it is for `email` and `github_handle`.
+
+An invitation code opens one circle, `circle_id`, or several: `circle_ids` holds the circles after the first (0.17.5), and `invitationCircles(record)` lists them all in order. A code minted without `expires_at` lives `DEFAULT_INVITATION_TTL_HOURS` (96). `intended_email` records where it was sent. `publicInvitation()` is what a code holder may see before registering: no address, no acceptances. An invitation minted from an approved proposal also carries `intended_github_handle`, `intended_local_account` and `person_role` (0.27.3), for the consumer to give the newcomer at registration. None of the three is in the public view.
 
 ```ts
 const invites = new JsonlInvitationStore('/srv/miadi/identity/invitations.jsonl');

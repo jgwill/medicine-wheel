@@ -13,6 +13,8 @@ import { randomBytes } from 'node:crypto';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { CircleRole } from './circles.js';
+import type { Role } from './roles.js';
+import type { LocalAccount } from './people.js';
 
 export interface InvitationRecord {
   code: string;
@@ -26,6 +28,12 @@ export interface InvitationRecord {
   intended_for?: string;
   /** The address the code was sent to. Never part of the public view. */
   intended_email?: string;
+  /** The GitHub handle the newcomer was proposed with (0.27.3). Never part of the public view. */
+  intended_github_handle?: string;
+  /** The local account that will act for the newcomer (0.27.3). Never part of the public view. */
+  intended_local_account?: LocalAccount;
+  /** The platform role the newcomer receives at registration, when it is not the community default (0.27.3). */
+  person_role?: Role;
   created_at: string;
   expires_at?: string;
   max_uses: number;
@@ -41,6 +49,9 @@ export interface InvitationInput {
   role?: CircleRole;
   intended_for?: string;
   intended_email?: string;
+  intended_github_handle?: string;
+  intended_local_account?: LocalAccount;
+  person_role?: Role;
   /** ISO date. Without it the code lives DEFAULT_INVITATION_TTL_HOURS. */
   expires_at?: string;
   max_uses?: number;
@@ -135,6 +146,9 @@ export class JsonlInvitationStore implements InvitationStore {
       role: input.role ?? 'member',
       ...(input.intended_for ? { intended_for: input.intended_for } : {}),
       ...(input.intended_email ? { intended_email: input.intended_email.trim().toLowerCase() } : {}),
+      ...(input.intended_github_handle ? { intended_github_handle: input.intended_github_handle } : {}),
+      ...(input.intended_local_account ? { intended_local_account: input.intended_local_account } : {}),
+      ...(input.person_role ? { person_role: input.person_role } : {}),
       created_at: new Date(now).toISOString(),
       expires_at: input.expires_at ?? new Date(now + DEFAULT_INVITATION_TTL_HOURS * 3600_000).toISOString(),
       max_uses: input.max_uses && input.max_uses > 0 ? input.max_uses : 1,

@@ -41,6 +41,8 @@ export interface Person {
   email?: string;
   /** The GitHub login this seat answers to, without the `@`. */
   github_handle?: string;
+  /** The accounts on a host that act for this seat (0.27.3, #172). */
+  local_accounts?: LocalAccount[];
   direction?: DirectionName;
   created_at: string;
   updated_at: string;
@@ -57,6 +59,14 @@ export const NewPersonSchema = z.object({
       const handle = normalizeGithubHandle(value);
       if (handle === null) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'not a GitHub handle' });
       return handle ?? '';
+    })
+    .optional(),
+  local_accounts: z
+    .array(z.object({ host: z.string(), user: z.string() }))
+    .transform((list, ctx) => {
+      const accounts = list.map(normalizeLocalAccount);
+      if (accounts.some((a) => a === null)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'not a local account (host name and POSIX user name)' });
+      return uniqueAccounts(accounts.filter((a): a is LocalAccount => a !== null));
     })
     .optional(),
   direction: z.enum(['east', 'south', 'west', 'north']).optional(),
@@ -76,6 +86,33 @@ export function normalizeGithubHandle(input: string): string | null {
   return GITHUB_HANDLE.test(handle) ? handle : null;
 }
 
+/** An account on a host that acts for a person: the Unix user `user` on `host`. */
+export interface LocalAccount {
+  host: string;
+  user: string;
+}
+
+/** A POSIX user name as useradd takes it. */
+const POSIX_USER = /^[a-z_][a-z0-9_-]{0,31}$/;
+/** A host name: labels of letters, digits and inner hyphens, joined by dots. */
+const HOST_NAME = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/;
+
+/** The account in its stored form (lower-case host, trimmed user), or null when either part is not a name. */
+export function normalizeLocalAccount(input: { host?: unknown; user?: unknown }): LocalAccount | null {
+  const host = typeof input.host === 'string' ? input.host.trim().toLowerCase() : '';
+  const user = typeof input.user === 'string' ? input.user.trim() : '';
+  return HOST_NAME.test(host) && POSIX_USER.test(user) ? { host, user } : null;
+}
+
+/** Same host and same user. */
+export function sameLocalAccount(a: LocalAccount, b: LocalAccount): boolean {
+  return a.host === b.host && a.user === b.user;
+}
+
+function uniqueAccounts(list: LocalAccount[]): LocalAccount[] {
+  return list.filter((a, i) => list.findIndex((b) => sameLocalAccount(a, b)) === i);
+}
+
 export function personNodeId(being: Being = 'human'): string {
   return `node:${being}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -93,6 +130,7 @@ export function personNode(input: NewPerson, now = new Date().toISOString()): Re
       api_access: input.api_access === true,
       ...(input.email ? { email: input.email } : {}),
       ...(input.github_handle ? { github_handle: input.github_handle } : {}),
+      ...(input.local_accounts?.length ? { local_accounts: input.local_accounts } : {}),
     },
     created_at: now,
     updated_at: now,
@@ -113,6 +151,7 @@ export function personFromNode(node: RelationalNode | null | undefined): Person 
     api_access: meta.api_access === true,
     ...(typeof meta.email === 'string' ? { email: meta.email } : {}),
     ...(typeof meta.github_handle === 'string' ? { github_handle: meta.github_handle } : {}),
+    ...localAccountsOf(meta),
     ...(node.direction ? { direction: node.direction } : {}),
     created_at: node.created_at,
     updated_at: node.updated_at,
@@ -138,6 +177,22 @@ export function reactivatePatch(current: Record<string, unknown> = {}): Record<s
 /** The metadata patch that grants or withdraws API access (the right to issue one's own tokens). */
 export function apiAccessPatch(enabled: boolean, current: Record<string, unknown> = {}): Record<string, unknown> {
   return { ...current, api_access: enabled };
+}
+
+function localAccountsOf(meta: Record<string, unknown>): { local_accounts?: LocalAccount[] } {
+  if (!Array.isArray(meta.local_accounts)) return {};
+  const accounts = uniqueAccounts(meta.local_accounts.map((a) => normalizeLocalAccount(a ?? {})).filter((a): a is LocalAccount => a !== null));
+  return accounts.length ? { local_accounts: accounts } : {};
+}
+
+/** The metadata patch that sets a person's local accounts (the whole list), or removes them with null or an empty list. */
+export function localAccountsPatch(accounts: Array<{ host: string; user: string }> | null, current: Record<string, unknown> = {}): Record<string, unknown> {
+  const { local_accounts: _gone, ...rest } = current;
+  if (accounts === null || accounts.length === 0) return rest;
+  const normalized = accounts.map(normalizeLocalAccount);
+  const bad = accounts.find((_, i) => normalized[i] === null);
+  if (bad) throw new Error(`not a local account: ${JSON.stringify(bad)}`);
+  return { ...rest, local_accounts: uniqueAccounts(normalized as LocalAccount[]) };
 }
 
 /** The metadata patch that sets a person's GitHub handle, or removes it with null. The handle is normalised first. */
