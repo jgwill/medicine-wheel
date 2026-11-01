@@ -4,6 +4,12 @@
  * Skills are curated capabilities that can be installed into a local
  * `.mw/skills/` directory.  Each CLI (mw, mwsrv) exposes its own
  * relevant subset via `skill view` and `skill install`.
+ *
+ * An installed SKILL.md opens with front matter (`name`, `description`),
+ * rendered from the definition by `renderSkill`, so an agent that loads
+ * skills from a folder reads it as one. A body names only calls that run
+ * today; `tests/skills-catalog.test.ts` checks every MCP tool a body names
+ * against the tools the MCP server registers.
  */
 
 import * as fs from 'fs';
@@ -35,33 +41,52 @@ const SKILLS: SkillDefinition[] = [
   {
     name: 'direction-inquiry',
     title: 'Direction Inquiry',
-    description: 'Analyze tasks through the Four Directions (East / South / West / North)',
+    description: 'Read a task through the Four Directions (East / South / West / North) with mw_decompose_prompt before acting on it',
     target: 'cli',
-    complement: 'api-health',
     body: `# Skill: Direction Inquiry
 
 ## Purpose
-Analyze an engineering task using the Four Directions framework.
+Read an engineering task through the Four Directions before acting on it: East
+for vision, South for analysis, West for validation, North for action.
 
-## Input
-- Engineering task description
-- Optional: constraints, repo paths
+## What runs today
 
-## Output
-- **East** — vision statement
-- **South** — analysis questions
-- **West** — validation checks
-- **North** — action stack
-- Ceremony recommendation if balance is poor
+\`\`\`
+mw_decompose_prompt { prompt: "Refactor the auth module" }
+\`\`\`
+
+It answers \`primary_intent\`, \`balance_score\`, \`neglected_directions\`,
+\`ceremony_required\`, \`ceremony_guidance\` and an \`action_stack\` whose items
+carry \`text\`, \`direction\` and \`implicit\`. An implicit item is one the prompt
+implied without saying. Read the neglected directions first: they name the
+questions the prompt did not ask.
+
+A direction's medicine, season, teaching, life stage and colour:
+
+\`\`\`
+mw direction east                      # mw directions for all four
+mw_get_direction { direction: "east" }
+\`\`\`
+
+Before debugging, fixing or root-cause work, ask which orientation the outcome
+calls for:
+
+\`\`\`
+mw orient "<outcome>" [--restores "<prior state>"] [--evidence "<when it existed>"]
+\`\`\`
+
+## What is NOT here
+
+\`mw_decompose_prompt\` writes no file. The \`.pde/<yymmddHHMM>--<uuid>/\` vessels
+in this workspace are written by tools outside this repository (\`mcp-pde\`,
+\`miaco decompose run\`).
 
 ## Usage
 
-> **Not available yet.** \`mw skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mw skill run\` has no implementation and exits 3. A skill is a document, not
+> a program. **The calls above are real.**
 >
-> **What works today:** \`mw skill install direction-inquiry\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mw skill install direction-inquiry\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`
@@ -72,34 +97,54 @@ mw skill run direction-inquiry "Refactor auth module"
   {
     name: 'fire-keeper-check',
     title: 'Fire Keeper Check',
-    description: 'Run gating and stewardship checks on proposed actions',
+    description: 'Before an action, read the Fire Keeper status of its inquiry and run the four-step relational check-back',
     target: 'cli',
-    complement: 'session-manager',
+    complement: 'precondition-guard',
     body: `# Skill: Fire Keeper Check
 
 ## Purpose
-Evaluate a proposed action against permission tiers and relational gates.
+Before an action, read whether the inquiry it serves is aligned, and run the
+four-step relational check-back on the action itself.
 
-## Input
-- Proposed action description
-- Current permission tier
-- Current ceremony phase
-- Optional: Wilson / OCAP metadata
+## What runs today
 
-## Output
-- accept / hold / human-needed assessment
-- Unsatisfied gates
-- Check-back step results
-- Suggested next move
+\`\`\`
+mw_fire_keeper_status { inquiryRef: "<inquiry or cycle>" }
+mw_relational_check_back { action: "Deploy to production", inquiryRef: "<inquiry or cycle>" }
+\`\`\`
+
+\`mw_fire_keeper_status\` answers \`status\` (\`aligned\` or \`tension\`),
+\`confidence\`, \`issues\`, the ceremony \`phase\` and the \`active_ceremonies\`
+linked to the inquiry.
+
+\`mw_relational_check_back\` answers \`approved\`, a \`summary\` and four \`steps\`,
+each with its \`question\`, \`passed\` and \`reason\`. It needs an open ceremony
+linked to the inquiry and refuses without one, so open that first:
+
+\`\`\`
+mw_ceremony_open { intention: "<what this work holds>", inquiryRef: "<inquiry or cycle>" }
+\`\`\`
+
+The paradigm checks also run from the CLI:
+
+\`\`\`
+mw validate wilson "<description>"          # Wilson paradigm check
+mw validate ocap '<data_plan_json>'         # OCAP® compliance check
+mw validate accountability '<plan_json>'    # accountability audit
+\`\`\`
+
+## What is NOT here
+
+No tool here answers "accept", "hold" or "human-needed". \`approved: false\` and
+\`tension\` are information for the person who decides, not a decision. A gate
+on infrastructure (linger, a free port, consent to a root step) is
+\`mw_enforce_gate\`: see \`precondition-guard\`.
 
 ## Usage
 
-> **Not available yet.** \`mw skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mw skill run\` has no implementation and exits 3. The calls above are real.
 >
-> **What works today:** \`mw skill install fire-keeper-check\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mw skill install fire-keeper-check\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`
@@ -110,32 +155,49 @@ mw skill run fire-keeper-check "Deploy to production"
   {
     name: 'wave-spec-generator',
     title: 'Wave Spec Generator',
-    description: 'Generate .pde wave specifications for development cycles',
+    description: 'Turn a goal into a wave bundle in a .pde vessel, decomposed with mw_decompose_prompt and written by hand',
     target: 'cli',
-    complement: 'storage-config',
     body: `# Skill: Wave Spec Generator
 
 ## Purpose
-Create a proposal-grade wave bundle matching current .pde practice.
+Turn a goal into a wave bundle that a supervised development cycle is launched
+from, kept in the \`.pde/\` vessel of its decomposition.
 
-## Input
-- Goal description
-- Relevant specs
-- Target paths and constraints
+## What runs today
 
-## Output
-- ORCHESTRATION.md
-- PROMPT.txt
-- artifacts/ checklist
+\`\`\`
+mw_decompose_prompt { prompt: "Add a caching layer" }
+\`\`\`
+
+It gives the action stack by direction and the directions the goal neglects.
+Nothing in this repository writes a wave bundle: it is written by hand.
+
+## The shape of a vessel here
+
+\`.pde/<yymmddHHMM>--<uuid>/\` holds \`input-prompt.md\`, \`meta.json\`,
+\`pde-<uuid>.json\` and \`pde-<uuid>.md\`, sometimes \`revised-prompt.md\`. It is
+written by \`mcp-pde\` or \`miaco decompose run\`, outside this repository.
+
+The one wave bundle in this repository is
+\`.pde/20260423-092004-copilot-storage-provider-wave/\`:
+
+- \`ORCHESTRATION.md\`, the contract: operating sequence, constraints, context
+  directories to load, deliverables, completion criteria.
+- \`PROMPT.txt\`, what the executing agent is given: the working directory, the
+  contract to follow, and the sequence of passes it runs.
+
+## Steps
+
+1. Decompose the goal, and keep the vessel the decomposition wrote.
+2. Write \`ORCHESTRATION.md\` in it from the action stack, with the five sections above.
+3. Write \`PROMPT.txt\` naming \`ORCHESTRATION.md\` as the contract.
+4. Commit the vessel. An uncommitted \`.pde/\` folder is invisible to the next session.
 
 ## Usage
 
-> **Not available yet.** \`mw skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mw skill run\` has no implementation and exits 3. \`mw_decompose_prompt\` is real.
 >
-> **What works today:** \`mw skill install wave-spec-generator\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mw skill install wave-spec-generator\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`
@@ -146,32 +208,60 @@ mw skill run wave-spec-generator "Add caching layer"
   {
     name: 'ceremony-guide',
     title: 'Ceremony Guide',
-    description: 'Guide through ceremony lifecycle phases with protocol awareness',
+    description: 'Open a ceremony bound to its episode and circle, list it, and close it with its learnings, by CLI or MCP',
     target: 'cli',
-    complement: 'docker-setup',
     body: `# Skill: Ceremony Guide
 
 ## Purpose
-Provide step-by-step guidance through the ceremony lifecycle.
+Open a ceremony, bind it to the episode and the circle it belongs to, and close
+it with what was learned.
 
-## Input
-- Current ceremony state (or new ceremony intention)
-- Phase: opening / council / integration / closure
+## What runs today
 
-## Output
-- Current phase assessment
-- Protocol requirements for next transition
-- Relational checks and community review prompts
-- Completion criteria
+From the CLI:
+
+\`\`\`
+mw ceremony open "<intention>"        # an opening, in the East
+mw ceremony list [--direction east]
+mw ceremony get <id>
+mw ceremony close <id> "<summary>"
+\`\`\`
+
+Through MCP:
+
+\`\`\`
+mw_ceremony_open { intention: "<the intention>", type: "talking_circle", direction: "east",
+                   episode_path: "<episode directory name>", circle_id: "<circle id>" }
+list_ceremonies { episode_path: "<episode directory name>" }
+get_ceremony { ceremony_id: "<id>" }
+mw_ceremony_close { ceremony_id: "<id>", summary: "<what happened>", learnings: ["<one>"] }
+\`\`\`
+
+\`mw_ceremony_open\` also takes \`participants\`, \`medicines\`, \`inquiryRef\` and
+\`cycleId\`. \`type\` is \`opening\` (the default), \`talking_circle\`, \`smudging\` or
+\`spirit_feeding\`. A \`closing\` is written by \`mw_ceremony_close\`, linked to
+the opening it closes. \`episode_path\` is the episode's directory name, never
+its number. \`list_ceremonies\` filters by \`direction\`, \`type\`,
+\`episode_path\`, \`circle_id\` and \`subject_id\`.
+
+## Phases
+
+\`ontology-core\` names four: \`opening\`, \`council\`, \`integration\`, \`closure\`.
+\`ceremony-protocol\` carries a longer cycle: \`gathering\`, \`kindling\`,
+\`tending\`, \`harvesting\`, \`resting\`.
+
+## What is NOT here
+
+These tools check no seat, write no episode note and keep no audit: they are
+the door for an agent's own ceremony. A talking circle that people sit in, with
+seats, spoken turns and a note in the episode, opens through Miadi
+(\`POST /api/circles/<id>/ceremonies\`).
 
 ## Usage
 
-> **Not available yet.** \`mw skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mw skill run\` has no implementation and exits 3. The calls above are real.
 >
-> **What works today:** \`mw skill install ceremony-guide\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mw skill install ceremony-guide\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`
@@ -401,28 +491,43 @@ mw skill run drift-reconciliation --host gaia --propose
   {
     name: 'docker-setup',
     title: 'Docker Setup',
-    description: 'Configure and validate Docker environment for Medicine Wheel server',
+    description: 'Run the Medicine Wheel server in Docker with mwsrv --docker, and check that it answers',
     target: 'srv',
-    complement: 'ceremony-guide',
     body: `# Skill: Docker Setup
 
 ## Purpose
-Configure the Docker environment for running the Medicine Wheel server.
+Run the Medicine Wheel server in a container, with its data kept on the host,
+and check that it answers.
+
+## What runs today
+
+\`\`\`
+mwsrv --docker [--pull] [-p 8040] [-D <dir>]
+\`\`\`
+
+It runs \`jgwill/medicine-wheel:app\` with the host's \`<dir>/.mw/store\` (default:
+the working directory) mounted at \`/data/store\`, and passes
+\`MW_DATA_DIR=/data/store\`, \`MW_STORAGE_PROVIDER=jsonl\` and \`PORT=8040\`. It
+prints the \`docker run\` line before running it. \`--pull\` updates the image
+first. Without \`--docker\`, \`mwsrv\` runs the same server from the installed
+package.
+
+The image is built and pushed from this repository by
+\`./docker-build-push.sh [tag]\` (tag \`app\` by default).
 
 ## Checks
-- Docker daemon availability
-- Image pull status (jgwill/medicine-wheel:app)
-- Volume mount configuration
-- Port availability
+
+\`\`\`
+docker info >/dev/null && echo "docker answers"
+docker image inspect jgwill/medicine-wheel:app >/dev/null && echo "image present"
+curl -s http://localhost:8040/api/health        # read it with api-health
+\`\`\`
 
 ## Usage
 
-> **Not available yet.** \`mwsrv skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mwsrv skill run\` has no implementation and exits 3. The commands above are real.
 >
-> **What works today:** \`mwsrv skill install docker-setup\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mwsrv skill install docker-setup\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`
@@ -433,32 +538,44 @@ mwsrv skill run docker-setup
   {
     name: 'storage-config',
     title: 'Storage Configuration',
-    description: 'Configure and validate storage providers (JSONL / PostgreSQL)',
+    description: 'Choose the storage provider (JSONL by default, Neon with a database URL) and check that the server took it',
     target: 'srv',
-    complement: 'wave-spec-generator',
     body: `# Skill: Storage Configuration
 
 ## Purpose
-Configure the storage backend for the Medicine Wheel server.
+Choose where the wheel keeps its nodes, edges, ceremonies and beats, and check
+that the server took the choice.
 
-## Supported Providers
-- **jsonl** — Local file-based storage (.mw/store/)
-- **postgres** — PostgreSQL via DATABASE_URL
+## Providers (\`@medicine-wheel/storage-provider\`)
+
+| \`MW_STORAGE_PROVIDER\` | stores in | needs |
+|---|---|---|
+| \`jsonl\` (default) | JSONL files | \`MW_DATA_DIR\`, else a \`.mw/store\` folder resolved from the working directory |
+| \`neon\` | PostgreSQL (Neon) | \`DATABASE_URL\`, \`POSTGRES_URL\` or \`NEON_DATABASE_URL\` |
+| \`redis\` | | named and not implemented: the factory refuses it |
 
 ## Checks
-- Current MW_STORAGE_PROVIDER value
-- Data directory existence and permissions
-- PostgreSQL connectivity (if applicable)
-- Migration status
+
+\`\`\`
+curl -s "$MW_API_URL/api/health"
+mw status
+\`\`\`
+
+In \`/api/health\`, \`provider\` names the provider the server chose, \`counts\`
+are the whole store's nodes and ceremonies, and \`env\` says whether
+\`MW_STORAGE_PROVIDER\` and \`DATABASE_URL\` are set, never their values.
+\`mw status\` prints the store directory the CLI resolves.
+
+## What is NOT here
+
+No migration runner ships in this repository, and moving data from one provider
+to another is not a command.
 
 ## Usage
 
-> **Not available yet.** \`mwsrv skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mwsrv skill run\` has no implementation and exits 3. The checks above are real.
 >
-> **What works today:** \`mwsrv skill install storage-config\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mwsrv skill install storage-config\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`
@@ -469,28 +586,47 @@ mwsrv skill run storage-config
   {
     name: 'api-health',
     title: 'API Health Monitor',
-    description: 'Monitor and diagnose API endpoint health and connectivity',
+    description: 'Read /api/health (the provider, whole-store counts, the Honcho projection and the event log) and check a wheel answers',
     target: 'srv',
-    complement: 'direction-inquiry',
     body: `# Skill: API Health Monitor
 
 ## Purpose
-Check the health and connectivity of Medicine Wheel API endpoints.
+Say whether a wheel answers, from which store, and what it still owes.
 
-## Checks
-- Server reachability (MW_API_URL)
-- Core endpoint status (/api/directions, /api/ceremonies, /api/nodes)
-- Response time measurements
-- Storage layer connectivity
+## What runs today
+
+\`\`\`
+curl -s "$MW_API_URL/api/health"      # MW_API_URL defaults to http://localhost:8040
+mw status
+\`\`\`
+
+\`/api/health\` answers:
+
+- \`status\`, \`healthy\` or \`unhealthy\` (with the \`error\`);
+- \`provider\`, the storage provider in use;
+- \`counts\`, nodes and ceremonies across the whole store, never a page of it;
+- \`honcho\`, the projection to Honcho (enabled when \`HONCHO_URL\` is set) and
+  what is still \`pending\`;
+- \`events\`, the event log: how many events, the last one, and what a
+  publisher still owes;
+- \`env\`, whether \`MW_STORAGE_PROVIDER\` and \`DATABASE_URL\` are set.
+
+\`mw status\` says whether \`/api/directions\` answers within two seconds, where
+the MCP server is, and which store directory the CLI resolves.
+
+Other routes worth reading: \`/api/directions\`, \`/api/nodes\`,
+\`/api/ceremonies\`, \`/api/events\`.
+
+## What is NOT here
+
+No response-time measurement ships here. \`curl -s -o /dev/null -w '%{time_total}\\n' <url>\`
+gives one.
 
 ## Usage
 
-> **Not available yet.** \`mwsrv skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mwsrv skill run\` has no implementation and exits 3. The calls above are real.
 >
-> **What works today:** \`mwsrv skill install api-health\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mwsrv skill install api-health\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`
@@ -501,28 +637,39 @@ mwsrv skill run api-health
   {
     name: 'session-manager',
     title: 'Session Manager',
-    description: 'Manage and inspect active server sessions and connections',
+    description: 'Read what a recorded agent session did, from its _sessiondata events, with mw_analyze_session',
     target: 'srv',
-    complement: 'fire-keeper-check',
     body: `# Skill: Session Manager
 
 ## Purpose
-Inspect and manage active sessions on the Medicine Wheel server.
+Read what an agent session did, from the events recorded for it.
 
-## Capabilities
-- List active sessions
-- Inspect session state and ceremony context
-- View session data directory contents
-- Cleanup stale session data
+## What runs today
+
+\`\`\`
+mw_analyze_session { sessionId: "<session id>" }
+\`\`\`
+
+It reads the session's JSONL events from \`_sessiondata/\` under the working
+directory, or from \`SESSION_DATA_DIR\`, and answers the \`model\`, the
+\`eventCount\`, the \`analytics\` and the five tools the session used most.
+
+\`@medicine-wheel/session-reader\` holds the rest as a library: \`listSessions\`,
+\`searchSessions\`, \`getSessionSummary\`, \`getSessionEvents\`,
+\`getSessionDetail\`, and \`getSessionBindings\` (a session's binding lines: one
+per start, resume, rename and end).
+
+## What is NOT here
+
+No CLI command, route or MCP tool lists sessions, and nothing here deletes
+session data. A session still running is someone's work in progress: read it,
+never clear it.
 
 ## Usage
 
-> **Not available yet.** \`mwsrv skill run\` has no implementation.
-> It prints this explanation and exits 3 — nothing is executed. Planned, not shipped.
+> \`mwsrv skill run\` has no implementation and exits 3. \`mw_analyze_session\` is real.
 >
-> **What works today:** \`mwsrv skill install session-manager\` writes this
-> SKILL.md into \`.mw/skills/\`. Follow the steps above yourself, or hand this
-> file to an agent.
+> \`mwsrv skill install session-manager\` writes this SKILL.md into \`.mw/skills/\`.
 
 Planned invocation (does not run yet):
 \`\`\`
@@ -707,6 +854,15 @@ export function getSkill(name: string): SkillDefinition | undefined {
   return SKILLS.find((s) => s.name === name);
 }
 
+/**
+ * The SKILL.md a skill installs as: front matter carrying its name and
+ * description, then its body. Descriptions are written as plain YAML scalars
+ * (no `: `, no ` #`, no leading indicator), so the front matter needs no quoting.
+ */
+export function renderSkill(skill: SkillDefinition): string {
+  return `---\nname: ${skill.name}\ndescription: ${skill.description}\n---\n\n${skill.body}`;
+}
+
 /** Return the complement skill for a given skill. */
 export function getComplement(skill: SkillDefinition): SkillDefinition | undefined {
   return skill.complement ? getSkill(skill.complement) : undefined;
@@ -810,13 +966,14 @@ export function installSkill(
     const skillDir = path.join(dir, skill.name);
     const skillFile = path.join(skillDir, 'SKILL.md');
 
+    const content = renderSkill(skill);
     if (fs.existsSync(skillFile)) {
       // An existing file is never overwritten. Say so honestly when the copy
       // on disk no longer matches the catalog, otherwise "already installed"
       // reads as "up to date" while the reader follows outdated instructions.
       let onDisk = '';
       try { onDisk = fs.readFileSync(skillFile, 'utf8'); } catch { /* unreadable → treat as drifted */ }
-      if (onDisk === skill.body) {
+      if (onDisk === content) {
         console.log(`  ${C.dim}⊘ ${skill.name} (already installed)${C.reset}`);
       } else {
         stale++;
@@ -831,7 +988,7 @@ export function installSkill(
     }
 
     fs.mkdirSync(skillDir, { recursive: true });
-    fs.writeFileSync(skillFile, skill.body, 'utf8');
+    fs.writeFileSync(skillFile, content, 'utf8');
     installed++;
     console.log(`  ${C.green}✓${C.reset} Installed ${skill.name}`);
 
