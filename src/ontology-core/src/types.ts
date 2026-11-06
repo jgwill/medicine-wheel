@@ -651,7 +651,8 @@ export type ProductionEntityKind =
   | 'scene'
   | 'recording'
   | 'collaborator'
-  | 'edit-brief';
+  | 'edit-brief'
+  | 'media-plan';
 
 /**
  * A relation grounded in film/media production. Knowledge emerges through
@@ -666,7 +667,9 @@ export interface ProductionRelation extends Relation {
     | 'sequence-of'
     | 'witnessed-by'
     | 'directed-by'
-    | 'sounds-in';
+    | 'sounds-in'
+    | 'holds-plan' // notebook → media plan
+    | 'seeded-from'; // media plan → the plan it was started from
   /** The production session / episode this relation belongs to. */
   production_id?: string;
   /** Timecode or transcript offset anchoring this relation. */

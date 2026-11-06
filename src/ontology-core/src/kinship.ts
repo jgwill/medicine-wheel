@@ -135,6 +135,26 @@ export const KINSHIP_EDGE_TYPES = {
     defaultObligations: ['land', 'human'],
   },
 
+  // ── Media plan edges (jgwill/medicine-wheel#173) ───────────────────────────
+  // How a plan for a piece of media is held and where it came from, before
+  // anything renders. See `media-plan.ts`.
+  'holds-plan': {
+    name: 'holds-plan',
+    symmetry: 'asymmetric',
+    inverse: 'plan-held-by',
+    description:
+      'A notebook keeps a plan for a piece of media, an outline or producer notes, one version of what it may make.',
+    defaultObligations: ['human'],
+  },
+  'seeded-from': {
+    name: 'seeded-from',
+    symmetry: 'asymmetric',
+    inverse: 'seed-of',
+    description:
+      'A new version of a plan was started from a kept one. The earlier version stays as it was, and what people said about it stays with it.',
+    defaultObligations: ['future'],
+  },
+
   // ── Developer edges ───────────────────────────────────────────────────────
   // How repositories, the features observed in them and the capabilities of
   // the platform hold each other. Registered here for the reason the

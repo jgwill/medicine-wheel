@@ -23,7 +23,7 @@ ep.node === null;            // true when the episode was never registered on th
 circlesHeldIn(ep.ceremonies); // [{ circle_id, ceremonies, open, last }, …]
 ```
 
-A ceremony gathered around something names that node in `subject_id` (0.15.5): a review's talking circle carries `subject_id: 'review:<uuid>'`, and `wheel.ceremonies.list({ subject_id: 'review:<uuid>' })` finds it from the review. The wheel refuses a `subject_id` whose node does not exist. `wheel.ceremonies.remove(id)` (0.15.6) removes a ceremony nobody entered; the wheel refuses (409) while a closing, a turn or a diary entry holds it.
+A ceremony gathered around something names that node in `subject_id` (0.15.5): a review's talking circle carries `subject_id: 'review:<uuid>'`, and `wheel.ceremonies.list({ subject_id: 'review:<uuid>' })` finds it from the review. The wheel refuses a `subject_id` whose node does not exist. `wheel.ceremonies.remove(id)` (0.15.6) removes a ceremony nobody entered; the wheel refuses (409) while a closing, a turn or a diary entry holds it. One version of a media plan is named the same way, `media-plan:<card uuid>` (`rispecs/media-plan.spec.md`).
 
 The wheel's memory (0.16.0) is asked through the wheel, never through its provider:
 

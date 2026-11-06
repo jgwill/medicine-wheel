@@ -88,6 +88,18 @@ export {
   inverseEdge,
 } from './kinship';
 
+// ── Media Plan (a plan for a piece of media, kept before anything renders) ──
+export type { MediaPlanMetadata, MediaPlanState } from './media-plan';
+export {
+  MEDIA_PLAN_KIND,
+  MEDIA_PLAN_NODE_PREFIX,
+  MEDIA_PLAN_STATES,
+  MediaPlanMetadataSchema,
+  isMediaPlanMetadata,
+  mediaPlanCardId,
+  mediaPlanNodeId,
+} from './media-plan';
+
 // ── Medicine Wheel Vocabulary (kinship-graph labels) ────────────────────────
 export {
   MW_NS, IDS_NS, OCAP_NS, REL_NS, CER_NS, BEAT_NS,
