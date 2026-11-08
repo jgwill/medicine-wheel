@@ -454,7 +454,6 @@ export function ConversationList(props: ConversationListProps) {
             <span {...part('listFacts')}>
               <span>{labels.turns(c.turn_count)}</span>
               <span>{dayTime(c.last_at ?? c.updated_at)}</span>
-              {c.shared_in && <span title={labels.shared} aria-label={labels.shared}>{icons.shared}</span>}
               {renderFacts?.(c)}
             </span>
           );
@@ -462,13 +461,13 @@ export function ConversationList(props: ConversationListProps) {
             <li key={c.id} {...part('listItem')} data-active={isActive ? 'true' : undefined}>
               {editing?.id === c.id ? (
                 <form
-                  style={{ display: 'flex', flex: 1, gap: 6, alignItems: 'center' }}
+                  style={{ display: 'flex', flex: '1 1 0%', minWidth: 0, gap: 6, alignItems: 'center' }}
                   onSubmit={async (e) => {
                     e.preventDefault();
                     if (await state.rename(c.id, editing.title)) setEditing(null);
                   }}
                 >
-                  <input {...part('input')} autoFocus value={editing.title} maxLength={160} onChange={(e) => setEditing({ id: c.id, title: e.target.value })} onKeyDown={(e) => e.key === 'Escape' && setEditing(null)} aria-label={labels.rename} />
+                  <input {...part('input')} style={{ minWidth: 0, flex: '1 1 0%' }} autoFocus value={editing.title} maxLength={160} onChange={(e) => setEditing({ id: c.id, title: e.target.value })} onKeyDown={(e) => e.key === 'Escape' && setEditing(null)} aria-label={labels.rename} />
                   <button type="submit" {...part('iconButton')} aria-label={labels.saveTitle} title={labels.saveTitle} disabled={!editing.title.trim()}>{icons.confirm}</button>
                   <button type="button" {...part('iconButton')} aria-label={labels.cancel} title={labels.cancel} onClick={() => setEditing(null)}>{icons.close}</button>
                 </form>
@@ -490,7 +489,7 @@ export function ConversationList(props: ConversationListProps) {
                   }}
                 >
                   {c.shared_in ? icons.shared : icons.conversation}
-                  <span {...part('listTitle')}>{c.title}</span>
+                  <span {...part('listTitle')}>{c.title}{c.shared_in && <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{`, ${labels.shared}`}</span>}</span>
                   {facts}
                 </button>
               )}
@@ -500,7 +499,7 @@ export function ConversationList(props: ConversationListProps) {
                     <button type="button" {...part('iconButton')} aria-label={`${labels.rename}: ${c.title}`} title={labels.rename} onClick={() => setEditing({ id: c.id, title: c.title })}>{icons.rename}</button>
                   )}
                   {state.adapter.remove && (canFor?.(c).remove ?? true) && (
-                    <button type="button" {...part('iconButton')} aria-label={removing === c.id ? labels.closeRemove : `${labels.remove}: ${c.title}`} title={removing === c.id ? labels.closeRemove : labels.remove} aria-expanded={removing === c.id} onClick={() => setRemoving(removing === c.id ? null : c.id)}>{removing === c.id ? icons.close : icons.remove}</button>
+                    <button type="button" {...part('iconButton')} aria-label={removing === c.id ? labels.closeRemove : `${labels.remove}: ${c.title}`} title={removing === c.id ? labels.closeRemove : labels.remove} aria-expanded={removing === c.id} onClick={() => setRemoving(removing === c.id ? null : c.id)}>{icons.remove}</button>
                   )}
                 </span>
               )}
