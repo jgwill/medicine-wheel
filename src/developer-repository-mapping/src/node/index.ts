@@ -14,3 +14,5 @@ export type { FetchLike, HubStatus, HubRead, ReadHubOptions } from './hub';
 export { createMappingServer, toView, LOOPBACK_HOSTS } from './server';
 export type { MappingView, MappingServerOptions } from './server';
 export { MAPPING_PAGE } from './page';
+export { buildCapabilityMap, findClones, readRepositoryCapabilities, scanRepository, stateCapability, writeCapabilityFile } from './capability-scan';
+export type { CapabilityMap, CapabilityMapRepository, RepositoryCapabilities, ScanOptions, ScanResult, WriteCapabilityFileResult } from './capability-scan';

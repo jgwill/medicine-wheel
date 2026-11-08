@@ -11,6 +11,10 @@
  *   mw-repomap hub [<path>] [--json]
  *   mw-repomap serve [<path>] [--port <n>] [--host <address>] [--local]
  *   mw-repomap wheel [<path>] [--local]
+ *   mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]
+ *   mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--clone <path>]
+ *   mw-repomap capabilities show [<clone>] [--ref <ref>] [--json]
+ *   mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]
  *
  * <path> is a mapping folder, or an owner hub clone holding
  * .miadi/repository-mapping/; the current directory when absent. A meta hub
@@ -20,9 +24,15 @@
  * `observe --write` and `move` rewrite the folder's JSONL, and refuse while
  * any row fails to parse: a row that did not parse would not be written back.
  *
+ * `capabilities scan --write` keeps .miadi/capabilities.jsonl in the clone's
+ * working tree and commits nothing. `--check` writes nothing and exits 1 when
+ * the file would change. `capabilities map` goes through clones, reads each
+ * one's own file or its files, and prints one map.
+ *
  * Exit codes: 0 done, 1 the mapping has errors or a read failed, 2 usage error.
  */
 
+import { readFileSync, writeFileSync } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { hasErrors } from './check';
@@ -36,6 +46,9 @@ import { findMappingDir, initMappingDir, readMappingDir, writeMappingDir } from 
 import { originRepository, readActivity } from './node/git';
 import { readHub, type HubRead } from './node/hub';
 import { LOOPBACK_HOSTS, createMappingServer } from './node/server';
+import { CAPABILITY_KINDS, type CapabilityKind } from './capability-scan';
+import { CAPABILITY_FILE } from './capability-file';
+import { buildCapabilityMap, findClones, readRepositoryCapabilities, scanRepository, stateCapability, writeCapabilityFile } from './node/capability-scan';
 
 const USAGE = [
   'usage: mw-repomap init [<hub-dir>] --owner <login> [--meta] [--description <text>]',
@@ -47,9 +60,13 @@ const USAGE = [
   '       mw-repomap hub [<path>] [--json]',
   '       mw-repomap serve [<path>] [--port <n>] [--host <address>] [--local]',
   '       mw-repomap wheel [<path>] [--local]',
+  '       mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]',
+  '       mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--clone <path>]',
+  '       mw-repomap capabilities show [<clone>] [--ref <ref>] [--json]',
+  '       mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]',
 ].join('\n');
 
-const BOOLEAN_FLAGS = new Set(['meta', 'local', 'json', 'write', 'help']);
+const BOOLEAN_FLAGS = new Set(['meta', 'local', 'json', 'write', 'check', 'help']);
 
 /** The flags each command takes. Any other flag is a usage error, so a misspelling never passes silently. */
 const COMMAND_FLAGS: Record<string, readonly string[]> = {
@@ -58,6 +75,7 @@ const COMMAND_FLAGS: Record<string, readonly string[]> = {
   list: ['lifecycle', 'drift', 'revision', 'field', 'local', 'json'],
   show: ['local', 'json'],
   observe: ['dir', 'by', 'write'],
+  capabilities: ['write', 'check', 'ref', 'repository', 'by', 'clone', 'root', 'list', 'out', 'packages', 'json'],
   move: ['by', 'grounding'],
   hub: ['json'],
   serve: ['port', 'host', 'local'],
@@ -343,6 +361,102 @@ async function wheel(positional: string[], flags: Record<string, string | true>)
   return 0;
 }
 
+const SCAN_OBSERVER = () => `mw-repomap capabilities (${os.userInfo().username}@${os.hostname()})`;
+
+function changeLine(result: { added: string[]; removed: string[]; changed: string[]; keptByPerson: string[] }): string {
+  return `${result.added.length} added, ${result.changed.length} changed, ${result.removed.length} removed, ${result.keptByPerson.length} kept by a person`;
+}
+
+async function capabilitiesScan(positional: string[], flags: Record<string, string | true>): Promise<number> {
+  if (positional.length > 3) throw new UsageError('capabilities scan takes one clone');
+  if (flags.write && flags.check) throw new UsageError('--write changes the file and --check does not: pick one');
+  const clone = positional[2] ?? '.';
+  // The commit being worked on: a person writes the file on the branch they will commit it to.
+  const scan = await scanRepository(clone, { ref: text(flags, 'ref') ?? 'HEAD', repository: text(flags, 'repository'), observedBy: SCAN_OBSERVER() });
+  const result = await writeCapabilityFile(clone, scan, { write: flags.write === true });
+  const name = scan.repository.replace(/^repository:/, '');
+  if (flags.write) {
+    console.error(`${name} @ ${scan.commit.slice(0, 12)}: ${scan.fileRows.length} found. ${result.wrote ? `wrote ${result.file}` : `${CAPABILITY_FILE} is up to date`} (${changeLine(result)})`);
+    return 0;
+  }
+  if (flags.check) {
+    console.error(result.differs ? `${CAPABILITY_FILE} is behind ${name} @ ${scan.commit.slice(0, 12)} (${changeLine(result)}): run capabilities scan --write` : `${CAPABILITY_FILE} is up to date with ${name} @ ${scan.commit.slice(0, 12)}`);
+    return result.differs ? 1 : 0;
+  }
+  process.stdout.write(result.text);
+  console.error(`${name} @ ${scan.commit.slice(0, 12)}: ${scan.fileRows.length} found, nothing written (--write keeps them in ${CAPABILITY_FILE})`);
+  return 0;
+}
+
+async function capabilitiesState(positional: string[], flags: Record<string, string | true>): Promise<number> {
+  const target = positional[2];
+  const slash = target?.indexOf('/') ?? -1;
+  const kind = target?.slice(0, slash) as CapabilityKind;
+  if (!target || slash < 1 || !CAPABILITY_KINDS.includes(kind)) throw new UsageError(`capabilities state needs <kind>/<name>, kind one of ${CAPABILITY_KINDS.join(', ')}`);
+  const by = text(flags, 'by');
+  if (!by) throw new UsageError('capabilities state needs --by <who>: a statement is something someone says');
+  if (positional.length > 4) throw new UsageError('quote the statement: capabilities state <kind>/<name> "<at most 55 words>"');
+  const { file, row } = await stateCapability(text(flags, 'clone') ?? '.', { kind, name: target.slice(slash + 1), by, ...(positional[3] !== undefined ? { statement: positional[3] } : {}) });
+  console.error(`${row.kind}/${row.name} ${row.revision} by ${by} in ${file}`);
+  return 0;
+}
+
+async function capabilitiesShow(positional: string[], flags: Record<string, string | true>): Promise<number> {
+  const read = await readRepositoryCapabilities(positional[2] ?? '.', { ref: text(flags, 'ref'), repository: text(flags, 'repository'), observedBy: SCAN_OBSERVER() });
+  printIssues(read.issues);
+  if (flags.json) {
+    console.log(JSON.stringify({ repository: read.repository, commit: read.commit, source: read.source, capabilities: read.capabilities, packages: read.packages, ...(read.drift ? { drift: read.drift } : {}) }, null, 2));
+    return 0;
+  }
+  console.log(`${read.repository.replace(/^repository:/, '')} @ ${read.commit.slice(0, 12)} provides ${read.capabilities.length} (read from ${read.source === 'file' ? CAPABILITY_FILE : 'its files; it holds no capability file'})`);
+  for (const c of read.capabilities) {
+    const kind = /^capability:(package|cli|skill)-/.exec(c.nodeId)?.[1] ?? 'other';
+    console.log(`  ${kind.padEnd(8)} ${c.name}${c.statement ? ` — ${c.statement}` : ` [${c.status}]`}`);
+  }
+  return 0;
+}
+
+async function capabilitiesMap(positional: string[], flags: Record<string, string | true>): Promise<number> {
+  const clones = [...positional.slice(2)];
+  const root = text(flags, 'root');
+  if (root) clones.push(...findClones(root));
+  const list = text(flags, 'list');
+  if (list) clones.push(...readFileSync(list, 'utf8').split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('#')));
+  const unique = [...new Set(clones.map((c) => path.resolve(c)))];
+  if (!unique.length) throw new UsageError('capabilities map needs clones: name them, or --root <dir>, or --list <file>');
+  const map = await buildCapabilityMap(unique, { ref: text(flags, 'ref'), observedBy: SCAN_OBSERVER() });
+  const out = text(flags, 'out');
+  if (out) writeFileSync(out, map.capabilities.map((c) => JSON.stringify(c)).join('\n') + '\n', 'utf8');
+  const packages = text(flags, 'packages');
+  if (packages) writeFileSync(packages, map.packages.map((p) => JSON.stringify(p)).join('\n') + '\n', 'utf8');
+  const failed = map.repositories.filter((r) => r.error);
+  if (flags.json) {
+    console.log(JSON.stringify(map, null, 2));
+  } else {
+    for (const r of map.repositories) {
+      if (r.error) {
+        console.log(`  ${path.basename(r.clone).padEnd(36)} could not be read: ${r.error}`);
+        continue;
+      }
+      const c = r.counts!;
+      const stale = r.drift && (r.drift.added.length || r.drift.removed.length) ? `  file behind by ${r.drift.added.length + r.drift.removed.length}` : '';
+      console.log(`  ${r.repository!.replace(/^repository:/, '').padEnd(36)} ${r.source!.padEnd(5)} ${String(c.package).padStart(3)} packages ${String(c.cli).padStart(3)} CLIs ${String(c.skill).padStart(3)} skills  @${r.commit!.slice(0, 12)}${stale}`);
+      printIssues(r.issues);
+    }
+    console.log(`${map.capabilities.length} capabilities from ${map.repositories.length - failed.length} repositories, ${map.consumes.length} consumes relations between their packages${failed.length ? `, ${failed.length} could not be read` : ''}`);
+  }
+  return failed.length ? 1 : 0;
+}
+
+async function capabilities(positional: string[], flags: Record<string, string | true>): Promise<number> {
+  const sub = positional[1];
+  if (sub === 'scan') return capabilitiesScan(positional, flags);
+  if (sub === 'state') return capabilitiesState(positional, flags);
+  if (sub === 'show') return capabilitiesShow(positional, flags);
+  if (sub === 'map') return capabilitiesMap(positional, flags);
+  throw new UsageError('capabilities needs scan, state, show or map');
+}
+
 const COMMANDS: Record<string, (positional: string[], flags: Record<string, string | true>) => Promise<number>> = {
   init,
   validate,
@@ -353,6 +467,7 @@ const COMMANDS: Record<string, (positional: string[], flags: Record<string, stri
   hub,
   serve,
   wheel,
+  capabilities,
 };
 
 async function main(): Promise<number> {

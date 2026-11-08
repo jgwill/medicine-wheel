@@ -42,6 +42,25 @@ A statement holds at least one word and at most 55. A word is a whitespace-separ
 - **Behavior:** Rows are validated at the boundary where a model's reading becomes a row others trust. Objects are strict: an unknown key is refused, because in model-written rows it is far more often a misspelling than a new field.
 - **Behavior:** Nothing in this layer reads files, the network or the clock.
 
+## A repository's own capability file
+
+A repository keeps what it provides in `.miadi/capabilities.jsonl`, committed with the code, so whoever clones it knows what it offers with no registry and no Factory.
+
+- The first line says what the file is: `{"schema":"medicine-wheel/repository-capabilities","version":1,"repository":"<owner>/<name>"}`.
+- Each other line is one capability: `kind` (`package`, `cli`, `skill`), `name`, `address` (`miadi-capability://<owner>/<repo>/<kind>/<name>`), `statement` when there is one of at most 55 words, `status`, `package` for a CLI (the package that ships it), and the attribution of every row, with `grounding` holding the files that say so, relative to the repository.
+- Versions and dependency ranges are not in the file, because every release would make them stale. A reader takes them from each `package.json` at the commit it reads.
+- The commit is not in the file, because a committed file cannot name its own commit. A reader adds the commit it read, and the registry's grounding reads `<owner>/<name>@<commit>:<path>`.
+
+**Behaviors.**
+
+- `mw-repomap capabilities scan [<clone>] --write` reads the clone at HEAD from git objects and keeps the file in its working tree. It commits nothing. `--check` writes nothing and exits 1 when the file would change.
+- A rescan keeps what a person wrote. A row whose `statedBy` is not `mw-repomap scan` keeps its words and its attribution, and so does a statement added by hand to a row the scan could not state. A row the scan wrote stays as it is while its statement stays the same, and goes back to `pending` when the statement changes. A rescan of unchanged files changes nothing in the file, dates included.
+- `mw-repomap capabilities state <kind>/<name> "<statement>" --by <who>` is a person stating a row, held to 55 words. Without a statement it affirms what is there.
+- A reader takes the file first and merges it with what the commit's files say by the rule a rescan uses, so a file behind its repository still answers everything the commit provides.
+- `mw-repomap capabilities map` goes through clones (named, `--root <dir>`, or `--list <file>`), reads each one's file, or its files when it has none, and answers one map: what each repository provides, and which package consumes which across them. `--out` writes the rows a host reads through `MIADI_REPOSITORY_CAPABILITIES`. A clone that cannot be read is reported and the others are still read.
+
+Ground: William, 2026-11-07 and 2026-11-08, Episode 568's Capability Registry (`miadi-chronicle://568`).
+
 ## Creative Advancement Scenario
 
 **Creative Advancement Scenario**: Seeing a capability built twice

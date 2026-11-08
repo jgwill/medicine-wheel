@@ -46,6 +46,22 @@ A meta hub reads every hub it registers (from a local path, or from GitHub by de
 unless `--local`. `observe --write` and `move` refuse to rewrite a folder while any row
 fails to parse. Exit codes: 0 done, 1 errors or a failed read, 2 usage error.
 
+## What a repository provides
+
+Any git repository can keep what it provides in `.miadi/capabilities.jsonl`, committed with its code, so whoever clones it knows what it offers. Nothing else is needed: no account, no registry, no server.
+
+```bash
+npx @medicine-wheel/developer-repository-mapping capabilities scan --write   # in a clone: its packages, CLIs and skills
+git add .miadi/capabilities.jsonl && git commit -m "what this repository provides"
+
+mw-repomap capabilities show <clone>                  # what a clone provides, from its own file first
+mw-repomap capabilities state skill/greet "Says hello." --by Ava    # a person states a row (55 words at most)
+mw-repomap capabilities scan --check                  # exit 1 when the file is behind the code
+mw-repomap capabilities map --root ~/repos --out map.jsonl   # go through clones and answer one map
+```
+
+A rescan keeps what a person wrote and leaves the file alone when nothing changed. Versions come from each `package.json` at the commit read, so a release does not touch the file. The format is in `rispecs/developer-suite/repository-mapping/capabilities.spec.md`.
+
 ## Library
 
 ```ts

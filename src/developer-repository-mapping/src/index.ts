@@ -114,3 +114,39 @@ export { toWheelNodes, toWheelEdges } from './wheel';
 // ── Reading a folder through any reader ─────────────────────────────────────
 export { readMapping } from './read';
 export type { MappingReader, MappingRead } from './read';
+
+// Capabilities: what a repository provides, read from its files, and the file it keeps them in
+export {
+  CAPABILITY_KINDS,
+  CODE_READERS,
+  capabilityAddress,
+  capabilityId,
+  capabilityRows,
+  capabilitiesOf,
+  kindOf,
+  medicineWheelSkills,
+  mergeCapabilityRows,
+  packageManifests,
+  parsePackageJson,
+  parseSkillFrontMatter,
+  providesEdges,
+  skillFiles,
+  workspaceGlobs,
+} from './capability-scan';
+export type { Artefact, CapabilityKind, CapabilityRowContext, CodeReader, ProvidesEdge } from './capability-scan';
+export { PackageReadingSchema, bumpVersion, consumesEdges, impactOf, satisfies } from './capability-impact';
+export type { BumpLevel, ConsumesEdge, ImpactAnswer, ImpactConsumer, ImpactLink, PackageReading } from './capability-impact';
+export {
+  CAPABILITY_FILE,
+  CAPABILITY_FILE_SCHEMA,
+  CapabilityFileHeaderSchema,
+  CapabilityFileRowSchema,
+  SCAN_AUTHOR,
+  capabilityFileFacets,
+  capabilityFileRows,
+  mergeCapabilityFile,
+  parseCapabilityFile,
+  renderCapabilityFile,
+  stateCapabilityRow,
+} from './capability-file';
+export type { CapabilityFileHeader, CapabilityFileMerge, CapabilityFileRow, CapabilityStatementInput, ParsedCapabilityFile } from './capability-file';
