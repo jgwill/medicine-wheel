@@ -264,6 +264,10 @@ export interface ConversationIcons {
   working: ReactNode;
   conversation: ReactNode;
   shared: ReactNode;
+  /** Before an error. */
+  failed: ReactNode;
+  /** At the end of a row that leads to another place. */
+  outbound: ReactNode;
 }
 
 const svg = (d: string) => (
@@ -289,6 +293,8 @@ export const defaultConversationIcons: ConversationIcons = {
   working: svg('M21 12a9 9 0 1 1-6.2-8.6'),
   conversation: svg('M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z'),
   shared: svg('M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8'),
+  failed: svg('M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM15 9l-6 6M9 9l6 6'),
+  outbound: svg('M7 17 17 7M7 7h10v10'),
 };
 
 export interface ConversationLabels {
@@ -300,10 +306,12 @@ export interface ConversationLabels {
   saveTitle: string;
   cancel: string;
   remove: string;
+  /** The delete button's label while its plan is open. */
+  closeRemove: string;
   removeConfirm: string;
-  /** What deleting does, said before it is done. */
-  removePlan: (s: MemoryConversationSummary) => string;
-  unshareFirst: string;
+  /** What deleting does, said before it is done: a line, or lines with their own icons. */
+  removePlan: (s: MemoryConversationSummary) => ReactNode;
+  unshareFirst: ReactNode;
   turns: (n: number) => string;
   you: string;
   copy: string;
@@ -331,6 +339,7 @@ export const defaultConversationLabels: ConversationLabels = {
   saveTitle: 'Save the title',
   cancel: 'Cancel',
   remove: 'Delete',
+  closeRemove: 'Close the delete plan',
   removeConfirm: 'Delete',
   removePlan: (s) => `Delete “${s.title}” and its ${s.turn_count} ${s.turn_count === 1 ? 'turn' : 'turns'}. This cannot be undone.`,
   unshareFirst: 'It is shared. Unshare it before deleting it.',
@@ -454,9 +463,10 @@ export function ConversationList(props: ConversationListProps) {
                 </form>
               ) : href ? (
                 <a href={href} {...part('listOpen')}>
-                  {icons.conversation}
+                  {c.shared_in ? icons.shared : icons.conversation}
                   <span {...part('listTitle')}>{c.title}</span>
                   {facts}
+                  <span data-mw-part="outbound" style={{ gridColumn: 3, gridRow: '1 / span 2', display: 'inline-flex' }}>{icons.outbound}</span>
                 </a>
               ) : (
                 <button
@@ -468,7 +478,7 @@ export function ConversationList(props: ConversationListProps) {
                     onOpened?.(c.id);
                   }}
                 >
-                  {icons.conversation}
+                  {c.shared_in ? icons.shared : icons.conversation}
                   <span {...part('listTitle')}>{c.title}</span>
                   {facts}
                 </button>
@@ -479,20 +489,20 @@ export function ConversationList(props: ConversationListProps) {
                     <button type="button" {...part('iconButton')} aria-label={`${labels.rename}: ${c.title}`} title={labels.rename} onClick={() => setEditing({ id: c.id, title: c.title })}>{icons.rename}</button>
                   )}
                   {state.adapter.remove && (
-                    <button type="button" {...part('iconButton')} aria-label={`${labels.remove}: ${c.title}`} title={labels.remove} aria-expanded={removing === c.id} onClick={() => setRemoving(removing === c.id ? null : c.id)}>{icons.remove}</button>
+                    <button type="button" {...part('iconButton')} aria-label={removing === c.id ? labels.closeRemove : `${labels.remove}: ${c.title}`} title={removing === c.id ? labels.closeRemove : labels.remove} aria-expanded={removing === c.id} onClick={() => setRemoving(removing === c.id ? null : c.id)}>{removing === c.id ? icons.close : icons.remove}</button>
                   )}
                 </span>
               )}
               {removing === c.id && (
                 <div {...part('listUnfold')} role="group" aria-label={labels.remove}>
-                  <p>{c.shared_in ? labels.unshareFirst : labels.removePlan(c)}</p>
-                  <span style={{ display: 'flex', gap: 6 }}>
+                  <div style={{ flexBasis: '100%' }}>{c.shared_in ? labels.unshareFirst : labels.removePlan(c)}</div>
+                  <span style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+                    <button type="button" {...part('iconButton')} aria-label={labels.cancel} title={labels.cancel} onClick={() => setRemoving(null)}>{icons.close}</button>
                     {!c.shared_in && (
                       <button type="button" {...part('confirm')} onClick={async () => { if (await state.remove(c.id)) setRemoving(null); }}>
                         {icons.remove}<span>{labels.removeConfirm}</span>
                       </button>
                     )}
-                    <button type="button" {...part('iconButton')} aria-label={labels.cancel} title={labels.cancel} onClick={() => setRemoving(null)}>{icons.close}</button>
                   </span>
                 </div>
               )}
@@ -534,7 +544,8 @@ export function ConversationThread(props: ConversationThreadProps) {
   const end = useRef<HTMLDivElement | null>(null);
   const count = state.active?.turns.length ?? 0;
   useEffect(() => {
-    end.current?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    const still = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    end.current?.scrollIntoView?.({ block: 'nearest', behavior: still ? 'auto' : 'smooth' });
   }, [count, state.pending]);
 
   return (
@@ -543,11 +554,13 @@ export function ConversationThread(props: ConversationThreadProps) {
         const at = Math.min(picked[g.id] ?? g.turns.length - 1, g.turns.length - 1);
         const t = g.turns[at];
         const latest = gi === groups.length - 1;
-        const asker = t.asked_by === me ? labels.you : t.asked_by_name || t.asked_by;
+        // A reader's own questions carry no name, as in any conversation; another asker's do.
+        const asker = me !== undefined && t.asked_by === me ? null : t.asked_by_name || t.asked_by;
         return (
           <section key={g.id} {...part('group')}>
             <div {...part('question')}>
-              <span {...part('asker')}>{asker}</span>
+              {asker && <span {...part('asker')}>{asker}</span>}
+              <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{asker ? '' : labels.you}</span>
               <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{t.question}</p>
               {renderQuestionFacts?.(t)}
             </div>
@@ -597,7 +610,6 @@ export function ConversationThread(props: ConversationThreadProps) {
       {state.pending && (
         <section {...part('group')} data-pending="true">
           <div {...part('question')}>
-            <span {...part('asker')}>{labels.you}</span>
             <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{state.pending}</p>
           </div>
           <div {...part('pending')} role="status">
@@ -608,7 +620,8 @@ export function ConversationThread(props: ConversationThreadProps) {
       )}
       {state.error && (
         <p {...part('error')} role="alert">
-          {state.error}
+          {icons.failed}
+          <span>{state.error}</span>
         </p>
       )}
       <div ref={end} />
@@ -620,8 +633,8 @@ export function ConversationThread(props: ConversationThreadProps) {
 
 export interface ConversationComposerProps extends PartsProps {
   state: MemoryConversationsState;
-  /** When the reader may not ask: why, shown in place of the send button's use. */
-  disabledReason?: string | null;
+  /** When the reader may not ask: why, shown under the box (words, or words with the host's glyph). */
+  disabledReason?: ReactNode;
   /** The host's own actions beside the box (record what is said); `append` adds text to the box. */
   renderActions?: (api: { append: (text: string) => void; busy: boolean }) => ReactNode;
   /** Shown under the box (the reach, the prompt in use). */

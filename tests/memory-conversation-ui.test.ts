@@ -39,8 +39,12 @@ describe("memory conversation parts (#174)", () => {
     expect(html).toContain('aria-label="Ask again"');
     expect(html).toContain('aria-label="Copy the answer"');
     expect(html).toContain('data-mw-part="question"');
-    // Another person's question names them.
+    // The reader's own questions carry no visible name; another person's name them.
+    expect(html).not.toContain('data-mw-part="asker"');
     expect(renderToStaticMarkup(createElement(ConversationThread, { state: state(), me: "node:human:2:other" }))).toContain(">Guillaume<");
+    // An error carries its glyph.
+    const failed = renderToStaticMarkup(createElement(ConversationThread, { state: state({ error: "The wheel refused." }) }));
+    expect(failed).toMatch(/role="alert"><svg[^>]*>.*<\/svg><span>The wheel refused\.<\/span>/);
   });
 
   it("shows the question being asked and a working state, and the host's slots", () => {
