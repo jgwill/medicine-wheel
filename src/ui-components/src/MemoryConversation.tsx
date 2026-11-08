@@ -122,7 +122,16 @@ export function useMemoryConversations(adapter: ConversationAdapter, options: Us
   const refresh = useCallback(async () => {
     setBusy((b) => b ?? 'list');
     try {
-      setConversations(await adapterRef.current.list());
+      const fresh = await adapterRef.current.list();
+      // A list read before an ask may land after it: keep the newer of each conversation.
+      setConversations((current) => {
+        const byId = new Map(fresh.map((c) => [c.id, c]));
+        for (const c of current) {
+          const f = byId.get(c.id);
+          if (!f || f.updated_at < c.updated_at) byId.set(c.id, c);
+        }
+        return [...byId.values()].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+      });
       setListed(true);
     } catch (e) {
       setError(messageOf(e));
@@ -404,10 +413,12 @@ export interface ConversationListProps extends PartsProps {
   onOpened?: (id: string) => void;
   /** Rows shown before "show all". Default 8. */
   initialRows?: number;
+  /** What the reader may do with a row; default: whatever the adapter offers. A host passes the door's answer, so a reader is never offered what the door refuses. */
+  canFor?: (s: MemoryConversationSummary) => { rename?: boolean; remove?: boolean };
 }
 
 export function ConversationList(props: ConversationListProps) {
-  const { state, hrefFor, renderFacts, onOpened, initialRows = 8 } = props;
+  const { state, hrefFor, renderFacts, onOpened, initialRows = 8, canFor } = props;
   const { icons, labels, part } = useParts(props);
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState<{ id: string; title: string } | null>(null);
@@ -485,10 +496,10 @@ export function ConversationList(props: ConversationListProps) {
               )}
               {editing?.id !== c.id && (
                 <span {...part('listActions')}>
-                  {state.adapter.rename && (
+                  {state.adapter.rename && (canFor?.(c).rename ?? true) && (
                     <button type="button" {...part('iconButton')} aria-label={`${labels.rename}: ${c.title}`} title={labels.rename} onClick={() => setEditing({ id: c.id, title: c.title })}>{icons.rename}</button>
                   )}
-                  {state.adapter.remove && (
+                  {state.adapter.remove && (canFor?.(c).remove ?? true) && (
                     <button type="button" {...part('iconButton')} aria-label={removing === c.id ? labels.closeRemove : `${labels.remove}: ${c.title}`} title={removing === c.id ? labels.closeRemove : labels.remove} aria-expanded={removing === c.id} onClick={() => setRemoving(removing === c.id ? null : c.id)}>{removing === c.id ? icons.close : icons.remove}</button>
                   )}
                 </span>
@@ -533,10 +544,12 @@ export interface ConversationThreadProps extends PartsProps {
   renderAnswerActions?: (turn: MemoryConversationTurn) => ReactNode;
   /** What a turn was asked with, how far it reached: a line under the question. */
   renderQuestionFacts?: (turn: MemoryConversationTurn) => ReactNode;
+  /** Whether the reader may ask the latest question again. Default true. */
+  canAskAgain?: boolean;
 }
 
 export function ConversationThread(props: ConversationThreadProps) {
-  const { state, me, renderAnswer, renderSources, renderAnswerActions, renderQuestionFacts } = props;
+  const { state, me, renderAnswer, renderSources, renderAnswerActions, renderQuestionFacts, canAskAgain = true } = props;
   const { icons, labels, part } = useParts(props);
   const groups = useMemo(() => turnGroups(state.active?.turns ?? []), [state.active]);
   const [picked, setPicked] = useState<Record<string, number>>({});
@@ -597,7 +610,7 @@ export function ConversationThread(props: ConversationThreadProps) {
                   </button>
                 )}
                 {renderAnswerActions?.(t)}
-                {latest && !state.pending && state.adapter && (
+                {latest && canAskAgain && !state.pending && state.adapter && (
                   <button type="button" {...part('iconButton')} aria-label={labels.again} title={labels.again} disabled={state.busy !== null} onClick={() => { setPicked({ ...picked, [g.id]: g.turns.length }); void state.askAgain(); }}>
                     {icons.again}
                   </button>

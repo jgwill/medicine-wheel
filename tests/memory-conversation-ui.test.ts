@@ -71,6 +71,13 @@ describe("memory conversation parts (#174)", () => {
     expect(html).toContain('data-active="true"');
   });
 
+  it("offers a reader only what the door lets them do", () => {
+    const html = renderToStaticMarkup(createElement(ConversationList, { state: state(), canFor: () => ({ rename: false, remove: false }) }));
+    expect(html).not.toContain('aria-label="Rename: The lantern"');
+    expect(html).not.toContain('aria-label="Delete: The lantern"');
+    expect(renderToStaticMarkup(createElement(ConversationThread, { state: state(), canAskAgain: false }))).not.toContain('aria-label="Ask again"');
+  });
+
   it("offers Reply once a conversation is open, and says why when the reader may not ask", () => {
     expect(renderToStaticMarkup(createElement(ConversationComposer, { state: state() }))).toContain('aria-label="Reply"');
     expect(renderToStaticMarkup(createElement(ConversationComposer, { state: state({ active: null }) }))).toContain('aria-label="Ask"');
