@@ -279,6 +279,11 @@ export interface ConversationIcons {
   outbound: ReactNode;
 }
 
+/** An icon from the host's set, drawn as an element so every control visibly holds one. */
+export function Glyph({ of }: { of: ReactNode }) {
+  return <>{of}</>;
+}
+
 const svg = (d: string) => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" style={{ flex: '0 0 auto' }}>
     <path d={d} />
@@ -436,12 +441,12 @@ export function ConversationList(props: ConversationListProps) {
     <div {...part('list')}>
       <div {...part('listHeader')}>
         <label {...part('listSearch')}>
-          {icons.search}
+          <Glyph of={icons.search} />
           <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{labels.search}</span>
           <input {...part('input')} type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={labels.search} />
         </label>
         <button type="button" {...part('iconButton')} onClick={() => state.startNew()} aria-label={labels.newConversation} title={labels.newConversation}>
-          {icons.newConversation}
+          <Glyph of={icons.newConversation} />
         </button>
       </div>
       {state.listed && state.conversations.length === 0 && <p {...part('listEmpty')}>{labels.empty}</p>}
@@ -468,15 +473,15 @@ export function ConversationList(props: ConversationListProps) {
                   }}
                 >
                   <input {...part('input')} style={{ minWidth: 0, flex: '1 1 0%' }} autoFocus value={editing.title} maxLength={160} onChange={(e) => setEditing({ id: c.id, title: e.target.value })} onKeyDown={(e) => e.key === 'Escape' && setEditing(null)} aria-label={labels.rename} />
-                  <button type="submit" {...part('iconButton')} aria-label={labels.saveTitle} title={labels.saveTitle} disabled={!editing.title.trim()}>{icons.confirm}</button>
-                  <button type="button" {...part('iconButton')} aria-label={labels.cancel} title={labels.cancel} onClick={() => setEditing(null)}>{icons.close}</button>
+                  <button type="submit" {...part('iconButton')} aria-label={labels.saveTitle} title={labels.saveTitle} disabled={!editing.title.trim()}><Glyph of={icons.confirm} /></button>
+                  <button type="button" {...part('iconButton')} aria-label={labels.cancel} title={labels.cancel} onClick={() => setEditing(null)}><Glyph of={icons.close} /></button>
                 </form>
               ) : href ? (
                 <a href={href} {...part('listOpen')}>
-                  {c.shared_in ? icons.shared : icons.conversation}
+                  <Glyph of={c.shared_in ? icons.shared : icons.conversation} />
                   <span {...part('listTitle')}>{c.title}</span>
                   {facts}
-                  <span data-mw-part="outbound" style={{ gridColumn: 3, gridRow: '1 / span 2', display: 'inline-flex' }}>{icons.outbound}</span>
+                  <span data-mw-part="outbound" style={{ gridColumn: 3, gridRow: '1 / span 2', display: 'inline-flex' }}><Glyph of={icons.outbound} /></span>
                 </a>
               ) : (
                 <button
@@ -488,7 +493,7 @@ export function ConversationList(props: ConversationListProps) {
                     onOpened?.(c.id);
                   }}
                 >
-                  {c.shared_in ? icons.shared : icons.conversation}
+                  <Glyph of={c.shared_in ? icons.shared : icons.conversation} />
                   <span {...part('listTitle')}>{c.title}{c.shared_in && <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>{`, ${labels.shared}`}</span>}</span>
                   {facts}
                 </button>
@@ -496,10 +501,10 @@ export function ConversationList(props: ConversationListProps) {
               {editing?.id !== c.id && (
                 <span {...part('listActions')}>
                   {state.adapter.rename && (canFor?.(c).rename ?? true) && (
-                    <button type="button" {...part('iconButton')} aria-label={`${labels.rename}: ${c.title}`} title={labels.rename} onClick={() => setEditing({ id: c.id, title: c.title })}>{icons.rename}</button>
+                    <button type="button" {...part('iconButton')} aria-label={`${labels.rename}: ${c.title}`} title={labels.rename} onClick={() => setEditing({ id: c.id, title: c.title })}><Glyph of={icons.rename} /></button>
                   )}
                   {state.adapter.remove && (canFor?.(c).remove ?? true) && (
-                    <button type="button" {...part('iconButton')} aria-label={removing === c.id ? labels.closeRemove : `${labels.remove}: ${c.title}`} title={removing === c.id ? labels.closeRemove : labels.remove} aria-expanded={removing === c.id} onClick={() => setRemoving(removing === c.id ? null : c.id)}>{icons.remove}</button>
+                    <button type="button" {...part('iconButton')} aria-label={removing === c.id ? labels.closeRemove : `${labels.remove}: ${c.title}`} title={removing === c.id ? labels.closeRemove : labels.remove} aria-expanded={removing === c.id} onClick={() => setRemoving(removing === c.id ? null : c.id)}><Glyph of={icons.remove} /></button>
                   )}
                 </span>
               )}
@@ -507,10 +512,10 @@ export function ConversationList(props: ConversationListProps) {
                 <div {...part('listUnfold')} role="group" aria-label={labels.remove}>
                   <div style={{ flexBasis: '100%' }}>{c.shared_in ? labels.unshareFirst : labels.removePlan(c)}</div>
                   <span style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
-                    <button type="button" {...part('iconButton')} aria-label={labels.cancel} title={labels.cancel} onClick={() => setRemoving(null)}>{icons.close}</button>
+                    <button type="button" {...part('iconButton')} aria-label={labels.cancel} title={labels.cancel} onClick={() => setRemoving(null)}><Glyph of={icons.close} /></button>
                     {!c.shared_in && (
                       <button type="button" {...part('confirm')} onClick={async () => { if (await state.remove(c.id)) setRemoving(null); }}>
-                        {icons.remove}<span>{labels.removeConfirm}</span>
+                        <Glyph of={icons.remove} /><span>{labels.removeConfirm}</span>
                       </button>
                     )}
                   </span>
@@ -522,7 +527,7 @@ export function ConversationList(props: ConversationListProps) {
       </ul>
       {!all && !words.length && shown.length > initialRows && (
         <button type="button" {...part('button')} onClick={() => setAll(true)}>
-          {icons.conversation}<span>{`${shown.length - initialRows} more`}</span>
+          <Glyph of={icons.conversation} /><span>{`${shown.length - initialRows} more`}</span>
         </button>
       )}
     </div>
@@ -554,14 +559,25 @@ export function ConversationThread(props: ConversationThreadProps) {
   const [picked, setPicked] = useState<Record<string, number>>({});
   const [copied, setCopied] = useState<string | null>(null);
   const end = useRef<HTMLDivElement | null>(null);
+  const box = useRef<HTMLDivElement | null>(null);
   const count = state.active?.turns.length ?? 0;
+  const openedId = state.active?.id ?? null;
+  const shownId = useRef<string | null>(null);
   useEffect(() => {
     const still = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    end.current?.scrollIntoView?.({ block: 'nearest', behavior: still ? 'auto' : 'smooth' });
-  }, [count, state.pending]);
+    const first = shownId.current !== openedId;
+    shownId.current = openedId;
+    const el = box.current;
+    if (el && el.scrollHeight > el.clientHeight + 1) {
+      // A thread that scrolls by itself opens on its latest turn and follows each new one.
+      el.scrollTo?.({ top: el.scrollHeight, behavior: first || still ? 'auto' : 'smooth' });
+      return;
+    }
+    if (!first) end.current?.scrollIntoView?.({ block: 'nearest', behavior: still ? 'auto' : 'smooth' });
+  }, [count, state.pending, openedId]);
 
   return (
-    <div {...part('thread')} role="log" aria-live="polite" aria-busy={state.busy === 'ask' || state.busy === 'open'}>
+    <div ref={box} {...part('thread')} role="log" aria-live="polite" aria-busy={state.busy === 'ask' || state.busy === 'open'}>
       {groups.map((g, gi) => {
         const at = Math.min(picked[g.id] ?? g.turns.length - 1, g.turns.length - 1);
         const t = g.turns[at];
@@ -584,9 +600,9 @@ export function ConversationThread(props: ConversationThreadProps) {
               <div {...part('answerFoot')}>
                 {g.turns.length > 1 && (
                   <span {...part('pager')}>
-                    <button type="button" {...part('iconButton')} aria-label={labels.previousAnswer} title={labels.previousAnswer} disabled={at === 0} onClick={() => setPicked({ ...picked, [g.id]: at - 1 })}>{icons.previous}</button>
+                    <button type="button" {...part('iconButton')} aria-label={labels.previousAnswer} title={labels.previousAnswer} disabled={at === 0} onClick={() => setPicked({ ...picked, [g.id]: at - 1 })}><Glyph of={icons.previous} /></button>
                     <span>{labels.answerOf(at + 1, g.turns.length)}</span>
-                    <button type="button" {...part('iconButton')} aria-label={labels.nextAnswer} title={labels.nextAnswer} disabled={at === g.turns.length - 1} onClick={() => setPicked({ ...picked, [g.id]: at + 1 })}>{icons.next}</button>
+                    <button type="button" {...part('iconButton')} aria-label={labels.nextAnswer} title={labels.nextAnswer} disabled={at === g.turns.length - 1} onClick={() => setPicked({ ...picked, [g.id]: at + 1 })}><Glyph of={icons.next} /></button>
                   </span>
                 )}
                 {t.answer && (
@@ -605,13 +621,13 @@ export function ConversationThread(props: ConversationThreadProps) {
                       }
                     }}
                   >
-                    {copied === t.id ? icons.copied : icons.copy}
+                    <Glyph of={copied === t.id ? icons.copied : icons.copy} />
                   </button>
                 )}
                 {renderAnswerActions?.(t)}
-                {latest && canAskAgain && !state.pending && state.adapter && (
+                {latest && canAskAgain && !state.pending && !state.error && state.adapter && (
                   <button type="button" {...part('iconButton')} aria-label={labels.again} title={labels.again} disabled={state.busy !== null} onClick={() => { setPicked({ ...picked, [g.id]: g.turns.length }); void state.askAgain(); }}>
-                    {icons.again}
+                    <Glyph of={icons.again} />
                   </button>
                 )}
               </div>
@@ -625,14 +641,14 @@ export function ConversationThread(props: ConversationThreadProps) {
             <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{state.pending}</p>
           </div>
           <div {...part('pending')} role="status">
-            <span data-mw-spin="true">{icons.working}</span>
+            <span data-mw-spin="true"><Glyph of={icons.working} /></span>
             <span>{labels.working}</span>
           </div>
         </section>
       )}
       {state.error && (
         <p {...part('error')} role="alert">
-          {icons.failed}
+          <Glyph of={icons.failed} />
           <span>{state.error}</span>
         </p>
       )}
@@ -708,7 +724,7 @@ export function ConversationComposer(props: ConversationComposerProps) {
         {renderActions?.({ append, busy })}
         <span style={{ flex: 1 }}>{blocked ? disabledReason : footnote}</span>
         <button type="submit" {...part('send')} disabled={blocked || busy || !text.trim()} aria-label={replying ? labels.reply : labels.send} title={replying ? labels.reply : labels.send}>
-          {busy ? <span data-mw-spin="true">{icons.working}</span> : icons.send}
+          {busy ? <span data-mw-spin="true"><Glyph of={icons.working} /></span> : <Glyph of={icons.send} />}
           <span>{replying ? labels.reply : labels.send}</span>
         </button>
       </div>

@@ -21,6 +21,7 @@ export type { WilsonMeterProps } from './WilsonMeter.js';
 
 export {
   useMemoryConversations,
+  Glyph,
   ConversationList,
   ConversationThread,
   ConversationComposer,
