@@ -208,6 +208,76 @@ export const memoryTools: Tool[] = [
     },
   },
   {
+    name: "memory_converse",
+    description:
+      "Ask the wheel's memory within a conversation that the wheel keeps (jgwill/medicine-wheel#174). Without `conversation` a new one " +
+      "starts, held by `asked_by`; with it, the question is a reply, asked with the earlier turns, so 'say more' or 'revise what you just " +
+      "wrote' works. `retry_of` (the latest turn's id) asks that question again and keeps both answers. A conversation shared nowhere is " +
+      "continued only by its holder. Nothing of it is sent into the memory's own records. Needs MW_API_URL (a wheel server keeps them). " +
+      "Answers { conversation, turn, answer }.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        question: { type: "string", description: "Your words. Optional only with retry_of" },
+        scope: scopeSchema,
+        asked_by: { type: "string", description: "Who asks, by wheel id: your own agent node id, or the person you ask for" },
+        asked_by_name: { type: "string" },
+        conversation: { type: "string", description: "The conversation to continue (memory-conversation:…)" },
+        retry_of: { type: "string", description: "The latest turn's id, to ask its question again" },
+        opened_from: { type: "string", description: "On a new conversation: where it was opened (a ceremony id, chronicle:<episode path>)" },
+        title: { type: "string", description: "On a new conversation: its title. Default: the first question" },
+        reasoning_level: { type: "string", enum: ["minimal", "low", "medium", "high", "max"] },
+        limit: { type: "number" },
+      },
+      required: ["scope", "asked_by"],
+    },
+    handler: async (args) => {
+      if (!serverUrl()) return { status: "error", message: "Conversations are kept by a wheel server: set MW_API_URL." };
+      const scope = readScope(args?.scope);
+      if (!scope) return needScope;
+      if (typeof args?.asked_by !== "string" || !args.asked_by.trim()) return { status: "error", message: "asked_by is required: who asks, by wheel id." };
+      if ((typeof args?.question !== "string" || !args.question.trim()) && typeof args?.retry_of !== "string") return { status: "error", message: "Ask a question." };
+      const pick = (k: string) => (typeof args?.[k] === "string" && args[k].trim() ? { [k]: args[k].trim() } : {});
+      return server("POST", "/api/memory/conversations", {
+        ...pick("question"), scope, ...pick("asked_by"), ...pick("asked_by_name"), ...pick("conversation"), ...pick("retry_of"),
+        ...pick("opened_from"), ...pick("title"), ...pick("reasoning_level"), ...(typeof args?.limit === "number" ? { limit: args.limit } : {}),
+      });
+    },
+  },
+  {
+    name: "memory_conversations",
+    description:
+      "The conversations with the memory that one holder keeps, or that are shared in one ceremony, most recently continued first, " +
+      "without their turns. Name held_by or shared_in; q matches the title and every question. Needs MW_API_URL.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        held_by: { type: "string", description: "Who holds them, by wheel id" },
+        shared_in: { type: "string", description: "The ceremony they are shared in" },
+        q: { type: "string" },
+        limit: { type: "number" },
+      },
+    },
+    handler: async (args) => {
+      if (!serverUrl()) return { status: "error", message: "Conversations are kept by a wheel server: set MW_API_URL." };
+      const qs = new URLSearchParams();
+      for (const k of ["held_by", "shared_in", "q"]) if (typeof args?.[k] === "string" && args[k].trim()) qs.set(k, args[k].trim());
+      if (typeof args?.limit === "number") qs.set("limit", String(args.limit));
+      if (!qs.get("held_by") && !qs.get("shared_in")) return { status: "error", message: "Name held_by or shared_in." };
+      return server("GET", `/api/memory/conversations?${qs}`);
+    },
+  },
+  {
+    name: "memory_conversation",
+    description: "One conversation with the memory, with every turn: who asked, the question, the answer and its sources. Needs MW_API_URL.",
+    inputSchema: { type: "object", properties: { id: { type: "string", description: "memory-conversation:…" } }, required: ["id"] },
+    handler: async (args) => {
+      if (!serverUrl()) return { status: "error", message: "Conversations are kept by a wheel server: set MW_API_URL." };
+      if (typeof args?.id !== "string" || !args.id.trim()) return { status: "error", message: "id is required." };
+      return server("GET", `/api/memory/conversations/${encodeURIComponent(args.id.trim())}`);
+    },
+  },
+  {
     name: "memory_search",
     description: "The records within a scope closest to a query, with no reasoning: fast, and each source names the wheel record it is.",
     inputSchema: {

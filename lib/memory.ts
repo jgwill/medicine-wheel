@@ -10,7 +10,11 @@
  */
 
 import {
+  ConversationError,
+  createConversations,
   createMemory,
+  type Conversations,
+  type EarlierTurn,
   type CeremonyRef,
   type Memory,
   type MemoryRecord,
@@ -148,6 +152,33 @@ export function wheelMemory(): Memory {
     current = { key, memory: createMemory({ wheel: wheelForMemory(), providers }) };
   }
   return current.memory;
+}
+
+/**
+ * Conversations with the memory, kept in this wheel's store and asked through
+ * `wheelMemory()`. They are never projected into the memory provider.
+ * jgwill/medicine-wheel#174
+ */
+export async function wheelConversations(): Promise<Conversations> {
+  return createConversations({ memory: wheelMemory(), store: await createProvider() });
+}
+
+/** A door's answer to a refused conversation request, or null when the error is not one. */
+export function conversationRefusal(error: unknown): { status: number; error: string } | null {
+  return error instanceof ConversationError ? { status: error.status, error: error.message } : null;
+}
+
+/** Earlier turns from a request body, or the reason they are not. */
+export function readEarlier(value: unknown): { earlier?: EarlierTurn[] } | { error: string } {
+  if (value === undefined || value === null) return {};
+  if (!Array.isArray(value) || value.length > 200) return { error: 'earlier must be a list of at most 200 turns: [{ asked_by?, question, answer? }]' };
+  const earlier: EarlierTurn[] = [];
+  for (const t of value) {
+    if (!t || typeof t !== 'object' || typeof t.question !== 'string' || !t.question.trim()) return { error: 'each earlier turn needs its question' };
+    if (t.answer !== undefined && t.answer !== null && typeof t.answer !== 'string') return { error: 'an earlier answer is a string or null' };
+    earlier.push({ question: t.question, ...(typeof t.asked_by === 'string' ? { asked_by: t.asked_by } : {}), ...(typeof t.answer === 'string' ? { answer: t.answer } : {}) });
+  }
+  return earlier.length ? { earlier } : {};
 }
 
 const SCOPE_LISTS = ['ceremonies', 'subject_id', 'circle_id', 'episode_path'] as const;

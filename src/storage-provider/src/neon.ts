@@ -34,6 +34,16 @@ import { filterInquiryWeaves } from './inquiry-weaves.js';
 import { filterAndOrderDiaryEntries } from './diary-records.js';
 import { matchesCeremonyEventFilters } from './ceremony-events.js';
 import {
+  ConversationError,
+  appendTurn,
+  filterConversations,
+  patchConversation,
+  type MemoryConversation,
+  type MemoryConversationFilters,
+  type MemoryConversationPatch,
+  type MemoryConversationTurn,
+} from '@medicine-wheel/memory';
+import {
   mergeCaptureRecords,
   filterAndOrderCaptures,
 } from './capture-records.js';
@@ -55,6 +65,7 @@ export class NeonProvider implements StorageProvider {
     await this.ensureDiaryEntriesTable();
     await this.ensureCeremonyEventsTable();
     await this.ensureCapturesTable();
+    await this.ensureMemoryConversationsTable();
   }
 
   async disconnect(): Promise<void> {
@@ -665,6 +676,81 @@ export class NeonProvider implements StorageProvider {
       rows.map((row) => parseJsonValue<CaptureRecord | null>(row.payload, null)),
       filters,
     );
+  }
+
+  // ── Memory conversations (jgwill/medicine-wheel#174) ──
+  // A change is written only if the row still holds the version it was read at (its
+  // updated_at), so two replies at once both land: the second reads again and retries.
+
+  async getMemoryConversation(id: string): Promise<MemoryConversation | null> {
+    const rows = await this.db`SELECT payload FROM memory_conversations WHERE id = ${id}`;
+    if (rows.length === 0) return null;
+    return parseJsonValue<MemoryConversation | null>(rows[0].payload, null);
+  }
+
+  async createMemoryConversation(record: MemoryConversation): Promise<MemoryConversation> {
+    const rows = await this.db`
+      INSERT INTO memory_conversations (id, payload, held_by, opened_from, shared_in, created_at, updated_at)
+      VALUES (${record.id}, ${JSON.stringify(record)}, ${record.held_by}, ${record.opened_from}, ${record.shared_in}, ${record.created_at}, ${record.updated_at})
+      ON CONFLICT (id) DO NOTHING
+      RETURNING id
+    `;
+    if (rows.length === 0) throw new ConversationError(409, `Conversation ${record.id} exists`);
+    return record;
+  }
+
+  async appendMemoryConversationTurn(id: string, turn: MemoryConversationTurn): Promise<MemoryConversation> {
+    return this.changeMemoryConversation(id, (c) => appendTurn(c, turn));
+  }
+
+  async updateMemoryConversation(id: string, patch: MemoryConversationPatch): Promise<MemoryConversation> {
+    return this.changeMemoryConversation(id, (c) => patchConversation(c, patch, new Date().toISOString()));
+  }
+
+  async listMemoryConversations(filters: MemoryConversationFilters = {}): Promise<MemoryConversation[]> {
+    const rows = filters.held_by !== undefined
+      ? await this.db`SELECT payload FROM memory_conversations WHERE held_by = ${filters.held_by} ORDER BY updated_at DESC`
+      : filters.shared_in !== undefined
+        ? await this.db`SELECT payload FROM memory_conversations WHERE shared_in = ${filters.shared_in} ORDER BY updated_at DESC`
+        : await this.db`SELECT payload FROM memory_conversations ORDER BY updated_at DESC`;
+    return filterConversations(rows.map((row) => parseJsonValue<MemoryConversation | null>(row.payload, null)), filters);
+  }
+
+  async deleteMemoryConversation(id: string): Promise<void> {
+    await this.db`DELETE FROM memory_conversations WHERE id = ${id}`;
+  }
+
+  private async changeMemoryConversation(id: string, change: (c: MemoryConversation) => MemoryConversation): Promise<MemoryConversation> {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const current = await this.getMemoryConversation(id);
+      if (!current) throw new ConversationError(404, `No conversation ${id}`);
+      const next = change(current);
+      if (next === current) return current;
+      const rows = await this.db`
+        UPDATE memory_conversations
+        SET payload = ${JSON.stringify(next)}, shared_in = ${next.shared_in}, updated_at = ${next.updated_at}
+        WHERE id = ${id} AND payload->>'updated_at' = ${current.updated_at}
+        RETURNING id
+      `;
+      if (rows.length > 0) return next;
+    }
+    throw new ConversationError(409, 'The conversation kept changing while this was written. Try again.');
+  }
+
+  private async ensureMemoryConversationsTable(): Promise<void> {
+    await this.db`
+      CREATE TABLE IF NOT EXISTS memory_conversations (
+        id TEXT PRIMARY KEY,
+        payload JSONB NOT NULL,
+        held_by TEXT NOT NULL,
+        opened_from TEXT,
+        shared_in TEXT,
+        created_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ
+      )
+    `;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_memory_conversations_held_by ON memory_conversations(held_by)`;
+    await this.db`CREATE INDEX IF NOT EXISTS idx_memory_conversations_shared_in ON memory_conversations(shared_in)`;
   }
 
   private async ensureCapturesTable(): Promise<void> {

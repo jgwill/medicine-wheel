@@ -29,6 +29,15 @@ import {
   mergePlanPerspectiveRecords,
   matchesPlanPerspectiveFilters,
 } from './plan-perspectives.js';
+import {
+  ConversationError,
+  conversationRecords,
+  filterConversations,
+  type MemoryConversation,
+  type MemoryConversationFilters,
+  type MemoryConversationPatch,
+  type MemoryConversationTurn,
+} from '@medicine-wheel/memory';
 import { filterInquiryWeaves } from './inquiry-weaves.js';
 import { filterAndOrderDiaryEntries } from './diary-records.js';
 import { matchesCeremonyEventFilters } from './ceremony-events.js';
@@ -85,6 +94,7 @@ export class JsonlProvider implements StorageProvider {
   private readonly diaryEntriesFile: string;
   private readonly ceremonyEventsFile: string;
   private readonly capturesFile: string;
+  private readonly memoryConversationsFile: string;
 
   constructor(dataDir?: string) {
     this.dataDir = path.resolve(dataDir ?? resolveProjectDataDir());
@@ -96,6 +106,7 @@ export class JsonlProvider implements StorageProvider {
     this.diaryEntriesFile = path.join(this.dataDir, 'diary-entries.jsonl');
     this.ceremonyEventsFile = path.join(this.dataDir, 'ceremony-events.jsonl');
     this.capturesFile = path.join(this.dataDir, 'captures.jsonl');
+    this.memoryConversationsFile = path.join(this.dataDir, 'memory-conversations.jsonl');
   }
 
   async connect(): Promise<void> {
@@ -448,6 +459,48 @@ export class JsonlProvider implements StorageProvider {
 
   private readCeremonyEvents(): CeremonyEventRecord[] {
     return readJsonl<CeremonyEventRecord>(this.ceremonyEventsFile);
+  }
+
+  // ── Memory conversations (jgwill/medicine-wheel#174) ──
+
+  async getMemoryConversation(id: string): Promise<MemoryConversation | null> {
+    return readJsonl<MemoryConversation>(this.memoryConversationsFile).find((c) => c.id === id) ?? null;
+  }
+
+  async createMemoryConversation(record: MemoryConversation): Promise<MemoryConversation> {
+    await withWriteLock(this.memoryConversationsFile, () => {
+      const all = readJsonl<MemoryConversation>(this.memoryConversationsFile);
+      if (all.some((c) => c.id === record.id)) throw new ConversationError(409, `Conversation ${record.id} exists`);
+      writeJsonl(this.memoryConversationsFile, [...all, record]);
+    });
+    return record;
+  }
+
+  async appendMemoryConversationTurn(id: string, turn: MemoryConversationTurn): Promise<MemoryConversation> {
+    return withWriteLock(this.memoryConversationsFile, () => {
+      const { list, kept } = conversationRecords.append(readJsonl<MemoryConversation>(this.memoryConversationsFile), id, turn);
+      writeJsonl(this.memoryConversationsFile, list);
+      return kept;
+    });
+  }
+
+  async updateMemoryConversation(id: string, patch: MemoryConversationPatch): Promise<MemoryConversation> {
+    return withWriteLock(this.memoryConversationsFile, () => {
+      const { list, kept } = conversationRecords.patch(readJsonl<MemoryConversation>(this.memoryConversationsFile), id, patch, new Date().toISOString());
+      writeJsonl(this.memoryConversationsFile, list);
+      return kept;
+    });
+  }
+
+  async listMemoryConversations(filters: MemoryConversationFilters = {}): Promise<MemoryConversation[]> {
+    return filterConversations(readJsonl<MemoryConversation>(this.memoryConversationsFile), filters);
+  }
+
+  async deleteMemoryConversation(id: string): Promise<void> {
+    await withWriteLock(this.memoryConversationsFile, () => {
+      const all = readJsonl<MemoryConversation>(this.memoryConversationsFile);
+      writeJsonl(this.memoryConversationsFile, all.filter((c) => c.id !== id));
+    });
   }
 
   private readCaptures(): CaptureRecord[] {

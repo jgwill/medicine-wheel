@@ -81,3 +81,24 @@ Also exported: `resolveReach` (scope to ceremonies), `matchRecords` and `queryTe
 ## Who decides who may ask
 
 The wheel keeps an answer inside the scope it is given. Deciding who may name which scope stays with the caller. Miadi, for example, builds the scope from the circles a person sits in.
+
+## Conversations
+
+A person (or an agent) can reply to the memory's answer: "say more about the second point", "revise what you just wrote". Each reply is asked with the earlier turns, and the wheel keeps the conversation, so every host and agent reads the same ones (jgwill/medicine-wheel#174).
+
+```ts
+import { createConversations } from '@medicine-wheel/memory';
+
+const conversations = createConversations({ memory, store }); // store: a ConversationStore, e.g. @medicine-wheel/storage-provider
+const first = await conversations.converse({ question: 'What did we commit to?', scope: { ceremonies: 'ceremony:…' }, asked_by: 'node:human:…' });
+const reply = await conversations.converse({ conversation: first.conversation.id, question: 'Revise what you just wrote.', scope, asked_by: 'node:human:…' });
+const again = await conversations.converse({ conversation: first.conversation.id, retry_of: reply.turn.id, scope, asked_by: 'node:human:…' });
+```
+
+- **Earlier turns are placed by the wheel**, before the host's prompt, by `foldEarlierTurns`. A host's template never names them. The provider fits them within its own limit (Honcho: 10,000 characters): the latest answer is sent whole, older turns are shortened, then left out, and the memory is told how many were left out.
+- **Ask again** (`retry_of` the latest turn) keeps both answers; the newest continues the conversation (`currentTurns`).
+- **Never projected.** A conversation is the asker's record, not circle speech. It is kept in its own store file (`memory-conversations.jsonl`, table `memory_conversations`) and the memory provider never receives it as a message.
+- **Rules the wheel keeps**: a conversation shared nowhere is continued only by its holder; the doors list conversations only by holder (`held_by`) or by the ceremony they are shared in (`shared_in`); a shared conversation is unshared before it is deleted; 100 turns at most.
+- **Who may read one stays with the host.** The wheel's doors trust their callers, so a conversation is private as far as the host's door keeps it. In a shared conversation each turn names its asker, and the host computes each reply's scope from the one who replies.
+
+Doors: `GET|POST /api/memory/conversations`, `GET|PATCH|DELETE /api/memory/conversations/{id}`. Client: `wheel().memory.conversations`. MCP: `memory_converse`, `memory_conversations`, `memory_conversation`. A host that keeps its own history passes `earlier` to `ask` instead.

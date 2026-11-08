@@ -18,3 +18,28 @@ export type { OcapBadgeProps } from './OcapBadge.js';
 
 export { WilsonMeter } from './WilsonMeter.js';
 export type { WilsonMeterProps } from './WilsonMeter.js';
+
+export {
+  useMemoryConversations,
+  ConversationList,
+  ConversationThread,
+  ConversationComposer,
+  turnGroups,
+  defaultConversationIcons,
+  defaultConversationLabels,
+} from './MemoryConversation.js';
+export type {
+  ConversationAdapter,
+  ConversationAsked,
+  ConversationBusy,
+  MemoryConversationsState,
+  UseMemoryConversationsOptions,
+  ConversationIcons,
+  ConversationLabels,
+  ConversationPart,
+  ConversationClassNames,
+  ConversationListProps,
+  ConversationThreadProps,
+  ConversationComposerProps,
+  TurnGroup,
+} from './MemoryConversation.js';

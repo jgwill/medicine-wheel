@@ -29,7 +29,19 @@ import type {
   RelationalNode,
 } from '@medicine-wheel/ontology-core';
 import type { DiaryEntryRecord } from '@medicine-wheel/storage-provider';
-import type { AboutInput, AskInput, MemoryAnswer, MemoryProviderStatus, SearchInput } from '@medicine-wheel/memory';
+import type {
+  AboutInput,
+  AskInput,
+  ConverseInput,
+  ConverseResult,
+  MemoryAnswer,
+  MemoryConversation,
+  MemoryConversationFilters,
+  MemoryConversationPatch,
+  MemoryConversationSummary,
+  MemoryProviderStatus,
+  SearchInput,
+} from '@medicine-wheel/memory';
 
 export type { CeremonyLog, CeremonyType, DirectionName, NarrativeBeat, NodeType, RelationalEdge, RelationalNode, DiaryEntryRecord };
 
@@ -244,6 +256,21 @@ export interface MedicineWheelClient {
     ask(input: AskInput): Promise<MemoryAnswer>;
     search(input: SearchInput): Promise<MemoryAnswer>;
     about(input: AboutInput): Promise<MemoryAnswer>;
+    /**
+     * Conversations with the memory (jgwill/medicine-wheel#174): a reply is
+     * asked with the earlier turns, and every host reads the same ones. The
+     * wheel refuses a reply from anyone but the holder to a conversation shared
+     * nowhere; who may read one stays with the caller.
+     */
+    conversations: {
+      /** Start one (no `conversation`), reply to one, or ask its latest question again (`retry_of`). */
+      converse(input: ConverseInput): Promise<ConverseResult>;
+      list(filters?: MemoryConversationFilters): Promise<MemoryConversationSummary[]>;
+      /** Null when the wheel holds no such conversation. */
+      get(id: string): Promise<MemoryConversation | null>;
+      update(id: string, patch: MemoryConversationPatch): Promise<MemoryConversation>;
+      delete(id: string): Promise<void>;
+    };
   };
   episodes: {
     /**
@@ -509,6 +536,30 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
       },
       async about(input) {
         return json(await call('/api/memory/about', { method: 'POST', body: JSON.stringify(input) }, memoryTimeoutMs), 'refused the memory reading');
+      },
+      conversations: {
+        async converse(input) {
+          return json(await call('/api/memory/conversations', { method: 'POST', body: JSON.stringify(input) }, memoryTimeoutMs), 'refused the memory conversation');
+        },
+        async list(filters = {}) {
+          const body = await json<{ conversations: MemoryConversationSummary[] }>(
+            await call(`/api/memory/conversations${query({ held_by: filters.held_by, opened_from: filters.opened_from, shared_in: filters.shared_in, q: filters.q, limit: filters.limit ? String(filters.limit) : undefined })}`),
+            'refused the conversation list',
+          );
+          return body.conversations ?? [];
+        },
+        async get(id) {
+          const res = await call(`/api/memory/conversations/${encodeURIComponent(id)}`);
+          if (res.status === 404) return null;
+          return json<MemoryConversation>(res, 'refused the conversation read');
+        },
+        async update(id, patch) {
+          return json(await call(`/api/memory/conversations/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(patch) }), 'refused the conversation change');
+        },
+        async delete(id) {
+          const res = await call(`/api/memory/conversations/${encodeURIComponent(id)}`, { method: 'DELETE' });
+          if (!res.ok) await refused(res, 'refused the conversation removal');
+        },
       },
     },
 

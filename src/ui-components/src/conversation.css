@@ -1,0 +1,41 @@
+/*
+ * Default styles for the memory conversation parts (MemoryConversation.tsx),
+ * drawn with the wheel's tokens (tokens.css). A host that passes its own
+ * classNames need not import this. jgwill/medicine-wheel#174
+ */
+[data-mw-part='list'], [data-mw-part='thread'], [data-mw-part='composer'] { font: inherit; color: inherit; }
+[data-mw-part='listHeader'] { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+[data-mw-part='listSearch'] { position: relative; display: flex; flex: 1; align-items: center; gap: 6px; border: 1px solid #404040; border-radius: 10px; padding: 0 10px; min-height: 36px; }
+[data-mw-part='listSearch'] input { flex: 1; border: 0; background: transparent; color: inherit; outline: none; min-width: 0; }
+[data-mw-part='listItems'] { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+[data-mw-part='listItem'] { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; border: 1px solid #2a2a2a; border-radius: 10px; padding: 3px 3px 3px 10px; min-height: 40px; }
+[data-mw-part='listItem'][data-active='true'] { border-color: var(--mw-ring, #ffd700); }
+[data-mw-part='listOpen'] { display: flex; flex: 1; min-width: 0; align-items: center; gap: 8px; background: none; border: 0; color: inherit; text-align: left; cursor: pointer; padding: 4px 0; text-decoration: none; }
+[data-mw-part='listTitle'] { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-mw-part='listFacts'] { display: inline-flex; gap: 8px; align-items: center; font-size: 12px; color: #959595; font-variant-numeric: tabular-nums; }
+[data-mw-part='listActions'] { display: inline-flex; gap: 2px; }
+[data-mw-part='listUnfold'] { flex-basis: 100%; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--mw-ring, #ffd700); padding: 8px 6px 4px; font-size: 13px; }
+[data-mw-part='listUnfold'] p { margin: 0; }
+[data-mw-part='thread'] { display: grid; gap: 16px; }
+[data-mw-part='group'] { display: grid; gap: 8px; }
+[data-mw-part='question'] { justify-self: end; max-width: 85%; background: #242424; border: 1px solid #404040; border-radius: 14px 14px 4px 14px; padding: 8px 12px; }
+[data-mw-part='asker'] { display: block; font-size: 11px; color: #959595; margin-bottom: 2px; }
+[data-mw-part='answer'] { display: grid; gap: 8px; }
+[data-mw-part='answerFoot'] { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; color: #d0d0d0; }
+[data-mw-part='pager'] { display: inline-flex; align-items: center; gap: 2px; font-size: 12px; color: #959595; font-variant-numeric: tabular-nums; }
+[data-mw-part='pending'] { display: inline-flex; gap: 8px; align-items: center; color: #d0d0d0; font-size: 14px; }
+[data-mw-part='error'] { color: var(--mw-south-ink, #ff7b72); margin: 0; }
+[data-mw-part='composer'] { display: grid; gap: 6px; border: 1px solid #404040; border-radius: 14px; padding: 8px; background: #1c1c1c; }
+[data-mw-part='composer']:focus-within { border-color: var(--mw-ring, #ffd700); }
+[data-mw-part='composerInput'] { resize: none; border: 0; background: transparent; color: inherit; font: inherit; outline: none; min-height: 24px; line-height: 1.5; }
+[data-mw-part='composerFoot'] { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #959595; }
+[data-mw-part='iconButton'] { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: inherit; cursor: pointer; }
+[data-mw-part='iconButton']:hover:not(:disabled) { background: rgba(212, 168, 67, 0.14); }
+[data-mw-part='iconButton']:disabled { opacity: 0.45; cursor: default; }
+[data-mw-part='button'] { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: #d0d0d0; cursor: pointer; padding: 6px 4px; }
+[data-mw-part='send'], [data-mw-part='confirm'] { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 0; border-radius: 10px; background: #d4a843; color: #151515; font-weight: 600; cursor: pointer; }
+[data-mw-part='send']:disabled { background: #404040; color: #959595; cursor: default; }
+[data-mw-part='iconButton']:focus-visible, [data-mw-part='send']:focus-visible, [data-mw-part='confirm']:focus-visible, [data-mw-part='listOpen']:focus-visible { outline: 2px solid var(--mw-ring, #ffd700); outline-offset: 2px; }
+[data-mw-spin='true'] { display: inline-flex; animation: mw-spin 1s linear infinite; }
+@keyframes mw-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { [data-mw-spin='true'] { animation: none; } }

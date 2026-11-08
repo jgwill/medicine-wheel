@@ -15,6 +15,10 @@
  * dependencies. jgwill/medicine-wheel#149
  */
 
+import type { EarlierTurn } from './conversations.js';
+
+export * from './conversations.js';
+
 // ── the contract ────────────────────────────────────────────────────────────
 
 /** One value or several. */
@@ -105,7 +109,20 @@ export interface MemoryAnswer {
 
 /** A question as a provider receives it: the reach is already resolved. */
 export interface MemoryQuestion {
+  /** What the provider is asked: the host's prompt, or the person's words. */
   query: string;
+  /**
+   * What a provider searches its records with when `query` is a host's prompt:
+   * the person's own words, with the conversation's first question on a reply,
+   * the same words the wheel's own records are matched on.
+   */
+  question?: string;
+  /**
+   * The earlier turns of a conversation, oldest first. A provider that reasons
+   * folds them before `query` within its own limit ({@link foldEarlierTurns}).
+   * jgwill/medicine-wheel#174
+   */
+  earlier?: EarlierTurn[];
   reach: Reach;
   /** Whose memory is asked. A provider picks its own default. */
   peer?: string;
@@ -307,6 +324,12 @@ export interface AskInput {
   peer?: string;
   reasoning_level?: string;
   limit?: number;
+  /**
+   * The earlier turns of a conversation, oldest first: the question is a reply
+   * to them. Kept conversations pass them through {@link createConversations};
+   * a host that keeps its own may pass them here. jgwill/medicine-wheel#174
+   */
+  earlier?: EarlierTurn[];
 }
 
 export interface SearchInput {
@@ -435,9 +458,14 @@ export function createMemory(opts: { wheel: MemoryWheel; providers?: MemoryProvi
       const r = await reach(input.scope);
       if (isEmpty(r)) return empty(r);
       const limit = input.limit ?? 12;
-      const matched = matchRecords(input.question, await wheel.records(r), { limit });
+      const earlier = (input.earlier ?? []).filter((t) => t?.question?.trim());
+      // A reply such as "say more" names little; the conversation's first question names what it is about.
+      const matchOn = earlier.length ? `${earlier[0].question}\n${input.question}` : input.question;
+      const matched = matchRecords(matchOn, await wheel.records(r), { limit });
       const prompt = input.prompt?.trim();
-      const out = await answer(r, matched, limit, (p) => p.ask({ query: prompt || input.question, reach: r, peer: input.peer, reasoning_level: input.reasoning_level, limit }));
+      const out = await answer(r, matched, limit, (p) =>
+        p.ask({ query: prompt || input.question, question: matchOn, reach: r, peer: input.peer, reasoning_level: input.reasoning_level, limit, ...(earlier.length ? { earlier } : {}) }),
+      );
       return prompt && out.mode !== 'matched' && out.mode !== 'empty' ? { ...out, prompted: true } : out;
     },
     async search(input) {

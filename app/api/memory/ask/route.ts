@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
-import { readLimit, readScope, wheelMemory } from '@/lib/memory';
+import { readEarlier, readLimit, readScope, wheelMemory } from '@/lib/memory';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * Ask the wheel's memory a question within a scope.
- * Body: { question, prompt?, scope, peer?, reasoning_level?, limit? }.
+ * Body: { question, prompt?, scope, peer?, reasoning_level?, limit?, earlier? }.
+ * `earlier` is the turns of a conversation the host keeps itself; a kept
+ * conversation is asked through /api/memory/conversations (jgwill/medicine-wheel#174).
  * `prompt` is what the memory provider is asked when the host wraps the
  * question in its own template; the records match keeps `question`
  * (jgwill/medicine-wheel#171).
@@ -22,6 +24,8 @@ export async function POST(request: Request) {
   if (prompt.length > 20000) return NextResponse.json({ error: 'prompt holds at most 20000 characters' }, { status: 400 });
   const read = readScope(body?.scope);
   if ('error' in read) return NextResponse.json({ error: read.error }, { status: 400 });
+  const prior = readEarlier(body?.earlier);
+  if ('error' in prior) return NextResponse.json({ error: prior.error }, { status: 400 });
   try {
     const answer = await wheelMemory().ask({
       question,
@@ -30,6 +34,7 @@ export async function POST(request: Request) {
       ...(typeof body.peer === 'string' && body.peer ? { peer: body.peer } : {}),
       ...(typeof body.reasoning_level === 'string' ? { reasoning_level: body.reasoning_level } : {}),
       limit: readLimit(body.limit),
+      ...(prior.earlier ? { earlier: prior.earlier } : {}),
     });
     return NextResponse.json(answer, { headers: { 'cache-control': 'no-store' } });
   } catch (error) {

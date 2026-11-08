@@ -39,7 +39,7 @@
  */
 
 import type { CeremonyLog, NarrativeBeat, NodeType, DirectionName } from '@medicine-wheel/ontology-core';
-import { excerptAround, type MemoryProvider, type MemoryQuestion, type MemorySource, type ProviderAnswer, type Reach } from '@medicine-wheel/memory';
+import { excerptAround, foldEarlierTurns, type MemoryProvider, type MemoryQuestion, type MemorySource, type ProviderAnswer, type Reach } from '@medicine-wheel/memory';
 
 export type { CeremonyLog, NarrativeBeat };
 
@@ -324,8 +324,14 @@ export interface ScopedAnswer {
   sessions: string[];
 }
 
+/** The longest query Honcho's dialectic accepts (`DialecticOptions.query`, max_length 10000). */
+export const HONCHO_QUERY_MAX = 10000;
+
 export interface AskWithinOptions {
+  /** What the dialectic is asked. */
   query: string;
+  /** What the message search looks for; default `query`. A host's prompt is a poor search, the person's words are not. */
+  search_query?: string;
   /** Honcho session ids the answer may draw on. Nothing outside them is read. */
   sessions: string[];
   /** The peer whose memory is asked. Default: the wheel, seated in every ceremony. */
@@ -350,7 +356,7 @@ export async function askWithin(client: HonchoClient, opts: AskWithinOptions): P
   const filters = { session_id: { in: sessions } };
   const [confined, messages] = await Promise.all([
     client.supportsSessionFilters(),
-    client.search(opts.query, { limit: opts.limit ?? 12, filters }),
+    client.search(opts.search_query?.trim() || opts.query, { limit: opts.limit ?? 12, filters }),
   ]);
   if (!confined) return { mode: 'search', messages, sessions };
   const answer = await client.peers.chat(opts.peer ?? WHEEL_PEER, opts.query, { reasoning_level: opts.reasoning_level ?? 'low', filters });
@@ -705,14 +711,20 @@ export function honchoMemoryProvider(client: HonchoClient): MemoryProvider {
     async status() {
       try {
         await client.health();
-        return { provider: name, enabled: true, confined: await client.supportsSessionFilters(), detail: { url: client.baseUrl, workspace: client.workspace } };
+        return { provider: name, enabled: true, confined: await client.supportsSessionFilters(), detail: { url: client.baseUrl, workspace: client.workspace, max_query: HONCHO_QUERY_MAX } };
       } catch (error) {
         return { provider: name, enabled: false, detail: { url: client.baseUrl, workspace: client.workspace }, error: error instanceof Error ? error.message : String(error) };
       }
     },
     async ask(q) {
+      // A reply carries its conversation; the latest answer stays whole within Honcho's limit (jgwill/medicine-wheel#174).
+      const query = foldEarlierTurns(q.query, q.earlier, HONCHO_QUERY_MAX - 200);
+      if (query.length > HONCHO_QUERY_MAX) {
+        throw new Error(`the question is ${query.length} characters and Honcho takes ${HONCHO_QUERY_MAX}; shorten the prompt template or the question`);
+      }
       const out = await askWithin(client, {
-        query: q.query,
+        query,
+        ...(q.question?.trim() ? { search_query: q.question } : {}),
         sessions: sessionsForReach(q.reach),
         peer: q.peer,
         reasoning_level: q.reasoning_level,

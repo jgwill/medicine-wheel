@@ -69,3 +69,7 @@ import { WilsonMeter } from '@medicine-wheel/ui-components';
 ## License
 
 MIT
+
+## Memory conversations
+
+`useMemoryConversations(adapter)` holds a person's conversations with the wheel's memory (jgwill/medicine-wheel#174); `ConversationList`, `ConversationThread` and `ConversationComposer` draw them. The adapter is the host's own door, so the host decides who may read and reach what. Every part carries `data-mw-part` and takes a class per part (`classNames`); the host passes how an answer is rendered (`renderAnswer`, e.g. markdown), its sources (`renderSources`), its icons (`icons`), its own actions (`renderAnswerActions`, `renderActions` beside the box, for voice), and its words (`labels`). A question asked again shows each answer with a pager. Import `@medicine-wheel/ui-components/conversation.css` for default styles drawn with the wheel's tokens.

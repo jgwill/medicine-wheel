@@ -11,14 +11,17 @@
       "require": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./tokens.css": "./src/tokens.css"
+    "./tokens.css": "./src/tokens.css",
+    "./conversation.css": "./src/conversation.css"
   },
   "sideEffects": [
-    "./src/tokens.css"
+    "./src/tokens.css",
+    "./src/conversation.css"
   ],
   "files": [
     "dist",
     "src/tokens.css",
+    "src/conversation.css",
     "README.md"
   ],
   "scripts": {
@@ -42,7 +45,8 @@
     "directory": "src/ui-components"
   },
   "dependencies": {
-    "@medicine-wheel/ontology-core": "^0.27.5"
+    "@medicine-wheel/ontology-core": "^0.27.5",
+    "@medicine-wheel/memory": "^0.27.5"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0"

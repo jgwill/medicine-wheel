@@ -5,6 +5,7 @@
  * Implementations: JsonlProvider (local/default), NeonProvider (Postgres), RedisProvider (future)
  */
 
+import type { MemoryConversation, MemoryConversationFilters, MemoryConversationPatch, MemoryConversationTurn } from '@medicine-wheel/memory';
 import type {
   DirectionName,
   NodeType,
@@ -452,6 +453,17 @@ export interface StorageProvider {
   registerCapture(record: CaptureRecord): Promise<CaptureRecord>;
   getCapture(id: string): Promise<CaptureRecord | null>;
   listCaptures(filters?: CaptureFilters): Promise<CaptureRecord[]>;
+
+  // Memory conversations (@medicine-wheel/memory): what a person or an agent asked the
+  // memory and what it answered. Kept beside the store, never projected into the memory.
+  // jgwill/medicine-wheel#174
+  getMemoryConversation(id: string): Promise<MemoryConversation | null>;
+  createMemoryConversation(record: MemoryConversation): Promise<MemoryConversation>;
+  /** Reads the stored conversation again before appending, so two replies at once both land. */
+  appendMemoryConversationTurn(id: string, turn: MemoryConversationTurn): Promise<MemoryConversation>;
+  updateMemoryConversation(id: string, patch: MemoryConversationPatch): Promise<MemoryConversation>;
+  listMemoryConversations(filters?: MemoryConversationFilters): Promise<MemoryConversation[]>;
+  deleteMemoryConversation(id: string): Promise<void>;
 }
 
 export type ProviderType = 'jsonl' | 'neon' | 'redis' | 'auto';

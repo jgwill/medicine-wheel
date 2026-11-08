@@ -64,7 +64,7 @@
     "mcp"
   ],
   "scripts": {
-    "build:packages": "npm run build -w src/ontology-core -w src/creative-orientation && npm run build --workspaces --if-present",
+    "build:packages": "npm run build -w src/ontology-core -w src/creative-orientation -w src/memory && npm run build --workspaces --if-present",
     "build:cli": "tsc -p tsconfig.cli.json && node -e \"for (const f of ['dist/cli/mw.js','dist/cli/mwsrv.js']) { try { require('fs').chmodSync(f, 0o755); } catch (e) { console.warn('[cli] chmod skipped (non-fatal):', e.message); } }\"",
     "clean:packages": "npm run clean --workspaces --if-present",
     "prebuild": "npm run build:packages",
