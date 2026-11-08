@@ -16,7 +16,7 @@ const conversation: MemoryConversation = {
 };
 
 const state = (over: Partial<MemoryConversationsState> = {}): MemoryConversationsState => ({
-  conversations: [{ ...conversation, turns: undefined as never, turn_count: 3, last_question: "Why teal?", last_at: conversation.updated_at }],
+  conversations: [(({ turns: _turns, ...rest }) => ({ ...rest, turn_count: 3, last_question: "Why teal?", last_at: conversation.updated_at }))(conversation)],
   listed: true, active: conversation, busy: null, pending: null, error: null,
   adapter: { list: async () => [], get: async () => null, ask: async () => { throw new Error("no"); }, rename: async () => conversation, remove: async () => {} },
   refresh: async () => {}, open: async () => {}, startNew: () => {}, ask: async () => true, askAgain: async () => true,
