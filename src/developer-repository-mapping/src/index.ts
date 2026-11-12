@@ -138,7 +138,10 @@ export { PackageReadingSchema, bumpVersion, consumesEdges, impactOf, satisfies }
 export type { BumpLevel, ConsumesEdge, ImpactAnswer, ImpactConsumer, ImpactLink, PackageReading } from './capability-impact';
 export {
   CAPABILITY_FILE,
+  CAPABILITY_FILE_ROW_KEYS,
   CAPABILITY_FILE_SCHEMA,
+  CAPABILITY_FILE_VERSION,
+  CapabilityNameSchema,
   CapabilityFileHeaderSchema,
   CapabilityFileRowSchema,
   SCAN_AUTHOR,
@@ -149,4 +152,4 @@ export {
   renderCapabilityFile,
   stateCapabilityRow,
 } from './capability-file';
-export type { CapabilityFileHeader, CapabilityFileMerge, CapabilityFileRow, CapabilityStatementInput, ParsedCapabilityFile } from './capability-file';
+export type { CapabilityFileHeader, CapabilityFileMerge, CapabilityFileRow, CapabilityStatementInput, ParseCapabilityFileOptions, ParsedCapabilityFile } from './capability-file';

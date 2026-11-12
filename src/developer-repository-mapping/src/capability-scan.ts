@@ -52,6 +52,8 @@ export function parsePackageJson(text: string): {
   bins: string[];
   /** runtime dependencies (dependencies, peerDependencies, optionalDependencies): name → range */
   dependsOn: Record<string, string>;
+  /** `"private": true`: never published, so not offered to others */
+  private?: boolean;
 } {
   try {
     const p = JSON.parse(text) as Record<string, unknown>;
@@ -69,7 +71,7 @@ export function parsePackageJson(text: string): {
         for (const [dep, range] of Object.entries(deps as Record<string, unknown>)) if (typeof range === "string") dependsOn[dep] = range;
       }
     }
-    return { ...(name ? { name } : {}), ...(version ? { version } : {}), ...(description ? { description } : {}), bins, dependsOn };
+    return { ...(name ? { name } : {}), ...(version ? { version } : {}), ...(description ? { description } : {}), bins, dependsOn, ...(p.private === true ? { private: true } : {}) };
   } catch {
     return { bins: [], dependsOn: {} };
   }

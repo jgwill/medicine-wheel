@@ -46,20 +46,34 @@ A statement holds at least one word and at most 55. A word is a whitespace-separ
 
 A repository keeps what it provides in `.miadi/capabilities.jsonl`, committed with the code, so whoever clones it knows what it offers with no registry and no Factory.
 
+**Two meanings of capability.** The rows above (`capability:<slug>`, "something the platform can do for someone") are platform capabilities. The rows of a repository's file are what the repository provides: its packages, the commands they ship, its skills (`capability:<kind>-<slug>`). A provided capability says which platform capabilities it serves with `realizes`, and that join is what makes the inventory a map.
+
+**The file, format version 1.** JSON Lines. The JSON Schema of one line ships with the package at `schema/repository-capabilities.v1.schema.json` (`https://unpkg.com/@medicine-wheel/developer-repository-mapping/schema/repository-capabilities.v1.schema.json`); the header's `schema` and `version` name it.
+
 - The first line says what the file is: `{"schema":"medicine-wheel/repository-capabilities","version":1,"repository":"<owner>/<name>"}`.
-- Each other line is one capability: `kind` (`package`, `cli`, `skill`), `name`, `address` (`miadi-capability://<owner>/<repo>/<kind>/<name>`), `statement` when there is one of at most 55 words, `status`, `package` for a CLI (the package that ships it), and the attribution of every row, with `grounding` holding the files that say so, relative to the repository.
+- Each other line is one capability: `kind` (`package`, `cli`, `skill`), `name`, `address` (`miadi-capability://<repository>/<kind>/<name>`), `statement` when there is one of at most 55 words, `status`, `package` for a CLI (the package that ships it), `realizes` (each entry a platform capability with who said so and when), and the attribution of every row, with `grounding` holding the files that say so, relative to the repository.
 - Versions and dependency ranges are not in the file, because every release would make them stale. A reader takes them from each `package.json` at the commit it reads.
 - The commit is not in the file, because a committed file cannot name its own commit. A reader adds the commit it read, and the registry's grounding reads `<owner>/<name>@<commit>:<path>`.
+- A private package (`"private": true`) is never published, so it is read for what consumes what and not listed as something the repository provides.
+- Names and statements hold no control character; a statement is at most 1200 characters; a row for the same kind and name appears once.
+
+**Readers and writers.**
+
+- A reader of version 1 reads a file of a later version and skips what it does not know (a key, a kind, a header field, a higher version), each said as a warning. A writer of version 1 refuses to rewrite such a file, because the rewrite would lose what it does not know.
+- A reader computes each address from the header's repository, the kind and the name, and warns when a row says otherwise.
+- A reader reads a row only when the commit provides that capability: a row naming a package, a command or a skill the commit does not hold is the file's claim, reported and never read, so a repository cannot speak for another.
+- A fork, a mirror or a remote spelled in another case keeps the repository the file was written for: its addresses stay, and a rescan with unchanged files changes nothing. `--repository <owner/name>` adopts the file for another repository.
 
 **Behaviors.**
 
-- `mw-repomap capabilities scan [<clone>] --write` reads the clone at HEAD from git objects and keeps the file in its working tree. It commits nothing. `--check` writes nothing and exits 1 when the file would change.
-- A rescan keeps what a person wrote. A row whose `statedBy` is not `mw-repomap scan` keeps its words and its attribution, and so does a statement added by hand to a row the scan could not state. A row the scan wrote stays as it is while its statement stays the same, and goes back to `pending` when the statement changes. A rescan of unchanged files changes nothing in the file, dates included.
-- `mw-repomap capabilities state <kind>/<name> "<statement>" --by <who>` is a person stating a row, held to 55 words. Without a statement it affirms what is there.
-- A reader takes the file first and merges it with what the commit's files say by the rule a rescan uses, so a file behind its repository still answers everything the commit provides.
-- `mw-repomap capabilities map` goes through clones (named, `--root <dir>`, or `--list <file>`), reads each one's file, or its files when it has none, and answers one map: what each repository provides, and which package consumes which across them. `--out` writes the rows a host reads through `MIADI_REPOSITORY_CAPABILITIES`. A clone that cannot be read is reported and the others are still read.
+- `mw-repomap capabilities scan [<clone>] --write` reads the clone at HEAD from git objects and keeps the file in its working tree. It commits nothing. `--check` writes nothing and exits 1 when the file would change. It refuses to write when a `package.json` it should read is not JSON, because that package's rows would be removed, and it warns when the repository's ignore rules match the file.
+- A rescan keeps what a person wrote: a row whose `statedBy` is not `mw-repomap scan` keeps its words, its status and its attribution. A hand edit is a person's when it puts the person's name in `statedBy`; `capabilities state` does that. A row the scan wrote stays as it is while its statement stays the same, and goes back to `pending` when the statement changes or the files stop making one. `realizes` is never the scan's to say and stays through every rescan. A rescan of unchanged files changes nothing in the file, dates included.
+- `mw-repomap capabilities state <kind>/<name> "<statement>" --by <who>` is a person stating a row, held to 55 words; without a statement it affirms what is there. `--realizes capability:<slug>[,…]` adds what the row serves, each entry signed by `--by`. The scan's own name never signs a statement.
+- `mw-repomap capabilities show [<clone>]` reads HEAD, the repository's own file first, merged with what the commit's files say by the rule a rescan uses, so a file behind its repository still answers everything the commit provides.
+- `mw-repomap capabilities map` goes through clones (named, `--root <dir>`, or `--list <file>`), reads each one's default branch as last fetched, its file or its files when it has none, and answers one map: what each repository provides, which package consumes which, and what each capability realizes. `--out` writes the rows a host reads through `MIADI_REPOSITORY_CAPABILITIES`, `--packages` the package readings it reads through `MIADI_REPOSITORY_PACKAGES`. A clone or a folder that cannot be read is reported and the others are still read; two names that make one id are reported.
+- Each subcommand takes only its own flags, and `show` and `map` exit 1 when a file holds an error.
 
-Ground: William, 2026-11-07 and 2026-11-08, Episode 568's Capability Registry (`miadi-chronicle://568`).
+Ground: William, 2026-11-07 and 2026-11-08, Episode 568's Capability Registry (`miadi-chronicle://568`). Revised 2026-11-11 from a code review and a design review checked against Backstage's descriptor format, Security Insights, publiccode.yml's fork rule, MCP's server.json, the Agent Skills format, purl and JSON Lines.
 
 ## Creative Advancement Scenario
 

@@ -60,7 +60,13 @@ mw-repomap capabilities scan --check                  # exit 1 when the file is 
 mw-repomap capabilities map --root ~/repos --out map.jsonl   # go through clones and answer one map
 ```
 
-A rescan keeps what a person wrote and leaves the file alone when nothing changed. Versions come from each `package.json` at the commit read, so a release does not touch the file. The format is in `rispecs/developer-suite/repository-mapping/capabilities.spec.md`.
+A rescan keeps what a person wrote and leaves the file alone when nothing changed. Versions come from each `package.json` at the commit read, so a release does not touch the file. A reader skips what a newer format adds and reads the rest; it never reads a row the commit does not provide. A fork keeps the file's repository until `--repository` adopts it. If the repository ignores `*.jsonl`, add `!.miadi/capabilities.jsonl` after that rule.
+
+```bash
+mw-repomap capabilities state package/@acme/tool --realizes capability:publish-a-prototype --by Ava   # which platform capability it serves
+```
+
+The JSON Schema of a line ships at `schema/repository-capabilities.v1.schema.json`. The format and its rules are in `rispecs/developer-suite/repository-mapping/capabilities.spec.md` of jgwill/medicine-wheel.
 
 ## Library
 

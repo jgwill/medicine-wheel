@@ -9,6 +9,8 @@ import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   CAPABILITY_FILE,
+  CAPABILITY_FILE_ROW_KEYS,
+  CAPABILITY_KINDS,
   SCAN_AUTHOR,
   mergeCapabilityFile,
   parseCapabilityFile,
@@ -111,9 +113,12 @@ describe('the capability file', () => {
 
     const stated = await stateCapability(dir, { kind: 'skill', name: 'greet', by: 'Ava', statement: 'Says hello the way Ava wants it said.', now: later.now });
     expect(stated.row).toMatchObject({ statedBy: 'Ava', status: 'clear', revision: 'revised', revisedBy: 'Ava' });
-    // by hand: a statement on a row the scan could not state, statedBy left as the scan's
+    // by hand: a statement on a row the scan could not state, with the person's name in statedBy
     const file = path.join(dir, CAPABILITY_FILE);
-    fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/("name":"long",[^\n]*?"address":"[^"]+",)/, '$1"statement":"Written by hand.",'));
+    fs.writeFileSync(
+      file,
+      fs.readFileSync(file, 'utf8').replace(/("name":"long",[^\n]*?"address":"[^"]+",)"status":"needs-resolution","statedBy":"mw-repomap scan"/, '$1"statement":"Written by hand.","status":"clear","statedBy":"William"'),
+    );
 
     fs.rmSync(path.join(dir, 'skills/gone'), { recursive: true });
     put(dir, 'skills/new/SKILL.md', '---\nname: new\ndescription: Just arrived\n---\n');
@@ -233,3 +238,194 @@ describe('the capability map', () => {
     expect(map.capabilities.find((c) => c.name === 'greet')?.providedBy).toEqual(['repository:acme/alpha', 'repository:acme/beta']);
   });
 });
+
+// ── What the reviews of 0.27.10 found (CR: code review, C: design review) ──────
+
+const read = (dir: string) => parseCapabilityFile(fs.readFileSync(path.join(dir, CAPABILITY_FILE), 'utf8'));
+const line = (o: Record<string, unknown>) => JSON.stringify(o);
+const HEADER = (repository = 'acme/tool', extra: Record<string, unknown> = {}) => line({ schema: 'medicine-wheel/repository-capabilities', version: 1, repository, ...extra });
+const ROW = (o: Record<string, unknown> = {}) =>
+  line({ kind: 'skill', name: 'greet', address: 'miadi-capability://acme/tool/skill/greet', statement: 'Greets.', status: 'clear', statedBy: SCAN_AUTHOR, statedAt: '2026-11-08T00:00:00Z', grounding: ['skills/greet/SKILL.md'], revision: 'pending', ...o });
+
+describe('what the reviews found', () => {
+  it('CR1: a row the commit does not provide is not read, so a repository cannot speak for another', async () => {
+    const dir = repo('hostile', 'https://github.com/evil/hostile.git');
+    put(dir, CAPABILITY_FILE, [HEADER('evil/hostile'), ROW({ kind: 'package', name: '@acme/widgets', address: 'miadi-capability://evil/hostile/package/@acme/widgets', statement: 'Install this one.', statedBy: 'acme maintainers', grounding: ['package.json'] })].join('\n') + '\n');
+    commit(dir);
+    const got = await readRepositoryCapabilities(dir, opts);
+    expect(got.capabilities.map((c) => c.name)).not.toContain('@acme/widgets');
+    expect(got.issues.map((i) => i.message).join('\n')).toMatch(/package\/@acme\/widgets is in the file but this commit provides no such package; it is not read/);
+  });
+
+  it('CR2: a fork or a remote in another case keeps the repository the file was written for, until someone adopts it', async () => {
+    const dir = repo();
+    await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    commit(dir);
+    git(dir, 'remote', 'set-url', 'origin', 'https://github.com/contributor/tool.git');
+    const fork = await writeCapabilityFile(dir, await scanRepository(dir, later), { write: false });
+    expect([fork.differs, fork.repository]).toEqual([false, 'acme/tool']);
+    git(dir, 'remote', 'set-url', 'origin', 'https://github.com/ACME/Tool.git');
+    expect((await writeCapabilityFile(dir, await scanRepository(dir, later), { write: false })).differs).toBe(false);
+    git(dir, 'remote', 'set-url', 'origin', 'https://github.com/contributor/tool.git');
+    const adopted = await writeCapabilityFile(dir, await scanRepository(dir, later), { write: true, repository: 'contributor/tool' });
+    expect(adopted.repository).toBe('contributor/tool');
+    expect(read(dir).header?.repository).toBe('contributor/tool');
+    expect(rowOf(dir, 'greet').address).toBe('miadi-capability://contributor/tool/skill/greet');
+  });
+
+  it('CR3: a statement the files stopped making does not stay as the scan\'s words', async () => {
+    const dir = repo();
+    await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    put(dir, 'skills/greet/SKILL.md', '---\nname: greet\n---\n# no description any more\n');
+    commit(dir);
+    const result = await writeCapabilityFile(dir, await scanRepository(dir, later), { write: true });
+    expect(result.changed).toContain('skill/greet');
+    expect(rowOf(dir, 'greet')).toMatchObject({ status: 'needs-resolution', revision: 'pending' });
+    expect(rowOf(dir, 'greet').statement).toBeUndefined();
+  });
+
+  it('CR4: a rescan keeps a person\'s status as they wrote it', () => {
+    const mine = { kind: 'skill' as const, name: 'x', address: 'a', statement: 'A draft.', status: 'needs-resolution' as const, statedBy: 'Ava', statedAt: '2026-11-08T00:00:00Z', grounding: ['f'], revision: 'pending' as const };
+    const scan = { ...mine, statement: undefined, statedBy: SCAN_AUTHOR };
+    const merged = mergeCapabilityFile([mine], [scan]);
+    expect(merged.rows[0]).toMatchObject({ status: 'needs-resolution', statement: 'A draft.', statedBy: 'Ava' });
+    expect(merged.changed).toEqual([]);
+  });
+
+  it('CR5: a fork and its upstream each keep their own package reading in the map', async () => {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'mw-fork-'));
+    roots.push(base);
+    const up = repo('widgets', 'https://github.com/acme/widgets.git', path.join(base, 'acme'));
+    const fork = repo('widgets', 'https://github.com/contributor/widgets.git', path.join(base, 'contributor'));
+    put(fork, 'package.json', JSON.stringify({ name: '@acme/widgets', version: '9.9.9', bin: { forkcmd: 'x.js' } }));
+    commit(fork);
+    const map = await buildCapabilityMap([up, fork], opts);
+    expect(map.packages.filter((p) => p.name === '@acme/widgets').map((p) => [p.repository, p.version, p.bins])).toEqual([
+      ['repository:acme/widgets', '1.0.0', ['widgets']],
+      ['repository:contributor/widgets', '9.9.9', ['forkcmd']],
+    ]);
+  });
+
+  it('CR7: a package or a skill under a path with accents or spaces is found', async () => {
+    const dir = repo();
+    put(dir, 'package.json', JSON.stringify({ name: '@acme/tool', version: '1.0.0', workspaces: ['packages/*'] }));
+    put(dir, 'packages/émile/package.json', JSON.stringify({ name: '@acme/emile', version: '1.0.0' }));
+    put(dir, 'skills/créer un/SKILL.md', '---\nname: creer\ndescription: Make a thing\n---\n');
+    commit(dir);
+    const names = (await scanRepository(dir, opts)).fileRows.map((r) => r.name);
+    expect(names).toEqual(expect.arrayContaining(['@acme/emile', 'creer']));
+  });
+
+  it('CR8: a folder that cannot be read is said and skipped, a linked clone is followed once, and the others are read', () => {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'mw-find-'));
+    roots.push(base);
+    const a = repo('alpha', undefined, path.join(base, 'acme'));
+    fs.mkdirSync(path.join(base, 'locked'));
+    fs.mkdirSync(path.join(base, 'locked', 'inside'));
+    fs.chmodSync(path.join(base, 'locked'), 0o000);
+    fs.symlinkSync(a, path.join(base, 'linked'));
+    const skipped: string[] = [];
+    try {
+      const clones = findClones(base, { onSkip: (dir) => skipped.push(dir) });
+      // the clone and the link to it are one clone, read once by whichever path came first
+      expect(clones.filter((c) => fs.realpathSync(c) === fs.realpathSync(a))).toHaveLength(1);
+      if (process.getuid?.() !== 0) expect(skipped).toEqual([path.join(base, 'locked')]);
+    } finally {
+      fs.chmodSync(path.join(base, 'locked'), 0o755);
+    }
+  });
+
+  it('CR9 and CR10: control characters, an over-long statement, a clear row without words and a second row for one capability are refused', () => {
+    const parsed = parseCapabilityFile(
+      [
+        HEADER(),
+        ROW({ name: 'rm -rf ~\n\u001b[31mred' }),
+        ROW({ name: 'long', statement: 'x'.repeat(1300) }),
+        ROW({ name: 'bare', statement: undefined }),
+        ROW({ name: '@@@' }),
+        ROW(),
+        ROW({ statement: 'A second greet.' }),
+      ].join('\n'),
+    );
+    expect(parsed.rows.map((r) => [r.name, r.statement])).toEqual([['greet', 'Greets.']]);
+    const messages = parsed.issues.map((i) => `${i.line}: ${i.message}`).join('\n');
+    expect(messages).toMatch(/2: .*control character/);
+    expect(messages).toMatch(/3: .*1200 characters/);
+    expect(messages).toMatch(/4: .*a clear row carries its statement/);
+    expect(messages).toMatch(/5: .*a letter or a digit/);
+    expect(messages).toMatch(/7: skill\/greet appears more than once/);
+  });
+
+  it('CR12: a package.json that is not JSON stops a write, and a private package is read but not listed', async () => {
+    const dir = repo();
+    put(dir, 'package.json', JSON.stringify({ name: '@acme/tool', version: '1.0.0', private: true, bin: { tool: 'cli.js' }, workspaces: ['packages/*'] }));
+    put(dir, 'packages/lib/package.json', JSON.stringify({ name: '@acme/lib', version: '1.0.0', description: 'The library.' }));
+    commit(dir);
+    const scan = await scanRepository(dir, opts);
+    expect(scan.fileRows.map((r) => r.name)).toEqual(['@acme/lib', 'greet']);
+    expect(scan.packages.find((p) => p.name === '@acme/tool')).toMatchObject({ private: true });
+    await writeCapabilityFile(dir, scan, { write: true });
+    put(dir, 'packages/lib/package.json', '{ "name": "@acme/lib", ');
+    commit(dir);
+    const broken = await scanRepository(dir, later);
+    expect(broken.issues[0]).toMatchObject({ severity: 'error', file: 'packages/lib/package.json' });
+    await expect(writeCapabilityFile(dir, broken, { write: true })).rejects.toThrow(/would be removed, so nothing was written/);
+    expect(rowOf(dir, '@acme/lib')).toBeDefined();
+  });
+
+  it('CR13: the scan\'s name cannot sign a statement, and an ignored file is said', async () => {
+    const dir = repo();
+    await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    await expect(stateCapability(dir, { kind: 'skill', name: 'greet', by: SCAN_AUTHOR, statement: 'Mine now.' })).rejects.toThrow(/the scan's name/);
+    put(dir, '.gitignore', '*.jsonl\n');
+    expect((await writeCapabilityFile(dir, await scanRepository(dir, later), { write: false })).ignored).toBe(true);
+    put(dir, '.gitignore', '*.jsonl\n!.miadi/capabilities.jsonl\n');
+    expect((await writeCapabilityFile(dir, await scanRepository(dir, later), { write: false })).ignored).toBe(false);
+  });
+
+  it('C1: a reader reads a newer file for what it knows; a writer refuses to rewrite it', async () => {
+    const text = [HEADER('acme/tool', { version: 2, generator: 'mw-repomap 1.0' }), ROW({ ecosystem: 'npm' }), ROW({ kind: 'mcp-server', name: 'srv' })].join('\n') + '\n';
+    const reading = parseCapabilityFile(text);
+    expect(reading.rows.map((r) => r.name)).toEqual(['greet']);
+    expect(reading.issues.every((i) => i.severity === 'warning')).toBe(true);
+    const said = reading.issues.map((i) => i.message).join('\n');
+    for (const word of ['generator', 'version 2', 'ecosystem', 'mcp-server']) expect(said).toContain(word);
+    expect(parseCapabilityFile(text, { mode: 'write' }).issues.filter((i) => i.severity === 'error')).toHaveLength(4);
+
+    const dir = repo();
+    put(dir, CAPABILITY_FILE, text);
+    commit(dir);
+    expect((await readRepositoryCapabilities(dir, opts)).capabilities.map((c) => c.name)).toContain('greet');
+    await expect(writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true })).rejects.toThrow(/nothing was written/);
+  });
+
+  it('C2: an address that is not the row\'s own is said and read as it should be', () => {
+    const parsed = parseCapabilityFile([HEADER(), ROW({ address: 'miadi-capability://someone/else/skill/greet' })].join('\n'));
+    expect(parsed.rows[0]?.address).toBe('miadi-capability://acme/tool/skill/greet');
+    expect(parsed.issues[0]).toMatchObject({ severity: 'warning', line: 2 });
+  });
+
+  it('C3: a person says which platform capability a row serves, and every rescan keeps it', async () => {
+    const dir = repo();
+    await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    await expect(stateCapability(dir, { kind: 'skill', name: 'greet', by: 'Ava', realizes: ['Welcome people'] })).rejects.toThrow(/not a platform capability/);
+    await stateCapability(dir, { kind: 'skill', name: 'greet', by: 'Ava', realizes: ['capability:welcome-people'], now: later.now });
+    expect(rowOf(dir, 'greet')).toMatchObject({ realizes: [{ capability: 'capability:welcome-people', statedBy: 'Ava', statedAt: later.now.toISOString() }], revision: 'pending', statedBy: SCAN_AUTHOR });
+    put(dir, 'skills/greet/SKILL.md', '---\nname: greet\ndescription: Greet a person warmly\n---\n');
+    commit(dir);
+    await writeCapabilityFile(dir, await scanRepository(dir, later), { write: true });
+    expect(rowOf(dir, 'greet')).toMatchObject({ statement: 'Greet a person warmly', realizes: [{ capability: 'capability:welcome-people', statedBy: 'Ava' }] });
+    commit(dir);
+    const got = await readRepositoryCapabilities(dir, later);
+    expect(got.realizes).toEqual([{ from: 'capability:skill-greet', to: 'capability:welcome-people', type: 'realizes', repository: 'repository:acme/tool', statedBy: 'Ava', statedAt: later.now.toISOString() }]);
+    expect((await buildCapabilityMap([dir], later)).realizes).toHaveLength(1);
+  });
+
+  it('the published JSON Schema names the same keys, kinds and header as the code', () => {
+    const schema = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/developer-repository-mapping/schema/repository-capabilities.v1.schema.json'), 'utf8'));
+    expect(Object.keys(schema.$defs.row.properties).sort()).toEqual([...CAPABILITY_FILE_ROW_KEYS].sort());
+    expect(schema.$defs.row.properties.kind.enum).toEqual([...CAPABILITY_KINDS]);
+    expect(schema.$defs.header.required).toEqual(['schema', 'version', 'repository']);
+  });
+});
+

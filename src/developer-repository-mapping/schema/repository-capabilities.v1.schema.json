@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unpkg.com/@medicine-wheel/developer-repository-mapping/schema/repository-capabilities.v1.schema.json",
+  "title": "A repository's own capability file, .miadi/capabilities.jsonl, format version 1",
+  "description": "One JSON value per line (JSON Lines). The first line is the header; every other line is one capability the repository provides. This schema validates one line. A reader of version 1 reads a file of a later version and skips what it does not know; a writer of version 1 refuses to rewrite it. The rule a statement keeps, at most 55 words, is checked by @medicine-wheel/capabilities, not here. Spec: rispecs/developer-suite/repository-mapping/capabilities.spec.md in jgwill/medicine-wheel.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/header"
+    },
+    {
+      "$ref": "#/$defs/row"
+    }
+  ],
+  "$defs": {
+    "printable": {
+      "type": "string",
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]*$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "version",
+        "repository"
+      ],
+      "properties": {
+        "schema": {
+          "const": "medicine-wheel/repository-capabilities"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1 for this schema. A reader of version 1 reads a higher one and skips what it does not know."
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "owner/name, as the repository was known when the file was written. A fork keeps it until someone adopts the file with --repository."
+        }
+      }
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "name",
+        "address",
+        "status",
+        "statedBy",
+        "statedAt",
+        "grounding",
+        "revision"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "package",
+            "cli",
+            "skill"
+          ]
+        },
+        "name": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/printable"
+            },
+            {
+              "minLength": 1,
+              "maxLength": 214,
+              "pattern": "[A-Za-z0-9]"
+            }
+          ]
+        },
+        "address": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/printable"
+            },
+            {
+              "maxLength": 600
+            }
+          ],
+          "description": "miadi-capability://<header repository>/<kind>/<name>. A reader computes it and warns when a row says otherwise."
+        },
+        "statement": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/printable"
+            },
+            {
+              "minLength": 1,
+              "maxLength": 1200
+            }
+          ],
+          "description": "What the files, or a person, say it is: at most 55 words."
+        },
+        "status": {
+          "enum": [
+            "clear",
+            "unclear",
+            "needs-resolution",
+            "undefinable"
+          ]
+        },
+        "package": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/printable"
+            },
+            {
+              "minLength": 1,
+              "maxLength": 214
+            }
+          ],
+          "description": "For a CLI: the package that ships it."
+        },
+        "realizes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "capability",
+              "statedBy",
+              "statedAt"
+            ],
+            "properties": {
+              "capability": {
+                "type": "string",
+                "pattern": "^capability:[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "statedBy": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/printable"
+                  },
+                  {
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "not": {
+                      "const": "mw-repomap scan"
+                    }
+                  }
+                ]
+              },
+              "statedAt": {
+                "$ref": "#/$defs/timestamp"
+              }
+            }
+          },
+          "description": "The platform capabilities this one serves (capabilities.spec.md), each with who said so and when. Said by a person or an agent, never by the scan, and kept by every rescan."
+        },
+        "statedBy": {
+          "type": "string",
+          "minLength": 1,
+          "description": "\"mw-repomap scan\" for a row the scan wrote; any other name is a person's, and a rescan keeps its words."
+        },
+        "statedAt": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "grounding": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "The files that say so, relative to the repository. A reader adds the commit it read: owner/name@commit:path."
+        },
+        "revision": {
+          "enum": [
+            "pending",
+            "revised",
+            "affirmed"
+          ]
+        },
+        "revisedBy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revisedAt": {
+          "$ref": "#/$defs/timestamp"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "clear",
+                  "unclear"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "statement"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "revision": {
+                "enum": [
+                  "revised",
+                  "affirmed"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "revisedBy",
+              "revisedAt"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

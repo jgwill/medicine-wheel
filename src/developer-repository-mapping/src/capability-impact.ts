@@ -23,6 +23,8 @@ export const PackageReadingSchema = z
     dependsOn: z.record(z.string()),
     /** the commands this package ships */
     bins: z.array(z.string().min(1)).optional(),
+    /** never published: read for what consumes what, not listed as a capability */
+    private: z.boolean().optional(),
   })
   .strict();
 

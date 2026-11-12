@@ -22,9 +22,9 @@ import {
   attributionShape,
   checkStatement,
   refineAttribution,
+  refineStatementPresence,
   type CapabilityFacet,
 } from '@medicine-wheel/capabilities';
-import { parseJsonl } from './jsonl';
 import type { MappingIssue } from './types';
 import { CAPABILITY_KINDS, capabilityAddress, capabilityId, type Artefact, type CapabilityKind } from './capability-scan';
 
@@ -34,31 +34,72 @@ export const CAPABILITY_FILE_SCHEMA = 'medicine-wheel/repository-capabilities';
 /** `statedBy` of a row the scan wrote. Any other name is a person's, and a rescan keeps its words. */
 export const SCAN_AUTHOR = 'mw-repomap scan';
 
+/** The format version this package writes. A reader takes a newer one and reads what it knows. */
+export const CAPABILITY_FILE_VERSION = 1;
+
 export const CapabilityFileHeaderSchema = z
   .object({
     schema: z.literal(CAPABILITY_FILE_SCHEMA),
-    version: z.literal(1),
+    version: z.number().int().min(1),
     /** `owner/name`, as the repository was known when the file was written. */
-    repository: z.string().min(1),
+    repository: z.string().min(1).max(200),
   })
   .strict();
 export type CapabilityFileHeader = z.infer<typeof CapabilityFileHeaderSchema>;
 
-export const CapabilityFileRowSchema = z
+/** Control characters never reach a terminal or a page from a file someone else committed. */
+const CONTROL = /[\u0000-\u001f\u007f-\u009f]/;
+
+/** A name the registry can give an id to: printable, at most 214 characters, with a letter or a digit. */
+export const CapabilityNameSchema = z
+  .string()
+  .min(1)
+  .max(214)
+  .refine((t) => !CONTROL.test(t), 'a name holds no control character')
+  .refine((t) => /[a-z0-9]/i.test(t), 'a name needs a letter or a digit');
+
+/** A platform capability, `capability:<kebab-case-slug>`: what the platform can do for someone. */
+const PLATFORM_CAPABILITY = /^capability:[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+const CapabilityFileRowObject = z
   .object({
     kind: z.enum(CAPABILITY_KINDS as unknown as [CapabilityKind, ...CapabilityKind[]]),
-    name: z.string().min(1),
+    name: CapabilityNameSchema,
     /** `miadi-capability://<owner>/<repo>/<kind>/<name>` */
-    address: z.string().min(1),
-    statement: StatementSchema.optional(),
+    address: z.string().min(1).max(600).refine((t) => !CONTROL.test(t), 'an address holds no control character'),
+    statement: StatementSchema.and(z.string().max(1200, 'a statement is at most 1200 characters').refine((t) => !CONTROL.test(t), 'a statement holds no control character')).optional(),
     status: StatementStatusSchema,
     /** For a CLI: the package that ships it. */
-    package: z.string().min(1).optional(),
+    package: z.string().min(1).max(214).optional(),
+    /**
+     * The platform capabilities this one serves (`capability:<slug>`, capabilities.spec.md):
+     * said by a person or an agent, never by the scan, and kept by every rescan.
+     */
+    realizes: z
+      .array(
+        z
+          .object({
+            capability: z.string().regex(PLATFORM_CAPABILITY, 'a platform capability is capability:<kebab-case-slug>'),
+            statedBy: z.string().min(1).max(200).refine((t) => !CONTROL.test(t) && t !== SCAN_AUTHOR, 'a person or an agent says what a capability realizes'),
+            statedAt: z.string().datetime({ offset: true }),
+          })
+          .strict(),
+      )
+      .min(1)
+      .max(32)
+      .optional(),
     /** `grounding` here is the files that say so, relative to the repository. */
     ...attributionShape,
   })
-  .strict()
-  .superRefine((row, ctx) => refineAttribution(row, ctx));
+  .strict();
+
+/** The keys a row of this version holds. */
+export const CAPABILITY_FILE_ROW_KEYS: readonly string[] = Object.keys(CapabilityFileRowObject.shape);
+
+export const CapabilityFileRowSchema = CapabilityFileRowObject.superRefine((row, ctx) => {
+  refineAttribution(row, ctx);
+  refineStatementPresence(row.status, row.statement, 'statement', ctx);
+});
 export type CapabilityFileRow = z.infer<typeof CapabilityFileRowSchema>;
 
 export interface ParsedCapabilityFile {
@@ -74,25 +115,90 @@ function firstLineEnd(text: string): number {
   return i < 0 ? text.length : i;
 }
 
+export interface ParseCapabilityFileOptions {
+  /**
+   * `read` (the default): what a newer version of the format adds (a key, a
+   * kind, a header field, a higher version) is skipped and said as a warning,
+   * and everything this version knows is read. `write`: the same things are
+   * errors, because a rewrite by this version would lose them.
+   */
+  mode?: 'read' | 'write';
+}
+
+const KNOWN_KINDS = new Set<string>(CAPABILITY_KINDS);
+const HEADER_KEYS = new Set(Object.keys(CapabilityFileHeaderSchema.shape));
+const ROW_KEYS = new Set(CAPABILITY_FILE_ROW_KEYS);
+const describeZod = (issue: z.ZodIssue) => (issue.path.length ? `${issue.path.join('.')}: ${issue.message}` : issue.message);
+
 /** Read the file. Never throws: a bad line is an issue, and the good lines around it are still read. */
-export function parseCapabilityFile(text: string): ParsedCapabilityFile {
+export function parseCapabilityFile(text: string, options: ParseCapabilityFileOptions = {}): ParsedCapabilityFile {
+  const newer: MappingIssue['severity'] = options.mode === 'write' ? 'error' : 'warning';
   const clean = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
-  const end = firstLineEnd(clean);
+  const lines = clean.split(/\r?\n/);
   const issues: MappingIssue[] = [];
   let header: CapabilityFileHeader | undefined;
   try {
-    const parsed = CapabilityFileHeaderSchema.safeParse(JSON.parse(clean.slice(0, end)));
-    if (parsed.success) header = parsed.data;
-    else issues.push({ severity: 'error', file: CAPABILITY_FILE, line: 1, message: `the first line is not this file's header: ${parsed.error.issues[0]?.message}` });
+    const raw = JSON.parse(lines[0] ?? '') as Record<string, unknown>;
+    const extra = raw && typeof raw === 'object' ? Object.keys(raw).filter((k) => !HEADER_KEYS.has(k)) : [];
+    const known = raw && typeof raw === 'object' ? Object.fromEntries(Object.entries(raw).filter(([k]) => HEADER_KEYS.has(k))) : raw;
+    const parsed = CapabilityFileHeaderSchema.safeParse(known);
+    if (!parsed.success) {
+      issues.push({ severity: 'error', file: CAPABILITY_FILE, line: 1, message: `the first line is not this file's header: ${describeZod(parsed.error.issues[0]!)}` });
+    } else {
+      header = parsed.data;
+      if (extra.length) issues.push({ severity: newer, file: CAPABILITY_FILE, line: 1, message: `header keys ${extra.join(', ')} are not known to format version ${CAPABILITY_FILE_VERSION}` });
+      if (header.version > CAPABILITY_FILE_VERSION) issues.push({ severity: newer, file: CAPABILITY_FILE, line: 1, message: `written in format version ${header.version}; this version reads version ${CAPABILITY_FILE_VERSION} and what it knows of the rest` });
+    }
   } catch (error) {
     issues.push({ severity: 'error', file: CAPABILITY_FILE, line: 1, message: `not JSON: ${(error as Error).message}` });
   }
-  const rest = parseJsonl(clean.slice(end + 1), CapabilityFileRowSchema, CAPABILITY_FILE);
-  return {
-    ...(header ? { header } : {}),
-    rows: rest.rows,
-    issues: [...issues, ...rest.issues.map((i) => ({ ...i, ...(i.line ? { line: i.line + 1 } : {}) }))],
-  };
+  // One row per capability: a second row for the same kind and name is reported, and the first one read.
+  const seen = new Set<string>();
+  const rows: CapabilityFileRow[] = [];
+  lines.slice(1).forEach((rawLine, index) => {
+    const line = index + 2;
+    if (!rawLine.trim()) return;
+    let value: unknown;
+    try {
+      value = JSON.parse(rawLine);
+    } catch (error) {
+      issues.push({ severity: 'error', file: CAPABILITY_FILE, line, message: `not JSON: ${(error as Error).message}` });
+      return;
+    }
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      issues.push({ severity: 'error', file: CAPABILITY_FILE, line, message: 'a row is a JSON object' });
+      return;
+    }
+    const object = value as Record<string, unknown>;
+    if (typeof object.kind === 'string' && !KNOWN_KINDS.has(object.kind)) {
+      issues.push({ severity: newer, file: CAPABILITY_FILE, line, message: `kind ${JSON.stringify(object.kind)} is not known to format version ${CAPABILITY_FILE_VERSION}; the row is not read` });
+      return;
+    }
+    const extra = Object.keys(object).filter((k) => !ROW_KEYS.has(k));
+    if (extra.length) issues.push({ severity: newer, file: CAPABILITY_FILE, line, message: `keys ${extra.join(', ')} are not known to format version ${CAPABILITY_FILE_VERSION} and are not read` });
+    const parsed = CapabilityFileRowSchema.safeParse(Object.fromEntries(Object.entries(object).filter(([k]) => ROW_KEYS.has(k))));
+    if (!parsed.success) {
+      issues.push({ severity: 'error', file: CAPABILITY_FILE, line, message: parsed.error.issues.map(describeZod).join('; ') });
+      return;
+    }
+    const row = parsed.data;
+    const key = rowKey(row);
+    if (seen.has(key)) {
+      issues.push({ severity: 'error', file: CAPABILITY_FILE, line, message: `${key} appears more than once; the first row is read` });
+      return;
+    }
+    seen.add(key);
+    // The address is the header's repository, the kind and the name; a row that says otherwise is read as it should be.
+    if (header) {
+      const expected = capabilityAddress(header.repository, row.kind, row.name);
+      if (row.address !== expected) {
+        issues.push({ severity: 'warning', file: CAPABILITY_FILE, line, message: `address ${row.address} is not this row's; read as ${expected}` });
+        row.address = expected;
+      }
+    }
+    rows.push(row);
+  });
+  return { ...(header ? { header } : {}), rows, issues };
 }
 
 const KIND_ORDER = new Map<string, number>(CAPABILITY_KINDS.map((k, i) => [k, i]));
@@ -110,6 +216,7 @@ export function renderCapabilityFile(repository: string, rows: readonly Capabili
       ...(r.statement ? { statement: r.statement } : {}),
       status: r.status,
       ...(r.package ? { package: r.package } : {}),
+      ...(r.realizes?.length ? { realizes: r.realizes } : {}),
       statedBy: r.statedBy,
       statedAt: r.statedAt,
       grounding: r.grounding,
@@ -164,11 +271,12 @@ export interface CapabilityFileMerge {
  * What the file should hold after a scan.
  *
  * A row a person wrote (any `statedBy` but {@link SCAN_AUTHOR}) keeps its
- * words and its attribution. A statement added by hand to a row the scan could
- * not state is kept the same way. A row the scan wrote takes the scan's
- * statement, and goes back to pending only when the statement changed. The
- * files and the shipping package are always the scan's. The same rule serves
- * a reader, which merges a committed file with what the commit holds.
+ * words, its status and its attribution: `capabilities state` writes one, and
+ * so does a hand edit that puts the person's name in `statedBy`. A row the
+ * scan wrote takes the scan's statement, and goes back to pending when the
+ * statement changed or the files stopped making one. The files and the
+ * shipping package are always the scan's. The same rule serves a reader,
+ * which merges a committed file with what the commit holds.
  */
 export function mergeCapabilityFile(existing: readonly CapabilityFileRow[], scanned: readonly CapabilityFileRow[]): CapabilityFileMerge {
   const held = new Map(existing.map((r) => [rowKey(r), r]));
@@ -186,21 +294,16 @@ export function mergeCapabilityFile(existing: readonly CapabilityFileRow[], scan
       continue;
     }
     const byPerson = row.statedBy !== SCAN_AUTHOR;
-    const keepWords = byPerson || (!scan.statement && Boolean(row.statement));
     let next: CapabilityFileRow;
-    if (keepWords) {
-      next = {
-        ...row,
-        address: scan.address,
-        status: row.status === 'unclear' ? 'unclear' : row.statement ? 'clear' : row.status,
-        grounding: scan.grounding,
-        ...(scan.package ? { package: scan.package } : {}),
-      };
+    if (byPerson) {
+      next = { ...row, address: scan.address, grounding: scan.grounding, ...(scan.package ? { package: scan.package } : {}) };
     } else if (row.statement === scan.statement) {
       next = { ...row, address: scan.address, status: scan.status, grounding: scan.grounding, ...(scan.package ? { package: scan.package } : {}) };
     } else {
       next = scan;
     }
+    // What a capability realizes is never the scan's to say: it stays through every rescan.
+    if (row.realizes?.length) next = { ...next, realizes: row.realizes };
     if (JSON.stringify(rowForCompare(next)) !== JSON.stringify(rowForCompare(row))) changed.push(key);
     rows.push(next);
   }
@@ -251,22 +354,37 @@ export interface CapabilityStatementInput {
   at: string;
   /** With words, the person states it; without, the person affirms what is there. */
   statement?: string;
+  /** The platform capabilities it serves, `capability:<slug>`; each one not yet held is added, said by `by` at `at`. */
+  realizes?: string[];
 }
 
 /** A person states or affirms one row. An `error` says why not: no such row, or words that do not fit. */
 export function stateCapabilityRow(rows: readonly CapabilityFileRow[], input: CapabilityStatementInput): { rows: CapabilityFileRow[] } | { error: string } {
+  if (input.by.trim() === SCAN_AUTHOR) return { error: `"${SCAN_AUTHOR}" is the scan's name: a statement is said by a person` };
+  if (CONTROL.test(input.by)) return { error: 'a name holds no control character' };
+  if (input.statement !== undefined && (CONTROL.test(input.statement) || input.statement.length > 1200)) return { error: 'a statement is at most 1200 printable characters' };
   const key = rowKey(input);
   const row = rows.find((r) => rowKey(r) === key);
   if (!row) return { error: `the file holds no ${key}: run capabilities scan --write first` };
   if (input.statement !== undefined) {
     const check = checkStatement(input.statement);
     if (!check.fits) return { error: check.words === 0 ? 'a statement needs at least one word' : `${check.words} words, the limit is ${check.limit}` };
-  } else if (!row.statement) {
+  } else if (!row.statement && !input.realizes) {
     return { error: `${key} has no statement to affirm: give it one` };
   }
-  const next: CapabilityFileRow =
+  const bad = input.realizes?.find((id) => !PLATFORM_CAPABILITY.test(id));
+  if (bad !== undefined) return { error: `${bad} is not a platform capability: capability:<kebab-case-slug>` };
+  let next: CapabilityFileRow =
     input.statement !== undefined
       ? { ...row, statement: input.statement, status: 'clear', statedBy: input.by, statedAt: input.at, revision: 'revised', revisedBy: input.by, revisedAt: input.at }
-      : { ...row, revision: 'affirmed', revisedBy: input.by, revisedAt: input.at };
+      : input.realizes
+        ? // what a row realizes carries its own attribution; the row's statement and its revision stay as they are
+          { ...row }
+        : { ...row, revision: 'affirmed', revisedBy: input.by, revisedAt: input.at };
+  if (input.realizes) {
+    const held = row.realizes ?? [];
+    const added = [...new Set(input.realizes)].filter((c) => !held.some((h) => h.capability === c)).map((capability) => ({ capability, statedBy: input.by, statedAt: input.at }));
+    next = { ...next, realizes: [...held, ...added] };
+  }
   return { rows: rows.map((r) => (rowKey(r) === key ? next : r)) };
 }

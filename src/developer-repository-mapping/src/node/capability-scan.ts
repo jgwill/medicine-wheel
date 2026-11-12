@@ -9,7 +9,7 @@
  */
 
 import { execFile } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, mkdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
 import type { CapabilityFacet } from '@medicine-wheel/capabilities';
@@ -17,6 +17,7 @@ import { parseGithubRemote, repositoryNodeId } from '../ids';
 import type { MappingIssue } from '../types';
 import {
   CODE_READERS,
+  capabilityAddress,
   capabilityId,
   capabilityRows,
   mergeCapabilityRows,
@@ -31,6 +32,7 @@ import {
 import { consumesEdges, type ConsumesEdge, type PackageReading } from '../capability-impact';
 import {
   CAPABILITY_FILE,
+  CapabilityNameSchema,
   capabilityFileFacets,
   capabilityFileRows,
   mergeCapabilityFile,
@@ -78,6 +80,8 @@ export interface ScanResult {
   packages: PackageReading[];
   /** the rows this commit's files make, as the repository's own file would hold them */
   fileRows: CapabilityFileRow[];
+  /** what could not be read: a package.json that is not JSON, a name no id can be made from */
+  issues: MappingIssue[];
 }
 
 export async function scanRepository(clone: string, options: ScanOptions): Promise<ScanResult> {
@@ -97,15 +101,25 @@ export async function scanRepository(clone: string, options: ScanOptions): Promi
     repository = repositoryNodeId(remote.owner, remote.name);
   }
 
-  const files = ((await git(clone, ['ls-tree', '-r', '--name-only', commit])) ?? '').split('\n').filter(Boolean);
+  // -z: a path with a character git would quote (é, a space, a tab) is read as it is.
+  const files = ((await git(clone, ['ls-tree', '-r', '-z', '--name-only', commit])) ?? '').split('\0').filter(Boolean);
   const show = (file: string) => git(clone, ['show', `${commit}:${file}`]);
   const globs = workspaceGlobs(await show('package.json'), files.includes('pnpm-workspace.yaml') ? await show('pnpm-workspace.yaml') : undefined);
 
   const artefacts: Artefact[] = [];
   const packages: PackageReading[] = [];
+  const issues: MappingIssue[] = [];
   for (const manifest of packageManifests(globs, files)) {
-    const pkg = parsePackageJson((await show(manifest)) ?? '');
+    const text = (await show(manifest)) ?? '';
+    try {
+      JSON.parse(text);
+    } catch (error) {
+      issues.push({ severity: 'error', file: manifest, message: `not JSON, so its package and commands are not read: ${(error as Error).message}` });
+      continue;
+    }
+    const pkg = parsePackageJson(text);
     if (!pkg.name) continue;
+    // A private package is read for what consumes what, and not listed as something the repository provides.
     packages.push({
       capability: capabilityId('package', pkg.name),
       name: pkg.name,
@@ -115,7 +129,9 @@ export async function scanRepository(clone: string, options: ScanOptions): Promi
       commit: commit.slice(0, 12),
       dependsOn: pkg.dependsOn,
       ...(pkg.bins.length ? { bins: pkg.bins } : {}),
+      ...(pkg.private ? { private: true } : {}),
     });
+    if (pkg.private) continue;
     artefacts.push({ kind: 'package', name: pkg.name, ...(pkg.description ? { description: pkg.description } : {}), path: manifest });
     for (const bin of pkg.bins) {
       artefacts.push({ kind: 'cli', name: bin, description: `The ${bin} command, shipped by ${pkg.name}.`, path: manifest, package: pkg.name });
@@ -133,18 +149,39 @@ export async function scanRepository(clone: string, options: ScanOptions): Promi
     artefacts.push(...reader.read((await show(reader.path)) ?? ''));
   }
 
+  // A name no id can be made from, or one carrying control characters, is reported and not read.
+  const readable = artefacts.filter((a) => {
+    const named = CapabilityNameSchema.safeParse(a.name);
+    if (!named.success) issues.push({ severity: 'warning', file: a.path, message: `${a.kind} name ${JSON.stringify(a.name)} is not read: ${named.error.issues[0]?.message}` });
+    return named.success;
+  });
   const observedAt = (options.now ?? new Date()).toISOString();
   return {
     repository,
     ref,
     commit,
-    capabilities: capabilityRows(artefacts, { repository, commit, observedBy: options.observedBy, observedAt }),
+    capabilities: capabilityRows(readable, { repository, commit, observedBy: options.observedBy, observedAt }),
     packages,
-    fileRows: capabilityFileRows(artefacts, { repository, statedAt: observedAt }),
+    fileRows: capabilityFileRows(readable, { repository, statedAt: observedAt }),
+    issues,
   };
 }
 
+/** A provided capability serves a platform capability (`capability:<slug>`), said by a person in the repository's file. */
+export interface RealizesEdge {
+  /** the provided capability's id, `capability:<kind>-<slug>` */
+  from: string;
+  /** the platform capability, `capability:<slug>` */
+  to: string;
+  type: 'realizes';
+  repository: string;
+  statedBy: string;
+  statedAt: string;
+}
+
 export interface RepositoryCapabilities extends ScanResult {
+  /** what the file says each capability serves; none when the repository holds no file */
+  realizes: RealizesEdge[];
   /** `file` when the commit holds the repository's own file, `scan` when only its files were read */
   source: 'file' | 'scan';
   issues: MappingIssue[];
@@ -161,17 +198,26 @@ export interface RepositoryCapabilities extends ScanResult {
 export async function readRepositoryCapabilities(clone: string, options: ScanOptions): Promise<RepositoryCapabilities> {
   const scan = await scanRepository(clone, options);
   const text = await git(clone, ['show', `${scan.commit}:${CAPABILITY_FILE}`]);
-  if (text === undefined) return { ...scan, source: 'scan', issues: [] };
+  if (text === undefined) return { ...scan, source: 'scan', realizes: [] };
   const parsed = parseCapabilityFile(text);
   const merge = mergeCapabilityFile(parsed.rows, scan.fileRows);
-  const issues = [...parsed.issues];
+  const issues = [...scan.issues, ...parsed.issues];
   const named = `repository:${parsed.header?.repository ?? ''}`;
   if (parsed.header && named.toLowerCase() !== scan.repository.toLowerCase()) {
     issues.push({ severity: 'warning', file: CAPABILITY_FILE, message: `written for ${parsed.header.repository}; this clone's origin is ${scan.repository.replace(/^repository:/, '')}` });
   }
+  // A row the commit does not provide is the file's claim, not the repository's: reported, never read as a capability.
+  const grounded = merge.rows.filter((r) => {
+    const found = scan.fileRows.some((s) => s.kind === r.kind && s.name === r.name);
+    if (!found) issues.push({ severity: 'warning', file: CAPABILITY_FILE, message: `${r.kind}/${r.name} is in the file but this commit provides no such ${r.kind}; it is not read` });
+    return found;
+  });
   return {
     ...scan,
-    capabilities: capabilityFileFacets(merge.rows, { repository: scan.repository, commit: scan.commit }),
+    capabilities: capabilityFileFacets(grounded, { repository: scan.repository, commit: scan.commit }),
+    realizes: grounded.flatMap((r) =>
+      (r.realizes ?? []).map((x) => ({ from: capabilityId(r.kind, r.name), to: x.capability, type: 'realizes' as const, repository: scan.repository, statedBy: x.statedBy, statedAt: x.statedAt })),
+    ),
     source: 'file',
     issues,
     drift: { added: merge.added, removed: merge.removed, changed: merge.changed, keptByPerson: merge.keptByPerson },
@@ -184,16 +230,21 @@ async function workingRoot(clone: string): Promise<string> {
   return root;
 }
 
+/** The working tree's file, read to be rewritten: anything this version does not know is an error, because the rewrite would lose it. */
 function readWorkingFile(file: string): ReturnType<typeof parseCapabilityFile> | undefined {
-  return existsSync(file) ? parseCapabilityFile(readFileSync(file, 'utf8')) : undefined;
+  return existsSync(file) ? parseCapabilityFile(readFileSync(file, 'utf8'), { mode: 'write' }) : undefined;
 }
 
 export interface WriteCapabilityFileResult extends Pick<CapabilityFileMerge, 'added' | 'removed' | 'changed' | 'keptByPerson'> {
   file: string;
   text: string;
+  /** the repository the file is written for: its header's when it has one, else the scan's */
+  repository: string;
   /** the file would change (or does not exist yet) */
   differs: boolean;
   wrote: boolean;
+  /** the repository's ignore rules match the file, so `git add` would leave it out */
+  ignored: boolean;
 }
 
 /**
@@ -202,26 +253,36 @@ export interface WriteCapabilityFileResult extends Pick<CapabilityFileMerge, 'ad
  * write would change it. Refuses a file with a bad line, because a line that
  * did not parse would not be written back.
  */
-export async function writeCapabilityFile(clone: string, scan: ScanResult, options: { write: boolean }): Promise<WriteCapabilityFileResult> {
+export async function writeCapabilityFile(
+  clone: string,
+  scan: ScanResult,
+  options: { write: boolean; /** names the repository instead of the file's header */ repository?: string },
+): Promise<WriteCapabilityFileResult> {
   const root = await workingRoot(clone);
   const file = path.join(root, CAPABILITY_FILE);
   const current = readWorkingFile(file);
   const bad = current?.issues.find((i) => i.severity === 'error');
   if (bad) throw new Error(`${CAPABILITY_FILE}${bad.line ? `:${bad.line}` : ''}: ${bad.message} (nothing was written)`);
-  const merge = mergeCapabilityFile(current?.rows ?? [], scan.fileRows);
-  const text = renderCapabilityFile(scan.repository, merge.rows);
+  const unread = scan.issues.find((i) => i.severity === 'error');
+  if (unread) throw new Error(`${unread.file}: ${unread.message}; its rows would be removed, so nothing was written`);
+  // A fork, a mirror or a remote spelled in another case keeps the repository the file was written for.
+  const named = options.repository?.replace(/^repository:/, '') ?? current?.header?.repository ?? scan.repository.replace(/^repository:/, '');
+  const scanned = scan.fileRows.map((r) => ({ ...r, address: capabilityAddress(named, r.kind, r.name) }));
+  const merge = mergeCapabilityFile(current?.rows ?? [], scanned);
+  const text = renderCapabilityFile(named, merge.rows);
   const differs = !existsSync(file) || readFileSync(file, 'utf8') !== text;
   if (differs && options.write) {
     mkdirSync(path.dirname(file), { recursive: true });
     writeFileSync(file, text, 'utf8');
   }
-  return { file, text, differs, wrote: differs && options.write, added: merge.added, removed: merge.removed, changed: merge.changed, keptByPerson: merge.keptByPerson };
+  const ignored = (await git(root, ['check-ignore', '-q', '--', CAPABILITY_FILE])) !== undefined;
+  return { file, text, repository: named, differs, wrote: differs && options.write, ignored, added: merge.added, removed: merge.removed, changed: merge.changed, keptByPerson: merge.keptByPerson };
 }
 
 /** A person states or affirms one capability in the working tree's file. */
 export async function stateCapability(
   clone: string,
-  input: { kind: CapabilityKind; name: string; by: string; statement?: string; now?: Date },
+  input: { kind: CapabilityKind; name: string; by: string; statement?: string; realizes?: string[]; now?: Date },
 ): Promise<{ file: string; row: CapabilityFileRow }> {
   const root = await workingRoot(clone);
   const file = path.join(root, CAPABILITY_FILE);
@@ -236,20 +297,57 @@ export async function stateCapability(
     by: input.by,
     at: (input.now ?? new Date()).toISOString(),
     ...(input.statement !== undefined ? { statement: input.statement } : {}),
+    ...(input.realizes ? { realizes: input.realizes } : {}),
   });
   if ('error' in answer) throw new Error(answer.error);
   writeFileSync(file, renderCapabilityFile(current.header.repository, answer.rows), 'utf8');
   return { file, row: answer.rows.find((r) => r.kind === input.kind && r.name === input.name)! };
 }
 
-/** The git clones under a folder: itself, its children, or `owner/name` two levels down. Hidden folders are skipped. */
-export function findClones(root: string): string[] {
+/**
+ * The git clones under a folder: itself when it is one, else its children, or
+ * `owner/name` two levels down. Hidden folders are skipped, a symlinked folder
+ * is followed once, and a folder that cannot be read is skipped and said
+ * through `onSkip`, so one locked folder never stops the others.
+ */
+export function findClones(root: string, options: { onSkip?: (dir: string, reason: string) => void } = {}): string[] {
   const isClone = (dir: string) => existsSync(path.join(dir, '.git'));
   if (isClone(root)) return [root];
-  const children = (dir: string) =>
-    readdirSync(dir, { withFileTypes: true })
-      .filter((d) => d.isDirectory() && !d.name.startsWith('.'))
-      .map((d) => path.join(dir, d.name));
+  const seen = new Set<string>();
+  const children = (dir: string): string[] => {
+    let entries;
+    try {
+      entries = readdirSync(dir, { withFileTypes: true });
+    } catch (error) {
+      options.onSkip?.(dir, (error as Error).message);
+      return [];
+    }
+    const out: string[] = [];
+    for (const d of entries) {
+      if (d.name.startsWith('.')) continue;
+      const full = path.join(dir, d.name);
+      let isDir = d.isDirectory();
+      if (d.isSymbolicLink()) {
+        try {
+          isDir = statSync(full).isDirectory();
+        } catch (error) {
+          options.onSkip?.(full, `a link that does not resolve: ${(error as Error).message}`);
+          continue;
+        }
+      }
+      if (!isDir) continue;
+      let real = full;
+      try {
+        real = realpathSync(full);
+      } catch {
+        // read it by its own path
+      }
+      if (seen.has(real)) continue;
+      seen.add(real);
+      out.push(full);
+    }
+    return out;
+  };
   const clones: string[] = [];
   for (const child of children(root)) {
     if (isClone(child)) clones.push(child);
@@ -272,11 +370,15 @@ export interface CapabilityMapRepository {
 
 export interface CapabilityMap {
   repositories: CapabilityMapRepository[];
+  /** ids that two different names make (`@a/b` and `a-b`): one row stands for both, and that is said */
+  collisions: { nodeId: string; names: string[] }[];
   /** one row per capability; a capability two repositories provide is one row both provide */
   capabilities: CapabilityFacet[];
   packages: PackageReading[];
   /** which package consumes which, across every repository read */
   consumes: ConsumesEdge[];
+  /** what each repository's file says its capabilities serve */
+  realizes: RealizesEdge[];
 }
 
 /**
@@ -287,6 +389,7 @@ export async function buildCapabilityMap(clones: readonly string[], options: { o
   const repositories: CapabilityMapRepository[] = [];
   const facets: CapabilityFacet[] = [];
   const packages: PackageReading[] = [];
+  const realizes: RealizesEdge[] = [];
   for (const clone of clones) {
     try {
       const read = await readRepositoryCapabilities(clone, options);
@@ -298,11 +401,19 @@ export async function buildCapabilityMap(clones: readonly string[], options: { o
       repositories.push({ clone, repository: read.repository, commit: read.commit, source: read.source, counts, issues: read.issues, ...(read.drift ? { drift: read.drift } : {}) });
       facets.push(...read.capabilities);
       packages.push(...read.packages);
+      realizes.push(...read.realizes);
     } catch (error) {
       repositories.push({ clone, issues: [], error: (error as Error).message });
     }
   }
+  // One reading per repository and package: a fork and its upstream each keep their own.
   const seen = new Set<string>();
-  const unique = packages.filter((p) => (seen.has(p.name) ? false : (seen.add(p.name), true)));
-  return { repositories, capabilities: mergeCapabilityRows(facets), packages: unique, consumes: consumesEdges(unique) };
+  const unique = packages.filter((p) => {
+    const key = `${p.repository.toLowerCase()}|${p.name}`;
+    return seen.has(key) ? false : (seen.add(key), true);
+  });
+  const names = new Map<string, Set<string>>();
+  for (const f of facets) names.set(f.nodeId, (names.get(f.nodeId) ?? new Set()).add(f.name));
+  const collisions = [...names].filter(([, n]) => n.size > 1).map(([nodeId, n]) => ({ nodeId, names: [...n].sort() }));
+  return { repositories, collisions, capabilities: mergeCapabilityRows(facets), packages: unique, consumes: consumesEdges(unique), realizes };
 }

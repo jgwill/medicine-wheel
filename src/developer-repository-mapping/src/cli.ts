@@ -12,7 +12,7 @@
  *   mw-repomap serve [<path>] [--port <n>] [--host <address>] [--local]
  *   mw-repomap wheel [<path>] [--local]
  *   mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]
- *   mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--clone <path>]
+ *   mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--clone <path>]
  *   mw-repomap capabilities show [<clone>] [--ref <ref>] [--json]
  *   mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]
  *
@@ -61,7 +61,7 @@ const USAGE = [
   '       mw-repomap serve [<path>] [--port <n>] [--host <address>] [--local]',
   '       mw-repomap wheel [<path>] [--local]',
   '       mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]',
-  '       mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--clone <path>]',
+  '       mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--clone <path>]',
   '       mw-repomap capabilities show [<clone>] [--ref <ref>] [--json]',
   '       mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]',
 ].join('\n');
@@ -75,7 +75,7 @@ const COMMAND_FLAGS: Record<string, readonly string[]> = {
   list: ['lifecycle', 'drift', 'revision', 'field', 'local', 'json'],
   show: ['local', 'json'],
   observe: ['dir', 'by', 'write'],
-  capabilities: ['write', 'check', 'ref', 'repository', 'by', 'clone', 'root', 'list', 'out', 'packages', 'json'],
+  capabilities: ['write', 'check', 'ref', 'repository', 'by', 'clone', 'realizes', 'root', 'list', 'out', 'packages', 'json'],
   move: ['by', 'grounding'],
   hub: ['json'],
   serve: ['port', 'host', 'local'],
@@ -363,8 +363,23 @@ async function wheel(positional: string[], flags: Record<string, string | true>)
 
 const SCAN_OBSERVER = () => `mw-repomap capabilities (${os.userInfo().username}@${os.hostname()})`;
 
+/** The flags each capabilities subcommand takes: a flag another subcommand takes is a usage error here, never ignored. */
+const CAPABILITY_FLAGS: Record<string, readonly string[]> = {
+  scan: ['write', 'check', 'ref', 'repository'],
+  state: ['by', 'clone', 'realizes'],
+  show: ['ref', 'repository', 'json'],
+  map: ['root', 'list', 'out', 'packages', 'ref', 'json'],
+};
+
+/** Text from a file someone else committed, printable: a control character never reaches the terminal. */
+const printable = (text: string) => text.replace(/[\u0000-\u001f\u007f-\u009f]/g, '?');
+
 function changeLine(result: { added: string[]; removed: string[]; changed: string[]; keptByPerson: string[] }): string {
   return `${result.added.length} added, ${result.changed.length} changed, ${result.removed.length} removed, ${result.keptByPerson.length} kept by a person`;
+}
+
+function printCapabilityIssues(issues: readonly MappingIssue[], where?: string): void {
+  for (const i of issues) console.error(printable(`${i.severity} ${where ? `${where} ` : ''}${i.file ?? ''}${i.line ? `:${i.line}` : ''} — ${i.message}`));
 }
 
 async function capabilitiesScan(positional: string[], flags: Record<string, string | true>): Promise<number> {
@@ -372,19 +387,26 @@ async function capabilitiesScan(positional: string[], flags: Record<string, stri
   if (flags.write && flags.check) throw new UsageError('--write changes the file and --check does not: pick one');
   const clone = positional[2] ?? '.';
   // The commit being worked on: a person writes the file on the branch they will commit it to.
-  const scan = await scanRepository(clone, { ref: text(flags, 'ref') ?? 'HEAD', repository: text(flags, 'repository'), observedBy: SCAN_OBSERVER() });
-  const result = await writeCapabilityFile(clone, scan, { write: flags.write === true });
-  const name = scan.repository.replace(/^repository:/, '');
+  const repository = text(flags, 'repository');
+  const scan = await scanRepository(clone, { ref: text(flags, 'ref') ?? 'HEAD', ...(repository ? { repository } : {}), observedBy: SCAN_OBSERVER() });
+  printCapabilityIssues(scan.issues);
+  const result = await writeCapabilityFile(clone, scan, { write: flags.write === true, ...(repository ? { repository } : {}) });
+  const origin = scan.repository.replace(/^repository:/, '');
+  if (result.repository.toLowerCase() !== origin.toLowerCase()) {
+    console.error(`note: the file is written for ${result.repository}; this clone's origin is ${origin}. Its addresses stay ${result.repository}'s; --repository ${origin} adopts it.`);
+  }
+  if (result.ignored) console.error(`warning: this repository's ignore rules match ${CAPABILITY_FILE}, so git add leaves it out. Add the line !${CAPABILITY_FILE} after the rule that matches it.`);
+  const at = `${result.repository} @ ${scan.commit.slice(0, 12)}`;
   if (flags.write) {
-    console.error(`${name} @ ${scan.commit.slice(0, 12)}: ${scan.fileRows.length} found. ${result.wrote ? `wrote ${result.file}` : `${CAPABILITY_FILE} is up to date`} (${changeLine(result)})`);
+    console.error(`${at}: ${scan.fileRows.length} found. ${result.wrote ? `wrote ${result.file}` : `${CAPABILITY_FILE} is up to date`} (${changeLine(result)})`);
     return 0;
   }
   if (flags.check) {
-    console.error(result.differs ? `${CAPABILITY_FILE} is behind ${name} @ ${scan.commit.slice(0, 12)} (${changeLine(result)}): run capabilities scan --write` : `${CAPABILITY_FILE} is up to date with ${name} @ ${scan.commit.slice(0, 12)}`);
+    console.error(result.differs ? `${CAPABILITY_FILE} is behind ${at} (${changeLine(result)}): run capabilities scan --write` : `${CAPABILITY_FILE} is up to date with ${at}`);
     return result.differs ? 1 : 0;
   }
   process.stdout.write(result.text);
-  console.error(`${name} @ ${scan.commit.slice(0, 12)}: ${scan.fileRows.length} found, nothing written (--write keeps them in ${CAPABILITY_FILE})`);
+  console.error(`${at}: ${scan.fileRows.length} found, nothing written (--write keeps them in ${CAPABILITY_FILE})`);
   return 0;
 }
 
@@ -396,65 +418,85 @@ async function capabilitiesState(positional: string[], flags: Record<string, str
   const by = text(flags, 'by');
   if (!by) throw new UsageError('capabilities state needs --by <who>: a statement is something someone says');
   if (positional.length > 4) throw new UsageError('quote the statement: capabilities state <kind>/<name> "<at most 55 words>"');
-  const { file, row } = await stateCapability(text(flags, 'clone') ?? '.', { kind, name: target.slice(slash + 1), by, ...(positional[3] !== undefined ? { statement: positional[3] } : {}) });
-  console.error(`${row.kind}/${row.name} ${row.revision} by ${by} in ${file}`);
+  const realizes = text(flags, 'realizes')?.split(',').map((r) => r.trim()).filter(Boolean);
+  const { file, row } = await stateCapability(text(flags, 'clone') ?? '.', {
+    kind,
+    name: target.slice(slash + 1),
+    by,
+    ...(positional[3] !== undefined ? { statement: positional[3] } : {}),
+    ...(realizes ? { realizes } : {}),
+  });
+  console.error(`${row.kind}/${row.name} ${row.revision} by ${by}${row.realizes ? `, realizes ${row.realizes.map((r) => r.capability).join(', ')}` : ''} in ${file}`);
   return 0;
 }
 
 async function capabilitiesShow(positional: string[], flags: Record<string, string | true>): Promise<number> {
-  const read = await readRepositoryCapabilities(positional[2] ?? '.', { ref: text(flags, 'ref'), repository: text(flags, 'repository'), observedBy: SCAN_OBSERVER() });
-  printIssues(read.issues);
+  if (positional.length > 3) throw new UsageError('capabilities show takes one clone');
+  const repository = text(flags, 'repository');
+  // HEAD, the commit a person works on; `map` reads each clone's default branch.
+  const read = await readRepositoryCapabilities(positional[2] ?? '.', { ref: text(flags, 'ref') ?? 'HEAD', ...(repository ? { repository } : {}), observedBy: SCAN_OBSERVER() });
+  printCapabilityIssues(read.issues);
+  const failed = read.issues.some((i) => i.severity === 'error') ? 1 : 0;
   if (flags.json) {
-    console.log(JSON.stringify({ repository: read.repository, commit: read.commit, source: read.source, capabilities: read.capabilities, packages: read.packages, ...(read.drift ? { drift: read.drift } : {}) }, null, 2));
-    return 0;
+    console.log(JSON.stringify({ repository: read.repository, commit: read.commit, source: read.source, capabilities: read.capabilities, packages: read.packages, realizes: read.realizes, issues: read.issues, ...(read.drift ? { drift: read.drift } : {}) }, null, 2));
+    return failed;
   }
   console.log(`${read.repository.replace(/^repository:/, '')} @ ${read.commit.slice(0, 12)} provides ${read.capabilities.length} (read from ${read.source === 'file' ? CAPABILITY_FILE : 'its files; it holds no capability file'})`);
   for (const c of read.capabilities) {
     const kind = /^capability:(package|cli|skill)-/.exec(c.nodeId)?.[1] ?? 'other';
-    console.log(`  ${kind.padEnd(8)} ${c.name}${c.statement ? ` — ${c.statement}` : ` [${c.status}]`}`);
+    const realizes = read.realizes.filter((r) => r.from === c.nodeId).map((r) => r.to);
+    console.log(printable(`  ${kind.padEnd(8)} ${c.name}${c.statement ? ` — ${c.statement}` : ` [${c.status}]`}${realizes.length ? `  (realizes ${realizes.join(', ')})` : ''}`));
   }
-  return 0;
+  return failed;
 }
 
 async function capabilitiesMap(positional: string[], flags: Record<string, string | true>): Promise<number> {
   const clones = [...positional.slice(2)];
+  const skipped: { dir: string; reason: string }[] = [];
   const root = text(flags, 'root');
-  if (root) clones.push(...findClones(root));
+  if (root) clones.push(...findClones(root, { onSkip: (dir, reason) => skipped.push({ dir, reason }) }));
   const list = text(flags, 'list');
   if (list) clones.push(...readFileSync(list, 'utf8').split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('#')));
   const unique = [...new Set(clones.map((c) => path.resolve(c)))];
+  for (const s of skipped) console.error(printable(`skipped ${s.dir}: ${s.reason}`));
   if (!unique.length) throw new UsageError('capabilities map needs clones: name them, or --root <dir>, or --list <file>');
-  const map = await buildCapabilityMap(unique, { ref: text(flags, 'ref'), observedBy: SCAN_OBSERVER() });
+  // Each clone's default branch as it was last fetched: fetch first for today's.
+  const map = await buildCapabilityMap(unique, { ...(text(flags, 'ref') ? { ref: text(flags, 'ref') } : {}), observedBy: SCAN_OBSERVER() });
   const out = text(flags, 'out');
   if (out) writeFileSync(out, map.capabilities.map((c) => JSON.stringify(c)).join('\n') + '\n', 'utf8');
   const packages = text(flags, 'packages');
   if (packages) writeFileSync(packages, map.packages.map((p) => JSON.stringify(p)).join('\n') + '\n', 'utf8');
   const failed = map.repositories.filter((r) => r.error);
+  const erred = map.repositories.filter((r) => r.issues.some((i) => i.severity === 'error'));
   if (flags.json) {
-    console.log(JSON.stringify(map, null, 2));
+    console.log(JSON.stringify({ ...map, skipped }, null, 2));
   } else {
     for (const r of map.repositories) {
       if (r.error) {
-        console.log(`  ${path.basename(r.clone).padEnd(36)} could not be read: ${r.error}`);
+        console.log(printable(`  ${path.basename(r.clone).padEnd(36)} could not be read: ${r.error}`));
         continue;
       }
       const c = r.counts!;
       const stale = r.drift && (r.drift.added.length || r.drift.removed.length) ? `  file behind by ${r.drift.added.length + r.drift.removed.length}` : '';
       console.log(`  ${r.repository!.replace(/^repository:/, '').padEnd(36)} ${r.source!.padEnd(5)} ${String(c.package).padStart(3)} packages ${String(c.cli).padStart(3)} CLIs ${String(c.skill).padStart(3)} skills  @${r.commit!.slice(0, 12)}${stale}`);
-      printIssues(r.issues);
+      printCapabilityIssues(r.issues, r.repository!.replace(/^repository:/, ''));
     }
-    console.log(`${map.capabilities.length} capabilities from ${map.repositories.length - failed.length} repositories, ${map.consumes.length} consumes relations between their packages${failed.length ? `, ${failed.length} could not be read` : ''}`);
+    for (const c of map.collisions) console.error(printable(`warning: ${c.names.join(' and ')} share the id ${c.nodeId}, so one row stands for both`));
+    console.log(`${map.capabilities.length} capabilities from ${map.repositories.length - failed.length} repositories, ${map.consumes.length} consumes relations between their packages${map.realizes.length ? `, ${map.realizes.length} realizes` : ''}${failed.length ? `, ${failed.length} could not be read` : ''}${skipped.length ? `, ${skipped.length} folders skipped` : ''}`);
   }
-  return failed.length ? 1 : 0;
+  return failed.length || erred.length ? 1 : 0;
 }
 
 async function capabilities(positional: string[], flags: Record<string, string | true>): Promise<number> {
   const sub = positional[1];
+  const allowed = sub ? CAPABILITY_FLAGS[sub] : undefined;
+  if (!allowed) throw new UsageError('capabilities needs scan, state, show or map');
+  const unknown = Object.keys(flags).filter((k) => !allowed.includes(k));
+  if (unknown.length) throw new UsageError(`capabilities ${sub} does not take ${unknown.map((k) => `--${k}`).join(', ')}; it takes ${allowed.map((k) => `--${k}`).join(', ')}`);
   if (sub === 'scan') return capabilitiesScan(positional, flags);
   if (sub === 'state') return capabilitiesState(positional, flags);
   if (sub === 'show') return capabilitiesShow(positional, flags);
-  if (sub === 'map') return capabilitiesMap(positional, flags);
-  throw new UsageError('capabilities needs scan, state, show or map');
+  return capabilitiesMap(positional, flags);
 }
 
 const COMMANDS: Record<string, (positional: string[], flags: Record<string, string | true>) => Promise<number>> = {

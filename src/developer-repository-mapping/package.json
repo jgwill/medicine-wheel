@@ -1,7 +1,7 @@
 {
   "name": "@medicine-wheel/developer-repository-mapping",
   "version": "0.27.10",
-  "description": "Repository mapping for the Medicine Wheel Developer Suite — owner hubs of JSONL rows in <owner>/<owner>/.miadi/repository-mapping/, a lifecycle state machine checked against git, a meta mapping that reads other hubs without copying them, the projection into wheel nodes and edges, and the mw-repomap CLI with a small web page",
+  "description": "Repository mapping for the Medicine Wheel Developer Suite \u2014 owner hubs of JSONL rows in <owner>/<owner>/.miadi/repository-mapping/, a lifecycle state machine checked against git, a meta mapping that reads other hubs without copying them, the projection into wheel nodes and edges, and the mw-repomap CLI with a small web page",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -24,6 +24,7 @@
   "sideEffects": false,
   "files": [
     "dist",
+    "schema",
     "README.md"
   ],
   "scripts": {
