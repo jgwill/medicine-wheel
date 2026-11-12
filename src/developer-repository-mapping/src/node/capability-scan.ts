@@ -20,6 +20,7 @@ import {
   capabilityAddress,
   capabilityId,
   capabilityRows,
+  holdsUnsafeCharacter,
   mergeCapabilityRows,
   packageManifests,
   parsePackageJson,
@@ -32,7 +33,9 @@ import {
 import { consumesEdges, type ConsumesEdge, type PackageReading } from '../capability-impact';
 import {
   CAPABILITY_FILE,
+  CapabilityInputError,
   CapabilityNameSchema,
+  REPOSITORY_NAME,
   capabilityFileFacets,
   capabilityFileRows,
   mergeCapabilityFile,
@@ -149,11 +152,19 @@ export async function scanRepository(clone: string, options: ScanOptions): Promi
     artefacts.push(...reader.read((await show(reader.path)) ?? ''));
   }
 
-  // A name no id can be made from, or one carrying control characters, is reported and not read.
+  // A name no id can be made from, or a name, a path or a shipping package carrying control characters, is reported and not read.
   const readable = artefacts.filter((a) => {
     const named = CapabilityNameSchema.safeParse(a.name);
-    if (!named.success) issues.push({ severity: 'warning', file: a.path, message: `${a.kind} name ${JSON.stringify(a.name)} is not read: ${named.error.issues[0]?.message}` });
-    return named.success;
+    const shipper = a.package === undefined ? undefined : CapabilityNameSchema.safeParse(a.package);
+    const why = !named.success
+      ? named.error.issues[0]?.message
+      : holdsUnsafeCharacter(a.path)
+        ? 'its path holds a control character'
+        : shipper && !shipper.success
+          ? `the package that ships it: ${shipper.error.issues[0]?.message}`
+          : undefined;
+    if (why) issues.push({ severity: 'warning', file: JSON.stringify(a.path).slice(1, -1), message: `${a.kind} name ${JSON.stringify(a.name)} is not read: ${why}` });
+    return why === undefined;
   });
   const observedAt = (options.now ?? new Date()).toISOString();
   return {
@@ -204,7 +215,7 @@ export async function readRepositoryCapabilities(clone: string, options: ScanOpt
   const issues = [...scan.issues, ...parsed.issues];
   const named = `repository:${parsed.header?.repository ?? ''}`;
   if (parsed.header && named.toLowerCase() !== scan.repository.toLowerCase()) {
-    issues.push({ severity: 'warning', file: CAPABILITY_FILE, message: `written for ${parsed.header.repository}; this clone's origin is ${scan.repository.replace(/^repository:/, '')}` });
+    issues.push({ severity: 'warning', file: CAPABILITY_FILE, message: `written for ${parsed.header.repository}; read here as ${scan.repository.replace(/^repository:/, '')}` });
   }
   // A row the commit does not provide is the file's claim, not the repository's: reported, never read as a capability.
   const grounded = merge.rows.filter((r) => {
@@ -267,9 +278,13 @@ export async function writeCapabilityFile(
   if (unread) throw new Error(`${unread.file}: ${unread.message}; its rows would be removed, so nothing was written`);
   // A fork, a mirror or a remote spelled in another case keeps the repository the file was written for.
   const named = options.repository?.replace(/^repository:/, '') ?? current?.header?.repository ?? scan.repository.replace(/^repository:/, '');
+  if (!REPOSITORY_NAME.test(named)) throw new CapabilityInputError(`${JSON.stringify(named)} is not owner/name as an address names it (nothing was written)`);
   const scanned = scan.fileRows.map((r) => ({ ...r, address: capabilityAddress(named, r.kind, r.name) }));
   const merge = mergeCapabilityFile(current?.rows ?? [], scanned);
   const text = renderCapabilityFile(named, merge.rows);
+  // Never write a file the next reader refuses.
+  const unreadable = parseCapabilityFile(text, { mode: 'write' }).issues.find((i) => i.severity === 'error');
+  if (unreadable) throw new Error(`the file this scan would write is not readable at line ${unreadable.line}: ${unreadable.message} (nothing was written)`);
   const differs = !existsSync(file) || readFileSync(file, 'utf8') !== text;
   if (differs && options.write) {
     mkdirSync(path.dirname(file), { recursive: true });
@@ -299,8 +314,11 @@ export async function stateCapability(
     ...(input.statement !== undefined ? { statement: input.statement } : {}),
     ...(input.realizes ? { realizes: input.realizes } : {}),
   });
-  if ('error' in answer) throw new Error(answer.error);
-  writeFileSync(file, renderCapabilityFile(current.header.repository, answer.rows), 'utf8');
+  if ('error' in answer) throw new CapabilityInputError(answer.error);
+  const text = renderCapabilityFile(current.header.repository, answer.rows);
+  const unreadable = parseCapabilityFile(text, { mode: 'write' }).issues.find((i) => i.severity === 'error');
+  if (unreadable) throw new CapabilityInputError(`line ${unreadable.line} would not be readable: ${unreadable.message} (nothing was written)`);
+  writeFileSync(file, text, 'utf8');
   return { file, row: answer.rows.find((r) => r.kind === input.kind && r.name === input.name)! };
 }
 
@@ -372,6 +390,8 @@ export interface CapabilityMap {
   repositories: CapabilityMapRepository[];
   /** ids that two different names make (`@a/b` and `a-b`): one row stands for both, and that is said */
   collisions: { nodeId: string; names: string[] }[];
+  /** ids several repositories provide (a fork and its upstream, or one command name in two tools): each repository's row speaks for its own */
+  shared: { nodeId: string; repositories: string[] }[];
   /** one row per capability; a capability two repositories provide is one row both provide */
   capabilities: CapabilityFacet[];
   packages: PackageReading[];
@@ -415,5 +435,9 @@ export async function buildCapabilityMap(clones: readonly string[], options: { o
   const names = new Map<string, Set<string>>();
   for (const f of facets) names.set(f.nodeId, (names.get(f.nodeId) ?? new Set()).add(f.name));
   const collisions = [...names].filter(([, n]) => n.size > 1).map(([nodeId, n]) => ({ nodeId, names: [...n].sort() }));
-  return { repositories, collisions, capabilities: mergeCapabilityRows(facets), packages: unique, consumes: consumesEdges(unique), realizes };
+  const capabilities = mergeCapabilityRows(facets);
+  const providers = new Map<string, Set<string>>();
+  for (const c of capabilities) for (const p of c.providedBy) providers.set(c.nodeId, (providers.get(c.nodeId) ?? new Set()).add(p));
+  const shared = [...providers].filter(([, r]) => r.size > 1).map(([nodeId, r]) => ({ nodeId, repositories: [...r].sort() }));
+  return { repositories, collisions, shared, capabilities, packages: unique, consumes: consumesEdges(unique), realizes };
 }

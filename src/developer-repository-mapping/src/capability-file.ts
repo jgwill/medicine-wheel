@@ -26,7 +26,17 @@ import {
   type CapabilityFacet,
 } from '@medicine-wheel/capabilities';
 import type { MappingIssue } from './types';
-import { CAPABILITY_KINDS, capabilityAddress, capabilityId, type Artefact, type CapabilityKind } from './capability-scan';
+import {
+  CAPABILITY_KINDS,
+  STATEMENT_MAX_CHARACTERS,
+  capabilityAddress,
+  capabilityId,
+  codePoints,
+  holdsUnsafeCharacter,
+  statementFromFiles,
+  type Artefact,
+  type CapabilityKind,
+} from './capability-scan';
 
 /** Where a repository keeps it, relative to its root. */
 export const CAPABILITY_FILE = '.miadi/capabilities.jsonl';
@@ -37,26 +47,39 @@ export const SCAN_AUTHOR = 'mw-repomap scan';
 /** The format version this package writes. A reader takes a newer one and reads what it knows. */
 export const CAPABILITY_FILE_VERSION = 1;
 
+/**
+ * `owner/name` as the reference grammar reads it in an address
+ * (`miadi-capability://<owner>/<repo>/…`): letters, digits, `.`, `_` and `-`,
+ * starting with a letter or a digit, the name not ending in `.git`.
+ */
+export const REPOSITORY_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}\/(?![^/]*\.git$)[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
+
+/** Text from a file someone else committed: printable, at most `max` characters counted as code points. */
+const printableText = (max: number, what: string) =>
+  z
+    .string()
+    .min(1, `${what} is empty`)
+    .refine((t) => codePoints(t) <= max, `${what} is at most ${max} characters`)
+    .refine((t) => !holdsUnsafeCharacter(t), `${what} holds no control character`);
+
+/** An ISO 8601 time with its offset and its seconds, as RFC 3339 and JSON Schema's date-time read it. */
+const FileTimestampSchema = z
+  .string()
+  .datetime({ offset: true })
+  .refine((t) => /T\d{2}:\d{2}:\d{2}/.test(t), 'a time carries its seconds');
+
 export const CapabilityFileHeaderSchema = z
   .object({
     schema: z.literal(CAPABILITY_FILE_SCHEMA),
     version: z.number().int().min(1),
     /** `owner/name`, as the repository was known when the file was written. */
-    repository: z.string().min(1).max(200),
+    repository: z.string().regex(REPOSITORY_NAME, 'the repository is owner/name, as an address names it'),
   })
   .strict();
 export type CapabilityFileHeader = z.infer<typeof CapabilityFileHeaderSchema>;
 
-/** Control characters never reach a terminal or a page from a file someone else committed. */
-const CONTROL = /[\u0000-\u001f\u007f-\u009f]/;
-
 /** A name the registry can give an id to: printable, at most 214 characters, with a letter or a digit. */
-export const CapabilityNameSchema = z
-  .string()
-  .min(1)
-  .max(214)
-  .refine((t) => !CONTROL.test(t), 'a name holds no control character')
-  .refine((t) => /[a-z0-9]/i.test(t), 'a name needs a letter or a digit');
+export const CapabilityNameSchema = printableText(214, 'a name').refine((t) => /[a-z0-9]/i.test(t), 'a name needs a letter or a digit');
 
 /** A platform capability, `capability:<kebab-case-slug>`: what the platform can do for someone. */
 const PLATFORM_CAPABILITY = /^capability:[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -66,11 +89,11 @@ const CapabilityFileRowObject = z
     kind: z.enum(CAPABILITY_KINDS as unknown as [CapabilityKind, ...CapabilityKind[]]),
     name: CapabilityNameSchema,
     /** `miadi-capability://<owner>/<repo>/<kind>/<name>` */
-    address: z.string().min(1).max(600).refine((t) => !CONTROL.test(t), 'an address holds no control character'),
-    statement: StatementSchema.and(z.string().max(1200, 'a statement is at most 1200 characters').refine((t) => !CONTROL.test(t), 'a statement holds no control character')).optional(),
+    address: printableText(600, 'an address'),
+    statement: StatementSchema.and(printableText(STATEMENT_MAX_CHARACTERS, 'a statement')).optional(),
     status: StatementStatusSchema,
     /** For a CLI: the package that ships it. */
-    package: z.string().min(1).max(214).optional(),
+    package: printableText(214, 'a package name').optional(),
     /**
      * The platform capabilities this one serves (`capability:<slug>`, capabilities.spec.md):
      * said by a person or an agent, never by the scan, and kept by every rescan.
@@ -80,8 +103,8 @@ const CapabilityFileRowObject = z
         z
           .object({
             capability: z.string().regex(PLATFORM_CAPABILITY, 'a platform capability is capability:<kebab-case-slug>'),
-            statedBy: z.string().min(1).max(200).refine((t) => !CONTROL.test(t) && t !== SCAN_AUTHOR, 'a person or an agent says what a capability realizes'),
-            statedAt: z.string().datetime({ offset: true }),
+            statedBy: printableText(200, 'a name').refine((t) => t !== SCAN_AUTHOR, 'a person or an agent says what a capability realizes'),
+            statedAt: FileTimestampSchema,
           })
           .strict(),
       )
@@ -90,6 +113,12 @@ const CapabilityFileRowObject = z
       .optional(),
     /** `grounding` here is the files that say so, relative to the repository. */
     ...attributionShape,
+    // The attribution a file holds is text someone else committed: printable, with its times in full.
+    statedBy: printableText(200, 'a name'),
+    statedAt: FileTimestampSchema,
+    grounding: z.array(printableText(1024, 'a path')).min(1),
+    revisedBy: printableText(200, 'a name').optional(),
+    revisedAt: FileTimestampSchema.optional(),
   })
   .strict();
 
@@ -238,13 +267,13 @@ export function capabilityFileRows(artefacts: readonly Artefact[], ctx: { reposi
       if (!existing.grounding.includes(a.path)) existing.grounding.push(a.path);
       continue;
     }
-    const fits = a.description ? checkStatement(a.description).fits : false;
+    const statement = statementFromFiles(a.description);
     rows.set(key, {
       kind: a.kind,
       name: a.name,
       address: capabilityAddress(ctx.repository, a.kind, a.name),
-      ...(fits ? { statement: a.description } : {}),
-      status: fits ? 'clear' : 'needs-resolution',
+      ...(statement ? { statement } : {}),
+      status: statement ? 'clear' : 'needs-resolution',
       ...(a.package ? { package: a.package } : {}),
       statedBy: SCAN_AUTHOR,
       statedAt: ctx.statedAt,
@@ -263,7 +292,7 @@ export interface CapabilityFileMerge {
   removed: string[];
   /** Rows whose text or files changed. */
   changed: string[];
-  /** Rows a person wrote that this scan does not find: kept, and said. */
+  /** Rows a person wrote, or that carry what a person said they realize, that this scan does not find: kept, and said. */
   keptByPerson: string[];
 }
 
@@ -312,7 +341,8 @@ export function mergeCapabilityFile(existing: readonly CapabilityFileRow[], scan
   for (const row of existing) {
     const key = rowKey(row);
     if (seen.has(key)) continue;
-    if (row.statedBy === SCAN_AUTHOR) {
+    // A row the scan wrote goes with its files, unless a person said what it realizes: those words are a person's.
+    if (row.statedBy === SCAN_AUTHOR && !row.realizes?.length) {
       removed.push(key);
     } else {
       rows.push(row);
@@ -358,11 +388,23 @@ export interface CapabilityStatementInput {
   realizes?: string[];
 }
 
-/** A person states or affirms one row. An `error` says why not: no such row, or words that do not fit. */
+/** What a person gave `capabilities state` cannot be written: no such row, or words or names the file does not hold. */
+export class CapabilityInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CapabilityInputError';
+  }
+}
+
+/**
+ * A person states or affirms one row. An `error` says why not: no such row,
+ * or words that do not fit. The row it answers is held to the row schema, so
+ * nothing it writes is refused by the next reader.
+ */
 export function stateCapabilityRow(rows: readonly CapabilityFileRow[], input: CapabilityStatementInput): { rows: CapabilityFileRow[] } | { error: string } {
   if (input.by.trim() === SCAN_AUTHOR) return { error: `"${SCAN_AUTHOR}" is the scan's name: a statement is said by a person` };
-  if (CONTROL.test(input.by)) return { error: 'a name holds no control character' };
-  if (input.statement !== undefined && (CONTROL.test(input.statement) || input.statement.length > 1200)) return { error: 'a statement is at most 1200 printable characters' };
+  if (holdsUnsafeCharacter(input.by)) return { error: 'a name holds no control character' };
+  if (input.statement !== undefined && (holdsUnsafeCharacter(input.statement) || codePoints(input.statement) > STATEMENT_MAX_CHARACTERS)) return { error: `a statement is at most ${STATEMENT_MAX_CHARACTERS} printable characters` };
   const key = rowKey(input);
   const row = rows.find((r) => rowKey(r) === key);
   if (!row) return { error: `the file holds no ${key}: run capabilities scan --write first` };
@@ -386,5 +428,7 @@ export function stateCapabilityRow(rows: readonly CapabilityFileRow[], input: Ca
     const added = [...new Set(input.realizes)].filter((c) => !held.some((h) => h.capability === c)).map((capability) => ({ capability, statedBy: input.by, statedAt: input.at }));
     next = { ...next, realizes: [...held, ...added] };
   }
+  const checked = CapabilityFileRowSchema.safeParse(next);
+  if (!checked.success) return { error: checked.error.issues.map(describeZod).join('; ') };
   return { rows: rows.map((r) => (rowKey(r) === key ? next : r)) };
 }

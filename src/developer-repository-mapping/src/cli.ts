@@ -13,7 +13,7 @@
  *   mw-repomap wheel [<path>] [--local]
  *   mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]
  *   mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--clone <path>]
- *   mw-repomap capabilities show [<clone>] [--ref <ref>] [--json]
+ *   mw-repomap capabilities show [<clone>] [--ref <ref>] [--repository <owner/name>] [--json]
  *   mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]
  *
  * <path> is a mapping folder, or an owner hub clone holding
@@ -32,7 +32,7 @@
  * Exit codes: 0 done, 1 the mapping has errors or a read failed, 2 usage error.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { hasErrors } from './check';
@@ -46,8 +46,8 @@ import { findMappingDir, initMappingDir, readMappingDir, writeMappingDir } from 
 import { originRepository, readActivity } from './node/git';
 import { readHub, type HubRead } from './node/hub';
 import { LOOPBACK_HOSTS, createMappingServer } from './node/server';
-import { CAPABILITY_KINDS, type CapabilityKind } from './capability-scan';
-import { CAPABILITY_FILE } from './capability-file';
+import { CAPABILITY_KINDS, UNSAFE_CHARACTER, type CapabilityKind } from './capability-scan';
+import { CAPABILITY_FILE, CapabilityInputError } from './capability-file';
 import { buildCapabilityMap, findClones, readRepositoryCapabilities, scanRepository, stateCapability, writeCapabilityFile } from './node/capability-scan';
 
 const USAGE = [
@@ -62,7 +62,7 @@ const USAGE = [
   '       mw-repomap wheel [<path>] [--local]',
   '       mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]',
   '       mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--clone <path>]',
-  '       mw-repomap capabilities show [<clone>] [--ref <ref>] [--json]',
+  '       mw-repomap capabilities show [<clone>] [--ref <ref>] [--repository <owner/name>] [--json]',
   '       mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]',
 ].join('\n');
 
@@ -104,7 +104,8 @@ function parse(argv: string[]) {
   }
   const allowed = COMMAND_FLAGS[positional[0]];
   if (allowed) {
-    const unknown = Object.keys(flags).filter((key) => !allowed.includes(key));
+    // --help is every command's: it prints the usage and exits 0.
+    const unknown = Object.keys(flags).filter((key) => key !== 'help' && !allowed.includes(key));
     if (unknown.length) {
       throw new UsageError(`${positional[0]} does not take ${unknown.map((k) => `--${k}`).join(', ')}; it takes ${allowed.map((k) => `--${k}`).join(', ') || 'no flags'}`);
     }
@@ -371,8 +372,9 @@ const CAPABILITY_FLAGS: Record<string, readonly string[]> = {
   map: ['root', 'list', 'out', 'packages', 'ref', 'json'],
 };
 
-/** Text from a file someone else committed, printable: a control character never reaches the terminal. */
-const printable = (text: string) => text.replace(/[\u0000-\u001f\u007f-\u009f]/g, '?');
+/** Text from a file someone else committed, printable: a control or bidirectional character never reaches the terminal. */
+const UNSAFE_GLOBAL = new RegExp(UNSAFE_CHARACTER.source, 'g');
+const printable = (text: string) => text.replace(UNSAFE_GLOBAL, '?');
 
 function changeLine(result: { added: string[]; removed: string[]; changed: string[]; keptByPerson: string[] }): string {
   return `${result.added.length} added, ${result.changed.length} changed, ${result.removed.length} removed, ${result.keptByPerson.length} kept by a person`;
@@ -454,7 +456,13 @@ async function capabilitiesMap(positional: string[], flags: Record<string, strin
   const clones = [...positional.slice(2)];
   const skipped: { dir: string; reason: string }[] = [];
   const root = text(flags, 'root');
-  if (root) clones.push(...findClones(root, { onSkip: (dir, reason) => skipped.push({ dir, reason }) }));
+  if (root) {
+    // A root that cannot be read is a failure to read, not a wrong command.
+    if (!existsSync(root)) throw new Error(`--root ${root} does not exist`);
+    clones.push(...findClones(root, { onSkip: (dir, reason) => skipped.push({ dir, reason }) }));
+    const unread = skipped.find((s) => path.resolve(s.dir) === path.resolve(root));
+    if (unread) throw new Error(`--root ${root} cannot be read: ${unread.reason}`);
+  }
   const list = text(flags, 'list');
   if (list) clones.push(...readFileSync(list, 'utf8').split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('#')));
   const unique = [...new Set(clones.map((c) => path.resolve(c)))];
@@ -481,7 +489,8 @@ async function capabilitiesMap(positional: string[], flags: Record<string, strin
       console.log(`  ${r.repository!.replace(/^repository:/, '').padEnd(36)} ${r.source!.padEnd(5)} ${String(c.package).padStart(3)} packages ${String(c.cli).padStart(3)} CLIs ${String(c.skill).padStart(3)} skills  @${r.commit!.slice(0, 12)}${stale}`);
       printCapabilityIssues(r.issues, r.repository!.replace(/^repository:/, ''));
     }
-    for (const c of map.collisions) console.error(printable(`warning: ${c.names.join(' and ')} share the id ${c.nodeId}, so one row stands for both`));
+    for (const c of map.collisions) console.error(printable(`warning: ${c.names.join(' and ')} share the id ${c.nodeId}, so one wheel node stands for both`));
+    for (const s of map.shared) console.error(printable(`note: ${s.nodeId} is provided by ${s.repositories.map((r) => r.replace(/^repository:/, '')).join(' and ')}; each speaks for its own`));
     console.log(`${map.capabilities.length} capabilities from ${map.repositories.length - failed.length} repositories, ${map.consumes.length} consumes relations between their packages${map.realizes.length ? `, ${map.realizes.length} realizes` : ''}${failed.length ? `, ${failed.length} could not be read` : ''}${skipped.length ? `, ${skipped.length} folders skipped` : ''}`);
   }
   return failed.length || erred.length ? 1 : 0;
@@ -489,6 +498,10 @@ async function capabilitiesMap(positional: string[], flags: Record<string, strin
 
 async function capabilities(positional: string[], flags: Record<string, string | true>): Promise<number> {
   const sub = positional[1];
+  if (flags.help) {
+    console.log(USAGE);
+    return 0;
+  }
   const allowed = sub ? CAPABILITY_FLAGS[sub] : undefined;
   if (!allowed) throw new UsageError('capabilities needs scan, state, show or map');
   const unknown = Object.keys(flags).filter((k) => !allowed.includes(k));
@@ -515,7 +528,7 @@ const COMMANDS: Record<string, (positional: string[], flags: Record<string, stri
 async function main(): Promise<number> {
   const { positional, flags } = parse(process.argv.slice(2));
   const command = positional[0];
-  if (command === 'help' || (flags.help && !command)) {
+  if (command === 'help' || flags.help) {
     console.log(USAGE);
     return 0;
   }
@@ -533,6 +546,12 @@ main().then(
     if (error instanceof UsageError) {
       console.error(`mw-repomap: ${error.message}`);
       console.error(USAGE);
+      process.exitCode = 2;
+      return;
+    }
+    // What a person typed cannot be written (no such row, words that do not fit): a bad argument, exit 2.
+    if (error instanceof CapabilityInputError) {
+      console.error(`mw-repomap: ${printable(error.message)}`);
       process.exitCode = 2;
       return;
     }

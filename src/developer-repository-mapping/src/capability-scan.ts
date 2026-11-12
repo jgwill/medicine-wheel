@@ -211,6 +211,34 @@ export interface CapabilityRowContext {
 }
 
 /**
+ * Characters that never reach a terminal or a page from a file someone else
+ * committed: control characters, bidirectional controls, and the line and
+ * paragraph separators.
+ */
+export const UNSAFE_CHARACTER = /[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u2028\u2029\u202a-\u202e\u2066-\u2069]/;
+
+export const holdsUnsafeCharacter = (text: string): boolean => UNSAFE_CHARACTER.test(text);
+
+/** A length as a person and JSON Schema count it: in code points, not UTF-16 units. */
+export const codePoints = (text: string): number => [...text].length;
+
+/** The longest statement a row holds, in code points. */
+export const STATEMENT_MAX_CHARACTERS = 1200;
+
+/**
+ * The statement a file's description makes: each run of whitespace (a line
+ * break included) read as one space. None when what is left holds an unsafe
+ * character, is longer than {@link STATEMENT_MAX_CHARACTERS}, or does not fit
+ * 55 words, so the scan never writes words its own reader refuses.
+ */
+export function statementFromFiles(description: string | undefined): string | undefined {
+  if (!description) return undefined;
+  const text = description.replace(/\s+/g, " ").trim();
+  if (!text || holdsUnsafeCharacter(text) || codePoints(text) > STATEMENT_MAX_CHARACTERS) return undefined;
+  return checkStatement(text).fits ? text : undefined;
+}
+
+/**
  * Capability rows for one repository. One row per id: two files naming the
  * same skill are one capability with both files as its grounding.
  */
@@ -225,12 +253,12 @@ export function capabilityRows(artefacts: readonly Artefact[], ctx: CapabilityRo
       if (!existing.grounding.includes(grounding)) existing.grounding.push(grounding);
       continue;
     }
-    const fits = a.description ? checkStatement(a.description).fits : false;
+    const statement = statementFromFiles(a.description);
     rows.set(nodeId, {
       nodeId,
       name: a.name,
-      ...(fits ? { statement: a.description } : {}),
-      status: fits ? "clear" : "needs-resolution",
+      ...(statement ? { statement } : {}),
+      status: statement ? "clear" : "needs-resolution",
       providedBy: [ctx.repository],
       statedBy: ctx.observedBy,
       statedAt: ctx.observedAt,
@@ -241,23 +269,28 @@ export function capabilityRows(artefacts: readonly Artefact[], ctx: CapabilityRo
   return [...rows.values()];
 }
 
+const providersKey = (row: CapabilityFacet) => row.providedBy.map((p) => p.toLowerCase()).sort().join(",");
+
 /**
- * Rows from several repositories as one inventory: a capability two
- * repositories provide is one row that both provide, with both files as its
- * grounding. The first row read keeps its name and statement.
+ * Rows from several repositories as one inventory. Each repository speaks for
+ * what it provides: two repositories with a capability of the same kind and
+ * name (a fork and its upstream, or two tools with one command name) are two
+ * rows with one id, each with its own provider, words and attribution, so
+ * neither one's statement is ever shown as the other's. Rows of the same
+ * provider for one id are one row with the files of both as its grounding.
  */
 export function mergeCapabilityRows(rows: readonly CapabilityFacet[]): CapabilityFacet[] {
   const merged = new Map<string, CapabilityFacet>();
   for (const row of rows) {
-    const existing = merged.get(row.nodeId);
+    const key = `${row.nodeId}\u0000${providersKey(row)}`;
+    const existing = merged.get(key);
     if (!existing) {
-      merged.set(row.nodeId, { ...row, providedBy: [...row.providedBy], grounding: [...row.grounding] });
+      merged.set(key, { ...row, providedBy: [...row.providedBy], grounding: [...row.grounding] });
       continue;
     }
-    for (const p of row.providedBy) if (!existing.providedBy.includes(p)) existing.providedBy.push(p);
     for (const g of row.grounding) if (!existing.grounding.includes(g)) existing.grounding.push(g);
   }
-  return [...merged.values()].sort((a, b) => (a.nodeId < b.nodeId ? -1 : a.nodeId > b.nodeId ? 1 : 0));
+  return [...merged.values()].sort((a, b) => (a.nodeId < b.nodeId ? -1 : a.nodeId > b.nodeId ? 1 : 0) || (providersKey(a) < providersKey(b) ? -1 : providersKey(a) > providersKey(b) ? 1 : 0));
 }
 
 /** One `provides` edge: a repository provides a capability, said by whoever said the capability. */

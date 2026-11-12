@@ -38,19 +38,64 @@ export interface ConsumesEdge {
   type: "consumes";
   fromName: string;
   toName: string;
+  /** the repository of the consuming reading */
+  fromRepository: string;
+  /** the repository of the consumed reading */
+  toRepository: string;
   /** the range `from` declares on `to` */
   range: string;
+  /**
+   * Several repositories hold a package of that name (a fork and its upstream)
+   * and none is the consumer's own: the edge is drawn to each, and none of
+   * them can be said to be the one installed.
+   */
+  ambiguous?: true;
 }
 
-/** `consumes` edges between the packages read, first-party only. */
-export function consumesEdges(packages: readonly PackageReading[]): ConsumesEdge[] {
-  const byName = new Map(packages.map((p) => [p.name, p]));
+/** One reading per repository and package name: a fork and its upstream are two readings. */
+export const readingKey = (p: Pick<PackageReading, "repository" | "name">): string => `${p.repository.toLowerCase()}|${p.name}`;
+
+interface ResolvedEdge {
+  fromKey: string;
+  toKey: string;
+  edge: ConsumesEdge;
+}
+
+/**
+ * A dependency is the package of that name in the consumer's own repository,
+ * else the only repository that holds one, else each of them, marked ambiguous.
+ */
+function resolveEdges(packages: readonly PackageReading[]): ResolvedEdge[] {
+  const byName = new Map<string, PackageReading[]>();
+  for (const p of packages) byName.set(p.name, [...(byName.get(p.name) ?? []), p]);
   return packages.flatMap((p) =>
     Object.entries(p.dependsOn).flatMap(([name, range]) => {
-      const to = byName.get(name);
-      return to && to.name !== p.name ? [{ from: p.capability, to: to.capability, type: "consumes" as const, fromName: p.name, toName: to.name, range }] : [];
+      if (name === p.name) return [];
+      const candidates = byName.get(name) ?? [];
+      const own = candidates.find((c) => c.repository.toLowerCase() === p.repository.toLowerCase());
+      const targets = own ? [own] : candidates;
+      return targets.map((to) => ({
+        fromKey: readingKey(p),
+        toKey: readingKey(to),
+        edge: {
+          from: p.capability,
+          to: to.capability,
+          type: "consumes" as const,
+          fromName: p.name,
+          toName: to.name,
+          fromRepository: p.repository,
+          toRepository: to.repository,
+          range,
+          ...(targets.length > 1 ? { ambiguous: true as const } : {}),
+        },
+      }));
     }),
   );
+}
+
+/** `consumes` edges between the packages read, first-party only, each naming the repositories of both readings. */
+export function consumesEdges(packages: readonly PackageReading[]): ConsumesEdge[] {
+  return resolveEdges(packages).map((r) => r.edge);
 }
 
 export type BumpLevel = "major" | "minor" | "patch";
@@ -143,31 +188,37 @@ export interface ImpactAnswer {
   consumers: ImpactConsumer[];
 }
 
-/** The impact of a package, found by name (`@miadi/x`) or capability id; undefined when no reading names it. */
-export function impactOf(packageOrCapability: string, packages: readonly PackageReading[], bump?: BumpLevel): ImpactAnswer | undefined {
-  const target = packages.find((p) => p.name === packageOrCapability || p.capability === packageOrCapability);
+/**
+ * The impact of a package, found by name (`@miadi/x`) or capability id;
+ * undefined when no reading names it. With `repository`, the reading of that
+ * repository: a fork and its upstream each answer for their own package.
+ */
+export function impactOf(packageOrCapability: string, packages: readonly PackageReading[], bump?: BumpLevel, options: { repository?: string } = {}): ImpactAnswer | undefined {
+  const wanted = options.repository?.toLowerCase();
+  const target = packages.find((p) => (p.name === packageOrCapability || p.capability === packageOrCapability) && (!wanted || p.repository.toLowerCase() === wanted));
   if (!target) return undefined;
-  const edges = consumesEdges(packages);
-  const byCapability = new Map(packages.map((p) => [p.capability, p]));
+  const edges = resolveEdges(packages);
+  const byKey = new Map(packages.map((p) => [readingKey(p), p]));
+  const targetKey = readingKey(target);
   const to = bump && target.version ? bumpVersion(target.version, bump) : undefined;
 
   const consumes = edges
-    .filter((e) => e.from === target.capability)
-    .map((e) => {
-      const p = byCapability.get(e.to)!;
-      return { name: p.name, capability: p.capability, repository: p.repository, ...(p.version ? { version: p.version } : {}), range: e.range };
+    .filter((e) => e.fromKey === targetKey)
+    .map(({ toKey, edge }) => {
+      const p = byKey.get(toKey)!;
+      return { name: p.name, capability: p.capability, repository: p.repository, ...(p.version ? { version: p.version } : {}), range: edge.range };
     });
 
   const consumers: ImpactConsumer[] = [];
-  const seen = new Set<string>([target.capability]);
-  let frontier: { capability: string; via?: string }[] = [{ capability: target.capability }];
+  const seen = new Set<string>([targetKey]);
+  let frontier: { key: string }[] = [{ key: targetKey }];
   for (let depth = 1; frontier.length; depth++) {
-    const next: { capability: string; via?: string }[] = [];
-    for (const { capability } of frontier) {
-      for (const e of edges.filter((x) => x.to === capability)) {
-        if (seen.has(e.from)) continue;
-        seen.add(e.from);
-        const p = byCapability.get(e.from)!;
+    const next: { key: string }[] = [];
+    for (const { key } of frontier) {
+      for (const { fromKey, edge: e } of edges.filter((x) => x.toKey === key)) {
+        if (seen.has(fromKey)) continue;
+        seen.add(fromKey);
+        const p = byKey.get(fromKey)!;
         const link: ImpactConsumer = {
           name: p.name,
           capability: p.capability,
@@ -175,7 +226,7 @@ export function impactOf(packageOrCapability: string, packages: readonly Package
           ...(p.version ? { version: p.version } : {}),
           range: e.range,
           depth,
-          ...(depth > 1 ? { via: byCapability.get(capability)!.name } : {}),
+          ...(depth > 1 ? { via: byKey.get(key)!.name } : {}),
         };
         if (to && target.version) {
           if (depth === 1) {
@@ -194,7 +245,7 @@ export function impactOf(packageOrCapability: string, packages: readonly Package
           }
         }
         consumers.push(link);
-        next.push({ capability: e.from });
+        next.push({ key: fromKey });
       }
     }
     frontier = next;

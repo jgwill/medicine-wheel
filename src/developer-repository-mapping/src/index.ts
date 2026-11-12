@@ -132,9 +132,14 @@ export {
   providesEdges,
   skillFiles,
   workspaceGlobs,
+  UNSAFE_CHARACTER,
+  holdsUnsafeCharacter,
+  codePoints,
+  STATEMENT_MAX_CHARACTERS,
+  statementFromFiles,
 } from './capability-scan';
 export type { Artefact, CapabilityKind, CapabilityRowContext, CodeReader, ProvidesEdge } from './capability-scan';
-export { PackageReadingSchema, bumpVersion, consumesEdges, impactOf, satisfies } from './capability-impact';
+export { PackageReadingSchema, bumpVersion, consumesEdges, impactOf, readingKey, satisfies } from './capability-impact';
 export type { BumpLevel, ConsumesEdge, ImpactAnswer, ImpactConsumer, ImpactLink, PackageReading } from './capability-impact';
 export {
   CAPABILITY_FILE,
@@ -151,5 +156,7 @@ export {
   parseCapabilityFile,
   renderCapabilityFile,
   stateCapabilityRow,
+  CapabilityInputError,
+  REPOSITORY_NAME,
 } from './capability-file';
 export type { CapabilityFileHeader, CapabilityFileMerge, CapabilityFileRow, CapabilityStatementInput, ParseCapabilityFileOptions, ParsedCapabilityFile } from './capability-file';
