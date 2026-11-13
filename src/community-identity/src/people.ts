@@ -15,6 +15,7 @@
 
 import type { DirectionName, RelationalNode } from '@medicine-wheel/ontology-core';
 import { z } from 'zod';
+import { normalizeLanguageTag } from './language.js';
 import { isRole, type Role } from './roles.js';
 
 export const PERSON_KIND = 'person' as const;
@@ -43,6 +44,8 @@ export interface Person {
   github_handle?: string;
   /** The accounts on a host that act for this seat (0.27.3, #172). */
   local_accounts?: LocalAccount[];
+  /** The language this seat prefers answers in, a canonical BCP 47 tag (#175). */
+  output_language?: string;
   direction?: DirectionName;
   created_at: string;
   updated_at: string;
@@ -67,6 +70,14 @@ export const NewPersonSchema = z.object({
       const accounts = list.map(normalizeLocalAccount);
       if (accounts.some((a) => a === null)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'not a local account (host name and POSIX user name)' });
       return uniqueAccounts(accounts.filter((a): a is LocalAccount => a !== null));
+    })
+    .optional(),
+  output_language: z
+    .string()
+    .transform((value, ctx) => {
+      const tag = normalizeLanguageTag(value);
+      if (tag === null) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'not a language tag' });
+      return tag ?? '';
     })
     .optional(),
   direction: z.enum(['east', 'south', 'west', 'north']).optional(),
@@ -131,6 +142,7 @@ export function personNode(input: NewPerson, now = new Date().toISOString()): Re
       ...(input.email ? { email: input.email } : {}),
       ...(input.github_handle ? { github_handle: input.github_handle } : {}),
       ...(input.local_accounts?.length ? { local_accounts: input.local_accounts } : {}),
+      ...(input.output_language ? { output_language: input.output_language } : {}),
     },
     created_at: now,
     updated_at: now,
@@ -152,6 +164,7 @@ export function personFromNode(node: RelationalNode | null | undefined): Person 
     ...(typeof meta.email === 'string' ? { email: meta.email } : {}),
     ...(typeof meta.github_handle === 'string' ? { github_handle: meta.github_handle } : {}),
     ...localAccountsOf(meta),
+    ...outputLanguageOf(meta),
     ...(node.direction ? { direction: node.direction } : {}),
     created_at: node.created_at,
     updated_at: node.updated_at,
@@ -202,6 +215,20 @@ export function githubHandlePatch(handle: string | null, current: Record<string,
   const normalized = normalizeGithubHandle(handle);
   if (normalized === null) throw new Error(`not a GitHub handle: ${handle}`);
   return { ...rest, github_handle: normalized };
+}
+
+function outputLanguageOf(meta: Record<string, unknown>): { output_language?: string } {
+  const tag = normalizeLanguageTag(meta.output_language);
+  return tag ? { output_language: tag } : {};
+}
+
+/** The metadata patch that sets the language a person prefers answers in, or removes it with null. The tag is normalised first. */
+export function outputLanguagePatch(tag: string | null, current: Record<string, unknown> = {}): Record<string, unknown> {
+  const { output_language: _gone, ...rest } = current;
+  if (tag === null) return rest;
+  const normalized = normalizeLanguageTag(tag);
+  if (normalized === null) throw new Error(`not a language tag: ${tag}`);
+  return { ...rest, output_language: normalized };
 }
 
 /**

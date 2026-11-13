@@ -384,3 +384,62 @@ describe("an episode's main circle and ceremony (0.26.1, #168)", () => {
     expect(mainCeremonyOf(records.slice(0, 1), { episode_path: ep, circle_id: "c" })).toBeNull();
   });
 });
+
+describe("the language answers are written in (#175)", () => {
+  it("normalises tags and refuses what is not one", async () => {
+    const { normalizeLanguageTag, normalizeLanguageList, languageName } = await import("../src/community-identity/src/index");
+    expect(normalizeLanguageTag(" EN ")).toBe("en");
+    expect(normalizeLanguageTag("fr-ca")).toBe("fr-CA");
+    expect(normalizeLanguageTag("not a tag")).toBeNull();
+    expect(normalizeLanguageTag(42)).toBeNull();
+    expect(normalizeLanguageList(["fr", "FR", "en"])).toEqual(["fr", "en"]);
+    expect(normalizeLanguageList(["fr", "?"])).toBeNull();
+    expect(languageName("fr")).toEqual({ tag: "fr", name: "French", native: "français" });
+  });
+
+  it("is read from a person's node, and set or removed by outputLanguagePatch", async () => {
+    const { NewPersonSchema, outputLanguagePatch } = await import("../src/community-identity/src/index");
+    const node = personNode(NewPersonSchema.parse({ name: "Iris", role: "participant", output_language: "fr-ca" }));
+    expect(node.metadata?.output_language).toBe("fr-CA");
+    expect(personFromNode(node)!.output_language).toBe("fr-CA");
+    const agent = personNode(NewPersonSchema.parse({ name: "Mia", role: "companion_ai", agent: true }));
+    expect(personFromNode(agent)!.output_language).toBeUndefined();
+    const meta = { kind: "person", role: "companion_ai", api_access: false };
+    const set = outputLanguagePatch("EN", meta);
+    expect(set.output_language).toBe("en");
+    expect(personFromNode({ ...agent, metadata: set })!.output_language).toBe("en");
+    expect(outputLanguagePatch(null, set)).toEqual(meta);
+    expect(() => outputLanguagePatch("??", meta)).toThrow(/not a language tag/);
+    expect(personFromNode({ ...agent, metadata: { ...meta, output_language: "??" } })!.output_language).toBeUndefined();
+    expect(() => NewPersonSchema.parse({ name: "X", role: "participant", output_language: "??" })).toThrow();
+  });
+
+  it("is chosen from what was asked, then the profile, then the platform, within the languages offered", async () => {
+    const { outputLanguageFor, offeredLanguages, offeredLanguage } = await import("../src/community-identity/src/index");
+    const config = { output_languages: ["en", "fr", "es"], default_output_language: "fr" };
+    expect(outputLanguageFor({ asked: "ES", person: { output_language: "en" }, config })).toEqual({ tag: "es", source: "asked" });
+    expect(outputLanguageFor({ asked: "de", person: { output_language: "en" }, config })).toEqual({ tag: "en", source: "profile" });
+    expect(outputLanguageFor({ person: { output_language: "de" }, config })).toEqual({ tag: "fr", source: "platform" });
+    expect(outputLanguageFor({})).toEqual({ tag: "en", source: "platform" });
+    expect(offeredLanguages({ output_languages: ["es"], default_output_language: "fr" })).toEqual({ languages: ["es"], default: "es" });
+    expect(offeredLanguage("FR", config)).toBe("fr");
+    expect(offeredLanguage("de", config)).toBeNull();
+  });
+
+  it("is offered by the community config, which keeps its default among its languages", async () => {
+    const { JsonConfigStore, DEFAULT_CONFIG, validateConfigPatch } = await import("../src/community-identity/src/index");
+    const store = new JsonConfigStore(path.join(tempDir, "config.json"));
+    expect((await store.get()).output_languages).toEqual(["en", "fr"]);
+    expect((await store.get()).default_output_language).toBe("en");
+    expect(validateConfigPatch({ output_languages: ["EN", "es"], default_output_language: "es" })).toEqual({ patch: { output_languages: ["en", "es"], default_output_language: "es" }, errors: [] });
+    expect(validateConfigPatch({ output_languages: [] }).errors).toEqual(["output_languages names at least one language"]);
+    expect(validateConfigPatch({ output_languages: ["en", "??"] }).errors).toHaveLength(1);
+    expect(validateConfigPatch({ output_languages: ["en"], default_output_language: "fr" }).errors).toEqual(["default_output_language must be one of output_languages"]);
+
+    // A default named alone joins the languages; a list without the default gives its first.
+    expect(await store.set({ default_output_language: "es" }, "admin")).toMatchObject({ output_languages: ["es", "en", "fr"], default_output_language: "es" });
+    expect(await store.set({ output_languages: ["fr", "en"] }, "admin")).toMatchObject({ output_languages: ["fr", "en"], default_output_language: "fr" });
+    expect(await store.get()).toMatchObject({ output_languages: ["fr", "en"], default_output_language: "fr" });
+    expect(DEFAULT_CONFIG.output_languages).toEqual(["en", "fr"]);
+  });
+});

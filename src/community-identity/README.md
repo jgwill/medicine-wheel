@@ -26,6 +26,13 @@ await wheel.nodes.patch(id, { metadata: githubHandlePatch('miadisabelle', node.m
 
 A person may record the accounts on a host that act for them in `local_accounts` (0.27.3, jgwill/medicine-wheel#172): a list of `{ host, user }`, a host name and a POSIX user name. `normalizeLocalAccount` returns the stored form or `null`, `sameLocalAccount` compares two, and `localAccountsPatch(list, metadata)` sets the whole list, or removes it with `null` or `[]`. Which person holds an account is the consumer's check, as it is for `email` and `github_handle`.
 
+A person may name the language answers are written in, `output_language` (0.27.13, jgwill/medicine-wheel#175): a canonical BCP 47 tag (`en`, `fr`, `fr-CA`) in `metadata.output_language`, for a human or an agent seat. `NewPersonSchema` accepts it and `outputLanguagePatch(tag, metadata)` sets it, or removes it with `null`. The community configuration offers the languages, `output_languages` (default `['en', 'fr']`), and names the default, `default_output_language` (default `'en'`); `JsonConfigStore` keeps the default among the languages. `outputLanguageFor({ asked, person, config })` picks the language of one answer: what was asked for, else the person's, else the community's default, passing over any language the community does not offer, and says which (`asked`, `profile`, `platform`). `normalizeLanguageTag`, `offeredLanguage(s)` and `languageName(tag)` (its name in English and in itself) go with it.
+
+```ts
+outputLanguageFor({ asked: null, person: { output_language: 'fr' }, config: { output_languages: ['en', 'fr'], default_output_language: 'en' } });
+// { tag: 'fr', source: 'profile' }
+```
+
 An invitation code opens one circle, `circle_id`, or several: `circle_ids` holds the circles after the first (0.17.5), and `invitationCircles(record)` lists them all in order. A code minted without `expires_at` lives `DEFAULT_INVITATION_TTL_HOURS` (96). `intended_email` records where it was sent. `publicInvitation()` is what a code holder may see before registering: no address, no acceptances. An invitation minted from an approved proposal also carries `intended_github_handle`, `intended_local_account` and `person_role` (0.27.3), for the consumer to give the newcomer at registration. None of the three is in the public view.
 
 ```ts

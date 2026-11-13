@@ -21,3 +21,4 @@ export * from './credentials.js';
 export * from './invitations.js';
 export * from './audit.js';
 export * from './config.js';
+export * from './language.js';
