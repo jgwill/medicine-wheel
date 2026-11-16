@@ -51,7 +51,7 @@ fails to parse. Exit codes: 0 done, 1 errors or a failed read, 2 usage error.
 Any git repository can keep what it provides in `.miadi/capabilities.jsonl`, committed with its code, so whoever clones it knows what it offers. Nothing else is needed: no account, no registry, no server.
 
 ```bash
-npx @medicine-wheel/developer-repository-mapping capabilities scan --write   # in a clone: its packages, CLIs and skills
+npx @medicine-wheel/developer-repository-mapping capabilities scan --write   # in a clone: its packages, CLIs, skills and decisions
 git add .miadi/capabilities.jsonl && git commit -m "what this repository provides"
 
 mw-repomap capabilities show <clone>                  # what a clone provides, from its own file first
@@ -59,6 +59,8 @@ mw-repomap capabilities state skill/greet "Says hello." --by Ava    # a person s
 mw-repomap capabilities scan --check                  # exit 1 when the file is behind the code
 mw-repomap capabilities map --root ~/repos --out map.jsonl   # go through clones and answer one map
 ```
+
+A skill or a decision defined in code rather than in a file of its own is read by a reader written for that repository and that file (`CODE_READERS`): the medicine wheel's `cli/skills.ts`, and Miadi's `packages/connector/src/claude-models.ts`, the decision of which model a mission runs on (`miadi-capability://jgwill/Miadi/decision/miadi.claude_model_routing`). A decision is one row per decision, named and stated by its file.
 
 A rescan keeps what a person wrote and leaves the file alone when nothing changed. Versions come from each `package.json` at the commit read, so a release does not touch the file. A reader skips what a newer format adds and reads the rest; it never reads a row the commit does not provide. A fork keeps the file's repository until `--repository` adopts it. If the repository ignores `*.jsonl`, add `!.miadi/capabilities.jsonl` after that rule.
 

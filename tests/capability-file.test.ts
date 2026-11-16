@@ -14,7 +14,12 @@ import {
   impactOf,
   CAPABILITY_FILE_ROW_KEYS,
   CAPABILITY_KINDS,
+  CODE_READERS,
   SCAN_AUTHOR,
+  capabilityAddress,
+  capabilityId,
+  kindOf,
+  miadiModelRouting,
   mergeCapabilityFile,
   parseCapabilityFile,
   renderCapabilityFile,
@@ -584,3 +589,96 @@ describe('what the verification found', () => {
   });
 });
 
+
+// ── A decision the Factory makes (jgwill/medicine-wheel#176, jgwill/Miadi#1030) ─
+
+/** The opening of jgwill/Miadi packages/connector/src/claude-models.ts as it reads at 20d878b6, shortened past the contract. */
+const CLAUDE_MODELS = `/**
+ * Which Claude Code model a new mission launches on (jgwill/Miadi#943).
+ *
+ * - A request that names a model launches on it. A model is a Claude Code model only: a request
+ *   for another provider that names one is refused, so a model never moves a mission to a
+ *   provider nobody chose.
+ */
+import { closeSync, openSync, readFileSync, readSync } from "node:fs";
+
+export const MODEL_ROUTING_CONTRACT = "miadi.claude_model_routing";
+/** The body mark of a request whose model Jev chooses when its brief is written. */
+export const JEV_WITHIN_CLAUDE = "jev_within_claude";
+
+export async function routeModel(
+  record: ConnectorRecord,
+): Promise<ModelRouting | null> {
+  return null;
+}
+`;
+const CLAUDE_MODELS_PATH = 'packages/connector/src/claude-models.ts';
+const DECISION_ADDRESS = 'miadi-capability://jgwill/Miadi/decision/miadi.claude_model_routing';
+
+describe('a decision the Factory makes', () => {
+  it('is a kind of its own, with an id and an address', () => {
+    expect(CAPABILITY_KINDS).toContain('decision');
+    expect(kindOf('capability:decision-miadi-claude-model-routing')).toBe('decision');
+    expect(capabilityId('decision', 'miadi.claude_model_routing')).toBe('capability:decision-miadi-claude-model-routing');
+    expect(capabilityAddress('repository:jgwill/Miadi', 'decision', 'miadi.claude_model_routing')).toBe(DECISION_ADDRESS);
+  });
+
+  it('the model routing reader names the decision by the contract the file declares, in the words its opening comment states', () => {
+    expect(miadiModelRouting(CLAUDE_MODELS)).toEqual([
+      { kind: 'decision', name: 'miadi.claude_model_routing', description: 'Which Claude Code model a new mission launches on (jgwill/Miadi#943).', path: CLAUDE_MODELS_PATH },
+    ]);
+    expect(CODE_READERS.find((r) => r.path === CLAUDE_MODELS_PATH)?.repository).toBe('repository:jgwill/Miadi');
+  });
+
+  it('a file that no longer declares the contract or no longer routes answers no decision, and one without its opening comment answers it without words', () => {
+    expect(miadiModelRouting(CLAUDE_MODELS.replace('export const MODEL_ROUTING_CONTRACT', 'const MODEL_ROUTING_CONTRACT'))).toEqual([]);
+    expect(miadiModelRouting(CLAUDE_MODELS.replace('export async function routeModel(', 'export async function chooseModel('))).toEqual([]);
+    expect(miadiModelRouting('export const nothing = 1')).toEqual([]);
+    const bare = CLAUDE_MODELS.slice(CLAUDE_MODELS.indexOf('import'));
+    expect(miadiModelRouting(bare)).toEqual([{ kind: 'decision', name: 'miadi.claude_model_routing', path: CLAUDE_MODELS_PATH }]);
+  });
+
+  it('a scan of jgwill/Miadi writes the decision as a row the next reader reads, and the map counts it', async () => {
+    const dir = repo('Miadi', 'https://github.com/jgwill/Miadi.git');
+    put(dir, CLAUDE_MODELS_PATH, CLAUDE_MODELS);
+    const at = commit(dir);
+    const scan = await scanRepository(dir, opts);
+    const row = scan.fileRows.find((r) => r.kind === 'decision');
+    expect(row).toMatchObject({ kind: 'decision', name: 'miadi.claude_model_routing', address: DECISION_ADDRESS, statement: 'Which Claude Code model a new mission launches on (jgwill/Miadi#943).', status: 'clear', grounding: [CLAUDE_MODELS_PATH], revision: 'pending' });
+    expect(scan.capabilities.find((c) => c.nodeId === 'capability:decision-miadi-claude-model-routing')?.grounding).toEqual([`jgwill/Miadi@${at.slice(0, 12)}:${CLAUDE_MODELS_PATH}`]);
+
+    await writeCapabilityFile(dir, scan, { write: true });
+    const written = read(dir);
+    expect(written.issues).toEqual([]);
+    expect(written.rows.map((r) => r.kind)).toEqual(['package', 'cli', 'skill', 'decision']);
+
+    const map = await buildCapabilityMap([dir], opts);
+    expect(map.repositories[0]?.counts).toEqual({ package: 1, cli: 1, skill: 1, decision: 1 });
+  });
+
+  it('another repository holding the same file has no decision read from it', async () => {
+    const dir = repo('connector');
+    put(dir, CLAUDE_MODELS_PATH, CLAUDE_MODELS);
+    commit(dir);
+    expect((await scanRepository(dir, opts)).fileRows.some((r) => r.kind === 'decision')).toBe(false);
+  });
+
+  it('the JSON Schema accepts a decision row, and capabilities show lists it as a decision', async () => {
+    const require = createRequire(__filename);
+    const Ajv = createRequire(require.resolve('ajv-formats'))('ajv/dist/2020').default;
+    const addFormats = require('ajv-formats').default ?? require('ajv-formats');
+    const ajv = new Ajv({ allErrors: true });
+    addFormats(ajv);
+    const validate = ajv.compile(JSON.parse(fs.readFileSync(path.join(__dirname, '../src/developer-repository-mapping/schema/repository-capabilities.v1.schema.json'), 'utf8')));
+    const row = JSON.parse(ROW({ kind: 'decision', name: 'miadi.claude_model_routing', address: DECISION_ADDRESS, grounding: [CLAUDE_MODELS_PATH] }));
+    expect(validate(row)).toBe(true);
+    expect(parseCapabilityFile(HEADER('jgwill/Miadi') + '\n' + JSON.stringify(row) + '\n', { mode: 'write' }).issues).toEqual([]);
+
+    const dir = repo('Miadi', 'https://github.com/jgwill/Miadi.git');
+    put(dir, CLAUDE_MODELS_PATH, CLAUDE_MODELS);
+    commit(dir);
+    const shown = cli('capabilities', 'show', dir);
+    expect(shown.code).toBe(0);
+    expect(shown.out).toMatch(/^ {2}decision miadi\.claude_model_routing — Which Claude Code model/m);
+  });
+});

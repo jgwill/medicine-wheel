@@ -64,7 +64,8 @@
           "enum": [
             "package",
             "cli",
-            "skill"
+            "skill",
+            "decision"
           ]
         },
         "name": {

@@ -125,6 +125,7 @@ export {
   capabilitiesOf,
   kindOf,
   medicineWheelSkills,
+  miadiModelRouting,
   mergeCapabilityRows,
   packageManifests,
   parsePackageJson,

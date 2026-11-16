@@ -16,11 +16,13 @@ import type { CapabilityFacet } from '@medicine-wheel/capabilities';
 import { parseGithubRemote, repositoryNodeId } from '../ids';
 import type { MappingIssue } from '../types';
 import {
+  CAPABILITY_KINDS,
   CODE_READERS,
   capabilityAddress,
   capabilityId,
   capabilityRows,
   holdsUnsafeCharacter,
+  kindOf,
   mergeCapabilityRows,
   packageManifests,
   parsePackageJson,
@@ -379,7 +381,7 @@ export interface CapabilityMapRepository {
   repository?: string;
   commit?: string;
   source?: 'file' | 'scan';
-  counts?: { package: number; cli: number; skill: number };
+  counts?: Record<CapabilityKind, number>;
   issues: MappingIssue[];
   drift?: RepositoryCapabilities['drift'];
   /** why this clone could not be read */
@@ -413,9 +415,9 @@ export async function buildCapabilityMap(clones: readonly string[], options: { o
   for (const clone of clones) {
     try {
       const read = await readRepositoryCapabilities(clone, options);
-      const counts = { package: 0, cli: 0, skill: 0 };
+      const counts = Object.fromEntries(CAPABILITY_KINDS.map((k) => [k, 0])) as Record<CapabilityKind, number>;
       for (const r of read.capabilities) {
-        const kind = /^capability:(package|cli|skill)-/.exec(r.nodeId)?.[1] as keyof typeof counts | undefined;
+        const kind = kindOf(r.nodeId);
         if (kind) counts[kind] += 1;
       }
       repositories.push({ clone, repository: read.repository, commit: read.commit, source: read.source, counts, issues: read.issues, ...(read.drift ? { drift: read.drift } : {}) });

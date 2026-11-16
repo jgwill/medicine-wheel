@@ -1,9 +1,10 @@
 /**
  * Capabilities, pure: what a git repository provides, read from its own files.
- * Its packages (package.json), its CLIs (a package's `bin`) and its skills
- * (SKILL.md, or a reader written for a file that defines them in code) become
- * `capability` nodes of @medicine-wheel/capabilities, and the repository
- * `provides` each one. A row states what the files say, never what a model
+ * Its packages (package.json), its CLIs (a package's `bin`), its skills
+ * (SKILL.md, or a reader written for a file that defines them in code) and the
+ * decisions its code makes (a reader written for the file that makes one)
+ * become `capability` nodes of @medicine-wheel/capabilities, and the
+ * repository `provides` each one. A row states what the files say, never what a model
  * guesses: a description over 55 words is not cut, the row is
  * `needs-resolution` without a statement. Every row is pending until a person
  * reads it.
@@ -11,9 +12,15 @@
 
 import { checkStatement, type CapabilityFacet } from "@medicine-wheel/capabilities";
 
-export type CapabilityKind = "package" | "cli" | "skill";
+/**
+ * `decision`: a decision a repository's code makes, such as which model runs a
+ * mission, one row per decision (Guillaume, jgwill/Miadi#1030, 2026-11-16).
+ */
+export type CapabilityKind = "package" | "cli" | "skill" | "decision";
 
-export const CAPABILITY_KINDS: readonly CapabilityKind[] = ["package", "cli", "skill"];
+export const CAPABILITY_KINDS: readonly CapabilityKind[] = ["package", "cli", "skill", "decision"];
+
+const KIND_PREFIX = new RegExp(`^capability:(${CAPABILITY_KINDS.join("|")})-`);
 
 const slug = (value: string) =>
   value
@@ -28,7 +35,7 @@ export function capabilityId(kind: CapabilityKind, name: string): string {
 
 /** The kind a capability id names, or undefined for a capability no scan wrote. */
 export function kindOf(nodeId: string): CapabilityKind | undefined {
-  const m = /^capability:(package|cli|skill)-/.exec(nodeId);
+  const m = KIND_PREFIX.exec(nodeId);
   return m ? (m[1] as CapabilityKind) : undefined;
 }
 
@@ -188,9 +195,35 @@ export function medicineWheelSkills(text: string): Artefact[] {
   return out;
 }
 
+/**
+ * Which Claude Code model a Miadi Factory mission launches on, decided in
+ * `packages/connector/src/claude-models.ts` (jgwill/Miadi#943). The decision is
+ * named by the contract the file declares (`MODEL_ROUTING_CONTRACT`), which every
+ * routing receipt carries, and stated by the first paragraph of the file's
+ * opening comment. A file that no longer declares the contract or no longer
+ * exports `routeModel` makes no decision this reader can name.
+ */
+export function miadiModelRouting(text: string): Artefact[] {
+  const contract = /^export const MODEL_ROUTING_CONTRACT = "([a-z0-9][a-z0-9._-]*)";$/m.exec(text)?.[1];
+  if (!contract || !/^export async function routeModel\(/m.test(text)) return [];
+  const opening = /^\/\*\*\r?\n([\s\S]*?)\*\//.exec(text)?.[1];
+  const paragraph: string[] = [];
+  for (const l of opening?.split(/\r?\n/) ?? []) {
+    const words = l.replace(/^\s*\*\s?/, "").trim();
+    if (!words) {
+      if (paragraph.length) break;
+      continue;
+    }
+    paragraph.push(words);
+  }
+  const description = paragraph.join(" ");
+  return [{ kind: "decision", name: contract, ...(description ? { description } : {}), path: "packages/connector/src/claude-models.ts" }];
+}
+
 /** The readers written so far, one per repository file that defines capabilities in code. */
 export const CODE_READERS: readonly CodeReader[] = [
   { repository: "repository:jgwill/medicine-wheel", path: "cli/skills.ts", read: medicineWheelSkills },
+  { repository: "repository:jgwill/Miadi", path: "packages/connector/src/claude-models.ts", read: miadiModelRouting },
 ];
 
 export function skillFiles(files: readonly string[]): string[] {

@@ -46,7 +46,7 @@ import { findMappingDir, initMappingDir, readMappingDir, writeMappingDir } from 
 import { originRepository, readActivity } from './node/git';
 import { readHub, type HubRead } from './node/hub';
 import { LOOPBACK_HOSTS, createMappingServer } from './node/server';
-import { CAPABILITY_KINDS, UNSAFE_CHARACTER, type CapabilityKind } from './capability-scan';
+import { CAPABILITY_KINDS, UNSAFE_CHARACTER, kindOf, type CapabilityKind } from './capability-scan';
 import { CAPABILITY_FILE, CapabilityInputError } from './capability-file';
 import { buildCapabilityMap, findClones, readRepositoryCapabilities, scanRepository, stateCapability, writeCapabilityFile } from './node/capability-scan';
 
@@ -445,7 +445,7 @@ async function capabilitiesShow(positional: string[], flags: Record<string, stri
   }
   console.log(`${read.repository.replace(/^repository:/, '')} @ ${read.commit.slice(0, 12)} provides ${read.capabilities.length} (read from ${read.source === 'file' ? CAPABILITY_FILE : 'its files; it holds no capability file'})`);
   for (const c of read.capabilities) {
-    const kind = /^capability:(package|cli|skill)-/.exec(c.nodeId)?.[1] ?? 'other';
+    const kind = kindOf(c.nodeId) ?? 'other';
     const realizes = read.realizes.filter((r) => r.from === c.nodeId).map((r) => r.to);
     console.log(printable(`  ${kind.padEnd(8)} ${c.name}${c.statement ? ` — ${c.statement}` : ` [${c.status}]`}${realizes.length ? `  (realizes ${realizes.join(', ')})` : ''}`));
   }
