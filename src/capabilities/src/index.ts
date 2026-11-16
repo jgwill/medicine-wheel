@@ -24,11 +24,14 @@ export type {
   RevisionState,
   Attribution,
   CapabilityFacet,
+  CapabilityStage,
+  CapabilityAchieves,
+  CapabilityStageReading,
   CapabilityClaim,
   SharedCapability,
 } from './types';
 
-export { STATEMENT_WORD_LIMIT } from './types';
+export { STATEMENT_WORD_LIMIT, CAPABILITY_STAGES, STAGES_WITHOUT_CODE } from './types';
 
 // ── The word limit ──────────────────────────────────────────────────────────
 export { countWords, checkStatement, isSlug, capabilityNodeId } from './statement';
@@ -44,6 +47,13 @@ export {
   refineAttribution,
   refineStatementPresence,
   CapabilityNodeIdSchema,
+  CapabilityStageSchema,
+  CapabilityAchievesSchema,
+  CapabilityStageReadingSchema,
+  RISE_ADDRESS,
+  SpecificationRefSchema,
+  ISSUE_REF,
+  IssueRefSchema,
   CapabilityFacetSchema,
 } from './schemas';
 

@@ -61,6 +61,46 @@ export interface Attribution {
   revisedAt?: string;
 }
 
+/**
+ * Where a capability stands in its life. `StatementStatus` is about the words
+ * a row holds; this is about the thing they describe.
+ *
+ * - `specified` — a specification describes it, and no code provides it yet.
+ * - `prototype` — code explores it; nothing is meant to depend on it yet.
+ * - `implementation` — code builds it toward a release.
+ * - `released` — a version someone can install or call.
+ * - `retired` — no longer offered: deprecated or removed. Its record stays for
+ *   the episodes and people that used it.
+ *
+ * `prototype` and `implementation` are the repository lifecycle's own words
+ * (`@medicine-wheel/developer-repository-mapping`).
+ */
+export type CapabilityStage = 'specified' | 'prototype' | 'implementation' | 'released' | 'retired';
+
+/** What a capability achieves, as someone said it. Never the scan's to say. */
+export interface CapabilityAchieves {
+  /**
+   * What a person or an agent can do, or has, because the capability exists.
+   * At most {@link STATEMENT_WORD_LIMIT} words. The row's `statement` says what
+   * the capability is; this says what it is for.
+   */
+  statement: string;
+  /** A person or an agent seat. */
+  statedBy: string;
+  /** ISO 8601. */
+  statedAt: string;
+}
+
+/** Where a capability stands, who said so, when, and from what. */
+export interface CapabilityStageReading {
+  stage: CapabilityStage;
+  statedBy: string;
+  /** ISO 8601. */
+  statedAt: string;
+  /** What shows the stage: a specification, a commit, `npm:<package>@<version>`, `owner/repo#n`. At least one. */
+  grounding: string[];
+}
+
 /** A platform capability. Annotates a `RelationalNode` of type `'knowledge'`. */
 export interface CapabilityFacet extends Attribution {
   /** → `RelationalNode.id`, `capability:<slug>` */
@@ -73,7 +113,25 @@ export interface CapabilityFacet extends Attribution {
   /** Repository or service node ids that offer it. */
   providedBy: NodeId[];
   metis?: MetisHold;
+  /** What it achieves for someone, and who said so. */
+  achieves?: CapabilityAchieves;
+  /** Where it stands in its life, and who said so from what. */
+  stage?: CapabilityStageReading;
+  /** Where its specifications are: `rise://<owner>/<repo>/<path>[@<commit>]`, or an `https://` URL. */
+  specifications?: string[];
+  /** The issues that track it: `owner/repo#n`. */
+  issues?: string[];
 }
+
+/** Every stage, in the order a capability usually lives them. */
+export const CAPABILITY_STAGES: readonly CapabilityStage[] = ['specified', 'prototype', 'implementation', 'released', 'retired'];
+
+/**
+ * Stages at which no code is expected to provide the capability: not yet
+ * (`specified`) or no longer (`retired`). A reader keeps such a row even when
+ * the commit it reads holds nothing of that name.
+ */
+export const STAGES_WITHOUT_CODE: readonly CapabilityStage[] = ['specified', 'retired'];
 
 /**
  * One provider's claim on a capability. It comes from a capability's own

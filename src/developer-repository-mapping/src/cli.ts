@@ -12,7 +12,7 @@
  *   mw-repomap serve [<path>] [--port <n>] [--host <address>] [--local]
  *   mw-repomap wheel [<path>] [--local]
  *   mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]
- *   mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--clone <path>]
+ *   mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--achieves <words>] [--stage <stage> [--stage-grounding <evidence>,…]] [--specification <path|rise://…>,…] [--issue <owner/repo#n>,…] [--clone <path>]
  *   mw-repomap capabilities show [<clone>] [--ref <ref>] [--repository <owner/name>] [--json]
  *   mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]
  *
@@ -42,6 +42,7 @@ import { LifecycleEventSchema, MappingManifestSchema } from './schemas';
 import { summarize } from './summary';
 import { MAPPING_DIR, MAPPING_SCHEMA, type LifecycleEvent, type MappingIssue, type RepositoryMapping } from './types';
 import { toWheelEdges, toWheelNodes } from './wheel';
+import { CAPABILITY_STAGES, type CapabilityStage } from '@medicine-wheel/capabilities';
 import { findMappingDir, initMappingDir, readMappingDir, writeMappingDir } from './node/fs';
 import { originRepository, readActivity } from './node/git';
 import { readHub, type HubRead } from './node/hub';
@@ -61,7 +62,7 @@ const USAGE = [
   '       mw-repomap serve [<path>] [--port <n>] [--host <address>] [--local]',
   '       mw-repomap wheel [<path>] [--local]',
   '       mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]',
-  '       mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--clone <path>]',
+  '       mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--achieves <words>] [--stage <stage> [--stage-grounding <evidence>,…]] [--specification <path|rise://…>,…] [--issue <owner/repo#n>,…] [--clone <path>]',
   '       mw-repomap capabilities show [<clone>] [--ref <ref>] [--repository <owner/name>] [--json]',
   '       mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]',
 ].join('\n');
@@ -75,7 +76,7 @@ const COMMAND_FLAGS: Record<string, readonly string[]> = {
   list: ['lifecycle', 'drift', 'revision', 'field', 'local', 'json'],
   show: ['local', 'json'],
   observe: ['dir', 'by', 'write'],
-  capabilities: ['write', 'check', 'ref', 'repository', 'by', 'clone', 'realizes', 'root', 'list', 'out', 'packages', 'json'],
+  capabilities: ['write', 'check', 'ref', 'repository', 'by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'issue', 'root', 'list', 'out', 'packages', 'json'],
   move: ['by', 'grounding'],
   hub: ['json'],
   serve: ['port', 'host', 'local'],
@@ -367,7 +368,7 @@ const SCAN_OBSERVER = () => `mw-repomap capabilities (${os.userInfo().username}@
 /** The flags each capabilities subcommand takes: a flag another subcommand takes is a usage error here, never ignored. */
 const CAPABILITY_FLAGS: Record<string, readonly string[]> = {
   scan: ['write', 'check', 'ref', 'repository'],
-  state: ['by', 'clone', 'realizes'],
+  state: ['by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'issue'],
   show: ['ref', 'repository', 'json'],
   map: ['root', 'list', 'out', 'packages', 'ref', 'json'],
 };
@@ -420,15 +421,35 @@ async function capabilitiesState(positional: string[], flags: Record<string, str
   const by = text(flags, 'by');
   if (!by) throw new UsageError('capabilities state needs --by <who>: a statement is something someone says');
   if (positional.length > 4) throw new UsageError('quote the statement: capabilities state <kind>/<name> "<at most 55 words>"');
-  const realizes = text(flags, 'realizes')?.split(',').map((r) => r.trim()).filter(Boolean);
+  const items = (flag: string) => text(flags, flag)?.split(',').map((r) => r.trim()).filter(Boolean);
+  const realizes = items('realizes');
+  const achieves = text(flags, 'achieves');
+  const stage = text(flags, 'stage');
+  if (stage !== undefined && !CAPABILITY_STAGES.includes(stage as CapabilityStage)) throw new UsageError(`--stage is one of ${CAPABILITY_STAGES.join(', ')}`);
+  const stageGrounding = items('stage-grounding');
+  if (stageGrounding && stage === undefined) throw new UsageError('--stage-grounding says what shows a --stage: give the stage');
+  const specifications = items('specification');
+  const issues = items('issue');
   const { file, row } = await stateCapability(text(flags, 'clone') ?? '.', {
     kind,
     name: target.slice(slash + 1),
     by,
     ...(positional[3] !== undefined ? { statement: positional[3] } : {}),
     ...(realizes ? { realizes } : {}),
+    ...(achieves !== undefined ? { achieves } : {}),
+    ...(stage !== undefined ? { stage: stage as CapabilityStage } : {}),
+    ...(stageGrounding ? { stageGrounding } : {}),
+    ...(specifications ? { specifications } : {}),
+    ...(issues ? { issues } : {}),
   });
-  console.error(`${row.kind}/${row.name} ${row.revision} by ${by}${row.realizes ? `, realizes ${row.realizes.map((r) => r.capability).join(', ')}` : ''} in ${file}`);
+  const said = [
+    row.realizes ? `realizes ${row.realizes.map((r) => r.capability).join(', ')}` : '',
+    row.stage ? `stage ${row.stage.stage}` : '',
+    row.achieves ? 'achieves stated' : '',
+    row.specifications ? `${row.specifications.length} specification(s)` : '',
+    row.issues ? `issues ${row.issues.join(', ')}` : '',
+  ].filter(Boolean);
+  console.error(`${row.kind}/${row.name} ${row.revision} by ${by}${said.length ? `, ${said.join(', ')}` : ''} in ${file}`);
   return 0;
 }
 
@@ -447,7 +468,10 @@ async function capabilitiesShow(positional: string[], flags: Record<string, stri
   for (const c of read.capabilities) {
     const kind = kindOf(c.nodeId) ?? 'other';
     const realizes = read.realizes.filter((r) => r.from === c.nodeId).map((r) => r.to);
-    console.log(printable(`  ${kind.padEnd(8)} ${c.name}${c.statement ? ` — ${c.statement}` : ` [${c.status}]`}${realizes.length ? `  (realizes ${realizes.join(', ')})` : ''}`));
+    console.log(printable(`  ${kind.padEnd(8)} ${c.name}${c.stage ? ` (${c.stage.stage})` : ''}${c.statement ? ` — ${c.statement}` : ` [${c.status}]`}${realizes.length ? `  (realizes ${realizes.join(', ')})` : ''}`));
+    if (c.achieves) console.log(printable(`           achieves: ${c.achieves.statement} (${c.achieves.statedBy})`));
+    for (const spec of c.specifications ?? []) console.log(printable(`           specified in ${spec}`));
+    if (c.issues?.length) console.log(printable(`           tracked by ${c.issues.join(', ')}`));
   }
   return failed;
 }

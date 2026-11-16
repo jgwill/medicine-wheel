@@ -73,6 +73,40 @@ export const CapabilityNodeIdSchema = z
   .string()
   .regex(/^capability:[a-z0-9]+(?:-[a-z0-9]+)*$/, 'a capability id is capability:<kebab-case-slug>');
 
+export const CapabilityStageSchema = z.enum(['specified', 'prototype', 'implementation', 'released', 'retired']);
+
+/** What a capability achieves, at most {@link STATEMENT_WORD_LIMIT} words, and who said so. */
+export const CapabilityAchievesSchema = z
+  .object({
+    statement: StatementSchema,
+    statedBy: z.string().min(1),
+    statedAt: TimestampSchema,
+  })
+  .strict();
+
+/** Where a capability stands, who said so, when, and from at least one piece of evidence. */
+export const CapabilityStageReadingSchema = z
+  .object({
+    stage: CapabilityStageSchema,
+    statedBy: z.string().min(1),
+    statedAt: TimestampSchema,
+    grounding: z.array(z.string().min(1)).min(1),
+  })
+  .strict();
+
+/** `rise://<owner>/<repo>/<path>[@<commit>]`, the reference grammar's specification address. */
+export const RISE_ADDRESS = /^rise:\/\/[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*\/[^\s]+$/;
+
+/** A specification: its `rise://` address, or an `https://` URL. */
+export const SpecificationRefSchema = z
+  .string()
+  .refine((s) => RISE_ADDRESS.test(s) || /^https:\/\/[^\s]+$/.test(s), 'a specification is rise://<owner>/<repo>/<path> or an https:// URL');
+
+/** `owner/repo#n`, never a bare `#n`: a bare number links to the wrong repository wherever it is read. */
+export const ISSUE_REF = /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*#[1-9][0-9]*$/;
+
+export const IssueRefSchema = z.string().regex(ISSUE_REF, 'an issue is owner/repo#n');
+
 export const CapabilityFacetSchema = z
   .object({
     nodeId: CapabilityNodeIdSchema,
@@ -81,6 +115,10 @@ export const CapabilityFacetSchema = z
     status: StatementStatusSchema,
     providedBy: z.array(z.string().min(1)),
     metis: MetisHoldSchema.optional(),
+    achieves: CapabilityAchievesSchema.optional(),
+    stage: CapabilityStageReadingSchema.optional(),
+    specifications: z.array(SpecificationRefSchema).min(1).optional(),
+    issues: z.array(IssueRefSchema).min(1).optional(),
     ...attributionShape,
   })
   .strict()

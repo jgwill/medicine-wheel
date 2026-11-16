@@ -12,7 +12,7 @@ import { execFile } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, mkdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
-import type { CapabilityFacet } from '@medicine-wheel/capabilities';
+import type { CapabilityFacet, CapabilityStage } from '@medicine-wheel/capabilities';
 import { parseGithubRemote, repositoryNodeId } from '../ids';
 import type { MappingIssue } from '../types';
 import {
@@ -44,6 +44,7 @@ import {
   parseCapabilityFile,
   renderCapabilityFile,
   stateCapabilityRow,
+  stagedWithoutCode,
   type CapabilityFileMerge,
   type CapabilityFileRow,
 } from '../capability-file';
@@ -220,8 +221,10 @@ export async function readRepositoryCapabilities(clone: string, options: ScanOpt
     issues.push({ severity: 'warning', file: CAPABILITY_FILE, message: `written for ${parsed.header.repository}; read here as ${scan.repository.replace(/^repository:/, '')}` });
   }
   // A row the commit does not provide is the file's claim, not the repository's: reported, never read as a capability.
+  // Unless its stage says no code is expected: specified (not yet) or retired (no longer). It is read at that stage, under this repository's address.
   const grounded = merge.rows.filter((r) => {
     const found = scan.fileRows.some((s) => s.kind === r.kind && s.name === r.name);
+    if (!found && stagedWithoutCode(r)) return true;
     if (!found) issues.push({ severity: 'warning', file: CAPABILITY_FILE, message: `${r.kind}/${r.name} is in the file but this commit provides no such ${r.kind}; it is not read` });
     return found;
   });
@@ -299,7 +302,19 @@ export async function writeCapabilityFile(
 /** A person states or affirms one capability in the working tree's file. */
 export async function stateCapability(
   clone: string,
-  input: { kind: CapabilityKind; name: string; by: string; statement?: string; realizes?: string[]; now?: Date },
+  input: {
+    kind: CapabilityKind;
+    name: string;
+    by: string;
+    statement?: string;
+    realizes?: string[];
+    achieves?: string;
+    stage?: CapabilityStage;
+    stageGrounding?: string[];
+    specifications?: string[];
+    issues?: string[];
+    now?: Date;
+  },
 ): Promise<{ file: string; row: CapabilityFileRow }> {
   const root = await workingRoot(clone);
   const file = path.join(root, CAPABILITY_FILE);
@@ -315,6 +330,12 @@ export async function stateCapability(
     at: (input.now ?? new Date()).toISOString(),
     ...(input.statement !== undefined ? { statement: input.statement } : {}),
     ...(input.realizes ? { realizes: input.realizes } : {}),
+    ...(input.achieves !== undefined ? { achieves: input.achieves } : {}),
+    ...(input.stage ? { stage: input.stage } : {}),
+    ...(input.stageGrounding ? { stageGrounding: input.stageGrounding } : {}),
+    ...(input.specifications ? { specifications: input.specifications } : {}),
+    ...(input.issues ? { issues: input.issues } : {}),
+    repository: current.header.repository,
   });
   if ('error' in answer) throw new CapabilityInputError(answer.error);
   const text = renderCapabilityFile(current.header.repository, answer.rows);

@@ -66,9 +66,11 @@ A rescan keeps what a person wrote and leaves the file alone when nothing change
 
 ```bash
 mw-repomap capabilities state package/@acme/tool --realizes capability:publish-a-prototype --by Ava   # which platform capability it serves
+mw-repomap capabilities state package/@acme/tool --achieves "A team publishes a prototype in one step." --stage released --stage-grounding npm:@acme/tool@1.0.0 --issue acme/tool#12 --by Ava
+mw-repomap capabilities state package/@acme/next "Plans the next release." --stage specified --specification rispecs/next.spec.md --by Ava   # written down before any code provides it
 ```
 
-The JSON Schema of a line ships at `schema/repository-capabilities.v1.schema.json`. The format and its rules are in `rispecs/developer-suite/repository-mapping/capabilities.spec.md` of jgwill/medicine-wheel.
+The JSON Schema of a line ships at `schema/repository-capabilities.v2.schema.json` (format version 2 adds `achieves`, `stage`, `specifications` and `issues`; a file that uses none of them is still written as version 1, whose schema stays at `schema/repository-capabilities.v1.schema.json`). The format and its rules are in `rispecs/developer-suite/repository-mapping/capabilities.spec.md` of jgwill/medicine-wheel.
 
 ## Library
 

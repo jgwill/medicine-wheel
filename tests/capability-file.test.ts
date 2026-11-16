@@ -8,8 +8,10 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { createRequire } from 'node:module';
 import { afterEach, describe, expect, it } from 'vitest';
+import { CAPABILITY_STAGES } from '../src/capabilities/src/index';
 import {
   CAPABILITY_FILE,
+  CAPABILITY_FILE_V2_KEYS,
   CapabilityInputError,
   impactOf,
   CAPABILITY_FILE_ROW_KEYS,
@@ -393,12 +395,12 @@ describe('what the reviews found', () => {
   });
 
   it('C1: a reader reads a newer file for what it knows; a writer refuses to rewrite it', async () => {
-    const text = [HEADER('acme/tool', { version: 2, generator: 'mw-repomap 1.0' }), ROW({ ecosystem: 'npm' }), ROW({ kind: 'mcp-server', name: 'srv' })].join('\n') + '\n';
+    const text = [HEADER('acme/tool', { version: 3, generator: 'mw-repomap 1.0' }), ROW({ ecosystem: 'npm' }), ROW({ kind: 'mcp-server', name: 'srv' })].join('\n') + '\n';
     const reading = parseCapabilityFile(text);
     expect(reading.rows.map((r) => r.name)).toEqual(['greet']);
     expect(reading.issues.every((i) => i.severity === 'warning')).toBe(true);
     const said = reading.issues.map((i) => i.message).join('\n');
-    for (const word of ['generator', 'version 2', 'ecosystem', 'mcp-server']) expect(said).toContain(word);
+    for (const word of ['generator', 'version 3', 'ecosystem', 'mcp-server']) expect(said).toContain(word);
     expect(parseCapabilityFile(text, { mode: 'write' }).issues.filter((i) => i.severity === 'error')).toHaveLength(4);
 
     const dir = repo();
@@ -431,10 +433,14 @@ describe('what the reviews found', () => {
   });
 
   it('the published JSON Schema names the same keys, kinds and header as the code', () => {
-    const schema = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/developer-repository-mapping/schema/repository-capabilities.v1.schema.json'), 'utf8'));
+    const read = (v: number) => JSON.parse(fs.readFileSync(path.join(__dirname, `../src/developer-repository-mapping/schema/repository-capabilities.v${v}.schema.json`), 'utf8'));
+    const schema = read(2);
     expect(Object.keys(schema.$defs.row.properties).sort()).toEqual([...CAPABILITY_FILE_ROW_KEYS].sort());
     expect(schema.$defs.row.properties.kind.enum).toEqual([...CAPABILITY_KINDS]);
     expect(schema.$defs.header.required).toEqual(['schema', 'version', 'repository']);
+    expect(schema.$defs.row.properties.stage.properties.stage.enum).toEqual([...CAPABILITY_STAGES]);
+    // Version 1 stays published as it was: the keys version 2 added are the only difference.
+    expect(Object.keys(read(1).$defs.row.properties).sort()).toEqual(CAPABILITY_FILE_ROW_KEYS.filter((k) => !CAPABILITY_FILE_V2_KEYS.includes(k)).sort());
   });
 });
 
@@ -573,8 +579,9 @@ describe('what the verification found', () => {
     // A later version: the v1 schema refuses it, a writer refuses it, a reader reads it.
     const v2 = { ...header, version: 2 };
     expect(validate(v2)).toBe(false);
-    expect(parseCapabilityFile(JSON.stringify(v2) + '\n', { mode: 'write' }).issues[0]?.severity).toBe('error');
-    expect(parseCapabilityFile(JSON.stringify(v2) + '\n').header?.version).toBe(2);
+    const v3 = { ...header, version: 3 };
+    expect(parseCapabilityFile(JSON.stringify(v3) + '\n', { mode: 'write' }).issues[0]?.severity).toBe('error');
+    expect(parseCapabilityFile(JSON.stringify(v3) + '\n').header?.version).toBe(3);
   });
 
   it('N7: a root that cannot be read exits 1, help exits 0, and what a person typed that cannot be written exits 2', async () => {
@@ -680,5 +687,149 @@ describe('a decision the Factory makes', () => {
     const shown = cli('capabilities', 'show', dir);
     expect(shown.code).toBe(0);
     expect(shown.out).toMatch(/^ {2}decision miadi\.claude_model_routing — Which Claude Code model/m);
+  });
+});
+
+// ── What a capability achieves, its stage, its specifications and issues (format version 2, take 261116142729) ─
+
+describe('format version 2: what a capability achieves, where it stands, where it is specified and tracked', () => {
+  const SPEC = 'rispecs/greet.spec.md';
+
+  it('a file that uses none of it is still written as version 1, byte for byte', async () => {
+    const dir = repo();
+    const result = await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    expect(JSON.parse(result.text.split('\n')[0]!).version).toBe(1);
+    const rows = parseCapabilityFile(result.text).rows;
+    expect(renderCapabilityFile('acme/tool', rows)).toBe(result.text);
+  });
+
+  it('a person states all four on a row the scan wrote; the file becomes version 2 and every rescan keeps them', async () => {
+    const dir = repo();
+    await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    await stateCapability(dir, {
+      kind: 'skill',
+      name: 'greet',
+      by: 'Guillaume',
+      achieves: 'A newcomer is greeted by name before anyone asks what they want.',
+      stage: 'released',
+      stageGrounding: ['npm:@acme/tool@1.0.0'],
+      specifications: [SPEC],
+      issues: ['acme/tool#12'],
+      now: opts.now,
+    });
+    const text = fs.readFileSync(path.join(dir, CAPABILITY_FILE), 'utf8');
+    expect(JSON.parse(text.split('\n')[0]!).version).toBe(2);
+    expect(rowOf(dir, 'greet')).toMatchObject({
+      statedBy: SCAN_AUTHOR,
+      revision: 'pending',
+      achieves: { statement: 'A newcomer is greeted by name before anyone asks what they want.', statedBy: 'Guillaume' },
+      stage: { stage: 'released', statedBy: 'Guillaume', grounding: ['npm:@acme/tool@1.0.0'] },
+      specifications: [SPEC],
+      issues: ['acme/tool#12'],
+    });
+    // The scan's own statement changes; what the person said stays.
+    put(dir, 'skills/greet/SKILL.md', '---\nname: greet\ndescription: Greet a person warmly\n---\n');
+    commit(dir);
+    await writeCapabilityFile(dir, await scanRepository(dir, later), { write: true });
+    expect(rowOf(dir, 'greet')).toMatchObject({ statement: 'Greet a person warmly', stage: { stage: 'released' }, issues: ['acme/tool#12'] });
+    // A row the scan wrote and no longer finds stays when a person said something of it.
+    fs.rmSync(path.join(dir, 'skills'), { recursive: true });
+    commit(dir);
+    const gone = await writeCapabilityFile(dir, await scanRepository(dir, later), { write: true });
+    expect(gone.keptByPerson).toContain('skill/greet');
+  });
+
+  it('a capability no code provides yet is written down at stage specified, and a reader reads it there; without a stage it stays the file\'s claim', async () => {
+    const dir = repo();
+    await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    put(dir, SPEC, '# Greet\n');
+    await stateCapability(dir, { kind: 'package', name: '@acme/farewell', by: 'Guillaume', statement: 'Says goodbye by name.', stage: 'specified', specifications: [SPEC], now: opts.now });
+    expect(rowOf(dir, '@acme/farewell')).toMatchObject({
+      address: 'miadi-capability://acme/tool/package/@acme/farewell',
+      statement: 'Says goodbye by name.',
+      status: 'clear',
+      statedBy: 'Guillaume',
+      grounding: [SPEC],
+      revision: 'pending',
+      stage: { stage: 'specified', grounding: [SPEC] },
+      specifications: [SPEC],
+    });
+    // A row at no stage that the commit does not provide is still not read (CR1).
+    const text = fs.readFileSync(path.join(dir, CAPABILITY_FILE), 'utf8') + ROW({ kind: 'package', name: '@acme/widgets', address: 'miadi-capability://acme/tool/package/@acme/widgets', statedBy: 'someone', grounding: ['package.json'] }) + '\n';
+    put(dir, CAPABILITY_FILE, text);
+    commit(dir);
+    const got = await readRepositoryCapabilities(dir, later);
+    const farewell = got.capabilities.find((c) => c.name === '@acme/farewell');
+    expect(farewell).toMatchObject({ stage: { stage: 'specified' }, specifications: ['rise://acme/tool/rispecs/greet.spec.md'], providedBy: ['repository:acme/tool'] });
+    expect(got.capabilities.map((c) => c.name)).not.toContain('@acme/widgets');
+    expect(got.issues.map((i) => i.message).join('\n')).toMatch(/package\/@acme\/widgets is in the file but this commit provides no such package/);
+    expect(got.issues.map((i) => i.message).join('\n')).not.toMatch(/@acme\/farewell/);
+  });
+
+  it('refuses a stage from no evidence, an unknown stage, a bare issue number, a specification outside the repository, and an achievement over 55 words', () => {
+    const row: CapabilityFileRow = { kind: 'skill', name: 'x', address: 'a', statement: 'X.', status: 'clear', statedBy: SCAN_AUTHOR, statedAt: '2026-11-08T00:00:00Z', grounding: ['f'], revision: 'pending' };
+    const input = { kind: 'skill' as const, name: 'x', by: 'Ava', at: '2026-11-08T00:00:00Z' };
+    expect(stateCapabilityRow([row], { ...input, stage: 'released' })).toMatchObject({ error: expect.stringMatching(/read from evidence/) });
+    expect(stateCapabilityRow([row], { ...input, stage: 'envisioned' as never, stageGrounding: ['x'] })).toMatchObject({ error: expect.stringMatching(/not a stage/) });
+    expect(stateCapabilityRow([row], { ...input, issues: ['#12'] })).toMatchObject({ error: expect.stringMatching(/owner\/repo#n/) });
+    expect(stateCapabilityRow([row], { ...input, specifications: ['../other/spec.md'] })).toMatchObject({ error: expect.stringMatching(/not a specification/) });
+    expect(stateCapabilityRow([row], { ...input, specifications: ['/etc/passwd'] })).toMatchObject({ error: expect.stringMatching(/not a specification/) });
+    expect(stateCapabilityRow([row], { ...input, achieves: Array(56).fill('w').join(' ') })).toEqual({ error: 'what it achieves: 56 words, the limit is 55' });
+    // A row the file does not hold is added only at stage specified, and only for the file's own repository.
+    expect(stateCapabilityRow([row], { ...input, name: 'y', stage: 'released', stageGrounding: ['npm:y@1.0.0'], repository: 'acme/tool' })).toMatchObject({ error: expect.stringMatching(/holds no skill\/y/) });
+    expect(stateCapabilityRow([row], { ...input, name: 'y', stage: 'specified', specifications: ['spec.md'] })).toMatchObject({ error: expect.stringMatching(/holds no skill\/y/) });
+    // What a person says of a row leaves its statement and revision as they were; specifications and issues add up.
+    const said = stateCapabilityRow([{ ...row, specifications: ['a.md'] }], { ...input, specifications: ['a.md', 'rise://acme/other/b.md'], issues: ['acme/tool#1'] });
+    expect(said).toMatchObject({ rows: [{ statement: 'X.', revision: 'pending', specifications: ['a.md', 'rise://acme/other/b.md'], issues: ['acme/tool#1'] }] });
+  });
+
+  it('the version 2 JSON Schema and the code accept and refuse the same lines', () => {
+    const require = createRequire(__filename);
+    const Ajv = createRequire(require.resolve('ajv-formats'))('ajv/dist/2020').default;
+    const addFormats = require('ajv-formats').default ?? require('ajv-formats');
+    const ajv = new Ajv({ allErrors: true });
+    addFormats(ajv);
+    const validate = ajv.compile(JSON.parse(fs.readFileSync(path.join(__dirname, '../src/developer-repository-mapping/schema/repository-capabilities.v2.schema.json'), 'utf8')));
+    const header = { schema: 'medicine-wheel/repository-capabilities', version: 2, repository: 'acme/tool' };
+    const row = JSON.parse(ROW());
+    const stage = { stage: 'specified', statedBy: 'Ava', statedAt: '2026-11-16T00:00:00Z', grounding: ['rispecs/x.md'] };
+    const achieves = { statement: 'Someone is greeted.', statedBy: 'Ava', statedAt: '2026-11-16T00:00:00Z' };
+    const cases: [string, Record<string, unknown>, 'header' | 'row'][] = [
+      ['a version 2 header', header, 'header'],
+      ['a version 1 header', { ...header, version: 1 }, 'header'],
+      ['a version 3 header', { ...header, version: 3 }, 'header'],
+      ['a row with all four', { ...row, achieves, stage, specifications: ['rispecs/x.md', 'rise://acme/tool/rispecs/y.md', 'https://example.org/s'], issues: ['acme/tool#7'] }, 'row'],
+      ['a stage it does not know', { ...row, stage: { ...stage, stage: 'envisioned' } }, 'row'],
+      ['a stage with no grounding', { ...row, stage: { ...stage, grounding: [] } }, 'row'],
+      ['a stage said by the scan', { ...row, stage: { ...stage, statedBy: SCAN_AUTHOR } }, 'row'],
+      ['an achievement said by the scan', { ...row, achieves: { ...achieves, statedBy: SCAN_AUTHOR } }, 'row'],
+      ['an achievement with a key it does not know', { ...row, achieves: { ...achieves, why: 'x' } }, 'row'],
+      ['a bare issue number', { ...row, issues: ['#7'] }, 'row'],
+      ['an empty issue list', { ...row, issues: [] }, 'row'],
+      ['a specification outside the repository', { ...row, specifications: ['../x.md'] }, 'row'],
+      ['an absolute specification', { ...row, specifications: ['/x.md'] }, 'row'],
+      ['an http specification', { ...row, specifications: ['http://example.org/s'] }, 'row'],
+    ];
+    for (const [what, value, kind] of cases) {
+      const text = kind === 'header' ? JSON.stringify(value) + '\n' : HEADER('acme/tool', { version: 2 }) + '\n' + JSON.stringify(value) + '\n';
+      const code = parseCapabilityFile(text, { mode: 'write' }).issues.every((i) => i.severity !== 'error');
+      expect([what, validate(value)]).toEqual([what, code]);
+    }
+  });
+
+  it('capabilities state takes the four from the command line, and show prints them', async () => {
+    const dir = repo();
+    await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    expect(cli('capabilities', 'state', 'package/@acme/farewell', 'Says goodbye by name.', '--by', 'Ava', '--stage', 'specified', '--specification', SPEC, '--clone', dir).code).toBe(0);
+    expect(cli('capabilities', 'state', 'skill/greet', '--by', 'Ava', '--achieves', 'A newcomer is greeted by name.', '--issue', 'acme/tool#3', '--clone', dir).code).toBe(0);
+    expect(cli('capabilities', 'state', 'skill/greet', '--by', 'Ava', '--stage', 'built', '--stage-grounding', 'x', '--clone', dir).code).toBe(2);
+    expect(cli('capabilities', 'state', 'skill/greet', '--by', 'Ava', '--stage-grounding', 'x', '--clone', dir).code).toBe(2);
+    commit(dir);
+    const shown = cli('capabilities', 'show', dir);
+    expect(shown.code).toBe(0);
+    expect(shown.out).toMatch(/package {2}@acme\/farewell \(specified\) — Says goodbye by name\./);
+    expect(shown.out).toContain('specified in rise://acme/tool/rispecs/greet.spec.md');
+    expect(shown.out).toContain('achieves: A newcomer is greeted by name. (Ava)');
+    expect(shown.out).toContain('tracked by acme/tool#3');
   });
 });

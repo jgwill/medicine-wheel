@@ -8,7 +8,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CAPABILITY_STAGES,
   CapabilityFacetSchema,
+  CapabilityStageReadingSchema,
+  IssueRefSchema,
+  STAGES_WITHOUT_CODE,
+  SpecificationRefSchema,
   STATEMENT_WORD_LIMIT,
   StatementSchema,
   capabilityClaims,
@@ -91,6 +96,53 @@ describe("CapabilityFacetSchema", () => {
     expect(CapabilityFacetSchema.safeParse({ ...capability, nodeId: "capability:Draw_Spec" }).success).toBe(false);
     expect(() => capabilityNodeId("Draw Spec")).toThrow(/kebab-case/);
     expect(capabilityNodeId("draw-a-specification")).toBe("capability:draw-a-specification");
+  });
+});
+
+describe("what a capability achieves, its stage, its specifications and issues (0.27.15)", () => {
+  const achieves = { statement: "A reader sees a state machine beside the spec it draws, and can run it.", statedBy: "Guillaume", statedAt: "2026-11-16T14:27:29-05:00" };
+  const stage = { stage: "specified", statedBy: "claude-opus-5-5", statedAt: "2026-11-16T19:30:00Z", grounding: ["rispecs/capability-registry/capability-registry.rispec.md"] };
+
+  it("keeps a row that carries none of them valid, as every 0.27.14 row is", () => {
+    expect(CapabilityFacetSchema.safeParse(capability).success).toBe(true);
+  });
+
+  it("accepts all four together", () => {
+    const parsed = CapabilityFacetSchema.safeParse({
+      ...capability,
+      achieves,
+      stage,
+      specifications: ["rise://jgwill/medicine-wheel/rispecs/developer-suite/repository-mapping/capabilities.spec.md", "https://example.org/spec"],
+      issues: ["jgwill/medicine-wheel#176"],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("holds what it achieves to the 55-word limit and to a speaker", () => {
+    expect(CapabilityFacetSchema.safeParse({ ...capability, achieves: { ...achieves, statement: words(56) } }).success).toBe(false);
+    const { statedBy: _, ...nobody } = achieves;
+    expect(CapabilityFacetSchema.safeParse({ ...capability, achieves: nobody }).success).toBe(false);
+  });
+
+  it("names every stage, and refuses one it does not know", () => {
+    expect(CAPABILITY_STAGES).toEqual(["specified", "prototype", "implementation", "released", "retired"]);
+    expect(STAGES_WITHOUT_CODE).toEqual(["specified", "retired"]);
+    for (const s of CAPABILITY_STAGES) expect(CapabilityStageReadingSchema.safeParse({ ...stage, stage: s }).success).toBe(true);
+    expect(CapabilityStageReadingSchema.safeParse({ ...stage, stage: "envisioned" }).success).toBe(false);
+  });
+
+  it("refuses a stage read from nothing", () => {
+    expect(CapabilityFacetSchema.safeParse({ ...capability, stage: { ...stage, grounding: [] } }).success).toBe(false);
+  });
+
+  it("takes a specification as a rise:// address or an https URL, and an issue only as owner/repo#n", () => {
+    expect(SpecificationRefSchema.safeParse("rise://jgwill/Miadi/rispecs/x.spec.md@abc123").success).toBe(true);
+    expect(SpecificationRefSchema.safeParse("rispecs/x.spec.md").success).toBe(false);
+    expect(SpecificationRefSchema.safeParse("http://example.org").success).toBe(false);
+    expect(IssueRefSchema.safeParse("jgwill/Miadi#873").success).toBe(true);
+    expect(IssueRefSchema.safeParse("#873").success).toBe(false);
+    expect(IssueRefSchema.safeParse("jgwill/Miadi#0").success).toBe(false);
+    expect(CapabilityFacetSchema.safeParse({ ...capability, issues: [] }).success).toBe(false);
   });
 });
 

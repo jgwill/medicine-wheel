@@ -35,6 +35,14 @@ import {
 | `StatementStatus` | `clear`, `unclear`, `undefinable`, `needs-resolution`. A clear or unclear row carries its statement. |
 | `STATEMENT_WORD_LIMIT`, `countWords`, `checkStatement`, `StatementSchema` | The 55-word limit. A writer over it records `needs-resolution` without a statement and moves on. |
 | `capabilityClaims`, `findSharedCapabilities` | Which capabilities two or more providers give: a relation to name, not a conflict. |
+| `CapabilityAchieves`, `CapabilityAchievesSchema` | What a capability achieves for someone, at most 55 words, with who said it and when. The statement says what it is; this says what it is for. |
+| `CapabilityStage`, `CAPABILITY_STAGES`, `CapabilityStageReading`, `CapabilityStageReadingSchema` | Where a capability stands: `specified`, `prototype`, `implementation`, `released`, `retired`, with who said so, when, and from what (at least one piece of evidence). |
+| `STAGES_WITHOUT_CODE` | `specified` and `retired`: the stages at which no code is expected to provide the capability, so a reader keeps the row. |
+| `SpecificationRefSchema`, `RISE_ADDRESS` | Where its specifications are: `rise://<owner>/<repo>/<path>[@<commit>]` or an `https://` URL. |
+| `IssueRefSchema`, `ISSUE_REF` | The issues that track it: `owner/repo#n`, never a bare `#n`. |
+
+`achieves`, `stage`, `specifications` and `issues` are optional on `CapabilityFacet` (0.27.15), so
+every row written before stays valid.
 
 Schemas are strict: in rows written by models, an unknown key is far more often a
 misspelling than a new field.
