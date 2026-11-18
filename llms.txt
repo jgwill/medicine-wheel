@@ -108,8 +108,8 @@ The Next.js app surfaces that relational state as REST endpoints (also consumed 
 - [llms-full.txt](llms-full.txt): Exhaustive reference with code samples and full API
 - [ALPHA.md](ALPHA.md): What "experimental alpha" means for anyone depending on this
 - [RELEASING.md](RELEASING.md): Publishing is not deploying — publish, install globally, run the binary, then bump
-- [CLAUDE.md](CLAUDE.md): Repo laws for agents — versioning, topological workspaces, skills, infra registration
-- [rispecs/CLAUDE.md](rispecs/CLAUDE.md): Specification index
+- [AGENTS.md](AGENTS.md): Repo laws for agents — versioning, topological workspaces, skills, infra registration
+- [rispecs/AGENTS.md](rispecs/AGENTS.md): Specification index
 - [llms/llms-rise-framework.txt](https://llms.jgwill.com/llms-rise-framework.txt): RISE methodology guide
 - [llms/llms-kinship-hub-system.md](https://llms.jgwill.com/llms-kinship-hub-system.md): Kinship hub protocol
 
