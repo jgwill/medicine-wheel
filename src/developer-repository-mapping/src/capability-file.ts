@@ -19,6 +19,8 @@ import { z } from 'zod';
 import {
   CAPABILITY_STAGES,
   CapabilityStageSchema,
+  EPISODE_REF,
+  HOSTING_URL,
   ISSUE_REF,
   RISE_ADDRESS,
   STAGES_WITHOUT_CODE,
@@ -29,6 +31,7 @@ import {
   refineAttribution,
   refineStatementPresence,
   type CapabilityFacet,
+  type CapabilityHosting,
   type CapabilityStage,
 } from '@medicine-wheel/capabilities';
 import type { MappingIssue } from './types';
@@ -52,11 +55,13 @@ export const SCAN_AUTHOR = 'mw-repomap scan';
 
 /**
  * The newest format version this package reads and writes. Version 2 adds what
- * a capability achieves, its stage, its specifications and its issues. A file
- * whose rows hold none of them is written as version 1, so a file that does
- * not use them stays byte for byte what a version 1 writer wrote.
+ * a capability achieves, its stage, its specifications and its issues. Version
+ * 3 adds the `app` kind, where a capability is hosted and the episodes that
+ * hold it (jgwill/medicine-wheel#177). A file is written at the lowest version
+ * its rows need, so a file that uses none of them stays byte for byte what an
+ * older writer wrote.
  */
-export const CAPABILITY_FILE_VERSION = 2;
+export const CAPABILITY_FILE_VERSION = 3;
 
 /**
  * `owner/name` as the reference grammar reads it in an address
@@ -110,12 +115,31 @@ export function specificationAddress(repository: string, specification: string):
   return `rise://${repository.replace(/^repository:/, '')}/${specification.replace(/^\.\//, '')}`;
 }
 
-/** The keys version 2 added to a row. A file whose rows hold none of them is written as version 1. */
+/** The keys version 2 added to a row. A file whose rows hold none of them, and nothing of version 3, is written as version 1. */
 export const CAPABILITY_FILE_V2_KEYS: readonly string[] = ['achieves', 'stage', 'specifications', 'issues'];
+
+/** The keys version 3 added to a row. A file holding one of them, or an `app` row, is written as version 3. */
+export const CAPABILITY_FILE_V3_KEYS: readonly string[] = ['hosting', 'episodes'];
+
+/** The kinds version 3 added. */
+export const CAPABILITY_FILE_V3_KINDS: readonly CapabilityKind[] = ['app'];
 
 /** What a person or an agent said about a row that the scan never says, and that keeps the row through every rescan. */
 function heldByPerson(row: CapabilityFileRow): boolean {
-  return Boolean(row.realizes?.length || row.achieves || row.stage || row.specifications?.length || row.issues?.length);
+  return Boolean(row.realizes?.length || row.achieves || row.stage || row.specifications?.length || row.issues?.length || row.hosting || row.episodes?.length);
+}
+
+/** The package.json an `app` row is read from: the first of its files that is one. Undefined for any other kind. */
+export function appManifestOf(row: Pick<CapabilityFileRow, 'kind' | 'grounding'>): string | undefined {
+  if (row.kind !== 'app') return undefined;
+  return row.grounding.find((p) => p === 'package.json' || p.endsWith('/package.json'));
+}
+
+/** The package.json of an app folder, `.` the repository's root. Undefined for a folder outside the repository. */
+export function appManifestIn(folder: string): string | undefined {
+  const dir = folder.trim().replace(/^\.\//, '').replace(/\/+$/, '');
+  if (dir === '' || dir === '.') return 'package.json';
+  return REPOSITORY_PATH.test(dir) && !holdsUnsafeCharacter(dir) ? `${dir}/package.json` : undefined;
 }
 
 /** A row whose stage says no code is expected to provide it: not yet, or no longer. */
@@ -173,6 +197,21 @@ const CapabilityFileRowObject = z
     specifications: z.array(SpecificationInFileSchema).min(1).max(32).optional(),
     /** Version 2. The issues that track it, `owner/repo#n`. */
     issues: z.array(z.string().regex(ISSUE_REF, 'an issue is owner/repo#n')).min(1).max(32).optional(),
+    /** Version 3. Where it runs, who deploys it, where its code is written, how a change reaches it: said by a person or an agent, never by the scan. */
+    hosting: z
+      .object({
+        urls: z.array(printableText(1024, 'a hosting address').refine((t) => HOSTING_URL.test(t), 'a hosting address is an http:// or https:// URL')).min(1).max(8).optional(),
+        deployedBy: printableText(200, 'who deploys it'),
+        authoredIn: printableText(200, 'where its code is written').optional(),
+        change: StatementSchema.and(printableText(STATEMENT_MAX_CHARACTERS, 'how a change reaches it')).optional(),
+        statedBy: printableText(200, 'a name').refine((t) => t !== SCAN_AUTHOR, 'a person or an agent says where a capability is hosted'),
+        statedAt: FileTimestampSchema,
+        grounding: z.array(printableText(1024, 'what shows it')).min(1).max(32),
+      })
+      .strict()
+      .optional(),
+    /** Version 3. The chronicle episodes that hold it, `miadi-chronicle://<n>`. */
+    episodes: z.array(z.string().regex(EPISODE_REF, 'an episode is miadi-chronicle://<n>')).min(1).max(32).optional(),
     /** `grounding` here is the files that say so, relative to the repository. */
     ...attributionShape,
     // The attribution a file holds is text someone else committed: printable, with its times in full.
@@ -298,7 +337,8 @@ const byKindThenName = (a: CapabilityFileRow, b: CapabilityFileRow) =>
 
 /** The file's text: the header, then one row per line in a fixed order, so a diff shows only what changed. */
 export function renderCapabilityFile(repository: string, rows: readonly CapabilityFileRow[]): string {
-  const version = rows.some((r) => CAPABILITY_FILE_V2_KEYS.some((k) => (r as Record<string, unknown>)[k] !== undefined)) ? 2 : 1;
+  const holds = (keys: readonly string[]) => rows.some((r) => keys.some((k) => (r as Record<string, unknown>)[k] !== undefined));
+  const version = holds(CAPABILITY_FILE_V3_KEYS) || rows.some((r) => CAPABILITY_FILE_V3_KINDS.includes(r.kind)) ? 3 : holds(CAPABILITY_FILE_V2_KEYS) ? 2 : 1;
   const header: CapabilityFileHeader = { schema: CAPABILITY_FILE_SCHEMA, version, repository: repository.replace(/^repository:/, '') };
   const lines = [...rows].sort(byKindThenName).map((r) =>
     JSON.stringify({
@@ -313,6 +353,8 @@ export function renderCapabilityFile(repository: string, rows: readonly Capabili
       ...(r.stage ? { stage: { stage: r.stage.stage, statedBy: r.stage.statedBy, statedAt: r.stage.statedAt, grounding: r.stage.grounding } } : {}),
       ...(r.specifications?.length ? { specifications: r.specifications } : {}),
       ...(r.issues?.length ? { issues: r.issues } : {}),
+      ...(r.hosting ? { hosting: hostingInOrder(r.hosting) } : {}),
+      ...(r.episodes?.length ? { episodes: r.episodes } : {}),
       statedBy: r.statedBy,
       statedAt: r.statedAt,
       grounding: r.grounding,
@@ -322,6 +364,19 @@ export function renderCapabilityFile(repository: string, rows: readonly Capabili
     }),
   );
   return [JSON.stringify(header), ...lines].join('\n') + '\n';
+}
+
+/** A row's hosting with its keys in the order the file writes them. */
+function hostingInOrder(h: NonNullable<CapabilityFileRow['hosting']>): NonNullable<CapabilityFileRow['hosting']> {
+  return {
+    ...(h.urls?.length ? { urls: h.urls } : {}),
+    deployedBy: h.deployedBy,
+    ...(h.authoredIn ? { authoredIn: h.authoredIn } : {}),
+    ...(h.change ? { change: h.change } : {}),
+    statedBy: h.statedBy,
+    statedAt: h.statedAt,
+    grounding: h.grounding,
+  };
 }
 
 /** The rows a scan's artefacts make: one per capability, the files that say so as grounding. */
@@ -359,7 +414,7 @@ export interface CapabilityFileMerge {
   removed: string[];
   /** Rows whose text or files changed. */
   changed: string[];
-  /** Rows a person wrote, or that carry what a person said of them (what they realize or achieve, their stage, specifications or issues), that this scan does not find: kept, and said. */
+  /** Rows a person wrote, or that carry what a person said of them (what they realize or achieve, their stage, specifications, issues, hosting or episodes), that this scan does not find: kept, and said. */
   keptByPerson: string[];
 }
 
@@ -404,6 +459,8 @@ export function mergeCapabilityFile(existing: readonly CapabilityFileRow[], scan
     if (row.stage) next = { ...next, stage: row.stage };
     if (row.specifications?.length) next = { ...next, specifications: row.specifications };
     if (row.issues?.length) next = { ...next, issues: row.issues };
+    if (row.hosting) next = { ...next, hosting: row.hosting };
+    if (row.episodes?.length) next = { ...next, episodes: row.episodes };
     if (JSON.stringify(rowForCompare(next)) !== JSON.stringify(rowForCompare(row))) changed.push(key);
     rows.push(next);
   }
@@ -449,6 +506,8 @@ export function capabilityFileFacets(rows: readonly CapabilityFileRow[], ctx: { 
     ...(r.stage ? { stage: { ...r.stage, grounding: [...r.stage.grounding] } } : {}),
     ...(r.specifications?.length ? { specifications: r.specifications.map((s) => specificationAddress(ctx.repository, s)) } : {}),
     ...(r.issues?.length ? { issues: [...r.issues] } : {}),
+    ...(r.hosting ? { hosting: { ...hostingInOrder(r.hosting), grounding: [...r.hosting.grounding] } as CapabilityHosting } : {}),
+    ...(r.episodes?.length ? { episodes: [...r.episodes] } : {}),
   }));
 }
 
@@ -471,6 +530,12 @@ export interface CapabilityStatementInput {
   specifications?: string[];
   /** Issues to add, `owner/repo#n`. */
   issues?: string[];
+  /** For an `app`: its folder in the repository, `.` the root. With it, an app the file does not hold yet is added at any stage. */
+  path?: string;
+  /** Where it is hosted, said by `by` at `at`. Replaces the hosting held before. */
+  hosting?: { urls?: string[]; deployedBy: string; authoredIn?: string; change?: string; grounding: string[] };
+  /** Episodes to add, `miadi-chronicle://<n>`. */
+  episodes?: string[];
   /**
    * The file's repository, `owner/name`. With it, a capability the file does not
    * hold yet is added when it is stated at stage `specified`: a capability can be
@@ -495,7 +560,7 @@ export class CapabilityInputError extends Error {
 export function stateCapabilityRow(rows: readonly CapabilityFileRow[], input: CapabilityStatementInput): { rows: CapabilityFileRow[] } | { error: string } {
   if (input.by.trim() === SCAN_AUTHOR) return { error: `"${SCAN_AUTHOR}" is the scan's name: a statement is said by a person` };
   if (holdsUnsafeCharacter(input.by)) return { error: 'a name holds no control character' };
-  for (const [what, words] of [['a statement', input.statement], ['what it achieves', input.achieves]] as const) {
+  for (const [what, words] of [['a statement', input.statement], ['what it achieves', input.achieves], ['how a change reaches it', input.hosting?.change]] as const) {
     if (words === undefined) continue;
     if (holdsUnsafeCharacter(words) || codePoints(words) > STATEMENT_MAX_CHARACTERS) return { error: `${what} is at most ${STATEMENT_MAX_CHARACTERS} printable characters` };
     const check = checkStatement(words);
@@ -510,13 +575,39 @@ export function stateCapabilityRow(rows: readonly CapabilityFileRow[], input: Ca
   if (badIssue !== undefined) return { error: `${badIssue} is not an issue: owner/repo#n` };
   const bad = input.realizes?.find((id) => !PLATFORM_CAPABILITY.test(id));
   if (bad !== undefined) return { error: `${bad} is not a platform capability: capability:<kebab-case-slug>` };
+  if (input.hosting && !input.hosting.deployedBy?.trim()) return { error: 'hosting names who or what deploys it' };
+  if (input.hosting && !input.hosting.grounding?.length) return { error: 'where a capability is hosted is read from evidence: give what shows it (a file, a URL, owner/repo#n)' };
+  const badUrl = input.hosting?.urls?.find((u) => !HOSTING_URL.test(u));
+  if (badUrl !== undefined) return { error: `${badUrl} is not a hosting address: an http:// or https:// URL` };
+  const badEpisode = input.episodes?.find((e) => !EPISODE_REF.test(e));
+  if (badEpisode !== undefined) return { error: `${badEpisode} is not an episode: miadi-chronicle://<n>` };
+  if (input.path !== undefined && input.kind !== 'app') return { error: 'a path names the folder of an app: state it as app/<name>' };
+  const manifest = input.path === undefined ? undefined : appManifestIn(input.path);
+  if (input.path !== undefined && !manifest) return { error: `${input.path} is not a folder in this repository` };
   const key = rowKey(input);
   let row = rows.find((r) => rowKey(r) === key);
   const isNew = !row;
+  if (!row && input.kind === 'app' && manifest && input.repository) {
+    // An application is named by a person, with its folder: the scan reads it there at every commit.
+    row = {
+      kind: 'app',
+      name: input.name,
+      address: capabilityAddress(input.repository, 'app', input.name),
+      status: 'needs-resolution',
+      statedBy: input.by,
+      statedAt: input.at,
+      grounding: [manifest],
+      revision: 'pending',
+    };
+  } else if (row && manifest && appManifestOf(row) !== manifest) {
+    row = { ...row, grounding: [manifest] };
+  }
   if (!row) {
     // A capability no code provides yet is written down at stage specified, grounded in its specification.
     if (input.stage !== 'specified' || !input.repository) {
-      return { error: `the file holds no ${key}: run capabilities scan --write first, or state it at --stage specified with its --specification` };
+      return {
+        error: `the file holds no ${key}: run capabilities scan --write first, or state it at --stage specified with its --specification${input.kind === 'app' ? ', or name the app\'s folder with --path' : ''}`,
+      };
     }
     row = {
       kind: input.kind,
@@ -529,7 +620,7 @@ export function stateCapabilityRow(rows: readonly CapabilityFileRow[], input: Ca
       revision: 'pending',
     };
   }
-  const says = Boolean(input.realizes || input.achieves !== undefined || input.stage || input.specifications || input.issues);
+  const says = Boolean(input.realizes || input.achieves !== undefined || input.stage || input.specifications || input.issues || input.hosting || input.episodes || (isNew && manifest));
   if (input.statement === undefined && !row.statement && !says) return { error: `${key} has no statement to affirm: give it one` };
   let next: CapabilityFileRow =
     input.statement !== undefined
@@ -549,6 +640,22 @@ export function stateCapabilityRow(rows: readonly CapabilityFileRow[], input: Ca
   if (input.stage) next = { ...next, stage: { stage: input.stage, statedBy: input.by, statedAt: input.at, grounding: [...new Set(stageGrounding)] } };
   if (input.specifications) next = { ...next, specifications: [...new Set([...(row.specifications ?? []), ...input.specifications])] };
   if (input.issues) next = { ...next, issues: [...new Set([...(row.issues ?? []), ...input.issues])] };
+  if (input.hosting) {
+    const h = input.hosting;
+    next = {
+      ...next,
+      hosting: {
+        ...(h.urls?.length ? { urls: [...new Set(h.urls)] } : {}),
+        deployedBy: h.deployedBy.trim(),
+        ...(h.authoredIn?.trim() ? { authoredIn: h.authoredIn.trim() } : {}),
+        ...(h.change !== undefined ? { change: h.change } : {}),
+        statedBy: input.by,
+        statedAt: input.at,
+        grounding: [...new Set(h.grounding)],
+      },
+    };
+  }
+  if (input.episodes) next = { ...next, episodes: [...new Set([...(row.episodes ?? []), ...input.episodes])] };
   const checked = CapabilityFileRowSchema.safeParse(next);
   if (!checked.success) return { error: checked.error.issues.map(describeZod).join('; ') };
   return { rows: isNew ? [...rows, next].sort(byKindThenName) : rows.map((r) => (rowKey(r) === key ? next : r)) };

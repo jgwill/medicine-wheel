@@ -36,6 +36,8 @@ import { consumesEdges, type ConsumesEdge, type PackageReading } from '../capabi
 import {
   CAPABILITY_FILE,
   CapabilityInputError,
+  appManifestIn,
+  appManifestOf,
   CapabilityNameSchema,
   REPOSITORY_NAME,
   capabilityFileFacets,
@@ -153,6 +155,19 @@ export async function scanRepository(clone: string, options: ScanOptions): Promi
   for (const reader of CODE_READERS) {
     if (reader.repository.toLowerCase() !== repository.toLowerCase() || !files.includes(reader.path)) continue;
     artefacts.push(...reader.read((await show(reader.path)) ?? ''));
+  }
+  // Applications, from the folders the repository's own file names: never guessed.
+  if (files.includes(CAPABILITY_FILE)) {
+    for (const row of parseCapabilityFile((await show(CAPABILITY_FILE)) ?? '').rows) {
+      const manifest = appManifestOf(row);
+      if (!manifest || !files.includes(manifest)) continue;
+      const pkg = parsePackageJson((await show(manifest)) ?? '');
+      if (pkg.name !== row.name) {
+        issues.push({ severity: 'warning', file: manifest, message: `names ${JSON.stringify(pkg.name ?? '')}, not the app ${JSON.stringify(row.name)} the capability file names here` });
+        continue;
+      }
+      artefacts.push({ kind: 'app', name: row.name, ...(pkg.description ? { description: pkg.description } : {}), path: manifest });
+    }
   }
 
   // A name no id can be made from, or a name, a path or a shipping package carrying control characters, is reported and not read.
@@ -313,6 +328,10 @@ export async function stateCapability(
     stageGrounding?: string[];
     specifications?: string[];
     issues?: string[];
+    /** For an app: its folder, whose package.json must name it */
+    path?: string;
+    hosting?: { urls?: string[]; deployedBy: string; authoredIn?: string; change?: string; grounding: string[] };
+    episodes?: string[];
     now?: Date;
   },
 ): Promise<{ file: string; row: CapabilityFileRow }> {
@@ -323,6 +342,14 @@ export async function stateCapability(
   const bad = current.issues.find((i) => i.severity === 'error');
   if (bad) throw new Error(`${CAPABILITY_FILE}${bad.line ? `:${bad.line}` : ''}: ${bad.message} (nothing was written)`);
   if (!current.header) throw new Error(`${CAPABILITY_FILE} has no header line (nothing was written)`);
+  if (input.path !== undefined && input.kind === 'app') {
+    // An app is named by the package.json in its folder: the folder a person names holds one with that name.
+    const manifest = appManifestIn(input.path);
+    const full = manifest ? path.join(root, manifest) : undefined;
+    if (!full || !existsSync(full)) throw new CapabilityInputError(`${input.path} holds no package.json (nothing was written)`);
+    const named = parsePackageJson(readFileSync(full, 'utf8')).name;
+    if (named !== input.name) throw new CapabilityInputError(`${manifest} names ${JSON.stringify(named ?? '')}, not ${JSON.stringify(input.name)} (nothing was written)`);
+  }
   const answer = stateCapabilityRow(current.rows, {
     kind: input.kind,
     name: input.name,
@@ -335,6 +362,9 @@ export async function stateCapability(
     ...(input.stageGrounding ? { stageGrounding: input.stageGrounding } : {}),
     ...(input.specifications ? { specifications: input.specifications } : {}),
     ...(input.issues ? { issues: input.issues } : {}),
+    ...(input.path !== undefined ? { path: input.path } : {}),
+    ...(input.hosting ? { hosting: input.hosting } : {}),
+    ...(input.episodes ? { episodes: input.episodes } : {}),
     repository: current.header.repository,
   });
   if ('error' in answer) throw new CapabilityInputError(answer.error);

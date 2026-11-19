@@ -15,10 +15,15 @@ import { checkStatement, type CapabilityFacet } from "@medicine-wheel/capabiliti
 /**
  * `decision`: a decision a repository's code makes, such as which model runs a
  * mission, one row per decision (Guillaume, jgwill/Miadi#1030, 2026-11-16).
+ *
+ * `app`: an application a person opens or a service calls, such as a web app,
+ * named by its package.json. A person names its folder in the repository's own
+ * file; the scan reads that package.json at each commit and never guesses an
+ * app (Guillaume, jgwill/medicine-wheel#177, 2026-11-19).
  */
-export type CapabilityKind = "package" | "cli" | "skill" | "decision";
+export type CapabilityKind = "package" | "cli" | "skill" | "decision" | "app";
 
-export const CAPABILITY_KINDS: readonly CapabilityKind[] = ["package", "cli", "skill", "decision"];
+export const CAPABILITY_KINDS: readonly CapabilityKind[] = ["package", "cli", "skill", "decision", "app"];
 
 const KIND_PREFIX = new RegExp(`^capability:(${CAPABILITY_KINDS.join("|")})-`);
 

@@ -40,9 +40,11 @@ import {
 | `STAGES_WITHOUT_CODE` | `specified` and `retired`: the stages at which no code is expected to provide the capability, so a reader keeps the row. |
 | `SpecificationRefSchema`, `RISE_ADDRESS` | Where its specifications are: `rise://<owner>/<repo>/<path>[@<commit>]` or an `https://` URL. |
 | `IssueRefSchema`, `ISSUE_REF` | The issues that track it: `owner/repo#n`, never a bare `#n`. |
+| `CapabilityHosting`, `CapabilityHostingSchema`, `HOSTING_URL` | Where it runs (`urls`, http or https), who deploys it (`deployedBy`), where its code is written when not in the repository that holds it (`authoredIn`), how a change reaches it (`change`, at most 55 words), with who said so, when, and from what. |
+| `EpisodeRefSchema`, `EPISODE_REF` | The chronicle episodes that hold it: `miadi-chronicle://<n>`. |
 
-`achieves`, `stage`, `specifications` and `issues` are optional on `CapabilityFacet` (0.27.15), so
-every row written before stays valid.
+`achieves`, `stage`, `specifications` and `issues` (0.27.15), `hosting` and `episodes` (0.27.16,
+jgwill/medicine-wheel#177) are optional on `CapabilityFacet`, so every row written before stays valid.
 
 Schemas are strict: in rows written by models, an unknown key is far more often a
 misspelling than a new field.

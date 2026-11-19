@@ -101,6 +101,32 @@ export interface CapabilityStageReading {
   grounding: string[];
 }
 
+/**
+ * Where a capability runs, who deploys it, where its code is written, and how a
+ * change reaches it, as someone said it. Never the scan's to say.
+ *
+ * `authoredIn` is set when the code is written somewhere other than the
+ * repository that holds it, a v0 project for example: the copy in the
+ * repository is replaced at the next import, so an edit made there is lost.
+ * `change` then says what to do instead.
+ */
+export interface CapabilityHosting {
+  /** Where people open it or services call it: `https://` or `http://` addresses. */
+  urls?: string[];
+  /** Who or what deploys it: 'v0, on Vercel', 'npm publish from this repository'. */
+  deployedBy: string;
+  /** Where its code is written when that is not this repository: 'v0'. */
+  authoredIn?: string;
+  /** How a change reaches it, at most {@link STATEMENT_WORD_LIMIT} words. */
+  change?: string;
+  /** A person or an agent seat. */
+  statedBy: string;
+  /** ISO 8601. */
+  statedAt: string;
+  /** What shows it: a file, a URL, `owner/repo#n`. At least one. */
+  grounding: string[];
+}
+
 /** A platform capability. Annotates a `RelationalNode` of type `'knowledge'`. */
 export interface CapabilityFacet extends Attribution {
   /** → `RelationalNode.id`, `capability:<slug>` */
@@ -121,6 +147,10 @@ export interface CapabilityFacet extends Attribution {
   specifications?: string[];
   /** The issues that track it: `owner/repo#n`. */
   issues?: string[];
+  /** Where it runs and how a change reaches it, and who said so. */
+  hosting?: CapabilityHosting;
+  /** The chronicle episodes that hold it: `miadi-chronicle://<n>`. */
+  episodes?: string[];
 }
 
 /** Every stage, in the order a capability usually lives them. */

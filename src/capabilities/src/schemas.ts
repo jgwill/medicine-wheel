@@ -107,6 +107,27 @@ export const ISSUE_REF = /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]
 
 export const IssueRefSchema = z.string().regex(ISSUE_REF, 'an issue is owner/repo#n');
 
+/** `miadi-chronicle:<n>` or `miadi-chronicle:<folder>`, `//` after the scheme accepted. */
+export const EPISODE_REF = /^miadi-chronicle:(?:\/\/)?[A-Za-z0-9][A-Za-z0-9._-]{0,199}$/;
+
+export const EpisodeRefSchema = z.string().regex(EPISODE_REF, 'an episode is miadi-chronicle://<n>');
+
+/** Where people open it or services call it. */
+export const HOSTING_URL = /^https?:\/\/[^\s]+$/;
+
+/** Where a capability runs, who deploys it, where its code is written, how a change reaches it, and from what. */
+export const CapabilityHostingSchema = z
+  .object({
+    urls: z.array(z.string().regex(HOSTING_URL, 'a hosting address is an http:// or https:// URL')).min(1).optional(),
+    deployedBy: z.string().min(1),
+    authoredIn: z.string().min(1).optional(),
+    change: StatementSchema.optional(),
+    statedBy: z.string().min(1),
+    statedAt: TimestampSchema,
+    grounding: z.array(z.string().min(1)).min(1),
+  })
+  .strict();
+
 export const CapabilityFacetSchema = z
   .object({
     nodeId: CapabilityNodeIdSchema,
@@ -119,6 +140,8 @@ export const CapabilityFacetSchema = z
     stage: CapabilityStageReadingSchema.optional(),
     specifications: z.array(SpecificationRefSchema).min(1).optional(),
     issues: z.array(IssueRefSchema).min(1).optional(),
+    hosting: CapabilityHostingSchema.optional(),
+    episodes: z.array(EpisodeRefSchema).min(1).optional(),
     ...attributionShape,
   })
   .strict()

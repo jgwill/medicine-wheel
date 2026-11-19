@@ -51,7 +51,7 @@ fails to parse. Exit codes: 0 done, 1 errors or a failed read, 2 usage error.
 Any git repository can keep what it provides in `.miadi/capabilities.jsonl`, committed with its code, so whoever clones it knows what it offers. Nothing else is needed: no account, no registry, no server.
 
 ```bash
-npx @medicine-wheel/developer-repository-mapping capabilities scan --write   # in a clone: its packages, CLIs, skills and decisions
+npx @medicine-wheel/developer-repository-mapping capabilities scan --write   # in a clone: its packages, CLIs, skills, decisions and the apps its file names
 git add .miadi/capabilities.jsonl && git commit -m "what this repository provides"
 
 mw-repomap capabilities show <clone>                  # what a clone provides, from its own file first
@@ -68,9 +68,14 @@ A rescan keeps what a person wrote and leaves the file alone when nothing change
 mw-repomap capabilities state package/@acme/tool --realizes capability:publish-a-prototype --by Ava   # which platform capability it serves
 mw-repomap capabilities state package/@acme/tool --achieves "A team publishes a prototype in one step." --stage released --stage-grounding npm:@acme/tool@1.0.0 --issue acme/tool#12 --by Ava
 mw-repomap capabilities state package/@acme/next "Plans the next release." --stage specified --specification rispecs/next.spec.md --by Ava   # written down before any code provides it
+mw-repomap capabilities state app/acme-review --path apps/review --stage prototype --stage-grounding apps/AGENTS.md \
+  --deployed-by "v0, on Vercel" --hosted-at https://acme-review.example.org --authored-in v0 \
+  --change "A v0 prompt in apps/prompts/." --hosting-grounding apps/AGENTS.md --episode miadi-chronicle://340 --by Ava   # an application, where it runs and how a change reaches it
 ```
 
-The JSON Schema of a line ships at `schema/repository-capabilities.v2.schema.json` (format version 2 adds `achieves`, `stage`, `specifications` and `issues`; a file that uses none of them is still written as version 1, whose schema stays at `schema/repository-capabilities.v1.schema.json`). The format and its rules are in `rispecs/developer-suite/repository-mapping/capabilities.spec.md` of jgwill/medicine-wheel.
+An application (`app`) is never guessed: a person names its folder with `--path`, and the scan reads the `package.json` there at every commit while its name is the app's. `hosting` says where a capability runs, who deploys it, where its code is written when not in this repository (`authoredIn`: the copy here is replaced at the next import) and how a change reaches it; `episodes` names the chronicle episodes that hold it. `capabilities show` prints both.
+
+The JSON Schema of a line ships at `schema/repository-capabilities.v3.schema.json` (format version 3 adds the `app` kind, `hosting` and `episodes`; version 2 adds `achieves`, `stage`, `specifications` and `issues`; a file is written at the lowest version its rows need, and `schema/repository-capabilities.v1.schema.json` and `…v2.schema.json` stay published). The format and its rules are in `rispecs/developer-suite/repository-mapping/capabilities.spec.md` of jgwill/medicine-wheel.
 
 ## Library
 

@@ -27,6 +27,7 @@ export type {
   CapabilityStage,
   CapabilityAchieves,
   CapabilityStageReading,
+  CapabilityHosting,
   CapabilityClaim,
   SharedCapability,
 } from './types';
@@ -54,6 +55,10 @@ export {
   SpecificationRefSchema,
   ISSUE_REF,
   IssueRefSchema,
+  EPISODE_REF,
+  EpisodeRefSchema,
+  HOSTING_URL,
+  CapabilityHostingSchema,
   CapabilityFacetSchema,
 } from './schemas';
 

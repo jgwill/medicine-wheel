@@ -12,6 +12,8 @@ import { CAPABILITY_STAGES } from '../src/capabilities/src/index';
 import {
   CAPABILITY_FILE,
   CAPABILITY_FILE_V2_KEYS,
+  CAPABILITY_FILE_V3_KEYS,
+  CAPABILITY_FILE_V3_KINDS,
   CapabilityInputError,
   impactOf,
   CAPABILITY_FILE_ROW_KEYS,
@@ -395,12 +397,12 @@ describe('what the reviews found', () => {
   });
 
   it('C1: a reader reads a newer file for what it knows; a writer refuses to rewrite it', async () => {
-    const text = [HEADER('acme/tool', { version: 3, generator: 'mw-repomap 1.0' }), ROW({ ecosystem: 'npm' }), ROW({ kind: 'mcp-server', name: 'srv' })].join('\n') + '\n';
+    const text = [HEADER('acme/tool', { version: 4, generator: 'mw-repomap 1.0' }), ROW({ ecosystem: 'npm' }), ROW({ kind: 'mcp-server', name: 'srv' })].join('\n') + '\n';
     const reading = parseCapabilityFile(text);
     expect(reading.rows.map((r) => r.name)).toEqual(['greet']);
     expect(reading.issues.every((i) => i.severity === 'warning')).toBe(true);
     const said = reading.issues.map((i) => i.message).join('\n');
-    for (const word of ['generator', 'version 3', 'ecosystem', 'mcp-server']) expect(said).toContain(word);
+    for (const word of ['generator', 'version 4', 'ecosystem', 'mcp-server']) expect(said).toContain(word);
     expect(parseCapabilityFile(text, { mode: 'write' }).issues.filter((i) => i.severity === 'error')).toHaveLength(4);
 
     const dir = repo();
@@ -434,13 +436,17 @@ describe('what the reviews found', () => {
 
   it('the published JSON Schema names the same keys, kinds and header as the code', () => {
     const read = (v: number) => JSON.parse(fs.readFileSync(path.join(__dirname, `../src/developer-repository-mapping/schema/repository-capabilities.v${v}.schema.json`), 'utf8'));
-    const schema = read(2);
+    const schema = read(3);
     expect(Object.keys(schema.$defs.row.properties).sort()).toEqual([...CAPABILITY_FILE_ROW_KEYS].sort());
     expect(schema.$defs.row.properties.kind.enum).toEqual([...CAPABILITY_KINDS]);
     expect(schema.$defs.header.required).toEqual(['schema', 'version', 'repository']);
+    expect(schema.$defs.header.properties.version.enum).toEqual([1, 2, 3]);
     expect(schema.$defs.row.properties.stage.properties.stage.enum).toEqual([...CAPABILITY_STAGES]);
-    // Version 1 stays published as it was: the keys version 2 added are the only difference.
-    expect(Object.keys(read(1).$defs.row.properties).sort()).toEqual(CAPABILITY_FILE_ROW_KEYS.filter((k) => !CAPABILITY_FILE_V2_KEYS.includes(k)).sort());
+    // Versions 1 and 2 stay published as they were: the keys and kinds each later version added are the only difference.
+    const v2Keys = CAPABILITY_FILE_ROW_KEYS.filter((k) => !CAPABILITY_FILE_V3_KEYS.includes(k));
+    expect(Object.keys(read(2).$defs.row.properties).sort()).toEqual([...v2Keys].sort());
+    expect(read(2).$defs.row.properties.kind.enum).toEqual(CAPABILITY_KINDS.filter((k) => !CAPABILITY_FILE_V3_KINDS.includes(k)));
+    expect(Object.keys(read(1).$defs.row.properties).sort()).toEqual(v2Keys.filter((k) => !CAPABILITY_FILE_V2_KEYS.includes(k)).sort());
   });
 });
 
@@ -579,9 +585,9 @@ describe('what the verification found', () => {
     // A later version: the v1 schema refuses it, a writer refuses it, a reader reads it.
     const v2 = { ...header, version: 2 };
     expect(validate(v2)).toBe(false);
-    const v3 = { ...header, version: 3 };
-    expect(parseCapabilityFile(JSON.stringify(v3) + '\n', { mode: 'write' }).issues[0]?.severity).toBe('error');
-    expect(parseCapabilityFile(JSON.stringify(v3) + '\n').header?.version).toBe(3);
+    const v4 = { ...header, version: 4 };
+    expect(parseCapabilityFile(JSON.stringify(v4) + '\n', { mode: 'write' }).issues[0]?.severity).toBe('error');
+    expect(parseCapabilityFile(JSON.stringify(v4) + '\n').header?.version).toBe(4);
   });
 
   it('N7: a root that cannot be read exits 1, help exits 0, and what a person typed that cannot be written exits 2', async () => {
@@ -660,7 +666,7 @@ describe('a decision the Factory makes', () => {
     expect(written.rows.map((r) => r.kind)).toEqual(['package', 'cli', 'skill', 'decision']);
 
     const map = await buildCapabilityMap([dir], opts);
-    expect(map.repositories[0]?.counts).toEqual({ package: 1, cli: 1, skill: 1, decision: 1 });
+    expect(map.repositories[0]?.counts).toEqual({ package: 1, cli: 1, skill: 1, decision: 1, app: 0 });
   });
 
   it('another repository holding the same file has no decision read from it', async () => {
@@ -797,7 +803,7 @@ describe('format version 2: what a capability achieves, where it stands, where i
     const cases: [string, Record<string, unknown>, 'header' | 'row'][] = [
       ['a version 2 header', header, 'header'],
       ['a version 1 header', { ...header, version: 1 }, 'header'],
-      ['a version 3 header', { ...header, version: 3 }, 'header'],
+      ['a version 4 header', { ...header, version: 4 }, 'header'],
       ['a row with all four', { ...row, achieves, stage, specifications: ['rispecs/x.md', 'rise://acme/tool/rispecs/y.md', 'https://example.org/s'], issues: ['acme/tool#7'] }, 'row'],
       ['a stage it does not know', { ...row, stage: { ...stage, stage: 'envisioned' } }, 'row'],
       ['a stage with no grounding', { ...row, stage: { ...stage, grounding: [] } }, 'row'],
@@ -831,5 +837,159 @@ describe('format version 2: what a capability achieves, where it stands, where i
     expect(shown.out).toContain('specified in rise://acme/tool/rispecs/greet.spec.md');
     expect(shown.out).toContain('achieves: A newcomer is greeted by name. (Ava)');
     expect(shown.out).toContain('tracked by acme/tool#3');
+  });
+});
+
+// ── Format version 3: an app, where a capability is hosted, the episodes that hold it (jgwill/medicine-wheel#177, jgwill/Miadi#1059) ─
+describe('format version 3: an app, where it is hosted, and the episodes that hold it', () => {
+  const HOSTING = {
+    urls: ['https://acme-review.example.org'],
+    deployedBy: 'v0, on Vercel',
+    authoredIn: 'v0',
+    change: 'Write a v0 prompt in apps/prompts/ for the person who owns the v0 project.',
+    grounding: ['apps/AGENTS.md'],
+  };
+  const withApp = () => {
+    const dir = repo();
+    put(dir, 'apps/review/package.json', JSON.stringify({ name: 'acme-review', version: '0.1.0', private: true, description: 'Reviews of videos and notes.' }));
+    put(dir, 'apps/AGENTS.md', '# apps\n');
+    commit(dir);
+    return dir;
+  };
+
+  it('a person names an app by its folder; the scan reads it there at every commit, and the file becomes version 3', async () => {
+    const dir = withApp();
+    const first = await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    expect(first.text).not.toContain('acme-review');
+    await stateCapability(dir, {
+      kind: 'app',
+      name: 'acme-review',
+      by: 'Guillaume',
+      path: 'apps/review/',
+      achieves: 'A person keeps every version of a review and cites it by one address.',
+      stage: 'prototype',
+      stageGrounding: ['apps/AGENTS.md'],
+      hosting: HOSTING,
+      episodes: ['miadi-chronicle://340', 'miadi-chronicle://340'],
+      now: opts.now,
+    });
+    const text = fs.readFileSync(path.join(dir, CAPABILITY_FILE), 'utf8');
+    expect(JSON.parse(text.split('\n')[0]!).version).toBe(3);
+    expect(rowOf(dir, 'acme-review')).toMatchObject({
+      kind: 'app',
+      address: 'miadi-capability://acme/tool/app/acme-review',
+      status: 'needs-resolution',
+      statedBy: 'Guillaume',
+      grounding: ['apps/review/package.json'],
+      stage: { stage: 'prototype', grounding: ['apps/AGENTS.md'] },
+      hosting: { ...HOSTING, statedBy: 'Guillaume', statedAt: opts.now.toISOString() },
+      episodes: ['miadi-chronicle://340'],
+    });
+    commit(dir);
+    // The scan finds it where the file says, takes its description, and keeps what the person said.
+    const scan = await scanRepository(dir, later);
+    expect(scan.fileRows.find((r) => r.kind === 'app')).toMatchObject({ name: 'acme-review', statement: 'Reviews of videos and notes.', grounding: ['apps/review/package.json'] });
+    const rescan = await writeCapabilityFile(dir, scan, { write: true });
+    expect(rescan).toMatchObject({ removed: [], keptByPerson: [] });
+    expect(rowOf(dir, 'acme-review')).toMatchObject({ hosting: { deployedBy: 'v0, on Vercel' }, episodes: ['miadi-chronicle://340'], stage: { stage: 'prototype' } });
+    const got = await readRepositoryCapabilities(dir, later);
+    expect(got.capabilities.find((c) => c.nodeId === 'capability:app-acme-review')).toMatchObject({
+      providedBy: ['repository:acme/tool'],
+      stage: { stage: 'prototype' },
+      hosting: { urls: HOSTING.urls, deployedBy: 'v0, on Vercel', authoredIn: 'v0', change: HOSTING.change },
+      episodes: ['miadi-chronicle://340'],
+    });
+    expect(kindOf('capability:app-acme-review')).toBe('app');
+    // A folder whose package.json names another app is not read as this one.
+    put(dir, 'apps/review/package.json', JSON.stringify({ name: 'acme-other', private: true }));
+    commit(dir);
+    const renamed = await readRepositoryCapabilities(dir, later);
+    expect(renamed.capabilities.map((c) => c.name)).not.toContain('acme-review');
+    const said = renamed.issues.map((i) => i.message).join('\n');
+    expect(said).toMatch(/names "acme-other", not the app "acme-review"/);
+    expect(said).toMatch(/app\/acme-review is in the file but this commit provides no such app/);
+  });
+
+  it('refuses an app with no folder or a folder outside the repository, hosting with no evidence or no deployer, an address that is not http, an episode that is not an address, and a change over 55 words', async () => {
+    const at = '2026-11-19T00:00:00Z';
+    const base = { kind: 'app' as const, name: 'acme-review', by: 'Ava', at, repository: 'acme/tool' };
+    expect(stateCapabilityRow([], { ...base, stage: 'prototype', stageGrounding: ['x'] })).toMatchObject({ error: expect.stringMatching(/--path/) });
+    expect(stateCapabilityRow([], { ...base, path: '../elsewhere' })).toMatchObject({ error: expect.stringMatching(/not a folder in this repository/) });
+    expect(stateCapabilityRow([], { ...base, path: '/abs' })).toMatchObject({ error: expect.stringMatching(/not a folder in this repository/) });
+    expect(stateCapabilityRow([], { ...base, kind: 'skill', path: 'apps/review' })).toMatchObject({ error: expect.stringMatching(/folder of an app/) });
+    const added = stateCapabilityRow([], { ...base, path: '.' });
+    expect(added).toMatchObject({ rows: [{ kind: 'app', grounding: ['package.json'], status: 'needs-resolution' }] });
+    const rows = 'rows' in added ? added.rows : [];
+    expect(stateCapabilityRow(rows, { ...base, hosting: { deployedBy: 'v0', grounding: [] } })).toMatchObject({ error: expect.stringMatching(/read from evidence/) });
+    expect(stateCapabilityRow(rows, { ...base, hosting: { deployedBy: ' ', grounding: ['x'] } })).toMatchObject({ error: expect.stringMatching(/who or what deploys it/) });
+    expect(stateCapabilityRow(rows, { ...base, hosting: { deployedBy: 'v0', urls: ['ftp://x.org'], grounding: ['x'] } })).toMatchObject({ error: expect.stringMatching(/not a hosting address/) });
+    expect(stateCapabilityRow(rows, { ...base, episodes: ['340'] })).toMatchObject({ error: expect.stringMatching(/not an episode/) });
+    expect(stateCapabilityRow(rows, { ...base, hosting: { deployedBy: 'v0', change: Array(56).fill('w').join(' '), grounding: ['x'] } })).toEqual({ error: 'how a change reaches it: 56 words, the limit is 55' });
+    // Hosting is replaced as a whole; episodes add up; the row's statement and revision stay.
+    const once = stateCapabilityRow(rows, { ...base, hosting: { deployedBy: 'v0', urls: ['http://gaia:3335'], grounding: ['a'] }, episodes: ['miadi-chronicle:340'] });
+    const twice = stateCapabilityRow('rows' in once ? once.rows : [], { ...base, hosting: { deployedBy: 'npm', grounding: ['b'] }, episodes: ['miadi-chronicle://568'] });
+    expect(twice).toMatchObject({ rows: [{ revision: 'pending', hosting: { deployedBy: 'npm', grounding: ['b'] }, episodes: ['miadi-chronicle:340', 'miadi-chronicle://568'] }] });
+    expect('rows' in twice && twice.rows[0]!.hosting?.urls).toBeFalsy();
+    // On disk, the folder holds a package.json with the app's name.
+    const dir = withApp();
+    await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    await expect(stateCapability(dir, { kind: 'app', name: 'acme-review', by: 'Ava', path: 'apps' })).rejects.toThrow(/holds no package\.json/);
+    await expect(stateCapability(dir, { kind: 'app', name: 'acme-else', by: 'Ava', path: 'apps/review' })).rejects.toThrow(/names "acme-review", not "acme-else"/);
+  });
+
+  it('the version 3 JSON Schema and the code accept and refuse the same lines', () => {
+    const require = createRequire(__filename);
+    const Ajv = createRequire(require.resolve('ajv-formats'))('ajv/dist/2020').default;
+    const addFormats = require('ajv-formats').default ?? require('ajv-formats');
+    const ajv = new Ajv({ allErrors: true });
+    addFormats(ajv);
+    const validate = ajv.compile(JSON.parse(fs.readFileSync(path.join(__dirname, '../src/developer-repository-mapping/schema/repository-capabilities.v3.schema.json'), 'utf8')));
+    const header = { schema: 'medicine-wheel/repository-capabilities', version: 3, repository: 'acme/tool' };
+    const row = JSON.parse(ROW());
+    const app = { ...row, kind: 'app', name: 'acme-review', address: 'miadi-capability://acme/tool/app/acme-review', grounding: ['apps/review/package.json'] };
+    const hosting = { urls: ['https://x.org', 'http://gaia:3335/review'], deployedBy: 'v0', authoredIn: 'v0', change: 'A v0 prompt.', statedBy: 'Ava', statedAt: '2026-11-19T00:00:00Z', grounding: ['apps/AGENTS.md'] };
+    const cases: [string, Record<string, unknown>, 'header' | 'row'][] = [
+      ['a version 3 header', header, 'header'],
+      ['a version 4 header', { ...header, version: 4 }, 'header'],
+      ['an app row', app, 'row'],
+      ['an app with hosting and episodes', { ...app, hosting, episodes: ['miadi-chronicle://340', 'miadi-chronicle:2026-08-27-episode-340-reviews-become-choices'] }, 'row'],
+      ['hosting with only who deploys it', { ...row, hosting: { deployedBy: 'npm', statedBy: 'Ava', statedAt: '2026-11-19T00:00:00Z', grounding: ['x'] } }, 'row'],
+      ['hosting said by the scan', { ...row, hosting: { ...hosting, statedBy: SCAN_AUTHOR } }, 'row'],
+      ['hosting with no deployer', { ...row, hosting: { ...hosting, deployedBy: undefined } }, 'row'],
+      ['hosting with no grounding', { ...row, hosting: { ...hosting, grounding: [] } }, 'row'],
+      ['hosting at an ftp address', { ...row, hosting: { ...hosting, urls: ['ftp://x.org'] } }, 'row'],
+      ['hosting with a key it does not know', { ...row, hosting: { ...hosting, region: 'iad1' } }, 'row'],
+      ['an episode by bare number', { ...row, episodes: ['340'] }, 'row'],
+      ['an empty episode list', { ...row, episodes: [] }, 'row'],
+      ['a kind it does not know', { ...row, kind: 'site' }, 'row'],
+    ];
+    for (const [what, value, kind] of cases) {
+      const clean = JSON.parse(JSON.stringify(value));
+      const text = kind === 'header' ? JSON.stringify(clean) + '\n' : HEADER('acme/tool', { version: 3 }) + '\n' + JSON.stringify(clean) + '\n';
+      const code = parseCapabilityFile(text, { mode: 'write' }).issues.every((i) => i.severity !== 'error');
+      expect([what, validate(clean)]).toEqual([what, code]);
+    }
+  });
+
+  it('capabilities state takes an app, its hosting and its episodes from the command line, and show prints them', async () => {
+    const dir = withApp();
+    await writeCapabilityFile(dir, await scanRepository(dir, opts), { write: true });
+    expect(cli('capabilities', 'state', 'app/acme-review', '--by', 'Ava', '--hosted-at', 'https://x.org', '--clone', dir).code).toBe(2);
+    const stated = cli(
+      'capabilities', 'state', 'app/acme-review', 'Reviews of videos and notes, kept in versions.',
+      '--by', 'Ava', '--path', 'apps/review', '--stage', 'prototype', '--stage-grounding', 'apps/AGENTS.md',
+      '--deployed-by', 'v0, on Vercel', '--hosted-at', 'https://acme-review.example.org', '--authored-in', 'v0',
+      '--change', 'A v0 prompt in apps/prompts/.', '--hosting-grounding', 'apps/AGENTS.md', '--episode', 'miadi-chronicle://340',
+      '--clone', dir,
+    );
+    expect(stated.code).toBe(0);
+    commit(dir);
+    const shown = cli('capabilities', 'show', dir);
+    expect(shown.code).toBe(0);
+    expect(shown.out).toMatch(/app {6}acme-review \(prototype\) — Reviews of videos and notes, kept in versions\./);
+    expect(shown.out).toContain('hosted at https://acme-review.example.org, deployed by v0, on Vercel (Ava)');
+    expect(shown.out).toContain('authored in v0: the copy here is replaced at the next import');
+    expect(shown.out).toContain('change: A v0 prompt in apps/prompts/.');
+    expect(shown.out).toContain('held by miadi-chronicle://340');
   });
 });

@@ -12,7 +12,7 @@
  *   mw-repomap serve [<path>] [--port <n>] [--host <address>] [--local]
  *   mw-repomap wheel [<path>] [--local]
  *   mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]
- *   mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--achieves <words>] [--stage <stage> [--stage-grounding <evidence>,…]] [--specification <path|rise://…>,…] [--issue <owner/repo#n>,…] [--clone <path>]
+ *   mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--achieves <words>] [--stage <stage> [--stage-grounding <evidence>,…]] [--specification <path|rise://…>,…] [--issue <owner/repo#n>,…] [--path <app folder>] [--deployed-by <who> --hosting-grounding <evidence>,… [--hosted-at <url>,…] [--authored-in <where>] [--change <words>]] [--episode <miadi-chronicle://n>,…] [--clone <path>]
  *   mw-repomap capabilities show [<clone>] [--ref <ref>] [--repository <owner/name>] [--json]
  *   mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]
  *
@@ -42,7 +42,7 @@ import { LifecycleEventSchema, MappingManifestSchema } from './schemas';
 import { summarize } from './summary';
 import { MAPPING_DIR, MAPPING_SCHEMA, type LifecycleEvent, type MappingIssue, type RepositoryMapping } from './types';
 import { toWheelEdges, toWheelNodes } from './wheel';
-import { CAPABILITY_STAGES, type CapabilityStage } from '@medicine-wheel/capabilities';
+import { CAPABILITY_STAGES, type CapabilityFacet, type CapabilityStage } from '@medicine-wheel/capabilities';
 import { findMappingDir, initMappingDir, readMappingDir, writeMappingDir } from './node/fs';
 import { originRepository, readActivity } from './node/git';
 import { readHub, type HubRead } from './node/hub';
@@ -62,7 +62,7 @@ const USAGE = [
   '       mw-repomap serve [<path>] [--port <n>] [--host <address>] [--local]',
   '       mw-repomap wheel [<path>] [--local]',
   '       mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]',
-  '       mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--achieves <words>] [--stage <stage> [--stage-grounding <evidence>,…]] [--specification <path|rise://…>,…] [--issue <owner/repo#n>,…] [--clone <path>]',
+  '       mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--achieves <words>] [--stage <stage> [--stage-grounding <evidence>,…]] [--specification <path|rise://…>,…] [--issue <owner/repo#n>,…] [--path <app folder>] [--deployed-by <who> --hosting-grounding <evidence>,… [--hosted-at <url>,…] [--authored-in <where>] [--change <words>]] [--episode <miadi-chronicle://n>,…] [--clone <path>]',
   '       mw-repomap capabilities show [<clone>] [--ref <ref>] [--repository <owner/name>] [--json]',
   '       mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]',
 ].join('\n');
@@ -76,7 +76,7 @@ const COMMAND_FLAGS: Record<string, readonly string[]> = {
   list: ['lifecycle', 'drift', 'revision', 'field', 'local', 'json'],
   show: ['local', 'json'],
   observe: ['dir', 'by', 'write'],
-  capabilities: ['write', 'check', 'ref', 'repository', 'by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'issue', 'root', 'list', 'out', 'packages', 'json'],
+  capabilities: ['write', 'check', 'ref', 'repository', 'by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'issue', 'path', 'hosted-at', 'deployed-by', 'authored-in', 'change', 'hosting-grounding', 'episode', 'root', 'list', 'out', 'packages', 'json'],
   move: ['by', 'grounding'],
   hub: ['json'],
   serve: ['port', 'host', 'local'],
@@ -368,7 +368,7 @@ const SCAN_OBSERVER = () => `mw-repomap capabilities (${os.userInfo().username}@
 /** The flags each capabilities subcommand takes: a flag another subcommand takes is a usage error here, never ignored. */
 const CAPABILITY_FLAGS: Record<string, readonly string[]> = {
   scan: ['write', 'check', 'ref', 'repository'],
-  state: ['by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'issue'],
+  state: ['by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'issue', 'path', 'hosted-at', 'deployed-by', 'authored-in', 'change', 'hosting-grounding', 'episode'],
   show: ['ref', 'repository', 'json'],
   map: ['root', 'list', 'out', 'packages', 'ref', 'json'],
 };
@@ -430,6 +430,16 @@ async function capabilitiesState(positional: string[], flags: Record<string, str
   if (stageGrounding && stage === undefined) throw new UsageError('--stage-grounding says what shows a --stage: give the stage');
   const specifications = items('specification');
   const issues = items('issue');
+  const appPath = text(flags, 'path');
+  const deployedBy = text(flags, 'deployed-by');
+  const hostedAt = items('hosted-at');
+  const authoredIn = text(flags, 'authored-in');
+  const change = text(flags, 'change');
+  const hostingGrounding = items('hosting-grounding');
+  const episodes = items('episode');
+  if (!deployedBy && (hostedAt || authoredIn !== undefined || change !== undefined || hostingGrounding)) {
+    throw new UsageError('--hosted-at, --authored-in, --change and --hosting-grounding describe where it is hosted: give --deployed-by <who>');
+  }
   const { file, row } = await stateCapability(text(flags, 'clone') ?? '.', {
     kind,
     name: target.slice(slash + 1),
@@ -441,6 +451,11 @@ async function capabilitiesState(positional: string[], flags: Record<string, str
     ...(stageGrounding ? { stageGrounding } : {}),
     ...(specifications ? { specifications } : {}),
     ...(issues ? { issues } : {}),
+    ...(appPath !== undefined ? { path: appPath } : {}),
+    ...(deployedBy
+      ? { hosting: { deployedBy, grounding: hostingGrounding ?? [], ...(hostedAt ? { urls: hostedAt } : {}), ...(authoredIn !== undefined ? { authoredIn } : {}), ...(change !== undefined ? { change } : {}) } }
+      : {}),
+    ...(episodes ? { episodes } : {}),
   });
   const said = [
     row.realizes ? `realizes ${row.realizes.map((r) => r.capability).join(', ')}` : '',
@@ -448,6 +463,8 @@ async function capabilitiesState(positional: string[], flags: Record<string, str
     row.achieves ? 'achieves stated' : '',
     row.specifications ? `${row.specifications.length} specification(s)` : '',
     row.issues ? `issues ${row.issues.join(', ')}` : '',
+    row.hosting ? `hosted by ${row.hosting.deployedBy}` : '',
+    row.episodes ? `episodes ${row.episodes.join(', ')}` : '',
   ].filter(Boolean);
   console.error(`${row.kind}/${row.name} ${row.revision} by ${by}${said.length ? `, ${said.join(', ')}` : ''} in ${file}`);
   return 0;
@@ -472,8 +489,21 @@ async function capabilitiesShow(positional: string[], flags: Record<string, stri
     if (c.achieves) console.log(printable(`           achieves: ${c.achieves.statement} (${c.achieves.statedBy})`));
     for (const spec of c.specifications ?? []) console.log(printable(`           specified in ${spec}`));
     if (c.issues?.length) console.log(printable(`           tracked by ${c.issues.join(', ')}`));
+    for (const line of hostingLines(c)) console.log(printable(`           ${line}`));
+    if (c.episodes?.length) console.log(printable(`           held by ${c.episodes.join(', ')}`));
   }
   return failed;
+}
+
+/** Where a capability is hosted, as `show` prints it: where it runs, who deploys it, where it is written, how a change reaches it. */
+function hostingLines(c: Pick<CapabilityFacet, 'hosting'>): string[] {
+  const h = c.hosting;
+  if (!h) return [];
+  return [
+    `hosted${h.urls?.length ? ` at ${h.urls.join(', ')}` : ''}, deployed by ${h.deployedBy} (${h.statedBy})`,
+    ...(h.authoredIn ? [`authored in ${h.authoredIn}: the copy here is replaced at the next import`] : []),
+    ...(h.change ? [`change: ${h.change}`] : []),
+  ];
 }
 
 async function capabilitiesMap(positional: string[], flags: Record<string, string | true>): Promise<number> {
