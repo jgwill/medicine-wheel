@@ -64,17 +64,17 @@ describe("@medicine-wheel/client kinship", () => {
   });
 
   it("an edge can name its kinship type and context, and is removed by that name", async () => {
-    const edge = { from_id: "a", to_id: "p", relationship_type: "SERVES", kinship_type: "SERVES", context: { stated_by: "p" } };
+    const edge = { from_id: "a", to_id: "p", relationship_type: "tends-to", kinship_type: "tends-to", context: { authorized_by: "p" } };
     const { seen, fetchFn } = recordingFetch({
       "POST /api/edges": { status: 201, body: { success: true, edge } },
-      "DELETE /api/edges?from=a&to=p&kinship_type=SERVES": { status: 200, body: { success: true } },
+      "DELETE /api/edges?from=a&to=p&kinship_type=tends-to": { status: 200, body: { success: true } },
       "DELETE /api/edges?from=a&to=p": { status: 200, body: { success: true } },
     });
     const wheel = createMedicineWheelClient({ baseUrl: "http://wheel", fetch: fetchFn });
     expect(await wheel.edges.create(edge)).toEqual(edge);
-    await wheel.edges.remove("a", "p", "SERVES");
+    await wheel.edges.remove("a", "p", "tends-to");
     await wheel.edges.remove("a", "p");
-    expect(seen.map((s) => s.key)).toEqual(["POST /api/edges", "DELETE /api/edges?from=a&to=p&kinship_type=SERVES", "DELETE /api/edges?from=a&to=p"]);
+    expect(seen.map((s) => s.key)).toEqual(["POST /api/edges", "DELETE /api/edges?from=a&to=p&kinship_type=tends-to", "DELETE /api/edges?from=a&to=p"]);
     expect(seen[0].body).toEqual(edge);
   });
 });

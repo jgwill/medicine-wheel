@@ -120,14 +120,15 @@ const relationProperties = {
   },
   speaks_with: {
     type: "array",
-    description: "The agents this agent speaks with. A new relation needs words and said_by and starts proposed; for one already on the wheel, what is left out stays as it is",
+    description: "The agents this agent speaks with. A new relation needs words and said_by and starts proposed; for one already on the wheel, what is left out stays as it is. said_by comes only with words; every move of the state names who makes it in state_set_by",
     items: {
       type: "object",
       properties: {
         agent_id: { type: "string", description: "The node id of the other agent" },
         words: { type: "string", description: "What the two agents speak about, in the words of the one who proposes it" },
-        said_by: { type: "string", description: "The node id of the one whose words these are" },
+        said_by: { type: "string", description: "The node id of the one whose words these are. Send it with words, never alone" },
         state: { type: "string", enum: ["proposed", "active", "paused", "ended"], description: "Where the relation stands. Active needs authorized_by" },
+        state_set_by: { type: "string", description: "The node id of the one who moves the state. Required whenever the state changes" },
         authorized_by: { type: "string", description: "The node id of the person who authorized the two agents to speak with each other" },
         valid_when: { type: "string", description: "When the relation holds" },
         forbidden_when: { type: "string", description: "When it does not" },

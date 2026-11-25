@@ -120,13 +120,14 @@ describe('agent kinship tools', () => {
     const proposed = await call('relate_agent', { agent_id: SOL, speaks_with: [{ agent_id: LUMA, words: 'About how we keep notes.', said_by: SOL }] });
     expect(proposed.kinship.speaks_with).toMatchObject([{ agent_id: LUMA, state: 'proposed' }]);
 
-    const unauthorized = await call('relate_agent', { agent_id: LUMA, speaks_with: [{ agent_id: SOL, state: 'active' }] });
+    const unauthorized = await call('relate_agent', { agent_id: LUMA, speaks_with: [{ agent_id: SOL, state: 'active', state_set_by: ADA }] });
     expect(unauthorized.status).toBe('error');
+    expect(unauthorized.issues[0]).toContain('authorized_by');
 
-    const active = await call('relate_agent', { agent_id: LUMA, speaks_with: [{ agent_id: SOL, state: 'active', authorized_by: ADA, valid_when: 'about the notes of an episode both sit in' }] });
+    const active = await call('relate_agent', { agent_id: LUMA, speaks_with: [{ agent_id: SOL, state: 'active', authorized_by: ADA, state_set_by: ADA, valid_when: 'about the notes of an episode both sit in' }] });
     expect(active.status, JSON.stringify(active)).toBe('related');
     expect((await call('get_agent_kinship', { node_id: SOL })).speaks_with).toMatchObject([
-      { agent_id: LUMA, words: 'About how we keep notes.', said_by: SOL, state: 'active', authorized_by: ADA, valid_when: 'about the notes of an episode both sit in' },
+      { agent_id: LUMA, words: 'About how we keep notes.', said_by: SOL, state: 'active', state_set_by: ADA, authorized_by: ADA, valid_when: 'about the notes of an episode both sit in' },
     ]);
     expect(store.getAllEdges().filter((e: any) => e.kinship_type === 'speaks-with')).toHaveLength(1);
   });
@@ -153,18 +154,46 @@ describe('agent kinship tools', () => {
 
   it('create_relational_edge carries a kinship type and a context, and refuses a name the registry does not govern', async () => {
     const made = await call('create_relational_edge', {
-      from_node_id: LUMA, to_node_id: NOOR, relationship_type: 'SERVES', kinship_type: 'SERVES',
-      description: 'Luma works with Noor.', context: { stated_by: NOOR },
+      from_node_id: LUMA, to_node_id: NOOR, relationship_type: 'tends-to', kinship_type: 'tends-to',
+      description: "Luma looks after Noor's notes.", context: { stated_by: NOOR },
     });
     expect(made.status, JSON.stringify(made)).toBe('created');
     const plain = await call('create_relational_edge', { from_node_id: LUMA, to_node_id: NOOR, relationship_type: 'works-beside' });
     expect(plain.status).toBe('created');
     const between = store.getAllEdges().filter((e: any) => e.from_id === LUMA && e.to_id === NOOR);
-    expect(between.map((e: any) => e.kinship_type ?? null).sort()).toEqual(['SERVES', null].sort());
-    expect(between.find((e: any) => e.kinship_type === 'SERVES').context).toEqual({ stated_by: NOOR });
+    expect(between.map((e: any) => e.kinship_type ?? null).sort()).toEqual(['tends-to', null].sort());
+    expect(between.find((e: any) => e.kinship_type === 'tends-to').context).toEqual({ stated_by: NOOR });
 
     expect((await call('create_relational_edge', { from_node_id: LUMA, to_node_id: NOOR, relationship_type: 'owned-by', kinship_type: 'owned-by' })).status).toBe('error');
-    expect((await call('create_relational_edge', { from_node_id: LUMA, to_node_id: NOOR, relationship_type: 'helps', kinship_type: 'SERVES' })).status).toBe('error');
-    expect((await call('create_relational_edge', { from_node_id: LUMA, to_node_id: NOOR, relationship_type: 'SERVES', kinship_type: 'SERVES', context: { owner: NOOR } })).status).toBe('error');
+    expect((await call('create_relational_edge', { from_node_id: LUMA, to_node_id: NOOR, relationship_type: 'helps', kinship_type: 'tends-to' })).status).toBe('error');
+    expect((await call('create_relational_edge', { from_node_id: LUMA, to_node_id: NOOR, relationship_type: 'tends-to', kinship_type: 'tends-to', context: { owner: NOOR } })).status).toBe('error');
+  });
+
+  it('RV3: create_relational_edge leaves the four agent-kinship edges to the kinship tools', async () => {
+    const created = await call('create_relational_edge', { from_node_id: LUMA, to_node_id: ADA, relationship_type: 'BORN_FROM', kinship_type: 'BORN_FROM', context: { stated_by: NOOR } });
+    expect(created.status).toBe('error');
+    expect(created.message).toContain('relate_agent');
+    expect(store.getAllEdges().filter((e: any) => e.from_id === LUMA && e.to_id === ADA)).toEqual([]);
+
+    // One that exists: its context and its words stay with the kinship tools; a ceremony's re-post passes.
+    const existing = store.getAllEdges().find((e: any) => e.kinship_type === 'BORN_FROM' && e.from_id === SOL && e.to_id === ADA);
+    const changed = await call('create_relational_edge', { from_node_id: SOL, to_node_id: ADA, relationship_type: 'BORN_FROM', kinship_type: 'BORN_FROM', context: { stated_by: NOOR } });
+    expect(changed.status).toBe('error');
+    const reworded = await call('create_relational_edge', { from_node_id: SOL, to_node_id: ADA, relationship_type: 'BORN_FROM', kinship_type: 'BORN_FROM', description: 'Someone else made Sol.' });
+    expect(reworded.status).toBe('error');
+    const honoured = await call('create_relational_edge', { from_node_id: SOL, to_node_id: ADA, relationship_type: 'BORN_FROM', kinship_type: 'BORN_FROM', strength: 0.9 });
+    expect(honoured.status, JSON.stringify(honoured)).toBe('created');
+    const after = store.getAllEdges().find((e: any) => e.kinship_type === 'BORN_FROM' && e.from_id === SOL && e.to_id === ADA);
+    expect(after).toMatchObject({ description: existing.description, context: existing.context, strength: 0.9, created_at: existing.created_at });
+  });
+
+  it('RV5: a governed edge written again through create_relational_edge keeps the date it was first written', async () => {
+    const first = await call('create_relational_edge', { from_node_id: SOL, to_node_id: LUMA, relationship_type: 'tends-to', kinship_type: 'tends-to', description: 'first' });
+    expect(first.status, JSON.stringify(first)).toBe('created');
+    const since = store.getAllEdges().find((e: any) => e.kinship_type === 'tends-to' && e.from_id === SOL).created_at;
+    await new Promise((resolve) => setTimeout(resolve, 15));
+    const again = await call('create_relational_edge', { from_node_id: SOL, to_node_id: LUMA, relationship_type: 'tends-to', kinship_type: 'tends-to', description: 'second' });
+    expect(again.status).toBe('created');
+    expect(store.getAllEdges().find((e: any) => e.kinship_type === 'tends-to' && e.from_id === SOL)).toMatchObject({ description: 'second', created_at: since });
   });
 });

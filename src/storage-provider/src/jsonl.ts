@@ -514,10 +514,14 @@ export class JsonlProvider implements StorageProvider {
 
   private async upsertEdge(edge: StoredEdge): Promise<void> {
     await withWriteLock(this.edgesFile, () => {
-      const nextEdges = this.readEdges().filter(
-        (candidate) => edgeKey(candidate) !== edgeKey(edge),
-      );
-      nextEdges.push(edge);
+      const edges = this.readEdges();
+      const key = edgeKey(edge);
+      // A governed edge keeps the date it was first written through every
+      // write: that date is how long the relation has held, and a ceremony
+      // that honours it or a person who says it again does not restart it.
+      const held = edge.kinship_type ? edges.find((candidate) => edgeKey(candidate) === key) : undefined;
+      const nextEdges = edges.filter((candidate) => edgeKey(candidate) !== key);
+      nextEdges.push(held ? { ...edge, created_at: held.created_at } : edge);
       writeJsonl(this.edgesFile, nextEdges);
     });
   }

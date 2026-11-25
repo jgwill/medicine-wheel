@@ -40,8 +40,13 @@ import {
 } from './circles.js';
 import { NewPersonSchema, personFromNode, personNode, speakerKindOf, type Being, type Person } from './people.js';
 
-/** An edge as it is written (no id) or as it is read back (with one). */
-export type KinshipEdge = Omit<RelationalEdge, 'id'> & { id?: string };
+/**
+ * An edge as it is written (no id) or as it is read back (with one). A store
+ * also keeps the ceremony that honoured an edge, as `last_ceremony` or as
+ * `ceremony_id`; both are named here so that saying a relation again carries
+ * them along.
+ */
+export type KinshipEdge = Omit<RelationalEdge, 'id'> & { id?: string; last_ceremony?: string; ceremony_id?: string };
 
 // ── The four edges ──────────────────────────────────────────────────────────
 // Each name is one constant. The spec sets out, for origin and for service,
@@ -57,6 +62,52 @@ export const AGENT_SERVICE_EDGE = 'SERVES' as const satisfies KinshipEdgeName;
 export const AGENT_DIALOGUE_EDGE = 'speaks-with' as const satisfies KinshipEdgeName;
 
 export const AGENT_KINSHIP_EDGES = [AGENT_ORIGIN_EDGE, AGENT_RESPONSIBILITY_EDGE, AGENT_SERVICE_EDGE, AGENT_DIALOGUE_EDGE] as const;
+
+/** True for one of the four kinship types this file writes. */
+export function isAgentKinshipEdge(kinship: unknown): boolean {
+  return typeof kinship === 'string' && (AGENT_KINSHIP_EDGES as readonly string[]).includes(kinship);
+}
+
+const canonical = (value: unknown): unknown =>
+  Array.isArray(value)
+    ? value.map(canonical)
+    : value && typeof value === 'object'
+      ? Object.fromEntries(Object.keys(value as object).sort().map((key) => [key, canonical((value as Record<string, unknown>)[key])]))
+      : value;
+const sameValue = (a: unknown, b: unknown): boolean => JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
+
+/**
+ * What a door that writes any edge answers when the edge is one of the four:
+ * the reason it refuses, or null when the write may pass.
+ *
+ * The four are written through the kinship doors, which check a statement
+ * against the wheel's records: who the two seats are, whose words these are,
+ * what a person may give, where a dialogue stands. A door that writes any edge
+ * checks none of that. So it does not create one of the four, and does not
+ * change the context or the words of one that exists. Writing one again with
+ * the context and the words it has, which is what a ceremony that honours the
+ * pair sends, passes. Releasing one stays possible.
+ */
+export function agentKinshipWriteRefusal(write: {
+  kinship_type?: string | null;
+  /** The edge with the same identity that the wheel already holds, if any. */
+  existing?: Pick<KinshipEdge, 'context' | 'description'> | null;
+  /** The context the write sends. Left out: the write does not touch it. */
+  context?: unknown;
+  /** The words the write sends. Left out: the write does not touch them. */
+  description?: string;
+}): string | null {
+  if (!isAgentKinshipEdge(write.kinship_type)) return null;
+  const door = 'the kinship door (POST /api/nodes/{agent id}/kinship, POST /api/agents for a new agent, or the relate_agent and define_agent tools)';
+  if (!write.existing) return `A ${write.kinship_type} relation between persons is created through ${door}, which checks it against the wheel's records.`;
+  if (write.context !== undefined && !sameValue(write.context, write.existing.context ?? {})) {
+    return `The context of a ${write.kinship_type} relation between persons (who said it, its state, what is given) changes through ${door}.`;
+  }
+  if (write.description !== undefined && write.description !== (write.existing.description ?? '')) {
+    return `The words of a ${write.kinship_type} relation between persons change through ${door}, with the one who says them.`;
+  }
+  return null;
+}
 
 // ── Grants: what an agent is given through the person it serves ─────────────
 
@@ -123,6 +174,11 @@ export const AgentServiceSchema = z
  * `proposed`. For one that is, each field left out stays as it is, so a
  * person can authorize, pause or end it without restating its words; `null`
  * removes a bound.
+ *
+ * `said_by` names whose words these are and comes only with `words`.
+ * `state_set_by` names who moves the state and comes with every move. They
+ * are two fields because moving a relation's state does not make its words
+ * the mover's.
  */
 export const AgentDialogueSchema = z
   .object({
@@ -130,6 +186,7 @@ export const AgentDialogueSchema = z
     words: Words.optional(),
     said_by: NodeId.optional(),
     state: z.enum(['proposed', 'active', 'paused', 'ended']).optional(),
+    state_set_by: NodeId.optional(),
     authorized_by: NodeId.optional(),
     valid_when: Bound.nullable().optional(),
     forbidden_when: Bound.nullable().optional(),
@@ -173,35 +230,51 @@ export type DefineAgentInput = z.infer<typeof DefineAgentSchema>;
 
 // ── The edges to write ──────────────────────────────────────────────────────
 
-function kinshipEdge(kinship: KinshipEdgeName, from_id: string, to_id: string, words: string | undefined, context: RelationContext, now: string): KinshipEdge {
+/**
+ * One governed edge. `before` is the same relation as the wheel already holds
+ * it: saying a relation again changes its words and its context, and keeps the
+ * date it was first written and what ceremonies wrote on it since (that it was
+ * honoured, by which ceremony, its strength, its obligations).
+ */
+function kinshipEdge(
+  kinship: KinshipEdgeName,
+  from_id: string,
+  to_id: string,
+  words: string | undefined,
+  context: RelationContext,
+  now: string,
+  before?: KinshipEdge | null,
+): KinshipEdge {
   return {
     from_id,
     to_id,
     relationship_type: kinship,
     kinship_type: kinship,
-    strength: 1,
-    ceremony_honored: false,
-    obligations: [],
+    strength: before?.strength ?? 1,
+    ceremony_honored: before?.ceremony_honored ?? false,
+    obligations: before?.obligations ?? [],
+    ...(before?.last_ceremony ? { last_ceremony: before.last_ceremony } : {}),
+    ...(before?.ceremony_id ? { ceremony_id: before.ceremony_id } : {}),
     ...(words ? { description: words } : {}),
     context,
-    created_at: now,
+    created_at: before?.created_at ?? now,
   };
 }
 
 /** The agent comes from the person: an edge from the agent to the person. */
-export function originEdge(agent_id: string, origin: AgentOriginInput, now = new Date().toISOString()): KinshipEdge {
-  return kinshipEdge(AGENT_ORIGIN_EDGE, agent_id, origin.person_id, origin.words, { stated_by: origin.said_by }, now);
+export function originEdge(agent_id: string, origin: AgentOriginInput, now = new Date().toISOString(), before?: KinshipEdge | null): KinshipEdge {
+  return kinshipEdge(AGENT_ORIGIN_EDGE, agent_id, origin.person_id, origin.words, { stated_by: origin.said_by }, now, before);
 }
 
 /** The person holds responsibility for the agent: an edge from the person to the agent. */
-export function responsibilityEdge(agent_id: string, held: AgentResponsibilityInput, now = new Date().toISOString()): KinshipEdge {
-  return kinshipEdge(AGENT_RESPONSIBILITY_EDGE, held.person_id, agent_id, held.words, { stated_by: held.said_by }, now);
+export function responsibilityEdge(agent_id: string, held: AgentResponsibilityInput, now = new Date().toISOString(), before?: KinshipEdge | null): KinshipEdge {
+  return kinshipEdge(AGENT_RESPONSIBILITY_EDGE, held.person_id, agent_id, held.words, { stated_by: held.said_by }, now, before);
 }
 
 /** The agent serves the person: an edge from the agent to the person, carrying what the person gives it. */
-export function serviceEdge(agent_id: string, service: AgentServiceInput, now = new Date().toISOString()): KinshipEdge {
+export function serviceEdge(agent_id: string, service: AgentServiceInput, now = new Date().toISOString(), before?: KinshipEdge | null): KinshipEdge {
   const grants = service.grants ?? [];
-  return kinshipEdge(AGENT_SERVICE_EDGE, agent_id, service.person_id, service.words, { stated_by: service.said_by, ...(grants.length ? { grants } : {}) }, now);
+  return kinshipEdge(AGENT_SERVICE_EDGE, agent_id, service.person_id, service.words, { stated_by: service.said_by, ...(grants.length ? { grants } : {}) }, now, before);
 }
 
 /** The two ends of a dialogue edge. The relation reads the same both ways, so it is stored once, lower id first. */
@@ -251,6 +324,8 @@ export interface DialogueRelation {
   words?: string;
   said_by?: string;
   state: RelationState;
+  /** Who moved the relation to that state. */
+  state_set_by?: string;
   /** Who authorized the two agents to speak with each other. */
   authorized_by?: string;
   /** When the relation holds. */
@@ -294,6 +369,7 @@ export function dialogueFromEdge(agent_id: string, edge: KinshipEdge): DialogueR
     agent_id: edge.from_id === agent_id ? edge.to_id : edge.from_id,
     ...said(edge),
     state: STATES.includes(String(context.state)) ? (context.state as RelationState) : 'proposed',
+    ...(context.state_set_by ? { state_set_by: context.state_set_by } : {}),
     ...(context.authorized_by ? { authorized_by: context.authorized_by } : {}),
     ...(context.valid_when ? { valid_when: context.valid_when } : {}),
     ...(context.forbidden_when ? { forbidden_when: context.forbidden_when } : {}),
@@ -353,6 +429,7 @@ export function nodeIdsNamedIn(input: AgentKinshipInput): string[] {
   for (const d of input.speaks_with ?? []) {
     ids.add(d.agent_id);
     if (d.said_by) ids.add(d.said_by);
+    if (d.state_set_by) ids.add(d.state_set_by);
     if (d.authorized_by) ids.add(d.authorized_by);
   }
   return [...ids];
@@ -368,7 +445,7 @@ export function isAgentSeat(node: RelationalNode | null | undefined): boolean {
  * wheel's own records: every person named exists and is a person, the agent
  * is an agent's seat, no relation joins a seat to itself, and a dialogue
  * follows its life. Nothing is written here. A relation that already exists
- * keeps the date it was first written.
+ * keeps the date it was first written and what ceremonies wrote on it.
  */
 export function planAgentKinship(args: {
   /** The agent's node: the one on the wheel, or the one about to be created. */
@@ -401,8 +478,9 @@ export function planAgentKinship(args: {
     if (!personFromNode(node)) { refuse(path, `${id} is not a person on the wheel`); return false; }
     return true;
   };
-  const since = (kinship: KinshipEdgeName, from_id: string, to_id: string): string =>
-    existing.find((e) => e.kinship_type === kinship && e.from_id === from_id && e.to_id === to_id)?.created_at ?? now;
+  /** The same relation as the wheel already holds it, if it does. */
+  const held = (kinship: KinshipEdgeName, from_id: string, to_id: string): KinshipEdge | null =>
+    existing.find((e) => e.kinship_type === kinship && e.from_id === from_id && e.to_id === to_id) ?? null;
 
   const withPerson = <T extends { person_id: string; said_by: string }>(
     key: 'comes_from' | 'responsibility_held_by' | 'serves',
@@ -418,14 +496,13 @@ export function planAgentKinship(args: {
       const known = person(item.person_id, `${at}.person_id`);
       const speaker = person(item.said_by, `${at}.said_by`);
       if (!known || !speaker) return;
-      const edge = build(item);
-      edges.push({ ...edge, created_at: since(edge.kinship_type as KinshipEdgeName, edge.from_id, edge.to_id) });
+      edges.push(build(item));
     });
   };
 
-  withPerson('comes_from', input.comes_from, (o) => originEdge(agent.id, o, now));
-  withPerson('responsibility_held_by', input.responsibility_held_by, (r) => responsibilityEdge(agent.id, r, now));
-  withPerson('serves', input.serves, (s) => serviceEdge(agent.id, s, now));
+  withPerson('comes_from', input.comes_from, (o) => originEdge(agent.id, o, now, held(AGENT_ORIGIN_EDGE, agent.id, o.person_id)));
+  withPerson('responsibility_held_by', input.responsibility_held_by, (r) => responsibilityEdge(agent.id, r, now, held(AGENT_RESPONSIBILITY_EDGE, r.person_id, agent.id)));
+  withPerson('serves', input.serves, (s) => serviceEdge(agent.id, s, now, held(AGENT_SERVICE_EDGE, agent.id, s.person_id)));
 
   const spoken = new Set<string>();
   (input.speaks_with ?? []).forEach((d, i) => {
@@ -437,17 +514,24 @@ export function planAgentKinship(args: {
     if (!other) { refuse(`${at}.agent_id`, `no node ${d.agent_id} on the wheel`); return; }
     if (!isAgentSeat(other)) { refuse(`${at}.agent_id`, `${d.agent_id} is not an agent's seat on the wheel`); return; }
     if (d.said_by && !person(d.said_by, `${at}.said_by`)) return;
+    if (d.state_set_by && !person(d.state_set_by, `${at}.state_set_by`)) return;
     if (d.authorized_by && !person(d.authorized_by, `${at}.authorized_by`)) return;
 
     const [from_id, to_id] = dialogueEnds(agent.id, d.agent_id);
-    const before = existing.find((e) => e.kinship_type === AGENT_DIALOGUE_EDGE && e.from_id === from_id && e.to_id === to_id);
+    const before = held(AGENT_DIALOGUE_EDGE, from_id, to_id);
     const was = before ? dialogueFromEdge(agent.id, before) : null;
 
+    // The words and their speaker move together, and only together: a
+    // statement that brings no words leaves both as they are.
+    if (d.words && !d.said_by) { refuse(`${at}.said_by`, 'new words need the one who says them'); return; }
+    if (d.said_by && !d.words) {
+      refuse(`${at}.said_by`, 'said_by names whose words these are and comes with words; who moves the state is state_set_by');
+      return;
+    }
     const words = d.words ?? was?.words;
-    const said_by = d.said_by ?? was?.said_by;
+    const said_by = d.words ? d.said_by : was?.said_by;
     if (!words) { refuse(`${at}.words`, 'the words of the one who proposes it are required'); return; }
     if (!said_by) { refuse(`${at}.said_by`, 'who says it is required'); return; }
-    if (d.words && !d.said_by) { refuse(`${at}.said_by`, 'new words need the one who says them'); return; }
 
     const state: RelationState = d.state ?? was?.state ?? 'proposed';
     if (was && !canMoveDialogue(was.state, state)) {
@@ -458,6 +542,18 @@ export function planAgentKinship(args: {
       refuse(`${at}.state`, `a new relation starts proposed or active, not ${state}`);
       return;
     }
+    // Who moved the state is its own fact. A new relation's state is set by
+    // the one who proposed it. Every later move names who makes it.
+    const moves = was !== null && state !== was.state;
+    if (moves && !d.state_set_by) {
+      refuse(`${at}.state_set_by`, `who moves the relation from ${was.state} to ${state} is required: state_set_by`);
+      return;
+    }
+    if (was && !moves && d.state_set_by) {
+      refuse(`${at}.state_set_by`, 'state_set_by names who moves the state, and this statement does not move it');
+      return;
+    }
+    const state_set_by = was ? (moves ? d.state_set_by : was.state_set_by) : d.state_set_by ?? said_by;
     // A relation proposed again after it ended is authorized again: the earlier authorization ended with it.
     const reopened = was?.state === 'ended' && state === 'proposed';
     const authorized_by = d.authorized_by ?? (reopened ? undefined : was?.authorized_by);
@@ -478,11 +574,13 @@ export function planAgentKinship(args: {
         {
           stated_by: said_by,
           state,
+          ...(state_set_by ? { state_set_by } : {}),
           ...(authorized_by ? { authorized_by } : {}),
           ...(valid_when ? { valid_when } : {}),
           ...(forbidden_when ? { forbidden_when } : {}),
         },
-        before?.created_at ?? now,
+        now,
+        before,
       ),
     );
   });
@@ -557,7 +655,7 @@ export function circleViews(records: CircleViewRecords): CircleView[] {
         through_person_id: membership.person_id,
         scope: grant.scope,
         member_role: membership.role,
-        sees: circleAnswerToAgentsOf(metadata, membership.role) === 'allowed',
+        sees: circleAnswerToAgentsOf(metadata, membership.person_id) === 'allowed',
         ...(answer ? { answer } : {}),
       });
     }

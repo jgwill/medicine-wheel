@@ -55,6 +55,11 @@ export class NeonProvider implements StorageProvider {
   readonly name = 'neon';
   private sql: NeonQueryFunction | null = null;
 
+  // connect() creates the tables below when they are missing. It never creates
+  // or alters `nodes`, `edges` or `ceremonies`: those come from the numbered
+  // scripts in `scripts/`, run by hand. The edge operations of this provider
+  // need `scripts/005-edges-kinship.sql` to have run on an existing database
+  // (the `kinship_type` column and its place in the key), and fail until it has.
   async connect(): Promise<void> {
     const url = getConnectionString();
     if (!url) throw new Error('DATABASE_URL, POSTGRES_URL, or NEON_DATABASE_URL must be set');

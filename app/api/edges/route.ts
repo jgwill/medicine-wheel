@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { agentKinshipWriteRefusal, isAgentKinshipEdge } from "@medicine-wheel/community-identity";
 import { KinshipEdgeNameSchema, RelationContextSchema } from "@medicine-wheel/ontology-core";
 import type { KinshipEdgeName, RelationContext } from "@medicine-wheel/ontology-core";
 import {
@@ -123,6 +124,22 @@ function relationNotFound(from: string, to: string, kinship?: string) {
   );
 }
 
+/**
+ * This door writes any relation and checks only that its two nodes exist. The
+ * four relations between a person and their agents are checked by the kinship
+ * door, so this one does not create them and does not change their context or
+ * their words (rispecs/agent-kinship.spec.md).
+ */
+function leftToTheKinshipDoor(reason: string) {
+  return NextResponse.json(
+    {
+      error: `${reason} Nothing was written.`,
+      hint: "Use POST /api/nodes/{agent id}/kinship, or POST /api/agents for a new agent. This door still releases such a relation (DELETE) and still records that a ceremony honoured it.",
+    },
+    { status: 400 },
+  );
+}
+
 function unexpected(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   return NextResponse.json({ error: message }, { status: 500 });
@@ -208,17 +225,35 @@ export async function POST(request: Request) {
     const previous = await store.getEdge(parsed.data.from_id, parsed.data.to_id, kinship);
     const replaced = Boolean(previous);
 
+    const refusal = agentKinshipWriteRefusal({
+      kinship_type: kinship,
+      existing: previous,
+      context: parsed.data.context,
+      description: parsed.data.description,
+    });
+    if (refusal) return leftToTheKinshipDoor(refusal);
+    // Past that check, one of the four exists already and this write brings
+    // its context and its words as they are, or does not bring them: both stay.
+    const kept = previous && isAgentKinshipEdge(kinship) ? previous : null;
+    const description = kept ? kept.description : parsed.data.description;
+    const context = kept ? kept.context : (parsed.data.context as RelationContext | undefined);
+
     const edge = {
       from_id: parsed.data.from_id,
       to_id: parsed.data.to_id,
       relationship_type: parsed.data.relationship_type ?? (kinship as string),
-      strength: parsed.data.strength ?? 0.5,
-      ceremony_honored: parsed.data.ceremony_honored ?? false,
-      obligations: parsed.data.obligations ?? [],
-      ...(parsed.data.description ? { description: parsed.data.description } : {}),
+      // For one of the four, what the write leaves out stays as it is: this
+      // door cannot create such a relation, so a write here is never its first.
+      strength: parsed.data.strength ?? kept?.strength ?? 0.5,
+      ceremony_honored: parsed.data.ceremony_honored ?? kept?.ceremony_honored ?? false,
+      obligations: parsed.data.obligations ?? kept?.obligations ?? [],
+      ...(kept?.last_ceremony ? { last_ceremony: kept.last_ceremony } : {}),
+      ...(description ? { description } : {}),
       ...(kinship ? { kinship_type: kinship } : {}),
-      ...(parsed.data.context ? { context: parsed.data.context as RelationContext } : {}),
-      created_at: new Date().toISOString(),
+      ...(context ? { context } : {}),
+      // A governed relation keeps the date it was first written: a ceremony
+      // that honours it, or a write that says it again, does not restart it.
+      created_at: kinship && previous ? previous.created_at : new Date().toISOString(),
     };
 
     await store.createEdge(edge);
@@ -272,6 +307,15 @@ export async function PATCH(request: Request) {
 
     const store = await createProvider();
     const previous = await store.getEdge(pair.from, pair.to, pair.kinship);
+    if (previous) {
+      const refusal = agentKinshipWriteRefusal({
+        kinship_type: pair.kinship,
+        existing: previous,
+        context: parsed.data.context,
+        description: parsed.data.description,
+      });
+      if (refusal) return leftToTheKinshipDoor(refusal);
+    }
     const edge = await store.updateEdge(
       pair.from,
       pair.to,

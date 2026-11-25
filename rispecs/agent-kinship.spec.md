@@ -5,7 +5,7 @@
 > other. Each relation is one of the kinship edges the wheel already governs, and keeps the words of the
 > person who said it.
 
-**Version:** 0.1.0, written on branch `feat/agent-kinship-261124`, not released
+**Version:** 0.1.1, on branch `feat/agent-kinship-261124`, not released. 0.1.1 takes in the independent review of 2026-11-24 (RV1 to RV8, at the end)
 **Package boundary:** `@medicine-wheel/ontology-core`, `@medicine-wheel/storage-provider`, `@medicine-wheel/events`, `@medicine-wheel/community-identity`, `@medicine-wheel/app` (the API), `@medicine-wheel/client`, `@medicine-wheel/mcp`
 **Document ID:** rispec-agent-kinship-v1
 **Last Updated:** 2026-11-24
@@ -98,9 +98,11 @@ The names for origin and service are each one constant. See "The two words" belo
 - **The words are kept.** A relation's `description` is the relation in the words of the one who said it,
   and `context.stated_by` is that person's node id. Words are required.
 - **No relation joins a seat to itself.**
-- **The same two seats and the same kind of relation are one relation.** Saying it again amends it, and it
-  keeps the date it was first written. For origin, responsibility and service the new statement replaces
-  the earlier one whole, grants included. For a dialogue, what is left out stays as it is.
+- **The same two seats and the same kind of relation are one relation.** Saying it again amends it. It
+  keeps the date it was first written and what ceremonies wrote on it since: that it was honoured, by
+  which ceremony, its strength and its obligations. For origin, responsibility and service the new
+  statement replaces the earlier words and context whole, grants included. For a dialogue, what is left
+  out stays as it is.
 - **Nothing is written unless all of it can be.** A statement is checked whole against the wheel's records
   before any edge is written. A person the wheel does not hold, or a node that is not a person, refuses the
   whole statement and names where.
@@ -123,6 +125,7 @@ The bounds live in the relation's context:
 | field | meaning |
 |---|---|
 | `state` | `proposed`, `active`, `paused` or `ended` |
+| `state_set_by` | the one who moved the relation to that state |
 | `authorized_by` | the person who authorized the two agents to speak with each other |
 | `valid_when` | when the relation holds, in words |
 | `forbidden_when` | when it does not, in words |
@@ -131,7 +134,13 @@ The bounds live in the relation's context:
 - Both ends are agents' seats.
 - The relation reads the same from both agents and is stored once, lower node id first. Either agent may
   state it.
-- A new relation needs words and the one who says them, and starts `proposed`.
+- A new relation needs words and the one who says them, and starts `proposed`. Its state is set by the one
+  who proposed it.
+- **The words and their speaker change together, and only together.** A statement that brings no words
+  leaves both as they are, and a statement that names a speaker without words is refused. So a person who
+  pauses a dialogue does not become the author of the words that proposed it.
+- **Every move of the state names who makes it**, in `state_set_by`, a person on the wheel. A move that
+  does not say who makes it is refused.
 - **Its life.** `proposed` becomes `active` or `ended`. `active` becomes `paused` or `ended`. `paused`
   becomes `active` or `ended`. `ended` becomes `proposed`. Any other move is refused with the moves that
   are open.
@@ -178,8 +187,16 @@ the agents of its members, in its node's metadata as `agent_readers`:
   answer. Whether that person may set it (the circle's facilitator) is checked by the application in front
   of the wheel.
 - **What a circle answers before anyone has set it is one constant**, with three possible values:
-  `allowed`, `refused`, or `facilitator`, which allows the agents of the circle's facilitator and refuses
-  the agents of its other members. The value on this branch is `facilitator`. It is not decided (Q3).
+  `allowed`, `refused`, or `facilitator`. The value on this branch is `facilitator`. It is not decided (Q3).
+- **Under `facilitator`, an unset circle allows only the agents of the one person it names as its
+  facilitator**, the `facilitator_id` of its own node. Every other member's agents are refused until the
+  answer is set, and that includes a member who holds `facilitate` on their membership: several members
+  can hold that obligation, and the circle names one facilitator. A circle that names no facilitator
+  refuses.
+- The two tests are different on purpose. A grant of scope `facilitated` reaches a circle when the person's
+  membership holds `facilitate`, so it reaches a co-facilitator's circles. Whether the agent then reads an
+  unset circle is the circle's answer, by `facilitator_id`. A co-facilitator's agent is listed on the
+  circle's page as held back until the circle allows.
 
 **Two readings, both from the wheel's own records.**
 
@@ -218,6 +235,9 @@ moves.
   without one. A governed edge is not reached without its name.
 - Update may replace the edge's whole context. It never changes the kinship type.
 - A ceremony that honors a pair honors every edge of the pair.
+- **A governed edge keeps the date it was first written through every write.** Writing it again, patching
+  it, or honouring it in a ceremony does not move that date. An edge without a kinship type keeps its
+  earlier behaviour: writing it again replaces the date.
 - A node still refuses to be removed while any edge holds it, governed or not.
 - An edge read back carries an id: `<from>:<to>`, or `<from>:<to>:<kinship type>` for a governed edge.
 
@@ -225,6 +245,20 @@ moves.
 whose unknown keys are refused. `relationship_type` may be left out when `kinship_type` is given and says
 the same name when both are sent. `PATCH` and `DELETE` reach a governed edge with `?kinship_type=`. A
 governed edge keeps its name: a patch that would rename it is refused.
+
+**The door that writes any edge leaves the four to the kinship doors.** `/api/edges` and the MCP tool
+`create_relational_edge` check that two nodes exist and nothing else. The kinship doors check who the two
+seats are, whose words these are, what a person may give and where a dialogue stands. So, for an edge whose
+kinship type is one of the four:
+
+- the generic door does not create it. It answers `400` and names the kinship door.
+- the generic door does not change its context or its words. Same answer.
+- writing it again with the context and the words it has passes, and so does writing it again without
+  them. Both stay as they are, and what the write leaves out of strength, obligations and ceremony stays
+  too. This is what a ceremony that honours the pair sends.
+- `DELETE` stays, because that is how such a relation ends today (Q6).
+
+Every other governed kinship type is written through the generic door as before.
 
 **The event log.** A change of context is recorded as `relation.amended` with `changed: ["context"]`. The
 event catalog is unchanged: an event's payload still names the two ends and the `relationship_type`.
@@ -240,15 +274,48 @@ event catalog is unchanged: an event's payload still names the two ends and the 
 **Not done.** The Postgres implementation and its migration are written and were never run against a
 database. The Redis data store still keeps one edge per pair and drops both new fields.
 
+### Before upgrading a wheel on Postgres
+
+On a Postgres wheel **every edge operation fails after the upgrade until `scripts/005-edges-kinship.sql`
+has been run by hand.** The provider reads and writes a `kinship_type` column and an edge key of
+`(from_id, to_id, kinship_type)`. Connecting creates some tables when they are missing and never touches
+`nodes`, `edges` or `ceremonies`, which come from the numbered scripts. So the order is: stop the wheel,
+run `005` on the database, start the upgraded wheel. A database created from the current
+`scripts/001-create-medicine-wheel-tables.sql` already has the column and the key. The script and the
+provider code were never run against a database, so run both on a copy first.
+
+### This release cannot be rolled back once a governed edge exists
+
+Code from before this change knows one edge per ordered pair. Given a store that holds an edge without a
+kinship type and two governed edges on one pair:
+
+- the earlier MCP store, opened on the files, reads one of the three, and its next write of edges drops
+  the other two.
+- the earlier provider's write of an edge on that pair removes every edge of the pair, the governed ones
+  with it.
+
+So, from the first governed edge on:
+
+- **no earlier writer may open the store's files.** That means an earlier wheel on the same data
+  directory, and an MCP server from an earlier version that is given the data directory instead of the
+  wheel's address. An earlier MCP server that reaches the wheel over HTTP is safe: the wheel does the writing.
+- **a rollback starts by taking the governed edges out.** With the current wheel still running: read every
+  edge that has a `kinship_type` (`GET /api/edges?limit=all`), keep that list somewhere outside the store,
+  and release each one (`DELETE /api/edges?from=&to=&kinship_type=`). When the store holds no governed
+  edge, earlier code reads and writes it as it always did. The saved relations are said again through the
+  kinship door after the wheel is upgraded again. They get new dates then, and the first dates are in the
+  saved list.
+
 ## What the ontology gained
 
 All additive and optional. Every relation stored before reads unchanged.
 
 - An edge may carry `kinship_type`, a governed kinship-edge name, and `context`, the context that
   authorizes and bounds it. The first-class `Relation` already had both.
-- A relation's context gains three fields:
+- A relation's context gains four fields:
   - `state`: where the relation stands in its own life, one of `proposed`, `active`, `paused`, `ended`.
     This is the relation's own state. It is not the ceremony state `active_context` names.
+  - `state_set_by`: who moved the relation to that state.
   - `stated_by`: whose words the relation's description carries.
   - `grants`: what the being at the `from` end is given through the being at the `to` end, a list of
     `{ kind, scope }`.
@@ -269,6 +336,7 @@ Pure functions. They build the edges to write and read edges back.
 | the edges a statement becomes, checked against the wheel's records | `planAgentKinship`, `planDefineAgent` |
 | one edge | `originEdge`, `responsibilityEdge`, `serviceEdge` |
 | the life of a dialogue | `DIALOGUE_MOVES`, `canMoveDialogue` |
+| what a door that writes any edge answers for one of the four | `isAgentKinshipEdge`, `agentKinshipWriteRefusal` |
 | an agent's four relations | `agentKinship` |
 | a person's agents | `agentsOf` |
 | the grants | `SEE_CIRCLES`, `SEE_CIRCLES_SCOPES`, `ServiceGrantSchema`, `serviceGrantsOf` |
@@ -280,7 +348,7 @@ Pure functions. They build the edges to write and read edges back.
 
 | route | what it does |
 |---|---|
-| `POST /api/agents` | A person defines an agent they made. Writes the agent's node and its relations together. `comes_from` is required. If a relation cannot be written after the node was, what was written is removed. `409` when the id is already a node. |
+| `POST /api/agents` | A person defines an agent they made. Writes the agent's node and its relations together. `comes_from` is required. If a relation cannot be written after the node was, what was written is removed, and each removal is recorded in the event log beside the write it undoes. `409` when the id is already a node. |
 | `POST /api/nodes/{id}/kinship` | Relates an agent that already has a node, or says one of its relations again. |
 | `GET /api/nodes/{id}/kinship` | What the wheel reads back for one person: the five readings of an agent and the three of a person, with a name for every seat and circle mentioned. `400` when the node is not a person. |
 | `GET /api/nodes/{id}/readers` | For a circle: its answer, what it answers when unset, and the agents within reach of it through a member. `400` when the node is not a circle. |
@@ -293,7 +361,7 @@ A statement has the same shape on both write routes:
   comes_from:             [{ person_id, words, said_by }],
   responsibility_held_by: [{ person_id, words, said_by }],
   serves:                 [{ person_id, words, said_by, grants: [{ kind, scope }] }],
-  speaks_with:            [{ agent_id, words, said_by, state, authorized_by, valid_when, forbidden_when }]
+  speaks_with:            [{ agent_id, words, said_by, state, state_set_by, authorized_by, valid_when, forbidden_when }]
 }
 ```
 
@@ -314,8 +382,10 @@ and `wheel.kinship.readersOf(circle_id)`. The two reads answer `null` when the w
 ### `@medicine-wheel/mcp`
 
 `define_agent`, `relate_agent`, `get_agent_kinship` and `get_circle_agent_readers`.
-`create_relational_edge` carries `kinship_type` and `context`. Beside a wheel server the two writes go to
-the server's routes. On a local store they are planned and written in process.
+`create_relational_edge` carries `kinship_type` and `context`, and leaves the four to the kinship tools as
+the generic route does. Beside a wheel server the two writes go to the server's routes. On a local store
+they are planned and written in process, and `define_agent` there cannot take back a node whose relations
+failed to write: the local store has no removal.
 
 ---
 
@@ -408,7 +478,15 @@ D1 to D5 came with the mission. D6 to D12 were taken while building and are open
 | D9 | A service relation that carries grants is stated by the person served. | this specification, from "chosen by the person" |
 | D10 | The circle reading also lists the agents a circle holds back, and says whether an agent holds its own seat. | this specification |
 | D11 | Only an edge that names its kinship type is read as agent kinship. | this specification, from M5 |
-| D12 | A statement about origin, responsibility or service replaces the earlier one whole. A statement about a dialogue changes what it names. | this specification |
+| D12 | A statement about origin, responsibility or service replaces the earlier words and context whole. A statement about a dialogue changes what it names. | this specification |
+| D13 | Unset, a circle allows only the agents of the person named by its `facilitator_id`. A circle that names none refuses. | Mia, after review (RV2) |
+| D14 | The door that writes any edge does not create one of the four and does not change its context. `DELETE` stays. | Mia, after review (RV3) |
+| D15 | Saying a relation again, or moving a dialogue's state, keeps what ceremonies wrote on it. | Mia, after review (RV4) |
+| D16 | An existing governed edge keeps its first date through every write. | Mia, after review (RV5) |
+| D17 | `stated_by` changes only together with the words. Who moved the state is a field of its own. | Mia, after review (RV6) |
+| D18 | The cleanup of a failed `POST /api/agents` records each removal as an event. | Mia, after review (RV7) |
+| D19 | The field for who moved the state is `state_set_by`. Every move names it, and a speaker named without words is refused. | this specification, from D17 |
+| D20 | The door that writes any edge does not change the words of one of the four either, and keeps what a write leaves out. | this specification, from D14 and D17 |
 
 ## Not decided
 
@@ -433,6 +511,22 @@ D1 to D5 came with the mission. D6 to D12 were taken while building and are open
 | N6 | Running the Postgres migration and testing the Neon provider against a database | whoever holds a Postgres wheel |
 | N7 | A page on the wheel for kinship. The relations page lists these relations as edges and can edit and release each one. | `@medicine-wheel/app` |
 | N8 | Protocol guards that read a relation's `state` | `@medicine-wheel/relational-query` |
+
+## What the independent review of 2026-11-24 found
+
+A second agent that had not read the brief probed the branch at `d5eb5e4` on temporary stores. Six findings
+were fixed, each with a test that failed before the fix. Two are written down above.
+
+| code | finding | where it is now |
+|---|---|---|
+| RV1 | Earlier code destroys governed edges it finds | "This release cannot be rolled back once a governed edge exists" |
+| RV2 | An unset circle answered by who holds `facilitate`, so a co-facilitator's agent read it | D13, "A circle answers the agents of its members" |
+| RV3 | The door that writes any edge skipped every kinship rule | D14, D20, "The door that writes any edge leaves the four to the kinship doors" |
+| RV4 | Saying a relation again erased what ceremonies wrote on it | D15, the rules that hold for all four |
+| RV5 | Writing a governed edge again moved its first date | D16, the provider contract |
+| RV6 | A state move with a speaker and no words gave the first speaker's words to the mover | D17, D19, "Dialogue between two agents" |
+| RV7 | A failed `POST /api/agents` left a `relation.made` with no removal in the event log | D18, the API table |
+| RV8 | On Postgres every edge operation fails until `005` is run by hand | "Before upgrading a wheel on Postgres" |
 
 ---
 

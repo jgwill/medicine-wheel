@@ -455,10 +455,16 @@ class EdgeCollection {
     });
   }
 
-  /** Upsert: replaces any existing edge with the same endpoints. */
+  /**
+   * Upsert: replaces any existing edge with the same identity. A governed edge
+   * keeps the date it was first written (the same rule as
+   * `@medicine-wheel/storage-provider`).
+   */
   add(edge: StoredEdge): void {
     this.sync();
-    this.items.set(this.edgeKey(edge), edge);
+    const key = this.edgeKey(edge);
+    const held = edge.kinship_type ? this.items.get(key) : undefined;
+    this.items.set(key, held ? { ...edge, created_at: held.created_at } : edge);
     this.flush();
   }
 

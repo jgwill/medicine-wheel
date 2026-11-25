@@ -165,6 +165,8 @@ export interface RelationContext {
    * `active_context` names.
    */
   state?: RelationState;
+  /** Who moved the relation to the state it is in: a node id. Kept apart from `stated_by`, because moving a relation's state does not change whose words it carries. */
+  state_set_by?: string;
   /** Whose words the relation's description carries: the node id of the one who said them. */
   stated_by?: string;
   /**

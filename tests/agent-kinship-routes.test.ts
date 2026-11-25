@@ -165,12 +165,15 @@ describe("POST /api/nodes/{id}/kinship: an existing agent is related to its pers
     expect(proposed.status, JSON.stringify(proposed.body)).toBe(200);
     expect(proposed.body.kinship.speaks_with).toMatchObject([{ agent_id: luma.id, state: "proposed" }]);
 
-    const unauthorized = await relate(luma.id, { speaks_with: [{ agent_id: sol.id, state: "active" }] });
+    const unauthorized = await relate(luma.id, { speaks_with: [{ agent_id: sol.id, state: "active", state_set_by: ada.id }] });
     expect(unauthorized.status).toBe(400);
     expect(unauthorized.body.issues[0]).toContain("authorized_by");
+    const unnamed = await relate(luma.id, { speaks_with: [{ agent_id: sol.id, state: "active", authorized_by: ada.id }] });
+    expect(unnamed.status).toBe(400);
+    expect(unnamed.body.issues[0]).toContain("state_set_by");
 
     const active = await relate(luma.id, {
-      speaks_with: [{ agent_id: sol.id, state: "active", authorized_by: ada.id, valid_when: "about the notes of an episode both sit in", forbidden_when: "about a person who is not in the room" }],
+      speaks_with: [{ agent_id: sol.id, state: "active", authorized_by: ada.id, state_set_by: ada.id, valid_when: "about the notes of an episode both sit in", forbidden_when: "about a person who is not in the room" }],
     });
     expect(active.status, JSON.stringify(active.body)).toBe(200);
 
@@ -187,9 +190,9 @@ describe("POST /api/nodes/{id}/kinship: an existing agent is related to its pers
     // One relation on the wheel, not one for each agent.
     expect((await allEdges()).filter((e) => e.kinship_type === "speaks-with")).toHaveLength(1);
 
-    const paused = await relate(sol.id, { speaks_with: [{ agent_id: luma.id, state: "paused" }] });
-    expect(paused.body.kinship.speaks_with).toMatchObject([{ state: "paused", authorized_by: ada.id }]);
-    const wrong = await relate(sol.id, { speaks_with: [{ agent_id: luma.id, state: "proposed" }] });
+    const paused = await relate(sol.id, { speaks_with: [{ agent_id: luma.id, state: "paused", state_set_by: noor.id }] });
+    expect(paused.body.kinship.speaks_with).toMatchObject([{ state: "paused", state_set_by: noor.id, authorized_by: ada.id, said_by: sol.id }]);
+    const wrong = await relate(sol.id, { speaks_with: [{ agent_id: luma.id, state: "proposed", state_set_by: noor.id }] });
     expect(wrong.status).toBe(400);
   });
 
@@ -248,62 +251,64 @@ describe("what an agent sees through the person it serves, and what a circle ans
   });
 });
 
+// The four agent-kinship types are written through the kinship door (RV3 below).
+// Every other governed kinship type is written here, as these two are.
 describe("/api/edges carries a governed relation's kinship type and context", () => {
   const pair = { from_id: luma.id, to_id: noor.id };
 
   it("keeps one relation for each kinship type beside the one relation without any", async () => {
     const plain = await postEdge({ ...pair, relationship_type: "works-beside", description: "by hand" });
-    const origin = await postEdge({ ...pair, kinship_type: "BORN_FROM", description: "Luma came from Noor's work.", context: { stated_by: noor.id } });
-    const service = await postEdge({ ...pair, kinship_type: "SERVES", relationship_type: "SERVES", context: { stated_by: noor.id, grants: [{ kind: "see_circles", scope: "facilitated" }] } });
+    const origin = await postEdge({ ...pair, kinship_type: "tends-to", description: "Luma looks after Noor's notes.", context: { stated_by: noor.id } });
+    const service = await postEdge({ ...pair, kinship_type: "part-of", relationship_type: "part-of", context: { stated_by: noor.id, grants: [{ kind: "see_circles", scope: "facilitated" }] } });
     expect([plain.status, origin.status, service.status]).toEqual([201, 201, 201]);
     expect([plain.body.replaced, origin.body.replaced, service.body.replaced]).toEqual([false, false, false]);
-    expect(origin.body.edge).toMatchObject({ relationship_type: "BORN_FROM", kinship_type: "BORN_FROM", context: { stated_by: noor.id } });
+    expect(origin.body.edge).toMatchObject({ relationship_type: "tends-to", kinship_type: "tends-to", context: { stated_by: noor.id } });
 
     const between = (await allEdges()).filter((e) => e.from_id === luma.id && e.to_id === noor.id);
-    expect(between.map((e) => e.kinship_type ?? null).sort()).toEqual(["BORN_FROM", "SERVES", null].sort());
-    expect(between.find((e) => e.kinship_type === "SERVES")?.context).toEqual({ stated_by: noor.id, grants: [{ kind: "see_circles", scope: "facilitated" }] });
+    expect(between.map((e) => e.kinship_type ?? null).sort()).toEqual(["tends-to", "part-of", null].sort());
+    expect(between.find((e) => e.kinship_type === "part-of")?.context).toEqual({ stated_by: noor.id, grants: [{ kind: "see_circles", scope: "facilitated" }] });
   });
 
   it("writing a relation again replaces the one with the same kinship type and no other", async () => {
-    const again = await postEdge({ ...pair, kinship_type: "BORN_FROM", description: "Luma came from the work Noor and Ada did." });
+    const again = await postEdge({ ...pair, kinship_type: "tends-to", description: "Luma looks after the notes of Noor and Ada." });
     expect(again.body.replaced).toBe(true);
     const between = (await allEdges()).filter((e) => e.from_id === luma.id && e.to_id === noor.id);
     expect(between).toHaveLength(3);
-    expect(between.find((e) => e.kinship_type === "BORN_FROM")?.description).toBe("Luma came from the work Noor and Ada did.");
+    expect(between.find((e) => e.kinship_type === "tends-to")?.description).toBe("Luma looks after the notes of Noor and Ada.");
     expect(between.find((e) => !e.kinship_type)?.description).toBe("by hand");
   });
 
   it("PATCH and DELETE reach a governed relation by its kinship type, and the plain one without it", async () => {
     const q = `from=${encodeURIComponent(luma.id)}&to=${encodeURIComponent(noor.id)}`;
-    const patched = await answer(await edgesRoute.PATCH(json("PATCH", `/api/edges?${q}&kinship_type=SERVES`, { context: { stated_by: noor.id } })));
+    const patched = await answer(await edgesRoute.PATCH(json("PATCH", `/api/edges?${q}&kinship_type=part-of`, { context: { stated_by: noor.id } })));
     expect(patched.status, JSON.stringify(patched.body)).toBe(200);
-    expect(patched.body.edge).toMatchObject({ kinship_type: "SERVES", context: { stated_by: noor.id } });
+    expect(patched.body.edge).toMatchObject({ kinship_type: "part-of", context: { stated_by: noor.id } });
 
-    const renamed = await answer(await edgesRoute.PATCH(json("PATCH", `/api/edges?${q}&kinship_type=SERVES`, { relationship_type: "owns" })));
+    const renamed = await answer(await edgesRoute.PATCH(json("PATCH", `/api/edges?${q}&kinship_type=part-of`, { relationship_type: "owns" })));
     expect(renamed.status).toBe(400);
 
     const plainPatched = await answer(await edgesRoute.PATCH(json("PATCH", `/api/edges?${q}`, { strength: 0.9 })));
     expect(plainPatched.body.edge).toMatchObject({ relationship_type: "works-beside", strength: 0.9 });
     expect(plainPatched.body.edge.kinship_type).toBeUndefined();
 
-    const removed = await answer(await edgesRoute.DELETE(json("DELETE", `/api/edges?${q}&kinship_type=SERVES`)));
+    const removed = await answer(await edgesRoute.DELETE(json("DELETE", `/api/edges?${q}&kinship_type=part-of`)));
     expect(removed.status).toBe(200);
-    expect(removed.body.deleted).toEqual({ from_id: luma.id, to_id: noor.id, kinship_type: "SERVES" });
+    expect(removed.body.deleted).toEqual({ from_id: luma.id, to_id: noor.id, kinship_type: "part-of" });
     const between = (await allEdges()).filter((e) => e.from_id === luma.id && e.to_id === noor.id);
-    expect(between.map((e) => e.kinship_type ?? null).sort()).toEqual(["BORN_FROM", null].sort());
+    expect(between.map((e) => e.kinship_type ?? null).sort()).toEqual(["tends-to", null].sort());
 
-    const gone = await answer(await edgesRoute.DELETE(json("DELETE", `/api/edges?${q}&kinship_type=SERVES`)));
+    const gone = await answer(await edgesRoute.DELETE(json("DELETE", `/api/edges?${q}&kinship_type=part-of`)));
     expect(gone.status).toBe(404);
-    expect(gone.body.error).toContain("SERVES");
+    expect(gone.body.error).toContain("part-of");
   });
 
   it("refuses a name the registry does not govern, two names on one relation, and a context key it does not know", async () => {
     const unknown = await postEdge({ ...pair, kinship_type: "owned-by" });
     expect(unknown.status).toBe(400);
-    const twoNames = await postEdge({ ...pair, kinship_type: "SERVES", relationship_type: "helps" });
+    const twoNames = await postEdge({ ...pair, kinship_type: "part-of", relationship_type: "helps" });
     expect(twoNames.status).toBe(400);
-    expect(twoNames.body.issues[0]).toContain("must be SERVES");
-    const strangeContext = await postEdge({ ...pair, kinship_type: "SERVES", context: { owner: noor.id } });
+    expect(twoNames.body.issues[0]).toContain("must be part-of");
+    const strangeContext = await postEdge({ ...pair, kinship_type: "part-of", context: { owner: noor.id } });
     expect(strangeContext.status).toBe(400);
     const noName = await postEdge({ ...pair });
     expect(noName.status).toBe(400);
@@ -313,5 +318,146 @@ describe("/api/edges carries a governed relation's kinship type and context", ()
   it("a node still refuses to be removed while a governed relation holds it", async () => {
     const res = await nodeRoute.DELETE(json("DELETE", `/api/nodes/${luma.id}`), at(luma.id));
     expect(res.status).toBe(409);
+  });
+});
+
+// ── What the independent review of 2026-11-24 found (RV codes), each pinned here ──
+
+describe("RV3: the generic edge door leaves agent kinship to the kinship door", () => {
+  const rvA = personNode({ id: "node:agent:rv3-a", name: "Rill", role: "companion_ai", agent: true });
+  const rvB = personNode({ id: "node:agent:rv3-b", name: "Vale", role: "companion_ai", agent: true });
+  const q = (from: string, to: string, kinship: string) => `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&kinship_type=${encodeURIComponent(kinship)}`;
+  const patchEdge = async (query: string, body: unknown) => answer(await edgesRoute.PATCH(json("PATCH", `/api/edges?${query}`, body)));
+  const dialogue = async () => (await allEdges()).filter((e) => e.kinship_type === "speaks-with" && [e.from_id, e.to_id].includes(rvA.id));
+
+  it("refuses to create one of the four, and names the kinship door", async () => {
+    for (const node of [rvA, rvB]) expect((await postNode(node)).status).toBe(201);
+
+    // The review's probe: a speaks-with posted higher id first.
+    const backwards = await postEdge({ from_id: rvB.id, to_id: rvA.id, kinship_type: "speaks-with", context: { state: "active" } });
+    expect(backwards.status).toBe(400);
+    expect(JSON.stringify(backwards.body)).toContain("/kinship");
+    // The review's probe: a third person gives what is not theirs to give.
+    const thirdPerson = await postEdge({ from_id: rvA.id, to_id: ada.id, kinship_type: "SERVES", context: { stated_by: noor.id, grants: [{ kind: "see_circles", scope: "sits_in" }] } });
+    expect(thirdPerson.status).toBe(400);
+    for (const kinship of ["BORN_FROM", "holds-responsibility-for"]) {
+      expect((await postEdge({ from_id: rvA.id, to_id: ada.id, kinship_type: kinship })).status).toBe(400);
+    }
+    expect((await allEdges()).filter((e) => [e.from_id, e.to_id].includes(rvA.id))).toEqual([]);
+  });
+
+  it("refuses to change the context or the words of one that exists, and lets a ceremony update through", async () => {
+    const proposed = await relate(rvA.id, { speaks_with: [{ agent_id: rvB.id, words: "About the tide tables.", said_by: rvA.id }] });
+    expect(proposed.status, JSON.stringify(proposed.body)).toBe(200);
+    const active = await relate(rvA.id, { speaks_with: [{ agent_id: rvB.id, state: "active", authorized_by: ada.id, state_set_by: ada.id }] });
+    expect(active.status, JSON.stringify(active.body)).toBe(200);
+    const [stored] = await dialogue();
+    const query = q(stored.from_id, stored.to_id, "speaks-with");
+
+    // The review's probe: a PATCH of context moved the dialogue back to proposed and dropped stated_by.
+    const moved = await patchEdge(query, { context: { state: "proposed" } });
+    expect(moved.status).toBe(400);
+    expect(JSON.stringify(moved.body)).toContain("/kinship");
+    const reworded = await patchEdge(query, { description: "About anything at all." });
+    expect(reworded.status).toBe(400);
+    const reposted = await postEdge({ from_id: stored.from_id, to_id: stored.to_id, kinship_type: "speaks-with", context: { ...stored.context, state: "ended" } });
+    expect(reposted.status).toBe(400);
+    expect((await dialogue())[0]).toMatchObject({ description: "About the tide tables.", context: stored.context });
+
+    // What a ceremony update sends: the same edge again, honoured. It passes and the context stays.
+    const honoured = await postEdge({ ...stored, ceremony_honored: true });
+    expect(honoured.status, JSON.stringify(honoured.body)).toBe(201);
+    expect(honoured.body.replaced).toBe(true);
+    // The same without the context: nothing is changed, so nothing is lost.
+    const bare = await postEdge({ from_id: stored.from_id, to_id: stored.to_id, kinship_type: "speaks-with", strength: 0.8, ceremony_honored: true });
+    expect(bare.status, JSON.stringify(bare.body)).toBe(201);
+    const same = await patchEdge(query, { context: stored.context, strength: 0.7 });
+    expect(same.status, JSON.stringify(same.body)).toBe(200);
+    expect((await dialogue())[0]).toMatchObject({ description: "About the tide tables.", context: stored.context, ceremony_honored: true, strength: 0.7 });
+    expect((await kinshipOf(rvA.id)).body.speaks_with).toMatchObject([{ agent_id: rvB.id, state: "active", said_by: rvA.id, authorized_by: ada.id }]);
+  });
+
+  it("still releases one, and still weaves every other governed kinship type", async () => {
+    const [stored] = await dialogue();
+    const released = await answer(await edgesRoute.DELETE(json("DELETE", `/api/edges?${q(stored.from_id, stored.to_id, "speaks-with")}`)));
+    expect(released.status).toBe(200);
+    expect(await dialogue()).toEqual([]);
+
+    const tended = await postEdge({ from_id: rvA.id, to_id: rvB.id, kinship_type: "tends-to", context: { authorized_by: ada.id } });
+    expect(tended.status, JSON.stringify(tended.body)).toBe(201);
+    const patched = await patchEdge(q(rvA.id, rvB.id, "tends-to"), { context: { authorized_by: noor.id } });
+    expect(patched.body.edge).toMatchObject({ kinship_type: "tends-to", context: { authorized_by: noor.id } });
+  });
+});
+
+describe("RV5: an existing governed edge keeps the date it was first written", () => {
+  it("through a re-post on the generic door", async () => {
+    const pair = { from_id: sol.id, to_id: luma.id, kinship_type: "tends-to" };
+    const first = await postEdge({ ...pair, description: "first" });
+    expect(first.status, JSON.stringify(first.body)).toBe(201);
+    await new Promise((resolve) => setTimeout(resolve, 15));
+    const again = await postEdge({ ...pair, description: "second", ceremony_honored: true });
+    expect(again.body.replaced).toBe(true);
+    expect(again.body.edge.created_at).toBe(first.body.edge.created_at);
+    const stored = (await allEdges()).find((e) => e.from_id === sol.id && e.to_id === luma.id && e.kinship_type === "tends-to");
+    expect(stored).toMatchObject({ description: "second", ceremony_honored: true, created_at: first.body.edge.created_at });
+  });
+});
+
+describe("RV4: saying a relation again through the kinship door keeps what a ceremony wrote", () => {
+  it("keeps the ceremony, the strength and the obligations of an origin relation", async () => {
+    const provider = await (await import("../src/storage-provider/src/index")).createProvider();
+    const since = (await allEdges()).find((e) => e.from_id === sol.id && e.to_id === ada.id && e.kinship_type === "BORN_FROM")?.created_at;
+    await provider.updateEdgeCeremony(sol.id, ada.id, "ceremony:rv4");
+    const tuned = await answer(await edgesRoute.PATCH(json("PATCH", `/api/edges?from=${encodeURIComponent(sol.id)}&to=${encodeURIComponent(ada.id)}&kinship_type=BORN_FROM`, { strength: 0.6, obligations: ["remember where Sol comes from"] })));
+    expect(tuned.status, JSON.stringify(tuned.body)).toBe(200);
+
+    const again = await relate(sol.id, { comes_from: [{ person_id: ada.id, words: "Sol came out of two winters of my work.", said_by: ada.id }] });
+    expect(again.status, JSON.stringify(again.body)).toBe(200);
+    const stored = (await allEdges()).find((e) => e.from_id === sol.id && e.to_id === ada.id && e.kinship_type === "BORN_FROM");
+    expect(stored).toMatchObject({
+      description: "Sol came out of two winters of my work.",
+      ceremony_honored: true,
+      last_ceremony: "ceremony:rv4",
+      strength: 0.6,
+      obligations: ["remember where Sol comes from"],
+      created_at: since,
+    });
+  });
+});
+
+describe("RV7: a POST /api/agents that fails leaves the event log balanced", () => {
+  it("records a removal for each relation and for the node it takes back", async () => {
+    const { JsonlProvider } = await import("../src/storage-provider/src/index");
+    const real = JsonlProvider.prototype.createEdge;
+    let calls = 0;
+    const spy = vi.spyOn(JsonlProvider.prototype, "createEdge").mockImplementation(function (this: InstanceType<typeof JsonlProvider>, edge) {
+      calls += 1;
+      if (calls === 2) return Promise.reject(new Error("the disk is full"));
+      return real.call(this, edge);
+    });
+    let failed;
+    try {
+      failed = await defineAgent({
+        agent: { id: "node:agent:rv7", name: "Brae", role: "companion_ai" },
+        comes_from: [{ person_id: ada.id, words: "I made Brae.", said_by: ada.id }],
+        responsibility_held_by: [{ person_id: ada.id, words: "I answer for Brae.", said_by: ada.id }],
+      });
+    } finally {
+      spy.mockRestore();
+    }
+    expect(failed.status).toBe(500);
+    expect(failed.body.rolled_back).toBe(true);
+    expect((await nodeRoute.GET(json("GET", "/api/nodes/node:agent:rv7"), at("node:agent:rv7"))).status).toBe(404);
+    expect((await allEdges()).filter((e) => [e.from_id, e.to_id].includes("node:agent:rv7"))).toEqual([]);
+
+    const events = fs.readFileSync(path.join(tempDir, "events.jsonl"), "utf-8").split("\n").filter(Boolean).map((line) => JSON.parse(line))
+      .filter((event) => JSON.stringify(event).includes("node:agent:rv7"))
+      .map((event) => event.event_type.replace(/^medicine-wheel\./, ""));
+    const count = (name: string) => events.filter((e) => e === name).length;
+    expect(count("relation.made")).toBe(1);
+    expect(count("relation.removed")).toBe(count("relation.made"));
+    expect(events.filter((e) => e.startsWith("node.")).length % 2).toBe(0);
+    expect(events[events.length - 1]).toMatch(/removed$/);
   });
 });
