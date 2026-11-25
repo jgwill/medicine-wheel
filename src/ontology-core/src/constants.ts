@@ -8,6 +8,7 @@
 import type {
   Direction, DirectionName, NodeType, CeremonyType,
   SunName, CeremonyPhase, PersonRole, RSISRelationType, GovernanceAccess, DirectionInfo,
+  RelationState,
 } from './types';
 
 // ── Direction Definitions ───────────────────────────────────────────────────
@@ -175,6 +176,11 @@ export const PERSON_ROLES: PersonRole[] = ['steward', 'contributor', 'elder', 'f
 export const RSIS_RELATION_TYPES: RSISRelationType[] = [
   'STEWARDS', 'BORN_FROM', 'SERVES', 'GIVES_BACK_TO', 'ALIGNED_WITH', 'KINSHIP_OF',
 ];
+
+// ── Relation states ─────────────────────────────────────────────────────────
+
+/** The states a relation's context may name (`RelationContext.state`). */
+export const RELATION_STATES: RelationState[] = ['proposed', 'active', 'paused', 'ended'];
 
 // ── RSIS Governance Access Levels ───────────────────────────────────────────
 

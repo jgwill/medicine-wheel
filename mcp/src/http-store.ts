@@ -37,6 +37,10 @@ interface StoredEdge {
   obligations: string[];
   /** Why the two are related, in the words of whoever wove the relation. */
   description?: string;
+  /** A governed kinship-edge name. With the two ends it identifies the relation. */
+  kinship_type?: string;
+  /** What authorizes and bounds the relation: who said it, its state, what is given along it. */
+  context?: Record<string, unknown>;
   created_at: string;
 }
 

@@ -77,6 +77,18 @@ export interface RelationalEdge {
   obligations: string[];
   /** Why the two are related, in the words of whoever wove the relation. */
   description?: string;
+  /**
+   * Governed kinship-edge name from `kinship.ts`. Optional and additive. An
+   * edge without one is identified by its two ends, as every edge was before
+   * this field existed. An edge that carries one is identified by its two ends and this
+   * name, so two beings can hold several governed relations in the same
+   * direction: an agent comes from a person and also serves that person.
+   * `relationship_type` carries the same name, for every reader that knows
+   * only that field.
+   */
+  kinship_type?: KinshipEdgeName;
+  /** Context that authorizes and bounds this relation. */
+  context?: RelationContext;
   created_at: string;
 }
 
@@ -147,6 +159,33 @@ export interface RelationContext {
   forbidden_when?: string;
   /** Identities permitted to traverse this relation. */
   authorized_kin?: string[];
+  /**
+   * Where the relation stands in its own life. Absent on a relation that has
+   * no such life. This is the relation's state, not the ceremony state
+   * `active_context` names.
+   */
+  state?: RelationState;
+  /** Whose words the relation's description carries: the node id of the one who said them. */
+  stated_by?: string;
+  /**
+   * What the being at the `from` end is given through the being at the `to`
+   * end. Nothing passes along a relation unless it is named here.
+   */
+  grants?: RelationGrant[];
+}
+
+/** The life of a relation that is proposed before it holds, and can pause or end. */
+export type RelationState = 'proposed' | 'active' | 'paused' | 'ended';
+
+/**
+ * One thing given along a relation: what kind of thing, and how far it
+ * reaches. The kinds and their scopes are named by the package that reads
+ * them (`@medicine-wheel/community-identity` for an agent and the person it
+ * serves); this type only gives them a place on the relation.
+ */
+export interface RelationGrant {
+  kind: string;
+  scope: string;
 }
 
 /**

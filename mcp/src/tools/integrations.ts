@@ -13,7 +13,7 @@ import {
   TenantFacetSchema,
   ServiceFacetSchema,
 } from "@medicine-wheel/infra";
-import { INFRA_ENTITY_BINDING, isKinshipEdgeName } from "@medicine-wheel/ontology-core";
+import { INFRA_ENTITY_BINDING, KINSHIP_EDGE_NAMES, RelationContextSchema, isKinshipEdgeName } from "@medicine-wheel/ontology-core";
 import {
   createBeat as authorBeat,
   validateBeatDraft,
@@ -176,12 +176,39 @@ export const integrationTools: Tool[] = [
           type: "string",
           description: "Why the two are related, in your words — what a person reads to understand this relation",
         },
+        kinship_type: {
+          type: "string",
+          description:
+            "A governed kinship-edge name (e.g. 'holds-responsibility-for', 'speaks-with'). The relation is then identified by its two nodes and this name, " +
+            "beside the one relation the pair holds without any. relationship_type must say the same name",
+        },
+        context: {
+          type: "object",
+          description: "What authorizes and bounds the relation: authorized_by, active_context, valid_when, forbidden_when, authorized_kin, state, stated_by, grants",
+        },
       },
       required: ["from_node_id", "to_node_id", "relationship_type"],
     },
     handler: async (args) => {
       try {
-        const { from_node_id, to_node_id, relationship_type, strength = 0.5, obligations = [], description } = args;
+        const { from_node_id, to_node_id, relationship_type, strength = 0.5, obligations = [], description, kinship_type, context } = args;
+
+        if (kinship_type !== undefined) {
+          if (!isKinshipEdgeName(String(kinship_type))) {
+            return { status: "error", message: `Not a governed kinship edge: ${String(kinship_type)}. Nothing was created.`, accepted: KINSHIP_EDGE_NAMES };
+          }
+          if (relationship_type !== kinship_type) {
+            return { status: "error", message: `relationship_type must be ${kinship_type}, the kinship_type. Nothing was created.` };
+          }
+        }
+        const parsedContext = context === undefined ? undefined : RelationContextSchema.strict().safeParse(context);
+        if (parsedContext && !parsedContext.success) {
+          return {
+            status: "error",
+            message: "Invalid context. Nothing was created.",
+            issues: parsedContext.error.issues.map((issue) => `context.${issue.path.join(".")}: ${issue.message}`),
+          };
+        }
 
         const edge = {
           from_id: from_node_id,
@@ -191,6 +218,8 @@ export const integrationTools: Tool[] = [
           ceremony_honored: false,
           obligations,
           ...(typeof description === "string" && description.trim() ? { description: description.trim() } : {}),
+          ...(kinship_type !== undefined ? { kinship_type: String(kinship_type) } : {}),
+          ...(parsedContext?.success ? { context: parsedContext.data as Record<string, unknown> } : {}),
           created_at: new Date().toISOString(),
         };
 

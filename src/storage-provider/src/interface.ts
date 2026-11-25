@@ -12,6 +12,7 @@ import type {
   CeremonyType,
   RelationalNode as OntologyRelationalNode,
   RelationalEdge as OntologyRelationalEdge,
+  RelationContext,
   CeremonyLog as OntologyCeremonyLog,
 } from '@medicine-wheel/ontology-core';
 
@@ -37,13 +38,18 @@ export interface NodePatch {
   metadata?: Record<string, unknown>;
 }
 
-/** Partial update for an edge (identified by from_id + to_id). */
+/**
+ * Partial update for an edge. The edge is identified by from_id + to_id, and
+ * by its `kinship_type` when it carries one; a patch never changes that name.
+ */
 export interface EdgePatch {
   relationship_type?: string;
   strength?: number;
   ceremony_honored?: boolean;
   obligations?: string[];
   description?: string;
+  /** Replaces the relation's whole context. */
+  context?: RelationContext;
 }
 
 // ── Typed Errors ──
@@ -59,8 +65,8 @@ export class NodeNotFoundError extends Error {
 
 export class EdgeNotFoundError extends Error {
   readonly code = 'EDGE_NOT_FOUND';
-  constructor(readonly fromId: string, readonly toId: string) {
-    super(`Relation not found between ${fromId} and ${toId}`);
+  constructor(readonly fromId: string, readonly toId: string, readonly kinshipType?: string) {
+    super(`Relation not found between ${fromId} and ${toId}${kinshipType ? ` (${kinshipType})` : ''}`);
     this.name = 'EdgeNotFoundError';
   }
 }
@@ -406,15 +412,23 @@ export interface StorageProvider {
   deleteNode(id: string): Promise<void>;
 
   // Edge Operations
+  //
+  // An edge is identified by its ordered pair (from_id, to_id). An edge that
+  // carries a `kinship_type` is identified by the pair and that name, so one
+  // pair can hold one edge without a kinship type and one edge for each
+  // governed kinship type. `kinshipType` below selects among them: left out,
+  // every operation reaches the edge without a kinship type, as it always did.
+  /** Writes the edge, replacing the one with the same identity. */
   createEdge(edge: RelationalEdge): Promise<void>;
-  getEdge(fromId: string, toId: string): Promise<RelationalEdge | null>;
+  getEdge(fromId: string, toId: string, kinshipType?: string): Promise<RelationalEdge | null>;
   getAllEdges(limit?: number): Promise<RelationalEdge[]>;
   getRelatedNodes(nodeId: string, direction?: 'from' | 'to' | 'both'): Promise<string[]>;
+  /** Marks every edge of the pair as honored by this ceremony, with or without a kinship type. */
   updateEdgeCeremony(fromId: string, toId: string, ceremonyId: string): Promise<void>;
-  /** Throws EdgeNotFoundError when no relation exists between the pair. */
-  updateEdge(fromId: string, toId: string, patch: EdgePatch): Promise<RelationalEdge>;
-  /** Throws EdgeNotFoundError when no relation exists between the pair. */
-  deleteEdge(fromId: string, toId: string): Promise<void>;
+  /** Throws EdgeNotFoundError when no such relation exists between the pair. */
+  updateEdge(fromId: string, toId: string, patch: EdgePatch, kinshipType?: string): Promise<RelationalEdge>;
+  /** Throws EdgeNotFoundError when no such relation exists between the pair. */
+  deleteEdge(fromId: string, toId: string, kinshipType?: string): Promise<void>;
   
   // Ceremony Operations
   logCeremony(ceremony: CeremonyLog): Promise<void>;

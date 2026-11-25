@@ -23,8 +23,12 @@ CREATE TABLE IF NOT EXISTS edges (
   last_ceremony TEXT,
   obligations JSONB DEFAULT '[]',
   description TEXT,
+  -- '' for an edge without a governed kinship type; the name otherwise. Part
+  -- of the key, so one pair holds one edge for each kinship type (005).
+  kinship_type TEXT NOT NULL DEFAULT '',
+  context JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  PRIMARY KEY (from_id, to_id)
+  PRIMARY KEY (from_id, to_id, kinship_type)
 );
 
 -- Ceremonies table
