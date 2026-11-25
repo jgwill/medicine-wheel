@@ -17,6 +17,7 @@ export * from './roles.js';
 export * from './people.js';
 export * from './circles.js';
 export * from './episode-circle.js';
+export * from './agent-kinship.js';
 export * from './credentials.js';
 export * from './invitations.js';
 export * from './audit.js';
