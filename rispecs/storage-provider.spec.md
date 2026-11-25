@@ -91,6 +91,12 @@ An edge update or deletion that targets no relation fails with a typed edge-not-
 
 An edge is identified by its ordered pair of nodes. An edge that names a governed kinship type is identified by the pair and that name, so one pair holds one edge without a kinship type and one edge for each kinship type. Get, update and delete take the kinship type as an optional last argument and reach the edge without one when it is left out. An edge also keeps the context that authorizes and bounds it. The rule and its reasons are in `agent-kinship.spec.md`. JSONL implements it. The Neon implementation and its migration `scripts/005-edges-kinship.sql` are written and have not been run against a database.
 
+A governed edge keeps the date it was first written through every write. An edge without a kinship type keeps its earlier behaviour: writing it again replaces the date.
+
+**Postgres: run `scripts/005-edges-kinship.sql` before starting an upgraded wheel.** The provider reads and writes the `kinship_type` column and the key `(from_id, to_id, kinship_type)`. Connecting does not create or alter `nodes`, `edges` or `ceremonies`. Until the script has run on an existing database, every edge operation fails.
+
+**No rollback once a governed edge exists, and no earlier writer on the files.** Code from before this rule knows one edge per ordered pair: the earlier provider's write on a pair removes the governed edges of that pair, and the earlier MCP store reads one edge of the pair and drops the others on its next write. Before going back to earlier code, read every edge that has a `kinship_type`, keep that list outside the store, and release each one with the current code. `agent-kinship.spec.md` gives the steps.
+
 ### Ceremonies
 
 The provider supports logging, retrieval, timelines, filtering by direction and ceremony type, paged listing, and explicit whole-collection counting.

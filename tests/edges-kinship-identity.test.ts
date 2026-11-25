@@ -101,6 +101,19 @@ describe("edge identity in the JSONL provider", () => {
     expect((await store.getAllEdges()).map((e) => [e.id, e.ceremony_honored]).sort()).toEqual([["a:p", true], ["a:p:SERVES", true]]);
   });
 
+  it("RV5: a governed edge keeps the date it was first written through every write; an edge without a kinship type does as it did", async () => {
+    await store.createEdge(governed("SERVES", { created_at: "2026-01-01T00:00:00.000Z" }) as never);
+    await store.createEdge(governed("SERVES", { created_at: "2026-11-24T22:00:00.000Z", ceremony_honored: true }) as never);
+    expect(await store.getEdge("a", "p", "SERVES")).toMatchObject({ created_at: "2026-01-01T00:00:00.000Z", ceremony_honored: true });
+    await store.updateEdge("a", "p", { strength: 0.9 }, "SERVES");
+    await store.updateEdgeCeremony("a", "p", "ceremony-1");
+    expect((await store.getEdge("a", "p", "SERVES"))?.created_at).toBe("2026-01-01T00:00:00.000Z");
+
+    await store.createEdge(edge({ created_at: "2026-01-01T00:00:00.000Z" }));
+    await store.createEdge(edge({ created_at: "2026-11-24T22:00:00.000Z" }));
+    expect((await store.getEdge("a", "p"))?.created_at).toBe("2026-11-24T22:00:00.000Z");
+  });
+
   it("a store written before these fields existed reads as it did", async () => {
     fs.writeFileSync(path.join(dir, "edges.jsonl"), JSON.stringify({ from_id: "a", to_id: "p", relationship_type: "member_of", strength: 1, ceremony_honored: false, obligations: ["show up"], created_at: at }) + "\n");
     const fresh = new JsonlProvider(dir);

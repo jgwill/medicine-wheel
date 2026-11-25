@@ -225,7 +225,7 @@ describe("two agents speaking with each other, with a context and a state", () =
     expect(edges[0]).toMatchObject({ kinship_type: "speaks-with", relationship_type: "speaks-with", context: { state: "proposed", stated_by: sol.id } });
     expect(edges[0].context?.authorized_by).toBeUndefined();
     expect(agentKinship(sol.id, edges).speaks_with).toEqual([
-      { agent_id: luma.id, words: "I would like to ask Luma how she keeps her notes.", said_by: sol.id, state: "proposed", since: T0 },
+      { agent_id: luma.id, words: "I would like to ask Luma how she keeps her notes.", said_by: sol.id, state: "proposed", state_set_by: sol.id, since: T0 },
     ]);
   });
 
@@ -234,7 +234,7 @@ describe("two agents speaking with each other, with a context and a state", () =
     expect(agentKinship(luma.id, edges).speaks_with).toMatchObject([{ agent_id: sol.id, state: "proposed", said_by: sol.id }]);
     const fromLuma = planned(planAgentKinship({
       agent: luma, nodes: everyone, now: T1, edges,
-      input: AgentKinshipInputSchema.parse({ speaks_with: [{ agent_id: sol.id, state: "active", authorized_by: ada.id }] }),
+      input: AgentKinshipInputSchema.parse({ speaks_with: [{ agent_id: sol.id, state: "active", authorized_by: ada.id, state_set_by: ada.id }] }),
     }));
     expect([fromLuma[0].from_id, fromLuma[0].to_id]).toEqual([edges[0].from_id, edges[0].to_id]);
   });
@@ -244,7 +244,7 @@ describe("two agents speaking with each other, with a context and a state", () =
     const active = planned(planAgentKinship({
       agent: sol, nodes: everyone, now: T1, edges,
       input: AgentKinshipInputSchema.parse({
-        speaks_with: [{ agent_id: luma.id, state: "active", authorized_by: ada.id, valid_when: "about the notes of an episode both sit in", forbidden_when: "about a person who is not in the room" }],
+        speaks_with: [{ agent_id: luma.id, state: "active", authorized_by: ada.id, state_set_by: ada.id, valid_when: "about the notes of an episode both sit in", forbidden_when: "about a person who is not in the room" }],
       }),
     }));
     expect(agentKinship(sol.id, active).speaks_with).toEqual([{
@@ -252,6 +252,7 @@ describe("two agents speaking with each other, with a context and a state", () =
       words: "I would like to ask Luma how she keeps her notes.",
       said_by: sol.id,
       state: "active",
+      state_set_by: ada.id,
       authorized_by: ada.id,
       valid_when: "about the notes of an episode both sit in",
       forbidden_when: "about a person who is not in the room",
@@ -262,14 +263,15 @@ describe("two agents speaking with each other, with a context and a state", () =
   it("is active only when someone authorized it", () => {
     const plan = planAgentKinship({
       agent: sol, nodes: everyone, edges: propose(),
-      input: AgentKinshipInputSchema.parse({ speaks_with: [{ agent_id: luma.id, state: "active" }] }),
+      input: AgentKinshipInputSchema.parse({ speaks_with: [{ agent_id: luma.id, state: "active", state_set_by: ada.id }] }),
     });
     expect(refusalsOf(plan)).toEqual(["speaks_with.0.authorized_by"]);
   });
 
   it("follows its life: proposed, active, paused, ended, and proposed again", () => {
+    // Every move names who makes it (RV6).
     const move = (edges: KinshipEdge[], patch: Record<string, unknown>) =>
-      planAgentKinship({ agent: sol, nodes: everyone, now: T1, edges, input: AgentKinshipInputSchema.parse({ speaks_with: [{ agent_id: luma.id, ...patch }] }) });
+      planAgentKinship({ agent: sol, nodes: everyone, now: T1, edges, input: AgentKinshipInputSchema.parse({ speaks_with: [{ agent_id: luma.id, state_set_by: ada.id, ...patch }] }) });
 
     const proposed = propose();
     expect(refusalsOf(move(proposed, { state: "paused" }))).toEqual(["speaks_with.0.state"]);
@@ -423,10 +425,13 @@ describe("an agent serves a person, and sees what that person gives it", () => {
   it("before anyone has set a circle's answer, the one constant decides", () => {
     // The value on this branch: allowed for the agents of the facilitator, refused for the agents of the other members.
     expect(AGENT_READERS_WHEN_UNSET).toBe("facilitator");
-    expect(circleAnswerToAgentsOf({}, "facilitator")).toBe("allowed");
-    expect(circleAnswerToAgentsOf({}, "member")).toBe("refused");
-    expect(circleAnswerToAgentsOf({}, "member", "allowed")).toBe("allowed");
-    expect(circleAnswerToAgentsOf({}, "facilitator", "refused")).toBe("refused");
+    // The test is the facilitator the circle names (RV2).
+    expect(circleAnswerToAgentsOf({ facilitator_id: ada.id }, ada.id)).toBe("allowed");
+    expect(circleAnswerToAgentsOf({ facilitator_id: ada.id }, noor.id)).toBe("refused");
+    expect(circleAnswerToAgentsOf({}, ada.id)).toBe("refused");
+    expect(circleAnswerToAgentsOf(null, ada.id)).toBe("refused");
+    expect(circleAnswerToAgentsOf({ facilitator_id: ada.id }, noor.id, "allowed")).toBe("allowed");
+    expect(circleAnswerToAgentsOf({ facilitator_id: ada.id }, ada.id, "refused")).toBe("refused");
 
     const edges = [...memberships, ...serves(sol, ada, [{ kind: "see_circles", scope: "sits_in" }])];
     expect(seen(sol, edges, [adaCircle, noorCircle, openCircle])).toEqual([[adaCircle.id, ada.id, "sits_in"]]);
@@ -543,5 +548,139 @@ describe("what the wheel reads back for one person", () => {
 
   it("a node that is not a person's seat has no reading", () => {
     expect(readKinship(circle, { edges, nodes })).toBeNull();
+  });
+});
+
+// ── What the independent review of 2026-11-24 found (RV codes), each pinned here ──
+
+describe("RV2: a circle nobody has set answers by the facilitator it names, not by who holds 'facilitate'", () => {
+  // Ada is the facilitator the circle names. Noor also holds 'facilitate' on her membership, as a co-facilitator does.
+  const shared = circleNode({ id: "circle:shared", name: "The shared circle", intention: "to talk", facilitator_id: ada.id }, T0);
+  const memberships: KinshipEdge[] = [
+    membershipEdge(ada.id, shared.id, "facilitator", T0),
+    membershipEdge(noor.id, shared.id, "facilitator", T0),
+  ];
+  const serves = (agent: RelationalNode, person: RelationalNode, scope: string) => planned(planAgentKinship({
+    agent, nodes: everyone, now: T0,
+    input: AgentKinshipInputSchema.parse({ serves: [{ person_id: person.id, words: "works with me", said_by: person.id, grants: [{ kind: "see_circles", scope }] }] }),
+  }));
+
+  it("allows only the agents of the person named by the circle's facilitator_id", () => {
+    const edges = [...memberships, ...serves(sol, ada, "sits_in"), ...serves(luma, noor, "sits_in")];
+    expect(circlesSeenBy(sol.id, { edges, circles: [shared] }).map((v) => v.circle_id)).toEqual([shared.id]);
+    expect(circlesSeenBy(luma.id, { edges, circles: [shared] })).toEqual([]);
+    expect(agentReadersOfCircle(shared.id, { edges, circles: [shared] }).map((r) => [r.agent_id, r.through_person_id, r.member_role, r.sees])).toEqual([
+      [sol.id, ada.id, "facilitator", true],
+      [luma.id, noor.id, "facilitator", false],
+    ]);
+  });
+
+  it("holds for scope facilitated too: the grant reaches the circle, the unset circle holds the agent back", () => {
+    const edges = [...memberships, ...serves(luma, noor, "facilitated")];
+    expect(circlesSeenBy(luma.id, { edges, circles: [shared] })).toEqual([]);
+    expect(agentReadersOfCircle(shared.id, { edges, circles: [shared] })).toMatchObject([{ agent_id: luma.id, scope: "facilitated", sees: false }]);
+  });
+
+  it("a circle that names no facilitator refuses, and so does a circle whose node is not at hand", () => {
+    const { facilitator_id: _gone, ...unnamed } = shared.metadata;
+    const edges = [...memberships, ...serves(sol, ada, "sits_in")];
+    expect(circlesSeenBy(sol.id, { edges, circles: [{ ...shared, metadata: unnamed }] })).toEqual([]);
+    expect(circlesSeenBy(sol.id, { edges, circles: [] })).toEqual([]);
+  });
+
+  it("once the circle has set its answer, the answer holds for every member's agent", () => {
+    const edges = [...memberships, ...serves(sol, ada, "sits_in"), ...serves(luma, noor, "sits_in")];
+    const allowed = { ...shared, metadata: agentReadersPatch("allowed", ada.id, shared.metadata, T0) };
+    expect(circlesSeenBy(luma.id, { edges, circles: [allowed] }).map((v) => v.circle_id)).toEqual([shared.id]);
+    const refused = { ...shared, metadata: agentReadersPatch("refused", ada.id, shared.metadata, T0) };
+    expect(circlesSeenBy(sol.id, { edges, circles: [refused] })).toEqual([]);
+  });
+});
+
+describe("RV4: saying a relation again keeps what ceremonies wrote on it", () => {
+  const honoured = { ceremony_honored: true, strength: 0.4, obligations: ["listen first"], last_ceremony: "ceremony:1", ceremony_id: "ceremony:1" };
+
+  it("origin, responsibility and service keep ceremony_honored, strength, obligations and the ceremony", () => {
+    const first = planned(planAgentKinship({
+      agent: sol, nodes: everyone, now: T0,
+      input: AgentKinshipInputSchema.parse({
+        comes_from: [{ person_id: ada.id, words: "I made Sol.", said_by: ada.id }],
+        responsibility_held_by: [{ person_id: ada.id, words: "I answer for Sol.", said_by: ada.id }],
+        serves: [{ person_id: ada.id, words: "Sol works with me.", said_by: ada.id }],
+      }),
+    })).map((edge) => ({ ...edge, ...honoured }));
+    const again = planned(planAgentKinship({
+      agent: sol, nodes: everyone, now: T1, edges: first,
+      input: AgentKinshipInputSchema.parse({
+        comes_from: [{ person_id: ada.id, words: "I made Sol, with Noor.", said_by: ada.id }],
+        responsibility_held_by: [{ person_id: ada.id, words: "I still answer for Sol.", said_by: ada.id }],
+        serves: [{ person_id: ada.id, words: "Sol works with me.", said_by: ada.id, grants: [{ kind: "see_circles", scope: "facilitated" }] }],
+      }),
+    }));
+    expect(again).toHaveLength(3);
+    for (const edge of again) expect(edge).toMatchObject({ ...honoured, created_at: T0 });
+    expect(again[0].description).toBe("I made Sol, with Noor.");
+  });
+
+  it("a dialogue's state move keeps them too", () => {
+    const proposed = planned(planAgentKinship({
+      agent: sol, nodes: everyone, now: T0,
+      input: AgentKinshipInputSchema.parse({ speaks_with: [{ agent_id: luma.id, words: "About notes.", said_by: sol.id }] }),
+    })).map((edge) => ({ ...edge, ...honoured }));
+    const active = planned(planAgentKinship({
+      agent: sol, nodes: everyone, now: T1, edges: proposed,
+      input: AgentKinshipInputSchema.parse({ speaks_with: [{ agent_id: luma.id, state: "active", authorized_by: ada.id, state_set_by: ada.id }] }),
+    }));
+    expect(active[0]).toMatchObject({ ...honoured, created_at: T0, context: { state: "active" } });
+  });
+
+  it("a relation written for the first time starts as before", () => {
+    const first = planned(planAgentKinship({ agent: sol, nodes: everyone, now: T0, input: AgentKinshipInputSchema.parse({ comes_from: [{ person_id: ada.id, words: "I made Sol.", said_by: ada.id }] }) }));
+    expect(first[0]).toMatchObject({ ceremony_honored: false, strength: 1, obligations: [] });
+    expect(first[0].last_ceremony).toBeUndefined();
+  });
+});
+
+describe("RV6: a dialogue's words keep their speaker; who moves its state is kept apart", () => {
+  const proposed = planned(planAgentKinship({
+    agent: sol, nodes: everyone, now: T0,
+    input: AgentKinshipInputSchema.parse({ speaks_with: [{ agent_id: luma.id, words: "I would like to ask Luma about notes.", said_by: sol.id }] }),
+  }));
+  const move = (edges: KinshipEdge[], patch: Record<string, unknown>) => {
+    const parsed = AgentKinshipInputSchema.safeParse({ speaks_with: [{ agent_id: luma.id, ...patch }] });
+    if (!parsed.success) return { ok: false as const, refusals: parsed.error.issues.map((i) => ({ path: i.path.join("."), message: i.message })) };
+    return planAgentKinship({ agent: sol, nodes: everyone, now: T1, edges, input: parsed.data });
+  };
+
+  it("the review's probe: said_by with a state and no words does not take the first speaker's words", () => {
+    const plan = move(proposed, { said_by: ada.id, state: "active", authorized_by: ada.id });
+    // Before the fix this was planned, with Sol's words under stated_by Ada.
+    expect(plan.ok).toBe(false);
+    expect(refusalsOf(plan)).toContain("speaks_with.0.said_by");
+  });
+
+  it("a state move names who moves it, and leaves the words and their speaker as they are", () => {
+    const active = planned(move(proposed, { state: "active", authorized_by: ada.id, state_set_by: luma.id }));
+    expect(active[0]).toMatchObject({ description: "I would like to ask Luma about notes.", context: { stated_by: sol.id, state: "active", authorized_by: ada.id, state_set_by: luma.id } });
+    expect(agentKinship(sol.id, active).speaks_with[0]).toMatchObject({ said_by: sol.id, state: "active", state_set_by: luma.id });
+
+    const paused = planned(move(active, { state: "paused", state_set_by: noor.id }));
+    expect(paused[0].context).toMatchObject({ stated_by: sol.id, state: "paused", state_set_by: noor.id, authorized_by: ada.id });
+  });
+
+  it("a state move that does not say who moves it is refused, and so is a mover with no move", () => {
+    expect(refusalsOf(move(proposed, { state: "active", authorized_by: ada.id }))).toEqual(["speaks_with.0.state_set_by"]);
+    expect(refusalsOf(move(proposed, { state_set_by: ada.id, valid_when: "in the open" }))).toEqual(["speaks_with.0.state_set_by"]);
+    expect(refusalsOf(move(proposed, { state: "active", authorized_by: ada.id, state_set_by: "node:human:nobody" }))).toEqual(["speaks_with.0.state_set_by"]);
+  });
+
+  it("new words come with their speaker and replace both; the state and who set it stay", () => {
+    const active = planned(move(proposed, { state: "active", authorized_by: ada.id, state_set_by: ada.id }));
+    const reworded = planned(move(active, { words: "We talk about notes and nothing else.", said_by: luma.id }));
+    expect(reworded[0]).toMatchObject({ description: "We talk about notes and nothing else.", context: { stated_by: luma.id, state: "active", state_set_by: ada.id } });
+  });
+
+  it("a new relation's state is set by the one who proposed it", () => {
+    expect(proposed[0].context).toMatchObject({ state: "proposed", stated_by: sol.id, state_set_by: sol.id });
   });
 });

@@ -87,8 +87,11 @@ export interface AgentReaders {
 
 /**
  * What a circle answers before anyone has set it: `allowed`, `refused`, or
- * `facilitator`, which allows the agents of the circle's facilitator and
- * refuses the agents of its other members until the answer is set.
+ * `facilitator`, which allows the agents of the one person the circle names
+ * as its facilitator (`facilitator_id`) and refuses the agents of every other
+ * member until the answer is set. A member who also holds `facilitate` on
+ * their membership is another member here, and a circle that names no
+ * facilitator refuses.
  */
 export type AgentReadersWhenUnset = AgentReadersAnswer | 'facilitator';
 
@@ -208,16 +211,22 @@ export function agentReadersPatch(
 
 /**
  * What a circle answers to the agents of one member: the answer it carries,
- * or, before anyone has set one, what `whenUnset` says for a member of this role.
+ * or, before anyone has set one, what `whenUnset` says for this person.
+ * `metadata` is the circle node's own. Under `facilitator` the test is the
+ * circle's `facilitator_id`, never the obligations on a membership edge:
+ * several members can hold `facilitate`, and the circle names one facilitator.
  */
 export function circleAnswerToAgentsOf(
   metadata: Record<string, unknown> | null | undefined,
-  role: CircleRole,
+  person_id: string,
   whenUnset: AgentReadersWhenUnset = AGENT_READERS_WHEN_UNSET,
 ): AgentReadersAnswer {
   const set = agentReadersOf(metadata);
   if (set) return set.answer;
-  if (whenUnset === 'facilitator') return role === 'facilitator' ? 'allowed' : 'refused';
+  if (whenUnset === 'facilitator') {
+    const facilitator = metadata?.facilitator_id;
+    return typeof facilitator === 'string' && facilitator !== '' && facilitator === person_id ? 'allowed' : 'refused';
+  }
   return whenUnset;
 }
 

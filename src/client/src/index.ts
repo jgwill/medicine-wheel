@@ -145,12 +145,17 @@ export interface KinStatement {
   said_by: string;
 }
 
-/** Two agents speak with each other. For a relation already on the wheel, what is left out stays as it is. */
+/**
+ * Two agents speak with each other. For a relation already on the wheel, what
+ * is left out stays as it is. `said_by` comes only with `words`. Every move
+ * of the state names who makes it in `state_set_by`.
+ */
 export interface DialogueStatement {
   agent_id: string;
   words?: string;
   said_by?: string;
   state?: RelationState;
+  state_set_by?: string;
   authorized_by?: string;
   valid_when?: string | null;
   forbidden_when?: string | null;
@@ -180,7 +185,7 @@ export interface AgentKinshipRead {
   comes_from: Array<KinRead & { person_id: string }>;
   responsibility_held_by: Array<KinRead & { person_id: string }>;
   serves: Array<KinRead & { person_id: string; grants: RelationGrant[] }>;
-  speaks_with: Array<KinRead & { agent_id: string; state: RelationState; authorized_by?: string; valid_when?: string; forbidden_when?: string }>;
+  speaks_with: Array<KinRead & { agent_id: string; state: RelationState; state_set_by?: string; authorized_by?: string; valid_when?: string; forbidden_when?: string }>;
 }
 
 /** A circle's answer to the agents of its members. */

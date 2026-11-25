@@ -107,6 +107,7 @@ export const RelationContextSchema = z.object({
   forbidden_when: z.string().optional(),
   authorized_kin: z.array(z.string()).optional(),
   state: RelationStateSchema.optional(),
+  state_set_by: z.string().optional(),
   stated_by: z.string().optional(),
   grants: z.array(RelationGrantSchema).optional(),
 });

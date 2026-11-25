@@ -14,6 +14,7 @@ import {
   ServiceFacetSchema,
 } from "@medicine-wheel/infra";
 import { INFRA_ENTITY_BINDING, KINSHIP_EDGE_NAMES, RelationContextSchema, isKinshipEdgeName } from "@medicine-wheel/ontology-core";
+import { agentKinshipWriteRefusal, isAgentKinshipEdge } from "@medicine-wheel/community-identity";
 import {
   createBeat as authorBeat,
   validateBeatDraft,
@@ -179,8 +180,9 @@ export const integrationTools: Tool[] = [
         kinship_type: {
           type: "string",
           description:
-            "A governed kinship-edge name (e.g. 'holds-responsibility-for', 'speaks-with'). The relation is then identified by its two nodes and this name, " +
-            "beside the one relation the pair holds without any. relationship_type must say the same name",
+            "A governed kinship-edge name (e.g. 'tends-to', 'part-of'). The relation is then identified by its two nodes and this name, " +
+            "beside the one relation the pair holds without any. relationship_type must say the same name. " +
+            "The four relations between a person and their agents (BORN_FROM, holds-responsibility-for, SERVES, speaks-with) are written with relate_agent and define_agent: this tool does not create them or change their context or words",
         },
         context: {
           type: "object",
@@ -210,17 +212,38 @@ export const integrationTools: Tool[] = [
           };
         }
 
+        const words = typeof description === "string" && description.trim() ? description.trim() : undefined;
+        // The edge this write would replace: same two nodes, same kinship type.
+        const previous = kinship_type !== undefined
+          ? (await store.getAllEdges()).find((e) => e.from_id === from_node_id && e.to_id === to_node_id && e.kinship_type === kinship_type)
+          : undefined;
+        // The four relations between a person and their agents are checked by
+        // the kinship tools. This tool does not create them and does not change
+        // their context or their words (rispecs/agent-kinship.spec.md).
+        const refusal = agentKinshipWriteRefusal({
+          kinship_type: kinship_type === undefined ? undefined : String(kinship_type),
+          existing: previous as any,
+          context: parsedContext?.success ? parsedContext.data : undefined,
+          description: words,
+        });
+        if (refusal) return { status: "error", message: `${refusal} Nothing was created.`, hint: "Use relate_agent, or define_agent for a new agent." };
+        const kept = previous && isAgentKinshipEdge(kinship_type) ? previous : undefined;
+        const keptWords = kept ? kept.description : words;
+        const keptContext = kept ? kept.context : parsedContext?.success ? (parsedContext.data as Record<string, unknown>) : undefined;
+
         const edge = {
           from_id: from_node_id,
           to_id: to_node_id,
           relationship_type,
-          strength,
-          ceremony_honored: false,
-          obligations,
-          ...(typeof description === "string" && description.trim() ? { description: description.trim() } : {}),
+          strength: kept && args.strength === undefined ? kept.strength : strength,
+          ceremony_honored: kept ? kept.ceremony_honored : false,
+          obligations: kept && !args.obligations ? kept.obligations : obligations,
+          ...(kept?.ceremony_id ? { ceremony_id: kept.ceremony_id } : {}),
+          ...(keptWords ? { description: keptWords } : {}),
           ...(kinship_type !== undefined ? { kinship_type: String(kinship_type) } : {}),
-          ...(parsedContext?.success ? { context: parsedContext.data as Record<string, unknown> } : {}),
-          created_at: new Date().toISOString(),
+          ...(keptContext ? { context: keptContext } : {}),
+          // A governed relation keeps the date it was first written.
+          created_at: previous ? previous.created_at : new Date().toISOString(),
         };
 
         await store.createEdge(edge);

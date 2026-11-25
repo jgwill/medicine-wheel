@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { agentKinship, DefineAgentSchema, nodeIdsNamedIn, planDefineAgent, type KinshipEdge } from "@medicine-wheel/community-identity";
-import { nodeWritten } from "@medicine-wheel/events";
+import { nodeRemoved, nodeWritten, relationRemoved } from "@medicine-wheel/events";
 import { createProvider, detectProvider } from "@medicine-wheel/storage-provider";
 import { nodesById, refusalIssues, writeKinshipEdges } from "@/lib/agent-kinship";
 import { recordEvent } from "@/lib/event-log";
@@ -55,28 +55,32 @@ export async function POST(request: Request) {
 
     // No provider offers a transaction across a node and its edges, so the
     // two are written in order and undone in reverse when a write fails: the
-    // wheel is left without half an agent.
+    // wheel is left without half an agent. The event log is kept in step.
+    // Each write is recorded as it lands and each removal as it is made, so
+    // the log never holds a relation that was made and is nowhere.
     const written: KinshipEdge[] = [];
+    const ends = new Map([...named, [plan.node.id, plan.node]]);
     await store.createNode(plan.node);
+    recordEvent(nodeWritten(null, plan.node));
     try {
-      await writeKinshipEdges(store, plan.edges, new Map([...named, [plan.node.id, plan.node]]), written);
+      await writeKinshipEdges(store, plan.edges, ends, written);
     } catch (error: unknown) {
-      const undone: string[] = [];
-      for (const edge of written.reverse()) {
-        await store.deleteEdge(edge.from_id, edge.to_id, edge.kinship_type).then(() => undone.push(`${edge.kinship_type}`), () => undefined);
+      for (const edge of [...written].reverse()) {
+        const removed = await store.deleteEdge(edge.from_id, edge.to_id, edge.kinship_type).then(() => true, () => false);
+        if (removed) recordEvent(relationRemoved(edge, { from: ends.get(edge.from_id), to: ends.get(edge.to_id) }));
       }
-      const nodeRemoved = await store.deleteNode(plan.node.id).then(() => true, () => false);
+      const nodeGone = await store.deleteNode(plan.node.id).then(() => true, () => false);
+      if (nodeGone) recordEvent(nodeRemoved(plan.node));
       const message = error instanceof Error ? error.message : String(error);
       return NextResponse.json(
         {
           error: `The agent's relations could not be written: ${message}`,
-          rolled_back: nodeRemoved,
-          ...(nodeRemoved ? {} : { left_on_the_wheel: plan.node.id }),
+          rolled_back: nodeGone,
+          ...(nodeGone ? {} : { left_on_the_wheel: plan.node.id }),
         },
         { status: 500 },
       );
     }
-    recordEvent(nodeWritten(null, plan.node));
 
     return NextResponse.json(
       {
