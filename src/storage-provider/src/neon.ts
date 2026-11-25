@@ -181,22 +181,27 @@ export class NeonProvider implements StorageProvider {
 
   async createEdge(edge: RelationalEdge): Promise<void> {
     await this.db`
-      INSERT INTO edges (from_id, to_id, relationship_type, strength, ceremony_honored, last_ceremony, obligations, description, created_at)
-      VALUES (${edge.from_id}, ${edge.to_id}, ${edge.relationship_type}, ${edge.strength},
+      INSERT INTO edges (from_id, to_id, kinship_type, relationship_type, strength, ceremony_honored, last_ceremony, obligations, description, context, created_at)
+      VALUES (${edge.from_id}, ${edge.to_id}, ${edge.kinship_type || ''}, ${edge.relationship_type}, ${edge.strength},
               ${edge.ceremony_honored}, ${edge.last_ceremony || null}, ${JSON.stringify(edge.obligations)},
-              ${edge.description || null}, ${edge.created_at})
-      ON CONFLICT (from_id, to_id) DO UPDATE SET
+              ${edge.description || null}, ${edge.context ? JSON.stringify(edge.context) : null}, ${edge.created_at})
+      ON CONFLICT (from_id, to_id, kinship_type) DO UPDATE SET
         relationship_type = EXCLUDED.relationship_type,
         strength = EXCLUDED.strength,
         ceremony_honored = EXCLUDED.ceremony_honored,
         last_ceremony = EXCLUDED.last_ceremony,
         obligations = EXCLUDED.obligations,
-        description = EXCLUDED.description
+        description = EXCLUDED.description,
+        context = EXCLUDED.context
     `;
   }
 
-  async getEdge(fromId: string, toId: string): Promise<RelationalEdge | null> {
-    const rows = await this.db`SELECT * FROM edges WHERE from_id = ${fromId} AND to_id = ${toId}`;
+  // `kinship_type` is part of the key (scripts/005-edges-kinship.sql). The
+  // column holds '' for an edge without one, because a primary key takes no NULL.
+  async getEdge(fromId: string, toId: string, kinshipType?: string): Promise<RelationalEdge | null> {
+    const rows = await this.db`
+      SELECT * FROM edges WHERE from_id = ${fromId} AND to_id = ${toId} AND kinship_type = ${kinshipType || ''}
+    `;
     if (rows.length === 0) return null;
     return this.parseEdge(rows[0]);
   }
@@ -229,9 +234,9 @@ export class NeonProvider implements StorageProvider {
     `;
   }
 
-  async updateEdge(fromId: string, toId: string, patch: EdgePatch): Promise<RelationalEdge> {
-    const existing = await this.getEdge(fromId, toId);
-    if (!existing) throw new EdgeNotFoundError(fromId, toId);
+  async updateEdge(fromId: string, toId: string, patch: EdgePatch, kinshipType?: string): Promise<RelationalEdge> {
+    const existing = await this.getEdge(fromId, toId, kinshipType);
+    if (!existing) throw new EdgeNotFoundError(fromId, toId, kinshipType);
 
     const next: RelationalEdge = {
       ...existing,
@@ -244,6 +249,7 @@ export class NeonProvider implements StorageProvider {
         : {}),
       ...(patch.obligations !== undefined ? { obligations: patch.obligations } : {}),
       ...(patch.description !== undefined ? { description: patch.description } : {}),
+      ...(patch.context !== undefined ? { context: patch.context } : {}),
     };
 
     await this.db`
@@ -252,23 +258,28 @@ export class NeonProvider implements StorageProvider {
         strength = ${next.strength},
         ceremony_honored = ${next.ceremony_honored},
         obligations = ${JSON.stringify(next.obligations)},
-        description = ${next.description || null}
-      WHERE from_id = ${fromId} AND to_id = ${toId}
+        description = ${next.description || null},
+        context = ${next.context ? JSON.stringify(next.context) : null}
+      WHERE from_id = ${fromId} AND to_id = ${toId} AND kinship_type = ${kinshipType || ''}
     `;
 
     return next;
   }
 
-  async deleteEdge(fromId: string, toId: string): Promise<void> {
+  async deleteEdge(fromId: string, toId: string, kinshipType?: string): Promise<void> {
     const deleted = await this.db`
-      DELETE FROM edges WHERE from_id = ${fromId} AND to_id = ${toId} RETURNING from_id
+      DELETE FROM edges
+      WHERE from_id = ${fromId} AND to_id = ${toId} AND kinship_type = ${kinshipType || ''}
+      RETURNING from_id
     `;
-    if (deleted.length === 0) throw new EdgeNotFoundError(fromId, toId);
+    if (deleted.length === 0) throw new EdgeNotFoundError(fromId, toId, kinshipType);
   }
 
   private parseEdge(row: Record<string, unknown>): RelationalEdge {
+    const kinshipType = typeof row.kinship_type === 'string' && row.kinship_type ? row.kinship_type : undefined;
+    const context = parseJsonValue<RelationalEdge['context'] | null>(row.context, null);
     return {
-      id: `${row.from_id as string}:${row.to_id as string}`,
+      id: [row.from_id as string, row.to_id as string, ...(kinshipType ? [kinshipType] : [])].join(':'),
       from_id: row.from_id as string,
       to_id: row.to_id as string,
       relationship_type: row.relationship_type as string,
@@ -277,6 +288,8 @@ export class NeonProvider implements StorageProvider {
       last_ceremony: (row.last_ceremony as string) || undefined,
       obligations: parseJsonValue<string[]>(row.obligations, []),
       ...(typeof row.description === 'string' && row.description ? { description: row.description } : {}),
+      ...(kinshipType ? { kinship_type: kinshipType as RelationalEdge['kinship_type'] } : {}),
+      ...(context && typeof context === 'object' ? { context } : {}),
       created_at: toIsoString(row.created_at),
     };
   }

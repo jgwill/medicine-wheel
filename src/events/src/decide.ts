@@ -312,9 +312,13 @@ export interface RelationLike {
   ceremony_id?: string;
   obligations?: string[];
   description?: string;
+  /** The governed kinship type, when the relation names one. With the two ends it identifies the relation. */
+  kinship_type?: string;
+  /** What authorizes and bounds the relation: who said it, its state, what is given along it. */
+  context?: unknown;
 }
 
-const RELATION_FIELDS = ['relationship_type', 'strength', 'ceremony_honored', 'ceremony_id', 'obligations', 'description'] as const;
+const RELATION_FIELDS = ['relationship_type', 'strength', 'ceremony_honored', 'ceremony_id', 'obligations', 'description', 'context'] as const;
 
 /** The nodes at either end of a relation, when the writer holds them. */
 export interface RelationEnds {

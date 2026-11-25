@@ -342,7 +342,7 @@ export default function NodesPage() {
                               const otherId = e.from_id === node.id ? e.to_id : e.from_id;
                               const other = nodes.find((n) => n.id === otherId);
                               return (
-                                <div key={`${e.from_id}:${e.to_id}`} className="py-1 text-sm border-b border-border/50 flex items-center gap-2">
+                                <div key={[e.from_id, e.to_id, ...(e.kinship_type ? [e.kinship_type] : [])].join(":")} className="py-1 text-sm border-b border-border/50 flex items-center gap-2">
                                   <span className="text-muted-foreground">{e.relationship_type}</span>
                                   <span aria-hidden>{e.from_id === node.id ? "→" : "←"}</span>
                                   {other?.name || "?"}

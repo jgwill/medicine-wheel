@@ -15,8 +15,16 @@ type NodeRecord = RelationalNode & { description?: string };
 
 const DIRECTION_ICONS: Record<DirectionName, string> = { east: "🌅", south: "🌞", west: "🌄", north: "❄️" };
 
-function edgeKey(edge: Pick<RelationalEdge, "from_id" | "to_id">): string {
-  return `${edge.from_id}:${edge.to_id}`;
+// A relation is identified by its two ends, and by its kinship type when it
+// names one: an agent can come from a person and also serve that person.
+function edgeKey(edge: Pick<RelationalEdge, "from_id" | "to_id" | "kinship_type">): string {
+  return [edge.from_id, edge.to_id, ...(edge.kinship_type ? [edge.kinship_type] : [])].join(":");
+}
+
+/** The query that reaches this relation on /api/edges, and no other relation of the same pair. */
+function edgeQuery(edge: Pick<RelationalEdge, "from_id" | "to_id" | "kinship_type">): string {
+  const base = `from=${encodeURIComponent(edge.from_id)}&to=${encodeURIComponent(edge.to_id)}`;
+  return edge.kinship_type ? `${base}&kinship_type=${encodeURIComponent(edge.kinship_type)}` : base;
 }
 
 function NodeChip({ node, id }: { node?: NodeRecord; id: string }) {
@@ -140,7 +148,7 @@ export default function RelationsPage() {
     };
     setBusy(true);
     try {
-      const res = await fetch(`/api/edges?from=${encodeURIComponent(edge.from_id)}&to=${encodeURIComponent(edge.to_id)}`, {
+      const res = await fetch(`/api/edges?${edgeQuery(edge)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -160,7 +168,7 @@ export default function RelationsPage() {
   async function releaseRelation(edge: RelationalEdge) {
     setBusy(true);
     try {
-      const res = await fetch(`/api/edges?from=${encodeURIComponent(edge.from_id)}&to=${encodeURIComponent(edge.to_id)}`, { method: "DELETE" });
+      const res = await fetch(`/api/edges?${edgeQuery(edge)}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Relation was not released");
       toast.success("Relation released — both nodes remain in the wheel");

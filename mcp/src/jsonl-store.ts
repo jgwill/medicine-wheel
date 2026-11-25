@@ -61,6 +61,14 @@ interface StoredEdge {
   description?: string;
   /** Annotation carried by the relation itself — e.g. which port a `binds-port` claims. */
   metadata?: Record<string, unknown>;
+  /**
+   * A governed kinship-edge name. An edge that names one is identified by its
+   * two ends and this name, so an agent can come from a person and also serve
+   * that person (the same rule as `@medicine-wheel/storage-provider`).
+   */
+  kinship_type?: string;
+  /** What authorizes and bounds the relation: who said it, its state, what is given along it. */
+  context?: Record<string, unknown>;
   created_at: string;
 }
 
@@ -420,7 +428,8 @@ class EdgeCollection {
   }
 
   private edgeKey(edge: StoredEdge): string {
-    return (edge as any).id || `${edge.from_id}:${edge.to_id}`;
+    if ((edge as any).id) return (edge as any).id;
+    return edge.kinship_type ? `${edge.from_id}:${edge.to_id}:${edge.kinship_type}` : `${edge.from_id}:${edge.to_id}`;
   }
 
   private sync(): void {
@@ -599,7 +608,9 @@ export class JsonlStore {
 
   // === Edges ===
   createEdge(edge: StoredEdge): void {
-    const before = this.edges.getAll().find((e) => e.from_id === edge.from_id && e.to_id === edge.to_id);
+    const before = this.edges.getAll().find(
+      (e) => e.from_id === edge.from_id && e.to_id === edge.to_id && (e.kinship_type || '') === (edge.kinship_type || ''),
+    );
     this.edges.add(edge);
     this.record(relationWritten(before, edge, this.endsOf(edge)));
   }
@@ -613,7 +624,9 @@ export class JsonlStore {
     this.edges.updateCeremony(fromId, toId, ceremonyId);
     const after = this.edges.getAll().filter(joins);
     for (const edge of after) {
-      const was = before.find((e) => e.from_id === edge.from_id && e.to_id === edge.to_id);
+      const was = before.find(
+        (e) => e.from_id === edge.from_id && e.to_id === edge.to_id && (e.kinship_type || '') === (edge.kinship_type || ''),
+      );
       this.record(relationWritten(was ?? edge, edge, this.endsOf(edge)));
     }
   }

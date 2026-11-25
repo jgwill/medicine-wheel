@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { KinshipEdgeNameSchema, RelationContextSchema } from "@medicine-wheel/ontology-core";
+import type { KinshipEdgeName, RelationContext } from "@medicine-wheel/ontology-core";
 import {
   createProvider,
   detectProvider,
@@ -9,18 +11,44 @@ import { relationRemoved, relationWritten } from "@medicine-wheel/events";
 import { parseLimit } from "@/lib/api-paging";
 import { recordEvent } from "@/lib/event-log";
 
-const EdgeCreateSchema = z.object({
-  from_id: z.string({ required_error: "from_id is required" }).trim().min(1),
-  to_id: z.string({ required_error: "to_id is required" }).trim().min(1),
-  relationship_type: z
-    .string({ required_error: "relationship_type is required" })
-    .trim()
-    .min(1, "cannot be empty"),
-  strength: z.number().min(0).max(1).optional(),
-  ceremony_honored: z.boolean().optional(),
-  obligations: z.array(z.string()).optional(),
-  description: z.string().trim().max(2000).optional(),
-});
+/**
+ * The context that authorizes and bounds a relation. Strict here: a context
+ * key this wheel does not know is a 400, not a key dropped in silence.
+ */
+const ContextSchema = RelationContextSchema.strict();
+
+/**
+ * A relation may name its governed kinship type (`kinship_type`, from the
+ * registry in ontology-core). It is then identified by its two ends and that
+ * name, so the same two nodes can hold one relation for each kinship type
+ * beside the one relation they hold without any. `relationship_type` may be
+ * left out when `kinship_type` is given, and must say the same name when both
+ * are sent: one relation does not carry two names.
+ */
+const EdgeCreateSchema = z
+  .object({
+    from_id: z.string({ required_error: "from_id is required" }).trim().min(1),
+    to_id: z.string({ required_error: "to_id is required" }).trim().min(1),
+    relationship_type: z.string().trim().min(1, "cannot be empty").optional(),
+    kinship_type: KinshipEdgeNameSchema.optional(),
+    strength: z.number().min(0).max(1).optional(),
+    ceremony_honored: z.boolean().optional(),
+    obligations: z.array(z.string()).optional(),
+    description: z.string().trim().max(2000).optional(),
+    context: ContextSchema.optional(),
+  })
+  .superRefine((edge, ctx) => {
+    if (!edge.relationship_type && !edge.kinship_type) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["relationship_type"], message: "relationship_type is required" });
+    }
+    if (edge.relationship_type && edge.kinship_type && edge.relationship_type !== edge.kinship_type) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["relationship_type"],
+        message: `must be ${edge.kinship_type}, the kinship_type, or left out`,
+      });
+    }
+  });
 
 const EdgePatchSchema = z
   .object({
@@ -29,21 +57,24 @@ const EdgePatchSchema = z
     ceremony_honored: z.boolean().optional(),
     obligations: z.array(z.string()).optional(),
     description: z.string().trim().max(2000).optional(),
+    context: ContextSchema.optional(),
   })
   .strict()
   .refine((patch) => Object.keys(patch).length > 0, {
     message:
-      "Provide at least one field to change: relationship_type, strength, ceremony_honored, obligations, or description.",
+      "Provide at least one field to change: relationship_type, strength, ceremony_honored, obligations, description, or context.",
   });
 
 /**
- * Relations are identified by their pair of nodes (from → to).
- * Accepts ?from=&to=, ?id=<from>:<to>, or from_id/to_id in the body.
+ * Relations are identified by their pair of nodes (from → to), and by their
+ * kinship type when they name one.
+ * Accepts ?from=&to=, ?id=<from>:<to>, or from_id/to_id in the body; and
+ * ?kinship_type=, or kinship_type in the body, for a relation that names one.
  */
 function resolvePair(
   request: Request,
   body: Record<string, unknown> | null,
-): { from: string; to: string } | null {
+): { from: string; to: string; kinship?: string } | null {
   const { searchParams } = new URL(request.url);
   let from = searchParams.get("from");
   let to = searchParams.get("to");
@@ -60,7 +91,12 @@ function resolvePair(
     if (!to && typeof body.to_id === "string") to = body.to_id;
   }
 
-  return from && to ? { from, to } : null;
+  const kinship =
+    searchParams.get("kinship_type") ||
+    (body && typeof body.kinship_type === "string" ? body.kinship_type : "") ||
+    undefined;
+
+  return from && to ? { from, to, ...(kinship ? { kinship } : {}) } : null;
 }
 
 function pairRequired() {
@@ -73,11 +109,15 @@ function pairRequired() {
   );
 }
 
-function relationNotFound(from: string, to: string) {
+function relationNotFound(from: string, to: string, kinship?: string) {
   return NextResponse.json(
     {
-      error: `No relation exists from ${from} to ${to}.`,
-      hint: "Relations are directional — check the from/to order, or refresh the relations list.",
+      error: kinship
+        ? `No ${kinship} relation exists from ${from} to ${to}.`
+        : `No relation exists from ${from} to ${to}.`,
+      hint: kinship
+        ? "Relations are directional — check the from/to order and the kinship_type, or refresh the relations list."
+        : "Relations are directional — check the from/to order, or refresh the relations list. A relation that names a kinship type is reached with ?kinship_type=.",
     },
     { status: 404 },
   );
@@ -162,17 +202,22 @@ export async function POST(request: Request) {
       );
     }
 
-    const previous = await store.getEdge(parsed.data.from_id, parsed.data.to_id);
+    // The relation this write replaces is the one with the same identity: the
+    // pair, and the kinship type when one is named.
+    const kinship = parsed.data.kinship_type as KinshipEdgeName | undefined;
+    const previous = await store.getEdge(parsed.data.from_id, parsed.data.to_id, kinship);
     const replaced = Boolean(previous);
 
     const edge = {
       from_id: parsed.data.from_id,
       to_id: parsed.data.to_id,
-      relationship_type: parsed.data.relationship_type,
+      relationship_type: parsed.data.relationship_type ?? (kinship as string),
       strength: parsed.data.strength ?? 0.5,
       ceremony_honored: parsed.data.ceremony_honored ?? false,
       obligations: parsed.data.obligations ?? [],
       ...(parsed.data.description ? { description: parsed.data.description } : {}),
+      ...(kinship ? { kinship_type: kinship } : {}),
+      ...(parsed.data.context ? { context: parsed.data.context as RelationContext } : {}),
       created_at: new Date().toISOString(),
     };
 
@@ -196,10 +241,11 @@ export async function PATCH(request: Request) {
     const pair = resolvePair(request, body);
     if (!pair) return pairRequired();
 
-    // from_id/to_id in the body only identify the relation — strip before validating the patch.
+    // from_id/to_id/kinship_type in the body only identify the relation — strip before validating the patch.
     const patchBody = body ? { ...body } : {};
     delete patchBody.from_id;
     delete patchBody.to_id;
+    delete patchBody.kinship_type;
 
     const parsed = EdgePatchSchema.safeParse(patchBody);
     if (!parsed.success) {
@@ -214,15 +260,30 @@ export async function PATCH(request: Request) {
       );
     }
 
+    if (pair.kinship && parsed.data.relationship_type && parsed.data.relationship_type !== pair.kinship) {
+      return NextResponse.json(
+        {
+          error: "Invalid relation patch — nothing was changed.",
+          issues: [`relationship_type: a ${pair.kinship} relation keeps its name; remove it and weave another to change its kind`],
+        },
+        { status: 400 },
+      );
+    }
+
     const store = await createProvider();
-    const previous = await store.getEdge(pair.from, pair.to);
-    const edge = await store.updateEdge(pair.from, pair.to, parsed.data);
+    const previous = await store.getEdge(pair.from, pair.to, pair.kinship);
+    const edge = await store.updateEdge(
+      pair.from,
+      pair.to,
+      { ...parsed.data, ...(parsed.data.context ? { context: parsed.data.context as RelationContext } : {}) },
+      pair.kinship,
+    );
     const [fromNode, toNode] = await Promise.all([store.getNode(pair.from), store.getNode(pair.to)]);
     recordEvent(relationWritten(previous ?? edge, edge, { from: fromNode, to: toNode }));
     return NextResponse.json({ success: true, edge, provider: detectProvider() });
   } catch (error: unknown) {
     if (error instanceof EdgeNotFoundError) {
-      return relationNotFound(error.fromId, error.toId);
+      return relationNotFound(error.fromId, error.toId, error.kinshipType);
     }
     return unexpected(error);
   }
@@ -235,18 +296,18 @@ export async function DELETE(request: Request) {
     if (!pair) return pairRequired();
 
     const store = await createProvider();
-    const previous = await store.getEdge(pair.from, pair.to);
+    const previous = await store.getEdge(pair.from, pair.to, pair.kinship);
     const [fromNode, toNode] = await Promise.all([store.getNode(pair.from), store.getNode(pair.to)]);
-    await store.deleteEdge(pair.from, pair.to);
+    await store.deleteEdge(pair.from, pair.to, pair.kinship);
     recordEvent(relationRemoved(previous ?? { from_id: pair.from, to_id: pair.to }, { from: fromNode, to: toNode }));
     return NextResponse.json({
       success: true,
-      deleted: { from_id: pair.from, to_id: pair.to },
+      deleted: { from_id: pair.from, to_id: pair.to, ...(pair.kinship ? { kinship_type: pair.kinship } : {}) },
       provider: detectProvider(),
     });
   } catch (error: unknown) {
     if (error instanceof EdgeNotFoundError) {
-      return relationNotFound(error.fromId, error.toId);
+      return relationNotFound(error.fromId, error.toId, error.kinshipType);
     }
     return unexpected(error);
   }

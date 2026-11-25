@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
-import type { DirectionName, NodeType, CeremonyType } from '@medicine-wheel/ontology-core';
+import type { DirectionName, NodeType, CeremonyType, RelationContext } from '@medicine-wheel/ontology-core';
 import type {
   StorageProvider,
   RelationalNode,
@@ -68,6 +68,8 @@ interface StoredEdge {
   last_ceremony?: string;
   obligations?: string[];
   description?: string;
+  kinship_type?: string;
+  context?: RelationContext;
   created_at: string;
 }
 
@@ -204,10 +206,8 @@ export class JsonlProvider implements StorageProvider {
     });
   }
 
-  async getEdge(fromId: string, toId: string): Promise<RelationalEdge | null> {
-    const edge = this.readEdges().find(
-      (candidate) => candidate.from_id === fromId && candidate.to_id === toId,
-    );
+  async getEdge(fromId: string, toId: string, kinshipType?: string): Promise<RelationalEdge | null> {
+    const edge = this.readEdges().find((candidate) => isEdge(candidate, fromId, toId, kinshipType));
     return edge ? this.parseEdge(edge) : null;
   }
 
@@ -253,13 +253,11 @@ export class JsonlProvider implements StorageProvider {
     });
   }
 
-  async updateEdge(fromId: string, toId: string, patch: EdgePatch): Promise<RelationalEdge> {
+  async updateEdge(fromId: string, toId: string, patch: EdgePatch, kinshipType?: string): Promise<RelationalEdge> {
     return withWriteLock(this.edgesFile, () => {
       const edges = this.readEdges();
-      const index = edges.findIndex(
-        (candidate) => candidate.from_id === fromId && candidate.to_id === toId,
-      );
-      if (index === -1) throw new EdgeNotFoundError(fromId, toId);
+      const index = edges.findIndex((candidate) => isEdge(candidate, fromId, toId, kinshipType));
+      if (index === -1) throw new EdgeNotFoundError(fromId, toId, kinshipType);
 
       const next: StoredEdge = {
         ...edges[index],
@@ -272,6 +270,7 @@ export class JsonlProvider implements StorageProvider {
           : {}),
         ...(patch.obligations !== undefined ? { obligations: patch.obligations } : {}),
         ...(patch.description !== undefined ? { description: patch.description } : {}),
+        ...(patch.context !== undefined ? { context: patch.context } : {}),
       };
 
       edges[index] = next;
@@ -280,14 +279,12 @@ export class JsonlProvider implements StorageProvider {
     });
   }
 
-  async deleteEdge(fromId: string, toId: string): Promise<void> {
+  async deleteEdge(fromId: string, toId: string, kinshipType?: string): Promise<void> {
     await withWriteLock(this.edgesFile, () => {
       const edges = this.readEdges();
-      const remaining = edges.filter(
-        (candidate) => !(candidate.from_id === fromId && candidate.to_id === toId),
-      );
+      const remaining = edges.filter((candidate) => !isEdge(candidate, fromId, toId, kinshipType));
       if (remaining.length === edges.length) {
-        throw new EdgeNotFoundError(fromId, toId);
+        throw new EdgeNotFoundError(fromId, toId, kinshipType);
       }
       writeJsonl(this.edgesFile, remaining);
     });
@@ -540,7 +537,7 @@ export class JsonlProvider implements StorageProvider {
 
   private parseEdge(edge: StoredEdge): RelationalEdge {
     return {
-      id: edge.id ?? `${edge.from_id}:${edge.to_id}`,
+      id: edge.id ?? [edge.from_id, edge.to_id, ...(edge.kinship_type ? [edge.kinship_type] : [])].join(':'),
       from_id: edge.from_id,
       to_id: edge.to_id,
       relationship_type: edge.relationship_type,
@@ -549,6 +546,10 @@ export class JsonlProvider implements StorageProvider {
       last_ceremony: edge.last_ceremony ?? edge.ceremony_id,
       obligations: Array.isArray(edge.obligations) ? edge.obligations : [],
       ...(typeof edge.description === 'string' && edge.description ? { description: edge.description } : {}),
+      ...(typeof edge.kinship_type === 'string' && edge.kinship_type
+        ? { kinship_type: edge.kinship_type as RelationalEdge['kinship_type'] }
+        : {}),
+      ...(edge.context && typeof edge.context === 'object' ? { context: edge.context } : {}),
       created_at: edge.created_at,
     };
   }
@@ -703,9 +704,25 @@ function resolveProjectDataDir(currentDir?: string): string {
   return path.join(cwd, '.mw', 'store');
 }
 
-function edgeKey(edge: Pick<StoredEdge, 'from_id' | 'to_id'>): string {
+/**
+ * What makes two stored edges the same edge: the ordered pair, and the kinship
+ * type when the edge carries one. An edge without a kinship type shares its
+ * key with no edge that has one, so writing either never replaces the other.
+ */
+function edgeKey(edge: Pick<StoredEdge, 'from_id' | 'to_id' | 'kinship_type'>): string {
   // JSON-array encoding avoids false collisions when IDs contain the delimiter.
-  return JSON.stringify([edge.from_id, edge.to_id]);
+  return JSON.stringify(
+    edge.kinship_type ? [edge.from_id, edge.to_id, edge.kinship_type] : [edge.from_id, edge.to_id],
+  );
+}
+
+/** True for the edge of this pair with this kinship type, or with none when none is named. */
+function isEdge(candidate: StoredEdge, fromId: string, toId: string, kinshipType?: string): boolean {
+  return (
+    candidate.from_id === fromId &&
+    candidate.to_id === toId &&
+    (candidate.kinship_type || '') === (kinshipType || '')
+  );
 }
 
 function sortByNewest<T extends Record<K, string>, K extends keyof T>(field: K) {

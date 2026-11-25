@@ -90,6 +90,27 @@ export const RelationalNodeSchema = z.object({
   updated_at: z.string(),
 });
 
+/** The states of a relation that is proposed before it holds, and can pause or end. */
+export const RelationStateSchema = z.enum(['proposed', 'active', 'paused', 'ended']);
+
+/** One thing given along a relation: its kind and how far it reaches. */
+export const RelationGrantSchema = z.object({
+  kind: z.string().trim().min(1),
+  scope: z.string().trim().min(1),
+});
+
+/** Validates the context that authorizes and bounds a relation. */
+export const RelationContextSchema = z.object({
+  authorized_by: z.string().optional(),
+  active_context: z.string().optional(),
+  valid_when: z.string().optional(),
+  forbidden_when: z.string().optional(),
+  authorized_kin: z.array(z.string()).optional(),
+  state: RelationStateSchema.optional(),
+  stated_by: z.string().optional(),
+  grants: z.array(RelationGrantSchema).optional(),
+});
+
 export const RelationalEdgeSchema = z.object({
   id: z.string(),
   from_id: z.string(),
@@ -98,6 +119,8 @@ export const RelationalEdgeSchema = z.object({
   strength: z.number().min(0).max(1),
   ceremony_honored: z.boolean(),
   obligations: z.array(z.string()),
+  kinship_type: KinshipEdgeNameSchema.optional(),
+  context: RelationContextSchema.optional(),
   created_at: z.string(),
 });
 
@@ -135,15 +158,6 @@ export const CeremonyContextSchema = z.object({
   ceremony_id: z.string().optional(),
   ceremony_type: CeremonyTypeSchema.optional(),
   ceremony_honored: z.boolean(),
-});
-
-/** Validates the context that authorizes and bounds a relation. */
-export const RelationContextSchema = z.object({
-  authorized_by: z.string().optional(),
-  active_context: z.string().optional(),
-  valid_when: z.string().optional(),
-  forbidden_when: z.string().optional(),
-  authorized_kin: z.array(z.string()).optional(),
 });
 
 export const RelationSchema = z.object({
