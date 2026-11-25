@@ -51,4 +51,20 @@ mainCircleOf(episode.path, circles);                                     // the 
 mainCeremonyOf(records, { episode_path: episode.path, circle_id: main.id });  // its open talking circle about chronicle:<folder>
 ```
 
+A person and the agents they gave rise to are related by four governed kinship edges (`rispecs/agent-kinship.spec.md`): whom an agent comes from (`BORN_FROM`, agent → person), who holds responsibility for it (`holds-responsibility-for`, person → agent), whom it serves (`SERVES`, agent → person) and which agents speak with each other (`speaks-with`). They are four relations and none implies another. Each keeps the words of the person who said it and who that was. `planDefineAgent` plans an agent's node with its relations, `planAgentKinship` relates an agent that already has a node, and both check the statement against the wheel's records and write nothing. `agentKinship(agent_id, edges)` and `agentsOf(person_id, edges)` read the relations back from either end. The wheel serves them at `POST /api/agents` and `POST` / `GET /api/nodes/{id}/kinship`.
+
+```ts
+const plan = planDefineAgent({
+  input: DefineAgentSchema.parse({
+    agent: { name: 'Wren', role: 'companion_ai' },
+    comes_from: [{ person_id: ada.id, words: 'I made Wren in the autumn of 2026.', said_by: ada.id }],
+    serves: [{ person_id: ada.id, words: 'Wren works with me.', said_by: ada.id, grants: [{ kind: 'see_circles', scope: 'facilitated' }] }],
+  }),
+  nodes: new Map([[ada.id, adaNode]]),
+});                                              // { ok: true, node, edges } or { ok: false, refusals }
+agentKinship(plan.node.id, plan.edges).comes_from;   // [{ person_id, words, said_by, since }]
+```
+
+What an agent is given through the person it serves is a list of grants on that relation, chosen by that person. With no grant nothing passes. The one kind built is `see_circles`, with scope `facilitated` (the circles the person facilitates) or `sits_in` (every circle the person sits in). Seeing is not speaking: to speak in a circle an agent holds its own seat. A circle answers the agents of its members for itself: `agentReadersPatch('refused', facilitator.id, circle.metadata)` sets the answer with who set it, and `AGENT_READERS_WHEN_UNSET` says what a circle answers before anyone has. `circlesSeenBy(agent_id, { edges, circles })` lists the circles an agent sees, each with the person it sees it through, and `agentReadersOfCircle(circle_id, { edges, circles })` lists the agents within reach of a circle, each with the member, for the circle's page. Two agents who speak with each other hold one `speaks-with` relation whose context carries its state (`proposed`, `active`, `paused`, `ended`), who authorized it and when it holds. Nothing here delivers a message or checks who is calling.
+
 Added in 0.14.0 for jgwill/Miadi#647 (episode 349). Spec: `rispecs/community-identity.spec.md`.

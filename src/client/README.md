@@ -43,6 +43,20 @@ The wheel keeps an answer inside the scope; deciding which scope a reader may na
 
 A consumer that filters ceremonies per reader passes only the visible ones to `circlesHeldIn`, so a circle is never named to someone who cannot read what it held.
 
+A person and the agents they gave rise to (`rispecs/agent-kinship.spec.md`): `wheel.kinship` writes and reads whom an agent comes from, who holds responsibility for it, whom it serves and what that person gives it, and which agents it speaks with. The wheel checks a statement against its records and writes all of it or none. Who may make the statement stays with the caller.
+
+```ts
+const { node, kinship } = await wheel.kinship.defineAgent({
+  agent: { name: 'Wren', role: 'companion_ai' },
+  comes_from: [{ person_id: ada, words: 'I made Wren in the autumn of 2026.', said_by: ada }],
+});                                                        // a person defines an agent they made
+await wheel.kinship.relate(sol, { responsibility_held_by: [{ person_id: noor, words: 'I answer for Sol.', said_by: noor }] });   // an agent that already has a node
+await wheel.kinship.of(sol);                               // the readings for one person, or null
+await wheel.kinship.readersOf('circle:…');                 // the agents that read a circle through a member, or null
+```
+
+An edge may name a governed `kinship_type` and carry a `context`. It is then identified by its two ends and that name, so `wheel.edges.remove(from, to, 'SERVES')` reaches that relation and `wheel.edges.remove(from, to)` the one the pair holds without a kinship type.
+
 No retry: an unreachable wheel throws `MedicineWheelClientError` with status 502; a refusal carries the wheel's status and body. `limit: 'all'` asks for the whole store.
 
 Extracted in 0.14.0 from the MCP's `http-store.ts` and Miadi's `lib/chronicle-wheel.ts` (jgwill/Miadi#647). Spec: `rispecs/client.spec.md`.
