@@ -37,6 +37,7 @@
   ],
   "dependencies": {
     "@medicine-wheel/ceremony-protocol": "^0.27.16",
+    "@medicine-wheel/community-identity": "^0.27.16",
     "@medicine-wheel/community-review": "^0.27.16",
     "@medicine-wheel/consent-lifecycle": "^0.27.16",
     "@medicine-wheel/creative-orientation": "^0.27.16",

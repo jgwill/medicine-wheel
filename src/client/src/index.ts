@@ -27,6 +27,9 @@ import type {
   NodeType,
   RelationalEdge,
   RelationalNode,
+  RelationContext,
+  RelationGrant,
+  RelationState,
 } from '@medicine-wheel/ontology-core';
 import type { DiaryEntryRecord } from '@medicine-wheel/storage-provider';
 import type {
@@ -43,7 +46,7 @@ import type {
   SearchInput,
 } from '@medicine-wheel/memory';
 
-export type { CeremonyLog, CeremonyType, DirectionName, NarrativeBeat, NodeType, RelationalEdge, RelationalNode, DiaryEntryRecord };
+export type { CeremonyLog, CeremonyType, DirectionName, NarrativeBeat, NodeType, RelationalEdge, RelationalNode, RelationContext, RelationGrant, RelationState, DiaryEntryRecord };
 
 // ── errors ──────────────────────────────────────────────────────────────────
 
@@ -121,6 +124,115 @@ export interface NewEdge {
   obligations?: string[];
   /** Why the two are related, in the words of whoever weaves the relation. */
   description?: string;
+  /**
+   * A governed kinship-edge name. The relation is then identified by its two
+   * ends and this name, beside the one relation the pair holds without any.
+   * When given, `relationship_type` must say the same name.
+   */
+  kinship_type?: string;
+  /** What authorizes and bounds the relation. */
+  context?: RelationContext;
+}
+
+// ── agent kinship (rispecs/agent-kinship.spec.md) ───────────────────────────
+// The shapes of `@medicine-wheel/community-identity`'s agent kinship, restated
+// here because this package is built before that one and cannot import it.
+
+/** One relation between an agent and a person, in the words of `said_by`. */
+export interface KinStatement {
+  person_id: string;
+  words: string;
+  said_by: string;
+}
+
+/** Two agents speak with each other. For a relation already on the wheel, what is left out stays as it is. */
+export interface DialogueStatement {
+  agent_id: string;
+  words?: string;
+  said_by?: string;
+  state?: RelationState;
+  authorized_by?: string;
+  valid_when?: string | null;
+  forbidden_when?: string | null;
+}
+
+export interface AgentKinshipInput {
+  comes_from?: KinStatement[];
+  responsibility_held_by?: KinStatement[];
+  /** `grants`: what the person gives the agent, chosen by that person. With none, nothing passes. */
+  serves?: Array<KinStatement & { grants?: RelationGrant[] }>;
+  speaks_with?: DialogueStatement[];
+}
+
+/** A person defines an agent they made: the agent's seat and its relations, written together. */
+export interface DefineAgentInput extends AgentKinshipInput {
+  agent: { name: string; role: string; id?: string } & Record<string, unknown>;
+  comes_from: KinStatement[];
+}
+
+export interface KinRead {
+  words?: string;
+  said_by?: string;
+  since: string;
+}
+
+export interface AgentKinshipRead {
+  comes_from: Array<KinRead & { person_id: string }>;
+  responsibility_held_by: Array<KinRead & { person_id: string }>;
+  serves: Array<KinRead & { person_id: string; grants: RelationGrant[] }>;
+  speaks_with: Array<KinRead & { agent_id: string; state: RelationState; authorized_by?: string; valid_when?: string; forbidden_when?: string }>;
+}
+
+/** A circle's answer to the agents of its members. */
+export interface AgentReadersAnswer {
+  answer: 'allowed' | 'refused';
+  set_by: string;
+  set_at: string;
+}
+
+/** One circle a grant reaches through one person, and whether the circle lets the agent read it. */
+export interface CircleViewRead {
+  agent_id: string;
+  circle_id: string;
+  through_person_id: string;
+  scope: string;
+  member_role: 'member' | 'facilitator';
+  sees: boolean;
+  answer?: AgentReadersAnswer;
+}
+
+export interface SeatLabel {
+  name: string;
+  being?: 'human' | 'agent';
+}
+
+/** What the wheel reads back for one person. */
+export interface KinshipReading extends AgentKinshipRead {
+  person: Record<string, unknown> & { id: string; name: string; being: 'human' | 'agent' };
+  /** The circles an agent sees through the persons it serves. A circle that refuses is left out. */
+  sees_circles: CircleViewRead[];
+  gave_rise_to: Array<KinRead & { agent_id: string }>;
+  holds_responsibility_for: Array<KinRead & { agent_id: string }>;
+  served_by: Array<KinRead & { agent_id: string; grants: RelationGrant[] }>;
+  /** The name of every seat the relations mention by id. */
+  seats: Record<string, SeatLabel>;
+  circles: Record<string, { name: string }>;
+  provider?: string;
+}
+
+/** What a circle's page shows: its answer, and the agents within reach of it through a member. */
+export interface CircleReadersReading {
+  circle: { id: string; name: string };
+  agent_readers: AgentReadersAnswer | null;
+  when_unset: 'allowed' | 'refused' | 'facilitator';
+  readers: Array<CircleViewRead & { sits_in_circle: boolean }>;
+  seats: Record<string, SeatLabel>;
+  provider?: string;
+}
+
+export interface KinshipWritten {
+  edges: RelationalEdge[];
+  kinship: AgentKinshipRead & { agent_id: string };
 }
 
 export interface ListCeremoniesOptions {
@@ -224,7 +336,24 @@ export interface MedicineWheelClient {
   edges: {
     list(opts?: ListEdgesOptions): Promise<Paged<RelationalEdge>>;
     create(input: NewEdge): Promise<RelationalEdge>;
-    remove(from_id: string, to_id: string): Promise<void>;
+    /** `kinship_type` reaches a relation that names one; left out, the relation the pair holds without any. */
+    remove(from_id: string, to_id: string, kinship_type?: string): Promise<void>;
+  };
+  /**
+   * A person and the agents they gave rise to (rispecs/agent-kinship.spec.md):
+   * whom an agent comes from, who holds responsibility for it, whom it serves
+   * and what that person gives it, and which agents it speaks with. The wheel
+   * checks the statement against its records; who may make it stays with the caller.
+   */
+  kinship: {
+    /** A person defines an agent they made. The seat and its relations are written together, or not at all. */
+    defineAgent(input: DefineAgentInput): Promise<KinshipWritten & { node: RelationalNode }>;
+    /** Relates an agent that already has a node, or says one of its relations again. */
+    relate(agent_id: string, input: AgentKinshipInput): Promise<KinshipWritten>;
+    /** What the wheel reads back for one person. Null when the wheel holds no such node. */
+    of(person_id: string): Promise<KinshipReading | null>;
+    /** The agents that read a circle through one of its members. Null when the wheel holds no such node. */
+    readersOf(circle_id: string): Promise<CircleReadersReading | null>;
   };
   ceremonies: {
     list(opts?: ListCeremoniesOptions): Promise<Paged<CeremonyLog>>;
@@ -440,9 +569,34 @@ export function createMedicineWheelClient(options: ClientOptions | string): Medi
         if (!body?.edge) throw new MedicineWheelClientError('wheel returned no edge', 502, res.url);
         return body.edge;
       },
-      async remove(from_id, to_id) {
-        const res = await call(`/api/edges${query({ from: from_id, to: to_id })}`, { method: 'DELETE' });
+      async remove(from_id, to_id, kinship_type) {
+        const res = await call(`/api/edges${query({ from: from_id, to: to_id, kinship_type })}`, { method: 'DELETE' });
         if (!res.ok && res.status !== 404) await refused(res, 'refused the edge removal');
+      },
+    },
+
+    kinship: {
+      async defineAgent(input) {
+        const res = await call('/api/agents', { method: 'POST', body: JSON.stringify(input) });
+        const body = await json<Partial<KinshipWritten> & { node?: RelationalNode }>(res, 'refused the agent');
+        if (!body?.node?.id || !body.kinship) throw new MedicineWheelClientError('wheel returned no agent', 502, res.url);
+        return { node: body.node, edges: body.edges ?? [], kinship: body.kinship };
+      },
+      async relate(agent_id, input) {
+        const res = await call(`/api/nodes/${encodeURIComponent(agent_id)}/kinship`, { method: 'POST', body: JSON.stringify(input) });
+        const body = await json<Partial<KinshipWritten>>(res, 'refused the kinship');
+        if (!body?.kinship) throw new MedicineWheelClientError('wheel returned no kinship', 502, res.url);
+        return { edges: body.edges ?? [], kinship: body.kinship };
+      },
+      async of(person_id) {
+        const res = await call(`/api/nodes/${encodeURIComponent(person_id)}/kinship`);
+        if (res.status === 404) return null;
+        return json<KinshipReading>(res, 'refused the kinship read');
+      },
+      async readersOf(circle_id) {
+        const res = await call(`/api/nodes/${encodeURIComponent(circle_id)}/readers`);
+        if (res.status === 404) return null;
+        return json<CircleReadersReading>(res, 'refused the circle readers read');
       },
     },
 

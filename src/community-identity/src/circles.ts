@@ -12,6 +12,12 @@
  * gathered for it before any of them has held a ceremony. One of them may be
  * the episode's main circle, `episode_role: 'main'` (0.26.1), where its people
  * and agent-spirits talk as the episode develops (`episode-circle.ts`).
+ *
+ * A circle also carries its answer to the agents of its members,
+ * `agent_readers`: allowed or refused, with who set it. An agent can be given
+ * the view of the circles a person sits in (`agent-kinship.ts`); the members
+ * of a circle admitted that person, not that person's agent, so the circle
+ * says whether those agents read it.
  */
 
 import type { DirectionName, RelationalEdge, RelationalNode } from '@medicine-wheel/ontology-core';
@@ -62,9 +68,36 @@ export interface Circle {
   episode_path?: string;
   /** What the circle is to that episode: `main` for the episode's own circle. Absent: one circle among others. */
   episode_role?: EpisodeRole;
+  /** The circle's answer to the agents of its members, when someone has set it. */
+  agent_readers?: AgentReaders;
   created_at: string;
   updated_at: string;
 }
+
+/** A circle's answer to the agents of its members: may they read it through the member they serve? */
+export type AgentReadersAnswer = 'allowed' | 'refused';
+export const AGENT_READERS_ANSWERS: readonly AgentReadersAnswer[] = ['allowed', 'refused'] as const;
+
+export interface AgentReaders {
+  answer: AgentReadersAnswer;
+  /** The person who set the answer. */
+  set_by: string;
+  set_at: string;
+}
+
+/**
+ * What a circle answers before anyone has set it: `allowed`, `refused`, or
+ * `facilitator`, which allows the agents of the circle's facilitator and
+ * refuses the agents of its other members until the answer is set.
+ */
+export type AgentReadersWhenUnset = AgentReadersAnswer | 'facilitator';
+
+/**
+ * Not decided (rispecs/agent-kinship.spec.md, Q3). The value here is the
+ * recommendation recorded there: a refusal after the fact leaves words
+ * already read, so a circle someone else facilitates starts refused.
+ */
+export const AGENT_READERS_WHEN_UNSET: AgentReadersWhenUnset = 'facilitator';
 
 export const NewCircleSchema = z.object({
   id: z.string().trim().min(1).optional(),
@@ -133,9 +166,59 @@ export function circleFromNode(node: RelationalNode | null | undefined): Circle 
     container: { ...DEFAULT_CONTAINER, ...container },
     ...(typeof meta.episode_path === 'string' && meta.episode_path ? { episode_path: meta.episode_path } : {}),
     ...((EPISODE_ROLES as readonly string[]).includes(String(meta.episode_role)) ? { episode_role: meta.episode_role as EpisodeRole } : {}),
+    ...agentReadersField(meta),
     created_at: node.created_at,
     updated_at: node.updated_at,
   };
+}
+
+/** The answer a circle node carries for the agents of its members, or null when nobody has set one. */
+export function agentReadersOf(metadata: Record<string, unknown> | null | undefined): AgentReaders | null {
+  const raw = metadata?.agent_readers;
+  if (!raw || typeof raw !== 'object') return null;
+  const { answer, set_by, set_at } = raw as Record<string, unknown>;
+  if (!(AGENT_READERS_ANSWERS as readonly unknown[]).includes(answer)) return null;
+  if (typeof set_by !== 'string' || !set_by || typeof set_at !== 'string') return null;
+  return { answer: answer as AgentReadersAnswer, set_by, set_at };
+}
+
+function agentReadersField(meta: Record<string, unknown>): { agent_readers?: AgentReaders } {
+  const readers = agentReadersOf(meta);
+  return readers ? { agent_readers: readers } : {};
+}
+
+/**
+ * The metadata patch that sets a circle's answer to the agents of its members,
+ * with who set it, or returns the circle to no answer with `null`. Whether
+ * `set_by` may set it (the circle's facilitator) is the consumer's check.
+ */
+export function agentReadersPatch(
+  answer: AgentReadersAnswer | null,
+  set_by: string,
+  current: Record<string, unknown> = {},
+  now = new Date().toISOString(),
+): Record<string, unknown> {
+  const { agent_readers: _gone, ...rest } = current;
+  if (answer === null) return rest;
+  if (!(AGENT_READERS_ANSWERS as readonly unknown[]).includes(answer)) throw new Error(`not an answer to agent readers: ${String(answer)}`);
+  const by = typeof set_by === 'string' ? set_by.trim() : '';
+  if (!by) throw new Error('the person who sets the answer is required');
+  return { ...rest, agent_readers: { answer, set_by: by, set_at: now } };
+}
+
+/**
+ * What a circle answers to the agents of one member: the answer it carries,
+ * or, before anyone has set one, what `whenUnset` says for a member of this role.
+ */
+export function circleAnswerToAgentsOf(
+  metadata: Record<string, unknown> | null | undefined,
+  role: CircleRole,
+  whenUnset: AgentReadersWhenUnset = AGENT_READERS_WHEN_UNSET,
+): AgentReadersAnswer {
+  const set = agentReadersOf(metadata);
+  if (set) return set.answer;
+  if (whenUnset === 'facilitator') return role === 'facilitator' ? 'allowed' : 'refused';
+  return whenUnset;
 }
 
 export type CircleRole = 'member' | 'facilitator';
