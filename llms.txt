@@ -69,6 +69,8 @@ The Next.js app surfaces that relational state as REST endpoints (also consumed 
 
 ## Specifications (RISE Framework)
 
+The rispecs follow RISE 2.x. RISE 2.3.0 (§ Toward 3.0 of [llms-rise-framework.txt](https://llms.jgwill.com/llms-rise-framework.txt)) asks a new specification to come with its drawings (ERD, state machines, sequences in one `.sysdf.json`) and to name the repository capability it draws. The wheel's part is recommended, not started: a capability names the system that draws it, a plugin and its components (skills, agents, hooks, commands, MCP servers) become a capability kind, and a system and its drawings can be nodes on the wheel (jgwill/medicine-wheel#181, jgwill/medicine-wheel#151).
+
 - [System Spec](rispecs/medicine-wheel.spec.md): Top-level overview linking all packages
 - [ontology-core](rispecs/ontology-core.spec.md): Types, schemas, vocabulary, constants, queries
 - [ceremony-protocol](rispecs/ceremony-protocol.spec.md): Ceremony state, phases, governance
