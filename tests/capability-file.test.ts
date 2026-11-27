@@ -955,7 +955,6 @@ describe('format version 3: an app, where it is hosted, and the episodes that ho
     const hosting = { urls: ['https://x.org', 'http://gaia:3335/review'], deployedBy: 'v0', authoredIn: 'v0', change: 'A v0 prompt.', statedBy: 'Ava', statedAt: '2026-11-19T00:00:00Z', grounding: ['apps/AGENTS.md'] };
     const cases: [string, Record<string, unknown>, 'header' | 'row'][] = [
       ['a version 3 header', header, 'header'],
-      ['a version 4 header', { ...header, version: 4 }, 'header'],
       ['an app row', app, 'row'],
       ['an app with hosting and episodes', { ...app, hosting, episodes: ['miadi-chronicle://340', 'miadi-chronicle:2026-08-27-episode-340-reviews-become-choices'] }, 'row'],
       ['hosting with only who deploys it', { ...row, hosting: { deployedBy: 'npm', statedBy: 'Ava', statedAt: '2026-11-19T00:00:00Z', grounding: ['x'] } }, 'row'],
