@@ -60,6 +60,10 @@ export type {
   // Developer entity kinds — additive, ride knowledge nodes
   DeveloperEntityKind,
   DeveloperRelation,
+  // Design entity kinds and directed relations — additive, ride knowledge nodes
+  DesignEntityKind,
+  DesignRelation,
+  DesignRelationType,
   // RSIS types
   SunName,
   CeremonyPhase,
@@ -164,6 +168,9 @@ export { ACADEMIC_ENTITY_BINDING, ACADEMIC_ENTITY_KINDS } from './types';
 
 // ── Developer entity binding (additive — no NodeType was widened) ───────────
 export { DEVELOPER_ENTITY_BINDING, DEVELOPER_ENTITY_KINDS } from './types';
+
+// ── Design entity binding (additive — no NodeType was widened) ───────────────
+export { DESIGN_ENTITY_BINDING, DESIGN_ENTITY_KINDS } from './types';
 
 // ── Zod Schemas ─────────────────────────────────────────────────────────────
 export {

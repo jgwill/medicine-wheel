@@ -92,6 +92,14 @@ inverseEdge('co-emerges-with');          // 'co-emerges-with' (symmetric)
 isKinshipEdgeName('speaks-with');        // true
 ```
 
+### Design systems and drawings
+
+`DESIGN_ENTITY_BINDING` places both `system` and `diagram` on `knowledge`
+nodes with `metadata.kind` set to the corresponding value. Each node's
+direction is optional and remains open for a knowledge holder to name.
+A `member-of` edge goes from a drawing to the system listing it. A
+`drawn-by` edge goes from a capability to the system describing it.
+
 ### Edge Context
 
 A relation may carry the context that authorizes and bounds it — consumed by the

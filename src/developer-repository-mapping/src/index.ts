@@ -142,6 +142,8 @@ export {
 export type { Artefact, CapabilityKind, CapabilityRowContext, CodeReader, ProvidesEdge } from './capability-scan';
 export { PackageReadingSchema, bumpVersion, consumesEdges, impactOf, readingKey, satisfies } from './capability-impact';
 export type { BumpLevel, ConsumesEdge, ImpactAnswer, ImpactConsumer, ImpactLink, PackageReading } from './capability-impact';
+export { PackageEvidenceSchema, parsePackageEvidence } from './package-evidence';
+export type { PackageEvidence } from './package-evidence';
 export {
   CAPABILITY_FILE,
   CAPABILITY_FILE_ROW_KEYS,

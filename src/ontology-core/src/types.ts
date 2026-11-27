@@ -884,6 +884,31 @@ export interface DeveloperRelation extends Relation {
   grounding?: string;
 }
 
+// ── Design entity kinds (systems and the drawings they hold) ─────────────────
+
+/** Design documents carried by knowledge nodes as `metadata.kind`. */
+export type DesignEntityKind = 'system' | 'diagram';
+
+/** Design documents leave direction for a knowledge holder to name (#151). */
+export const DESIGN_ENTITY_BINDING = {
+  system: { nodeType: 'knowledge', direction: undefined },
+  diagram: { nodeType: 'knowledge', direction: undefined },
+} as const satisfies Record<
+  DesignEntityKind,
+  { nodeType: NodeType; direction: DirectionName | undefined }
+>;
+
+export const DESIGN_ENTITY_KINDS: readonly DesignEntityKind[] = ['system', 'diagram'];
+
+export type DesignRelationType =
+  | 'member-of' // diagram → system listing its source
+  | 'drawn-by'; // capability → system drawing it
+
+/** Relations between the source documents and the knowledge they describe. */
+export interface DesignRelation extends Relation {
+  relationship_type: DesignRelationType;
+}
+
 // ── MCP Tool/Resource/Prompt types ──────────────────────────────────────────
 
 export interface MWTool {

@@ -16,3 +16,7 @@ export type { MappingView, MappingServerOptions } from './server';
 export { MAPPING_PAGE } from './page';
 export { buildCapabilityMap, findClones, readRepositoryCapabilities, scanRepository, stateCapability, writeCapabilityFile } from './capability-scan';
 export type { CapabilityMap, CapabilityMapRepository, RealizesEdge, RepositoryCapabilities, ScanOptions, ScanResult, WriteCapabilityFileResult } from './capability-scan';
+export { buildDesignProjection } from './design-projection';
+export type { DesignProjection, DesignProjectionIssue, ProjectedDesignNode } from './design-projection';
+export { readNpmLockEvidence, readPackageEvidenceFile } from './package-evidence';
+export type { NpmLockEvidenceOptions } from './package-evidence';

@@ -89,6 +89,24 @@ git add .miadi/capabilities.jsonl
 
 The JSON Schema of a line ships at `schema/repository-capabilities.v4.schema.json`. Version 4 adds plugins, components and systems. Version 3 adds apps, hosting and episodes. Version 2 adds achieves, stage, specifications and issues. Files are written at the lowest version their rows need, and the previous schemas stay published. The format and its rules are in `rispecs/developer-suite/repository-mapping/capabilities.spec.md` of jgwill/medicine-wheel.
 
+### Follow designs and inspect package evidence
+
+```sh
+mw-repomap capabilities map ./kit ./eury --ref HEAD --design \
+  --npm-consumer jgwill/eury:apps/studio --package-evidence ./package-evidence.jsonl --json
+```
+
+- `--design` adds a `design` object with Wheel nodes, relations and diagnostics. It reads the cited Stateloom systems and member drawings from the supplied Git clones. Each source address names the observed revision, and a GitHub clone supplies a pinned browser link. The projection reads Git and leaves the Wheel store untouched.
+- `--npm-consumer owner/repo:folder` reads the consumer's direct npm declarations and npm v2/v3 lockfile from the revision used in the map. Use `.` for a root package. Use `--package-evidence` to add separately observed release and host facts from a JSON Lines file. Read the results under `packageEvidence` in the JSON output. Each row names what was measured and cites its source.
+- `--packages` still exports the dependency readings used by npm impact analysis. A signed Debian publication or a host install observation does not establish a new dependency or select a provider for an ambiguous npm edge.
+
+An evidence file can hold a release observation and a host observation as separate rows:
+
+```jsonl
+{"kind":"published","ecosystem":"deb","name":"example","version":"1.2.0","architecture":"all","source":"https://apt.example.org/dists/stable/main/binary-all/Packages"}
+{"kind":"installed","ecosystem":"deb","name":"example","version":"1.1.0","architecture":"all","host":"studio","observedAt":"2026-11-27T12:00:00Z","source":"studio: dpkg-query -W example"}
+```
+
 ## Library
 
 ```ts

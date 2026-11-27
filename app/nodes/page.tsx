@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import type { SubmitEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { ArrowDownToLine, ArrowUpRight } from "lucide-react";
 import {
   type RelationalNode,
   type RelationalEdge,
@@ -20,8 +22,18 @@ const DIRECTIONS: DirectionName[] = ["east", "south", "west", "north"];
 const NODE_TYPE_ICONS: Record<NodeType, string> = { human: "👤", land: "🌍", spirit: "✨", ancestor: "🪶", future: "🌱", knowledge: "📚", circle: "⭕", agent: "🤖" };
 const DIRECTION_ICONS: Record<DirectionName, string> = { east: "🌅", south: "🌞", west: "🌄", north: "❄️" };
 
+const PINNED_DESIGN_SOURCE = /^https:\/\/github\.com\/[A-Za-z0-9][\w.-]*\/[A-Za-z0-9][\w.-]*\/blob\/[0-9a-f]{40}(?:[0-9a-f]{24})?\/(?:[\w~-][\w.~-]*\/)*[\w~-][\w.~-]*$/;
+
 function describeNode(node: NodeRecord): string {
   return node.description || (typeof node.metadata?.description === "string" ? node.metadata.description : "");
+}
+
+function designSource(node: NodeRecord) {
+  const { kind, source_url: url } = node.metadata ?? {};
+  if (node.type !== "knowledge" || (kind !== "system" && kind !== "diagram")) return;
+  if (typeof url === "string" && url.trim() === url && PINNED_DESIGN_SOURCE.test(url)) {
+    return { url, label: kind === "diagram" ? "drawing" : kind };
+  }
 }
 
 function DirectionChip({ direction }: { direction?: DirectionName }) {
@@ -34,6 +46,15 @@ function DirectionChip({ direction }: { direction?: DirectionName }) {
 }
 
 export default function NodesPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-12 text-muted-foreground">Loading nodes…</div>}>
+      <NodesList />
+    </Suspense>
+  );
+}
+
+function NodesList() {
+  const focusedNodeId = useSearchParams().get("node");
   const [nodes, setNodes] = useState<NodeRecord[]>([]);
   const [edges, setEdges] = useState<RelationalEdge[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +63,6 @@ export default function NodesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedNode, setExpandedNode] = useState<string | null>(null);
   const [showAddNode, setShowAddNode] = useState(false);
-  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [editingNode, setEditingNode] = useState<string | null>(null);
   const [deletingNode, setDeletingNode] = useState<NodeRecord | null>(null);
   const [busy, setBusy] = useState(false);
@@ -78,11 +98,6 @@ export default function NodesPage() {
   useEffect(() => { loadNodes(); }, [loadNodes]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setFocusedNodeId(params.get("node"));
-  }, []);
-
-  useEffect(() => {
     if (loading || !focusedNodeId || !nodes.some((node) => node.id === focusedNodeId)) return;
 
     setExpandedNode(focusedNodeId);
@@ -102,6 +117,12 @@ export default function NodesPage() {
 
   function relationsOf(nodeId: string): RelationalEdge[] {
     return edges.filter((e) => e.from_id === nodeId || e.to_id === nodeId);
+  }
+
+  function clearFilters() {
+    setFilterType("all");
+    setFilterDirection("all");
+    setSearchQuery("");
   }
 
   async function addNode(e: SubmitEvent<HTMLFormElement>) {
@@ -140,7 +161,7 @@ export default function NodesPage() {
     };
     setBusy(true);
     try {
-      const res = await fetch(`/api/nodes/${node.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const res = await fetch(`/api/nodes/${encodeURIComponent(node.id)}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.issues?.join("; ") || data.error || "Changes were not saved");
       toast.success(`Changes to "${data.node.name}" saved`);
@@ -156,7 +177,7 @@ export default function NodesPage() {
   async function deleteNode(node: NodeRecord) {
     setBusy(true);
     try {
-      const res = await fetch(`/api/nodes/${node.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/nodes/${encodeURIComponent(node.id)}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Node was not deleted");
       toast.success(`Node "${node.name}" released from the wheel`);
@@ -237,7 +258,7 @@ export default function NodesPage() {
           {DIRECTIONS.map((d) => <option key={d} value={d}>{DIRECTION_ICONS[d]} {d}</option>)}
         </select>
         {(filterType !== "all" || filterDirection !== "all" || searchQuery) && (
-          <button onClick={() => { setFilterType("all"); setFilterDirection("all"); setSearchQuery(""); }} className="mw-btn mw-btn--ghost">Clear filters</button>
+          <button onClick={clearFilters} className="mw-btn mw-btn--ghost">Clear filters</button>
         )}
       </div>
 
@@ -263,6 +284,7 @@ export default function NodesPage() {
             const nodeRelations = relationsOf(node.id);
             const isExpanded = expandedNode === node.id;
             const isEditing = editingNode === node.id;
+            const source = isExpanded && !isEditing ? designSource(node) : undefined;
             return (
               <div
                 key={node.id}
@@ -325,6 +347,18 @@ export default function NodesPage() {
                     ) : (
                       <>
                         {describeNode(node) && <p className="text-sm">{describeNode(node)}</p>}
+                        {source && (
+                          <a
+                            href={source.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mw-btn mw-btn--ghost min-h-9 max-w-full focus-visible:outline focus-visible:outline-2"
+                            aria-label={`View ${source.label} source on GitHub (opens in a new tab)`}
+                          >
+                            View {source.label} source
+                            <ArrowUpRight aria-hidden size={16} strokeWidth={1.9} className="shrink-0" />
+                          </a>
+                        )}
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div><span className="text-muted-foreground">Type:</span> <span className="capitalize">{node.type}</span></div>
                           <div><span className="text-muted-foreground">Direction:</span> <DirectionChip direction={node.direction} /></div>
@@ -341,11 +375,21 @@ export default function NodesPage() {
                             nodeRelations.map((e) => {
                               const otherId = e.from_id === node.id ? e.to_id : e.from_id;
                               const other = nodes.find((n) => n.id === otherId);
+                              const designLink = e.kinship_type === "drawn-by" || e.kinship_type === "member-of";
                               return (
                                 <div key={[e.from_id, e.to_id, ...(e.kinship_type ? [e.kinship_type] : [])].join(":")} className="py-1 text-sm border-b border-border/50 flex items-center gap-2">
                                   <span className="text-muted-foreground">{e.relationship_type}</span>
                                   <span aria-hidden>{e.from_id === node.id ? "→" : "←"}</span>
-                                  {other?.name || "?"}
+                                  {designLink ? (
+                                    <Link
+                                      href={`/nodes?node=${encodeURIComponent(otherId)}`}
+                                      onNavigate={clearFilters}
+                                      className="inline-flex min-h-9 min-w-0 items-center gap-1 underline underline-offset-2 focus-visible:outline focus-visible:outline-2"
+                                    >
+                                      <span className="break-words min-w-0">{other?.name ?? "Open related node"}</span>
+                                      <ArrowDownToLine aria-hidden size={16} strokeWidth={1.9} className="shrink-0" />
+                                    </Link>
+                                  ) : other?.name || "?"}
                                   <span className="text-xs text-muted-foreground">({Math.round(e.strength * 100)}%)</span>
                                   {e.ceremony_honored && <span style={{ color: "var(--mw-ceremony)" }} title="Ceremony honored">✦</span>}
                                 </div>
@@ -355,7 +399,7 @@ export default function NodesPage() {
                         </div>
                         <div className="flex gap-2 pt-1">
                           <button onClick={() => setEditingNode(node.id)} className="mw-btn mw-btn--secondary">Edit node</button>
-                          <Link href={`/graph?node=${node.id}`} className="mw-btn mw-btn--ghost">See on the wheel</Link>
+                          <Link href={`/graph?node=${encodeURIComponent(node.id)}`} className="mw-btn mw-btn--ghost">See on the wheel</Link>
                           <button onClick={() => setDeletingNode(node)} className="mw-btn mw-btn--danger">Delete node</button>
                         </div>
                       </>
@@ -380,7 +424,7 @@ export default function NodesPage() {
                 </p>
                 <div className="flex gap-2 justify-end">
                   <button onClick={() => setDeletingNode(null)} className="mw-btn mw-btn--ghost">Keep the node</button>
-                  <Link href={`/relations?node=${deletingNode.id}`} className="mw-btn mw-btn--primary">Review its relations</Link>
+                  <Link href={`/relations?node=${encodeURIComponent(deletingNode.id)}`} className="mw-btn mw-btn--primary">Review its relations</Link>
                 </div>
               </>
             ) : (
