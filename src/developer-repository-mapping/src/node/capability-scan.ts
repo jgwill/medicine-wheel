@@ -1,15 +1,15 @@
 /**
- * Capabilities on Node: read a clone at one commit, from git objects, never
- * from its working tree. A clone on another branch or with edits of its own
- * reads the same as a clean one, and every row names the commit it was read
- * at. `readRepositoryCapabilities` takes the repository's own file first;
+ * Capabilities on Node: read a clone at one commit, from git objects.
+ * A scan preparing a capability file can include pending plugin enrollments;
+ * its evidence still comes from the selected commit. `readRepositoryCapabilities`
+ * takes the repository's own committed file first;
  * `writeCapabilityFile` writes it; `buildCapabilityMap` goes through many
  * clones and answers one map. Reading runs git ls-tree, git show and git
  * rev-parse only. Writing touches the one file and commits nothing.
  */
 
 import { execFile } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync, mkdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, readdirSync, mkdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
 import type { CapabilityFacet, CapabilityStage } from '@medicine-wheel/capabilities';
@@ -50,6 +50,7 @@ import {
   type CapabilityFileMerge,
   type CapabilityFileRow,
 } from '../capability-file';
+import { pluginManifestCandidates, readPluginManifest, scanPlugins } from './plugin-capabilities';
 
 const run = promisify(execFile);
 
@@ -75,6 +76,8 @@ export interface ScanOptions {
   ref?: string;
   /** `owner/name` or `repository:owner/name`; default from the `origin` remote */
   repository?: string;
+  /** For preparing the working file: use its plugin enrollments with committed evidence. */
+  includeWorkingPluginEnrollments?: boolean;
   observedBy: string;
   now?: Date;
 }
@@ -157,18 +160,21 @@ export async function scanRepository(clone: string, options: ScanOptions): Promi
     artefacts.push(...reader.read((await show(reader.path)) ?? ''));
   }
   // Applications, from the folders the repository's own file names: never guessed.
-  if (files.includes(CAPABILITY_FILE)) {
-    for (const row of parseCapabilityFile((await show(CAPABILITY_FILE)) ?? '').rows) {
-      const manifest = appManifestOf(row);
-      if (!manifest || !files.includes(manifest)) continue;
-      const pkg = parsePackageJson((await show(manifest)) ?? '');
-      if (pkg.name !== row.name) {
-        issues.push({ severity: 'warning', file: manifest, message: `names ${JSON.stringify(pkg.name ?? '')}, not the app ${JSON.stringify(row.name)} the capability file names here` });
-        continue;
-      }
-      artefacts.push({ kind: 'app', name: row.name, ...(pkg.description ? { description: pkg.description } : {}), path: manifest });
+  const committed = files.includes(CAPABILITY_FILE) ? parseCapabilityFile((await show(CAPABILITY_FILE)) ?? '').rows : [];
+  for (const row of committed) {
+    const manifest = appManifestOf(row);
+    if (!manifest || !files.includes(manifest)) continue;
+    const pkg = parsePackageJson((await show(manifest)) ?? '');
+    if (pkg.name !== row.name) {
+      issues.push({ severity: 'warning', file: manifest, message: `names ${JSON.stringify(pkg.name ?? '')}, not the app ${JSON.stringify(row.name)} the capability file names here` });
+      continue;
     }
+    artefacts.push({ kind: 'app', name: row.name, ...(pkg.description ? { description: pkg.description } : {}), path: manifest });
   }
+  const pluginRows = options.includeWorkingPluginEnrollments
+    ? readWorkingFile(path.join(await workingRoot(clone), CAPABILITY_FILE))?.rows ?? []
+    : committed;
+  await scanPlugins(repository, pluginRows, new Set(files), show, artefacts, issues);
 
   // A name no id can be made from, or a name, a path or a shipping package carrying control characters, is reported and not read.
   const readable = artefacts.filter((a) => {
@@ -218,6 +224,22 @@ export interface RepositoryCapabilities extends ScanResult {
   drift?: Pick<CapabilityFileMerge, 'added' | 'removed' | 'changed' | 'keptByPerson'>;
 }
 
+/** Move only locally scoped capability references when reading or adopting a fork. */
+function withRepositoryAddress(row: CapabilityFileRow, from: string, to: string): CapabilityFileRow {
+  const prefix = `miadi-capability://${from.replace(/^repository:/, '')}/`;
+  const next = `miadi-capability://${to.replace(/^repository:/, '')}/`;
+  const rewrite = (ref: string) => ref.slice(0, prefix.length).toLowerCase() === prefix.toLowerCase()
+    ? next + ref.slice(prefix.length)
+    : ref;
+  return {
+    ...row,
+    address: capabilityAddress(to, row.kind, row.name),
+    ...(row.components ? { components: row.components.map(rewrite) } : {}),
+    ...(row.declaredComponents ? { declaredComponents: row.declaredComponents.map(rewrite) } : {}),
+    ...(row.plugin ? { plugin: rewrite(row.plugin) } : {}),
+  };
+}
+
 /**
  * What a repository provides at one commit: its own file when the commit
  * holds one, merged with what the commit's files say by the rule a rescan
@@ -229,7 +251,8 @@ export async function readRepositoryCapabilities(clone: string, options: ScanOpt
   const text = await git(clone, ['show', `${scan.commit}:${CAPABILITY_FILE}`]);
   if (text === undefined) return { ...scan, source: 'scan', realizes: [] };
   const parsed = parseCapabilityFile(text);
-  const merge = mergeCapabilityFile(parsed.rows, scan.fileRows);
+  const from = parsed.header?.repository ?? scan.repository;
+  const merge = mergeCapabilityFile(parsed.rows.map((row) => withRepositoryAddress(row, from, scan.repository)), scan.fileRows);
   const issues = [...scan.issues, ...parsed.issues];
   const named = `repository:${parsed.header?.repository ?? ''}`;
   if (parsed.header && named.toLowerCase() !== scan.repository.toLowerCase()) {
@@ -299,8 +322,9 @@ export async function writeCapabilityFile(
   // A fork, a mirror or a remote spelled in another case keeps the repository the file was written for.
   const named = options.repository?.replace(/^repository:/, '') ?? current?.header?.repository ?? scan.repository.replace(/^repository:/, '');
   if (!REPOSITORY_NAME.test(named)) throw new CapabilityInputError(`${JSON.stringify(named)} is not owner/name as an address names it (nothing was written)`);
-  const scanned = scan.fileRows.map((r) => ({ ...r, address: capabilityAddress(named, r.kind, r.name) }));
-  const merge = mergeCapabilityFile(current?.rows ?? [], scanned);
+  const scanned = scan.fileRows.map((row) => withRepositoryAddress(row, scan.repository, named));
+  const existing = current?.rows.map((row) => withRepositoryAddress(row, current.header?.repository ?? named, named)) ?? [];
+  const merge = mergeCapabilityFile(existing, scanned);
   const text = renderCapabilityFile(named, merge.rows);
   // Never write a file the next reader refuses.
   const unreadable = parseCapabilityFile(text, { mode: 'write' }).issues.find((i) => i.severity === 'error');
@@ -328,10 +352,12 @@ export async function stateCapability(
     stageGrounding?: string[];
     specifications?: string[];
     issues?: string[];
-    /** For an app: its folder, whose package.json must name it */
+    /** For an app or plugin: its folder, whose manifest must name it. */
     path?: string;
     hosting?: { urls?: string[]; deployedBy: string; authoredIn?: string; change?: string; grounding: string[] };
     episodes?: string[];
+    systems?: string[];
+    components?: string[];
     now?: Date;
   },
 ): Promise<{ file: string; row: CapabilityFileRow }> {
@@ -350,6 +376,21 @@ export async function stateCapability(
     const named = parsePackageJson(readFileSync(full, 'utf8')).name;
     if (named !== input.name) throw new CapabilityInputError(`${manifest} names ${JSON.stringify(named ?? '')}, not ${JSON.stringify(input.name)} (nothing was written)`);
   }
+  let pluginManifest: string | undefined;
+  if (input.kind === 'plugin' && input.path !== undefined) {
+    for (const candidate of pluginManifestCandidates(input.path)) {
+      const full = path.join(root, candidate);
+      const info = lstatSync(full, { throwIfNoEntry: false });
+      if (!info?.isFile() || realpathSync(full) !== full) continue;
+      if (readPluginManifest(candidate, readFileSync(full, 'utf8'))?.name === input.name) {
+        pluginManifest = candidate;
+        break;
+      }
+    }
+    if (pluginManifest === undefined) {
+      throw new CapabilityInputError(`${input.path} holds no Claude or Pi plugin manifest naming ${JSON.stringify(input.name)} (nothing was written)`);
+    }
+  }
   const answer = stateCapabilityRow(current.rows, {
     kind: input.kind,
     name: input.name,
@@ -363,8 +404,11 @@ export async function stateCapability(
     ...(input.specifications ? { specifications: input.specifications } : {}),
     ...(input.issues ? { issues: input.issues } : {}),
     ...(input.path !== undefined ? { path: input.path } : {}),
+    ...(pluginManifest ? { pluginManifest } : {}),
     ...(input.hosting ? { hosting: input.hosting } : {}),
     ...(input.episodes ? { episodes: input.episodes } : {}),
+    ...(input.systems ? { systems: input.systems } : {}),
+    ...(input.components ? { components: input.components } : {}),
     repository: current.header.repository,
   });
   if ('error' in answer) throw new CapabilityInputError(answer.error);

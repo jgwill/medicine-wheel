@@ -75,7 +75,19 @@ mw-repomap capabilities state app/acme-review --path apps/review --stage prototy
 
 An application (`app`) is never guessed: a person names its folder with `--path`, and the scan reads the `package.json` there at every commit while its name is the app's. `hosting` says where a capability runs, who deploys it, where its code is written when not in this repository (`authoredIn`: the copy here is replaced at the next import) and how a change reaches it; `episodes` names the chronicle episodes that hold it. `capabilities show` prints both.
 
-The JSON Schema of a line ships at `schema/repository-capabilities.v3.schema.json` (format version 3 adds the `app` kind, `hosting` and `episodes`; version 2 adds `achieves`, `stage`, `specifications` and `issues`; a file is written at the lowest version its rows need, and `schema/repository-capabilities.v1.schema.json` and `…v2.schema.json` stay published). The format and its rules are in `rispecs/developer-suite/repository-mapping/capabilities.spec.md` of jgwill/medicine-wheel.
+Name a plugin's folder to include it in the inventory. The scanner reads its install manifest and component files from the selected commit. Claude plugin skills retain their existing capability addresses. Agents, commands, hook events and MCP servers have names scoped to their plugin, such as `agent/example/assistant-editor`. A plugin lists its components, and each discovered component names the plugin that carries it.
+
+```bash
+mw-repomap capabilities state plugin/example --path claude/example --by Ava \
+  --specification rispecs/example/SPEC.md \
+  --system rise://acme/tools/rispecs/example/example.sysdf.json
+mw-repomap capabilities scan --write
+git add .miadi/capabilities.jsonl
+```
+
+`--system` accepts a comma-separated list of RISE system addresses on any capability. A revision may be appended with `@<commit>`. Use `--component` to associate additional capability addresses from the same repository with a plugin. `capabilities show` reads the committed inventory and prints the specification, system and component links.
+
+The JSON Schema of a line ships at `schema/repository-capabilities.v4.schema.json`. Version 4 adds plugins, components and systems. Version 3 adds apps, hosting and episodes. Version 2 adds achieves, stage, specifications and issues. Files are written at the lowest version their rows need, and the previous schemas stay published. The format and its rules are in `rispecs/developer-suite/repository-mapping/capabilities.spec.md` of jgwill/medicine-wheel.
 
 ## Library
 

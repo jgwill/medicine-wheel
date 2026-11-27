@@ -163,3 +163,24 @@ describe("findSharedCapabilities", () => {
     ]);
   });
 });
+
+describe("plugin references and Stateloom systems", () => {
+  const component = "miadi-capability://jgwill/smcraft/command/score/edit";
+  const plugin = "miadi-capability://jgwill/smcraft/plugin/@scope/score";
+  const system = "rise://jgwill/smcraft/rispecs/score/score~review.sysdf.json@topic/wip";
+
+  it("keeps plugin and system references in the facet", () => {
+    expect(CapabilityFacetSchema.parse({ ...capability, components: [component], systems: [system] })).toMatchObject({
+      components: [component],
+      systems: [system],
+    });
+    expect(CapabilityFacetSchema.parse({ ...capability, plugin }).plugin).toBe(plugin);
+  });
+
+  it("refuses unresolvable links or duplicate references", () => {
+    expect(CapabilityFacetSchema.safeParse({ ...capability, systems: [system.replace(".sysdf.json", ".smdf.json")] }).success).toBe(false);
+    expect(CapabilityFacetSchema.safeParse({ ...capability, systems: ["rise://jgwill/smcraft/.hidden/score.sysdf.json"] }).success).toBe(false);
+    expect(CapabilityFacetSchema.safeParse({ ...capability, components: [component, component] }).success).toBe(false);
+    expect(CapabilityFacetSchema.safeParse({ ...capability, plugin: component }).success).toBe(false);
+  });
+});

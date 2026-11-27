@@ -151,6 +151,12 @@ export interface CapabilityFacet extends Attribution {
   hosting?: CapabilityHosting;
   /** The chronicle episodes that hold it: `miadi-chronicle://<n>`. */
   episodes?: string[];
+  /** Revision-addressable Stateloom systems that draw this capability. */
+  systems?: string[];
+  /** For a plugin, the capability addresses of the components it carries. */
+  components?: string[];
+  /** For a plugin component, the capability address of its plugin. */
+  plugin?: string;
 }
 
 /** Every stage, in the order a capability usually lives them. */

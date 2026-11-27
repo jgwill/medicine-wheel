@@ -102,6 +102,37 @@ export const SpecificationRefSchema = z
   .string()
   .refine((s) => RISE_ADDRESS.test(s) || /^https:\/\/[^\s]+$/.test(s), 'a specification is rise://<owner>/<repo>/<path> or an https:// URL');
 
+// These addresses are stored in repository files and followed by readers.
+// Match repository and path segments explicitly so dots inside names work
+// without accepting a traversal, an absolute path or a URL fragment.
+const REPOSITORY = '[A-Za-z0-9][A-Za-z0-9._-]{0,99}/(?![^/]*\\.git/)[A-Za-z0-9][A-Za-z0-9._-]{0,99}';
+const SYSTEM_SEGMENT_START = '[A-Za-z0-9_~-]';
+const SYSTEM_SEGMENT_REST = '[A-Za-z0-9._~-]';
+const CAPABILITY_SEGMENT = '(?!\\.{1,2}(?:/|$))[A-Za-z0-9_@.~+-]{1,214}';
+
+export const SystemRefSchema = z.string().max(1024).regex(
+  // Match the RISE resolver's segment and revision limits. The file extension
+  // occupies 11 of the filename's 128 characters.
+  new RegExp(`^rise://(?!(?:[^/]+/)?[^/]*\\.\\.[^/]*/)${REPOSITORY}/(?:${SYSTEM_SEGMENT_START}${SYSTEM_SEGMENT_REST}{0,127}/){0,16}${SYSTEM_SEGMENT_START}${SYSTEM_SEGMENT_REST}{0,116}\\.sysdf\\.json(?:@[A-Za-z0-9._/-]{1,80})?$(?![\\s\\S])`),
+  'a system is rise://<owner>/<repo>/<path>.sysdf.json with an optional @revision',
+);
+
+export const ComponentRefSchema = z.string().max(419).regex(
+  new RegExp(`^miadi-capability://${REPOSITORY}/(?:skill|agent|command|hook|mcp-server)/(?:${CAPABILITY_SEGMENT}/)*${CAPABILITY_SEGMENT}$(?![\\s\\S])`),
+  'a component is a miadi-capability:// address for a skill, agent, command, hook or MCP server',
+);
+
+export const PluginRefSchema = z.string().max(419).regex(
+  new RegExp(`^miadi-capability://${REPOSITORY}/plugin/(?:${CAPABILITY_SEGMENT}/)*${CAPABILITY_SEGMENT}$(?![\\s\\S])`),
+  'a plugin is a miadi-capability://<owner>/<repo>/plugin/<name> address',
+);
+
+export const SystemRefsSchema = z.array(SystemRefSchema).min(1).max(32)
+  .refine((refs) => new Set(refs).size === refs.length, 'systems must be distinct');
+
+export const ComponentRefsSchema = z.array(ComponentRefSchema).min(1)
+  .refine((refs) => new Set(refs).size === refs.length, 'components must be distinct');
+
 /** `owner/repo#n`, never a bare `#n`: a bare number links to the wrong repository wherever it is read. */
 export const ISSUE_REF = /^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*#[1-9][0-9]*$/;
 
@@ -142,6 +173,9 @@ export const CapabilityFacetSchema = z
     issues: z.array(IssueRefSchema).min(1).optional(),
     hosting: CapabilityHostingSchema.optional(),
     episodes: z.array(EpisodeRefSchema).min(1).optional(),
+    systems: SystemRefsSchema.optional(),
+    components: ComponentRefsSchema.optional(),
+    plugin: PluginRefSchema.optional(),
     ...attributionShape,
   })
   .strict()

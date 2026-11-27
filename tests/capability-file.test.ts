@@ -9,6 +9,7 @@ import * as path from 'node:path';
 import { createRequire } from 'node:module';
 import { afterEach, describe, expect, it } from 'vitest';
 import { CAPABILITY_STAGES } from '../src/capabilities/src/index';
+import { CAPABILITY_FILE_V4_KEYS, CAPABILITY_FILE_V4_KINDS } from '../src/developer-repository-mapping/src/capability-file';
 import {
   CAPABILITY_FILE,
   CAPABILITY_FILE_V2_KEYS,
@@ -21,6 +22,7 @@ import {
   CODE_READERS,
   SCAN_AUTHOR,
   capabilityAddress,
+  capabilityFileFacets,
   capabilityId,
   kindOf,
   miadiModelRouting,
@@ -397,12 +399,12 @@ describe('what the reviews found', () => {
   });
 
   it('C1: a reader reads a newer file for what it knows; a writer refuses to rewrite it', async () => {
-    const text = [HEADER('acme/tool', { version: 4, generator: 'mw-repomap 1.0' }), ROW({ ecosystem: 'npm' }), ROW({ kind: 'mcp-server', name: 'srv' })].join('\n') + '\n';
+    const text = [HEADER('acme/tool', { version: 5, generator: 'mw-repomap 1.0' }), ROW({ ecosystem: 'npm' }), ROW({ kind: 'v5-kind', name: 'future' })].join('\n') + '\n';
     const reading = parseCapabilityFile(text);
     expect(reading.rows.map((r) => r.name)).toEqual(['greet']);
     expect(reading.issues.every((i) => i.severity === 'warning')).toBe(true);
     const said = reading.issues.map((i) => i.message).join('\n');
-    for (const word of ['generator', 'version 4', 'ecosystem', 'mcp-server']) expect(said).toContain(word);
+    for (const word of ['generator', 'version 5', 'ecosystem', 'v5-kind']) expect(said).toContain(word);
     expect(parseCapabilityFile(text, { mode: 'write' }).issues.filter((i) => i.severity === 'error')).toHaveLength(4);
 
     const dir = repo();
@@ -436,16 +438,20 @@ describe('what the reviews found', () => {
 
   it('the published JSON Schema names the same keys, kinds and header as the code', () => {
     const read = (v: number) => JSON.parse(fs.readFileSync(path.join(__dirname, `../src/developer-repository-mapping/schema/repository-capabilities.v${v}.schema.json`), 'utf8'));
-    const schema = read(3);
+    const schema = read(4);
     expect(Object.keys(schema.$defs.row.properties).sort()).toEqual([...CAPABILITY_FILE_ROW_KEYS].sort());
     expect(schema.$defs.row.properties.kind.enum).toEqual([...CAPABILITY_KINDS]);
     expect(schema.$defs.header.required).toEqual(['schema', 'version', 'repository']);
-    expect(schema.$defs.header.properties.version.enum).toEqual([1, 2, 3]);
+    expect(schema.$defs.header.properties.version.enum).toEqual([1, 2, 3, 4]);
     expect(schema.$defs.row.properties.stage.properties.stage.enum).toEqual([...CAPABILITY_STAGES]);
-    // Versions 1 and 2 stay published as they were: the keys and kinds each later version added are the only difference.
-    const v2Keys = CAPABILITY_FILE_ROW_KEYS.filter((k) => !CAPABILITY_FILE_V3_KEYS.includes(k));
+    // Earlier schemas stay published with the keys and kinds they already knew.
+    const v3Keys = CAPABILITY_FILE_ROW_KEYS.filter((k) => !CAPABILITY_FILE_V4_KEYS.includes(k));
+    const v3Kinds = CAPABILITY_KINDS.filter((k) => !CAPABILITY_FILE_V4_KINDS.includes(k));
+    expect(Object.keys(read(3).$defs.row.properties).sort()).toEqual([...v3Keys].sort());
+    expect(read(3).$defs.row.properties.kind.enum).toEqual(v3Kinds);
+    const v2Keys = v3Keys.filter((k) => !CAPABILITY_FILE_V3_KEYS.includes(k));
     expect(Object.keys(read(2).$defs.row.properties).sort()).toEqual([...v2Keys].sort());
-    expect(read(2).$defs.row.properties.kind.enum).toEqual(CAPABILITY_KINDS.filter((k) => !CAPABILITY_FILE_V3_KINDS.includes(k)));
+    expect(read(2).$defs.row.properties.kind.enum).toEqual(v3Kinds.filter((k) => !CAPABILITY_FILE_V3_KINDS.includes(k)));
     expect(Object.keys(read(1).$defs.row.properties).sort()).toEqual(v2Keys.filter((k) => !CAPABILITY_FILE_V2_KEYS.includes(k)).sort());
   });
 });
@@ -585,9 +591,9 @@ describe('what the verification found', () => {
     // A later version: the v1 schema refuses it, a writer refuses it, a reader reads it.
     const v2 = { ...header, version: 2 };
     expect(validate(v2)).toBe(false);
-    const v4 = { ...header, version: 4 };
-    expect(parseCapabilityFile(JSON.stringify(v4) + '\n', { mode: 'write' }).issues[0]?.severity).toBe('error');
-    expect(parseCapabilityFile(JSON.stringify(v4) + '\n').header?.version).toBe(4);
+    const v5 = { ...header, version: 5 };
+    expect(parseCapabilityFile(JSON.stringify(v5) + '\n', { mode: 'write' }).issues[0]?.severity).toBe('error');
+    expect(parseCapabilityFile(JSON.stringify(v5) + '\n').header?.version).toBe(5);
   });
 
   it('N7: a root that cannot be read exits 1, help exits 0, and what a person typed that cannot be written exits 2', async () => {
@@ -666,7 +672,7 @@ describe('a decision the Factory makes', () => {
     expect(written.rows.map((r) => r.kind)).toEqual(['package', 'cli', 'skill', 'decision']);
 
     const map = await buildCapabilityMap([dir], opts);
-    expect(map.repositories[0]?.counts).toEqual({ package: 1, cli: 1, skill: 1, decision: 1, app: 0 });
+    expect(map.repositories[0]?.counts).toEqual({ package: 1, cli: 1, skill: 1, decision: 1, app: 0, plugin: 0, agent: 0, command: 0, hook: 0, 'mcp-server': 0 });
   });
 
   it('another repository holding the same file has no decision read from it', async () => {
@@ -803,7 +809,6 @@ describe('format version 2: what a capability achieves, where it stands, where i
     const cases: [string, Record<string, unknown>, 'header' | 'row'][] = [
       ['a version 2 header', header, 'header'],
       ['a version 1 header', { ...header, version: 1 }, 'header'],
-      ['a version 4 header', { ...header, version: 4 }, 'header'],
       ['a row with all four', { ...row, achieves, stage, specifications: ['rispecs/x.md', 'rise://acme/tool/rispecs/y.md', 'https://example.org/s'], issues: ['acme/tool#7'] }, 'row'],
       ['a stage it does not know', { ...row, stage: { ...stage, stage: 'envisioned' } }, 'row'],
       ['a stage with no grounding', { ...row, stage: { ...stage, grounding: [] } }, 'row'],
@@ -969,6 +974,7 @@ describe('format version 3: an app, where it is hosted, and the episodes that ho
       const code = parseCapabilityFile(text, { mode: 'write' }).issues.every((i) => i.severity !== 'error');
       expect([what, validate(clean)]).toEqual([what, code]);
     }
+    expect(validate({ ...header, version: 4 })).toBe(false);
   });
 
   it('capabilities state takes an app, its hosting and its episodes from the command line, and show prints them', async () => {
@@ -991,5 +997,102 @@ describe('format version 3: an app, where it is hosted, and the episodes that ho
     expect(shown.out).toContain('authored in v0: the copy here is replaced at the next import');
     expect(shown.out).toContain('change: A v0 prompt in apps/prompts/.');
     expect(shown.out).toContain('held by miadi-chronicle://340');
+  });
+});
+
+describe('format version 4: plugins, components, and Stateloom systems', () => {
+  const repository = 'acme/tool';
+  const plugin = capabilityAddress(repository, 'plugin', 'score');
+  const command = capabilityAddress(repository, 'command', 'score/review');
+  const skill = capabilityAddress(repository, 'skill', 'greet');
+  const system = 'rise://acme/tool/rispecs/score/score.sysdf.json@deadbee';
+  const manifest = 'claude/score/.claude-plugin/plugin.json';
+  const subject = {
+    ...JSON.parse(ROW()),
+    kind: 'plugin',
+    name: 'score',
+    address: plugin,
+    grounding: [manifest],
+  } as CapabilityFileRow;
+
+  it('round-trips older canonical files and selects v4 only when its fields or kinds are used', () => {
+    const base = JSON.parse(ROW()) as CapabilityFileRow;
+    const variants = [
+      ROW(),
+      ROW().replace('"statedBy":', '"specifications":["SPEC.md"],"statedBy":'),
+      ROW().replace('"statedBy":', '"episodes":["miadi-chronicle:120"],"statedBy":'),
+    ];
+    for (const [i, row] of variants.entries()) {
+      const older = [HEADER(repository, { version: i + 1 }), row, ''].join('\n');
+      expect(renderCapabilityFile(repository, parseCapabilityFile(older).rows)).toBe(older);
+    }
+    expect(parseCapabilityFile(renderCapabilityFile(repository, [{ ...base, systems: [system] }])).header?.version).toBe(4);
+    expect(parseCapabilityFile(renderCapabilityFile(repository, [subject])).header?.version).toBe(4);
+  });
+
+  it('keeps authored links and systems while replacing stale scan findings', () => {
+    const result = stateCapabilityRow([{ ...subject, components: [command] }], {
+      kind: 'plugin', name: 'score', by: 'Ava', at: later.now.toISOString(), repository,
+      components: [skill, skill], systems: [system, system],
+    });
+    expect(result).toMatchObject({ rows: [{ components: [command, skill], declaredComponents: [skill], systems: [system] }] });
+    if (!('rows' in result)) throw new Error(result.error);
+    const rescanned = mergeCapabilityFile(result.rows, [subject]);
+    expect(rescanned.rows).toMatchObject([{ components: [skill], declaredComponents: [skill], systems: [system] }]);
+    const rendered = renderCapabilityFile(repository, rescanned.rows);
+    const parsed = parseCapabilityFile(rendered, { mode: 'write' });
+    expect(parsed.issues).toEqual([]);
+    expect(renderCapabilityFile(repository, parsed.rows)).toBe(rendered);
+    expect(capabilityFileFacets(parsed.rows, { repository, commit: 'deadbeef' })[0]).toMatchObject({ systems: [system], components: [skill] });
+    expect(capabilityFileFacets(parsed.rows, { repository, commit: 'deadbeef' })[0]).not.toHaveProperty('declaredComponents');
+    expect(mergeCapabilityFile(parsed.rows, [subject]).changed).toEqual([]);
+
+    const component = { ...JSON.parse(ROW()), plugin } as CapabilityFileRow;
+    expect(mergeCapabilityFile([component], [JSON.parse(ROW())]).rows[0]).not.toHaveProperty('plugin');
+  });
+
+  it('grounds a plugin in its verified manifest and rejects links with the wrong purpose', () => {
+    const input = { kind: 'plugin', name: 'score', by: 'Ava', at: later.now.toISOString(), path: 'claude/score', repository } as const;
+    expect(stateCapabilityRow([], { ...input, pluginManifest: manifest })).toMatchObject({ rows: [{ kind: 'plugin', address: plugin, grounding: [manifest] }] });
+    const moved = 'claude/new-score/.claude-plugin/plugin.json';
+    const old = { ...subject, grounding: [manifest, 'evidence.md', moved], systems: [system] };
+    expect(stateCapabilityRow([old], { ...input, path: 'claude/new-score', pluginManifest: moved, components: [skill] }))
+      .toMatchObject({ rows: [{ grounding: [moved, 'evidence.md'], systems: [system] }] });
+    expect(stateCapabilityRow([], { ...input, pluginManifest: 'claude/else/.claude-plugin/plugin.json' })).toHaveProperty('error');
+    expect(stateCapabilityRow([subject], { ...input, pluginManifest: manifest, systems: ['rise://acme/tool/rispecs/../score.sysdf.json'] })).toHaveProperty('error');
+    expect(stateCapabilityRow([subject], { ...input, pluginManifest: manifest, components: ['miadi-capability://acme/else/skill/greet'] })).toHaveProperty('error');
+    const oldHeader = HEADER(repository, { version: 3 });
+    expect(parseCapabilityFile(oldHeader + '\n' + JSON.stringify(subject), { mode: 'write' }).issues).toMatchObject([{ severity: 'error', line: 2 }]);
+  });
+
+  it('matches the published v4 schema for individual lines', () => {
+    const require = createRequire(__filename);
+    const Ajv = createRequire(require.resolve('ajv-formats'))('ajv/dist/2020').default;
+    const addFormats = require('ajv-formats').default ?? require('ajv-formats');
+    const ajv = new Ajv({ allErrors: true });
+    addFormats(ajv);
+    const schema = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/developer-repository-mapping/schema/repository-capabilities.v4.schema.json'), 'utf8'));
+    const validate = ajv.compile(schema);
+    const header = HEADER(repository, { version: 4 });
+    expect(validate(JSON.parse(header))).toBe(true);
+    const cases = [
+      { ...subject, systems: [system], components: [command], declaredComponents: [command] },
+      { ...subject, systems: [system, system] },
+      { ...subject, systems: [system.replace('.sysdf.json', '.smdf.json')] },
+      { ...subject, systems: [system + '\n'] },
+      { ...subject, systems: ['rise://acme/tool/.git/system.sysdf.json'] },
+      { ...subject, systems: ['rise://acme/tool/rispecs/example~same.sysdf.json@topic/review'] },
+      { ...subject, systems: [`rise://acme/tool/${'a/'.repeat(17)}score.sysdf.json`] },
+      { ...subject, components: [command.replace('/command/', '/plugin/')] },
+      { ...subject, components: [command + '/../else'] },
+      { ...subject, plugin },
+      { ...JSON.parse(ROW()), components: [command] },
+      { ...JSON.parse(ROW()), plugin },
+      { ...JSON.parse(ROW()), plugin: 'miadi-capability://acme/tool/plugin/@scope/score' },
+    ];
+    for (const row of cases) {
+      const read = parseCapabilityFile(header + '\n' + JSON.stringify(row), { mode: 'write' });
+      expect({ row, valid: validate(row) }).toEqual({ row, valid: read.issues.every((issue) => issue.severity !== 'error') });
+    }
   });
 });

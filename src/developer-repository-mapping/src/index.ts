@@ -150,6 +150,8 @@ export {
   CAPABILITY_FILE_V2_KEYS,
   CAPABILITY_FILE_V3_KEYS,
   CAPABILITY_FILE_V3_KINDS,
+  CAPABILITY_FILE_V4_KEYS,
+  CAPABILITY_FILE_V4_KINDS,
   appManifestIn,
   appManifestOf,
   SpecificationInFileSchema,
