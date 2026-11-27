@@ -19,13 +19,18 @@ import { z } from 'zod';
 import {
   CAPABILITY_STAGES,
   CapabilityStageSchema,
+  ComponentRefSchema,
+  ComponentRefsSchema,
   EPISODE_REF,
   HOSTING_URL,
   ISSUE_REF,
+  PluginRefSchema,
   RISE_ADDRESS,
   STAGES_WITHOUT_CODE,
   StatementSchema,
   StatementStatusSchema,
+  SystemRefSchema,
+  SystemRefsSchema,
   attributionShape,
   checkStatement,
   refineAttribution,
@@ -57,11 +62,11 @@ export const SCAN_AUTHOR = 'mw-repomap scan';
  * The newest format version this package reads and writes. Version 2 adds what
  * a capability achieves, its stage, its specifications and its issues. Version
  * 3 adds the `app` kind, where a capability is hosted and the episodes that
- * hold it (jgwill/medicine-wheel#177). A file is written at the lowest version
- * its rows need, so a file that uses none of them stays byte for byte what an
- * older writer wrote.
+ * hold it (jgwill/medicine-wheel#177). Version 4 adds plugins, their
+ * components and links from capabilities to Stateloom systems (#181).
+ * A file is written at the lowest version its rows need.
  */
-export const CAPABILITY_FILE_VERSION = 3;
+export const CAPABILITY_FILE_VERSION = 4;
 
 /**
  * `owner/name` as the reference grammar reads it in an address
@@ -124,9 +129,15 @@ export const CAPABILITY_FILE_V3_KEYS: readonly string[] = ['hosting', 'episodes'
 /** The kinds version 3 added. */
 export const CAPABILITY_FILE_V3_KINDS: readonly CapabilityKind[] = ['app'];
 
+/** The fields and kinds that require version 4. */
+export const CAPABILITY_FILE_V4_KEYS: readonly string[] = ['systems', 'components', 'declaredComponents', 'plugin'];
+export const CAPABILITY_FILE_V4_KINDS: readonly CapabilityKind[] = ['plugin', 'agent', 'command', 'hook', 'mcp-server'];
+const PLUGIN_COMPONENT_KINDS: readonly CapabilityKind[] = ['skill', 'agent', 'command', 'hook', 'mcp-server'];
+
 /** What a person or an agent said about a row that the scan never says, and that keeps the row through every rescan. */
 function heldByPerson(row: CapabilityFileRow): boolean {
-  return Boolean(row.realizes?.length || row.achieves || row.stage || row.specifications?.length || row.issues?.length || row.hosting || row.episodes?.length);
+  return Boolean(row.realizes?.length || row.achieves || row.stage || row.specifications?.length || row.issues?.length || row.hosting || row.episodes?.length ||
+    row.systems?.length || row.declaredComponents?.length);
 }
 
 /** The package.json an `app` row is read from: the first of its files that is one. Undefined for any other kind. */
@@ -212,6 +223,14 @@ const CapabilityFileRowObject = z
       .optional(),
     /** Version 3. The chronicle episodes that hold it, `miadi-chronicle://<n>`. */
     episodes: z.array(z.string().regex(EPISODE_REF, 'an episode is miadi-chronicle://<n>')).min(1).max(32).optional(),
+    /** Version 4. Stateloom systems cited by a capability. */
+    systems: SystemRefsSchema.optional(),
+    /** Version 4. A plugin's scanned and explicitly declared components. */
+    components: ComponentRefsSchema.optional(),
+    /** Version 4. Explicit component links that survive rescans. */
+    declaredComponents: ComponentRefsSchema.optional(),
+    /** Version 4. The plugin that carries this component. */
+    plugin: PluginRefSchema.optional(),
     /** `grounding` here is the files that say so, relative to the repository. */
     ...attributionShape,
     // The attribution a file holds is text someone else committed: printable, with its times in full.
@@ -229,6 +248,14 @@ export const CAPABILITY_FILE_ROW_KEYS: readonly string[] = Object.keys(Capabilit
 export const CapabilityFileRowSchema = CapabilityFileRowObject.superRefine((row, ctx) => {
   refineAttribution(row, ctx);
   refineStatementPresence(row.status, row.statement, 'statement', ctx);
+  for (const field of ['components', 'declaredComponents'] as const) {
+    if (row[field] && row.kind !== 'plugin') {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message: 'only a plugin lists its components' });
+    }
+  }
+  if (row.plugin && !PLUGIN_COMPONENT_KINDS.includes(row.kind)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['plugin'], message: 'only a plugin component names its plugin' });
+  }
 });
 export type CapabilityFileRow = z.infer<typeof CapabilityFileRowSchema>;
 
@@ -259,6 +286,10 @@ const KNOWN_KINDS = new Set<string>(CAPABILITY_KINDS);
 const HEADER_KEYS = new Set(Object.keys(CapabilityFileHeaderSchema.shape));
 const ROW_KEYS = new Set(CAPABILITY_FILE_ROW_KEYS);
 const describeZod = (issue: z.ZodIssue) => (issue.path.length ? `${issue.path.join('.')}: ${issue.message}` : issue.message);
+
+function capabilityRefInRepository(ref: string, repository: string): boolean {
+  return ref.startsWith(`miadi-capability://${repository.replace(/^repository:/, '')}/`);
+}
 
 /** Read the file. Never throws: a bad line is an issue, and the good lines around it are still read. */
 export function parseCapabilityFile(text: string, options: ParseCapabilityFileOptions = {}): ParsedCapabilityFile {
@@ -312,6 +343,17 @@ export function parseCapabilityFile(text: string, options: ParseCapabilityFileOp
       return;
     }
     const row = parsed.data;
+    if (header && header.version < 4 && (CAPABILITY_FILE_V4_KINDS.includes(row.kind) || CAPABILITY_FILE_V4_KEYS.some((field) => Object.hasOwn(row, field)))) {
+      issues.push({ severity: newer, file: CAPABILITY_FILE, line, message: 'plugin components and system links require format version 4' });
+    }
+    if (header) {
+      const links = [...(row.components ?? []), ...(row.declaredComponents ?? []), ...(row.plugin ? [row.plugin] : [])];
+      const foreign = links.find((ref) => !capabilityRefInRepository(ref, header.repository));
+      if (foreign) {
+        issues.push({ severity: 'error', file: CAPABILITY_FILE, line, message: `plugin and component addresses must name ${header.repository}: ${foreign}` });
+        return;
+      }
+    }
     const key = rowKey(row);
     if (seen.has(key)) {
       issues.push({ severity: 'error', file: CAPABILITY_FILE, line, message: `${key} appears more than once; the first row is read` });
@@ -338,7 +380,10 @@ const byKindThenName = (a: CapabilityFileRow, b: CapabilityFileRow) =>
 /** The file's text: the header, then one row per line in a fixed order, so a diff shows only what changed. */
 export function renderCapabilityFile(repository: string, rows: readonly CapabilityFileRow[]): string {
   const holds = (keys: readonly string[]) => rows.some((r) => keys.some((k) => (r as Record<string, unknown>)[k] !== undefined));
-  const version = holds(CAPABILITY_FILE_V3_KEYS) || rows.some((r) => CAPABILITY_FILE_V3_KINDS.includes(r.kind)) ? 3 : holds(CAPABILITY_FILE_V2_KEYS) ? 2 : 1;
+  let version = 1;
+  if (holds(CAPABILITY_FILE_V2_KEYS)) version = 2;
+  if (holds(CAPABILITY_FILE_V3_KEYS) || rows.some((r) => CAPABILITY_FILE_V3_KINDS.includes(r.kind))) version = 3;
+  if (holds(CAPABILITY_FILE_V4_KEYS) || rows.some((r) => CAPABILITY_FILE_V4_KINDS.includes(r.kind))) version = 4;
   const header: CapabilityFileHeader = { schema: CAPABILITY_FILE_SCHEMA, version, repository: repository.replace(/^repository:/, '') };
   const lines = [...rows].sort(byKindThenName).map((r) =>
     JSON.stringify({
@@ -355,6 +400,10 @@ export function renderCapabilityFile(repository: string, rows: readonly Capabili
       ...(r.issues?.length ? { issues: r.issues } : {}),
       ...(r.hosting ? { hosting: hostingInOrder(r.hosting) } : {}),
       ...(r.episodes?.length ? { episodes: r.episodes } : {}),
+      ...(r.systems?.length ? { systems: r.systems } : {}),
+      ...(r.components?.length ? { components: r.components } : {}),
+      ...(r.declaredComponents?.length ? { declaredComponents: r.declaredComponents } : {}),
+      ...(r.plugin ? { plugin: r.plugin } : {}),
       statedBy: r.statedBy,
       statedAt: r.statedAt,
       grounding: r.grounding,
@@ -397,6 +446,8 @@ export function capabilityFileRows(artefacts: readonly Artefact[], ctx: { reposi
       ...(statement ? { statement } : {}),
       status: statement ? 'clear' : 'needs-resolution',
       ...(a.package ? { package: a.package } : {}),
+      ...(a.components?.length ? { components: [...new Set(a.components)] } : {}),
+      ...(a.plugin ? { plugin: a.plugin } : {}),
       statedBy: SCAN_AUTHOR,
       statedAt: ctx.statedAt,
       grounding: [a.path],
@@ -461,6 +512,13 @@ export function mergeCapabilityFile(existing: readonly CapabilityFileRow[], scan
     if (row.issues?.length) next = { ...next, issues: row.issues };
     if (row.hosting) next = { ...next, hosting: row.hosting };
     if (row.episodes?.length) next = { ...next, episodes: row.episodes };
+    if (row.systems?.length) next = { ...next, systems: row.systems };
+    if (row.declaredComponents?.length) next = { ...next, declaredComponents: row.declaredComponents };
+    const components = [...new Set([...(scan.components ?? []), ...(row.declaredComponents ?? [])])];
+    if (components.length) next.components = components;
+    else delete next.components;
+    if (scan.plugin) next.plugin = scan.plugin;
+    else delete next.plugin;
     if (JSON.stringify(rowForCompare(next)) !== JSON.stringify(rowForCompare(row))) changed.push(key);
     rows.push(next);
   }
@@ -508,6 +566,9 @@ export function capabilityFileFacets(rows: readonly CapabilityFileRow[], ctx: { 
     ...(r.issues?.length ? { issues: [...r.issues] } : {}),
     ...(r.hosting ? { hosting: { ...hostingInOrder(r.hosting), grounding: [...r.hosting.grounding] } as CapabilityHosting } : {}),
     ...(r.episodes?.length ? { episodes: [...r.episodes] } : {}),
+    ...(r.systems?.length ? { systems: [...r.systems] } : {}),
+    ...(r.components?.length ? { components: [...r.components] } : {}),
+    ...(r.plugin ? { plugin: r.plugin } : {}),
   }));
 }
 
@@ -530,12 +591,18 @@ export interface CapabilityStatementInput {
   specifications?: string[];
   /** Issues to add, `owner/repo#n`. */
   issues?: string[];
-  /** For an `app`: its folder in the repository, `.` the root. With it, an app the file does not hold yet is added at any stage. */
+  /** For an app or plugin: its folder in the repository, `.` the root. */
   path?: string;
+  /** The plugin manifest the repository reader verified in `path`. */
+  pluginManifest?: string;
   /** Where it is hosted, said by `by` at `at`. Replaces the hosting held before. */
   hosting?: { urls?: string[]; deployedBy: string; authoredIn?: string; change?: string; grounding: string[] };
   /** Episodes to add, `miadi-chronicle://<n>`. */
   episodes?: string[];
+  /** Stateloom systems to add by `rise://` address. */
+  systems?: string[];
+  /** Component capability addresses to add to a plugin. */
+  components?: string[];
   /**
    * The file's repository, `owner/name`. With it, a capability the file does not
    * hold yet is added when it is stated at stage `specified`: a capability can be
@@ -581,32 +648,51 @@ export function stateCapabilityRow(rows: readonly CapabilityFileRow[], input: Ca
   if (badUrl !== undefined) return { error: `${badUrl} is not a hosting address: an http:// or https:// URL` };
   const badEpisode = input.episodes?.find((e) => !EPISODE_REF.test(e));
   if (badEpisode !== undefined) return { error: `${badEpisode} is not an episode: miadi-chronicle://<n>` };
-  if (input.path !== undefined && input.kind !== 'app') return { error: 'a path names the folder of an app: state it as app/<name>' };
-  const manifest = input.path === undefined ? undefined : appManifestIn(input.path);
-  if (input.path !== undefined && !manifest) return { error: `${input.path} is not a folder in this repository` };
+  const badSystem = input.systems?.find((s) => !SystemRefSchema.safeParse(s).success);
+  if (badSystem !== undefined) return { error: `${badSystem} is not a system: rise://<owner>/<repo>/<path>.sysdf.json[@revision]` };
+  if (input.components?.length && input.kind !== 'plugin') return { error: 'only a plugin lists its components' };
+  const badComponent = input.components?.find((ref) =>
+    !ComponentRefSchema.safeParse(ref).success || (input.repository && !capabilityRefInRepository(ref, input.repository)),
+  );
+  if (badComponent !== undefined) return { error: `${badComponent} is not a component capability address in this repository` };
+  if (input.path !== undefined && input.kind !== 'app' && input.kind !== 'plugin') {
+    return { error: 'a path names the folder of an app or a plugin: state it as app/<name> or plugin/<name>' };
+  }
+  const packageManifest = input.path === undefined ? undefined : appManifestIn(input.path);
+  if (input.path !== undefined && !packageManifest) return { error: `${input.path} is not a folder in this repository` };
+  const manifest = input.kind === 'plugin' && packageManifest ? input.pluginManifest : packageManifest;
+  if (input.kind === 'plugin' && packageManifest) {
+    const claudeManifest = packageManifest.replace(/package\.json$/, '.claude-plugin/plugin.json');
+    if (manifest !== packageManifest && manifest !== claudeManifest) return { error: `${input.path} has no verified plugin manifest` };
+  }
   const key = rowKey(input);
   let row = rows.find((r) => rowKey(r) === key);
   const isNew = !row;
-  if (!row && input.kind === 'app' && manifest && input.repository) {
-    // An application is named by a person, with its folder: the scan reads it there at every commit.
+  if (!row && (input.kind === 'app' || input.kind === 'plugin') && manifest && input.repository) {
+    // An app or plugin is enrolled by naming its folder. The scan reads its manifest at each commit.
     row = {
-      kind: 'app',
+      kind: input.kind,
       name: input.name,
-      address: capabilityAddress(input.repository, 'app', input.name),
+      address: capabilityAddress(input.repository, input.kind, input.name),
       status: 'needs-resolution',
       statedBy: input.by,
       statedAt: input.at,
       grounding: [manifest],
       revision: 'pending',
     };
-  } else if (row && manifest && appManifestOf(row) !== manifest) {
-    row = { ...row, grounding: [manifest] };
+  } else if (row && manifest) {
+    if (row.kind === 'plugin') {
+      const otherGrounding = row.grounding.filter((path) => !/(?:^|\/)(?:\.claude-plugin\/plugin\.json|package\.json)$/.test(path));
+      row = { ...row, grounding: [manifest, ...otherGrounding] };
+    } else if (appManifestOf(row) !== manifest) {
+      row = { ...row, grounding: [manifest] };
+    }
   }
   if (!row) {
     // A capability no code provides yet is written down at stage specified, grounded in its specification.
     if (input.stage !== 'specified' || !input.repository) {
       return {
-        error: `the file holds no ${key}: run capabilities scan --write first, or state it at --stage specified with its --specification${input.kind === 'app' ? ', or name the app\'s folder with --path' : ''}`,
+        error: `the file holds no ${key}: run capabilities scan --write first, or state it at --stage specified with its --specification${input.kind === 'app' || input.kind === 'plugin' ? `, or name the ${input.kind}'s folder with --path` : ''}`,
       };
     }
     row = {
@@ -620,7 +706,8 @@ export function stateCapabilityRow(rows: readonly CapabilityFileRow[], input: Ca
       revision: 'pending',
     };
   }
-  const says = Boolean(input.realizes || input.achieves !== undefined || input.stage || input.specifications || input.issues || input.hosting || input.episodes || (isNew && manifest));
+  const says = Boolean(input.realizes || input.achieves !== undefined || input.stage || input.specifications || input.issues ||
+    input.hosting || input.episodes || input.systems?.length || input.components?.length || (isNew && manifest));
   if (input.statement === undefined && !row.statement && !says) return { error: `${key} has no statement to affirm: give it one` };
   let next: CapabilityFileRow =
     input.statement !== undefined
@@ -656,6 +743,11 @@ export function stateCapabilityRow(rows: readonly CapabilityFileRow[], input: Ca
     };
   }
   if (input.episodes) next = { ...next, episodes: [...new Set([...(row.episodes ?? []), ...input.episodes])] };
+  if (input.systems?.length) next.systems = [...new Set([...(row.systems ?? []), ...input.systems])];
+  if (input.components?.length) {
+    next.declaredComponents = [...new Set([...(row.declaredComponents ?? []), ...input.components])];
+    next.components = [...new Set([...(row.components ?? []), ...next.declaredComponents])];
+  }
   const checked = CapabilityFileRowSchema.safeParse(next);
   if (!checked.success) return { error: checked.error.issues.map(describeZod).join('; ') };
   return { rows: isNew ? [...rows, next].sort(byKindThenName) : rows.map((r) => (rowKey(r) === key ? next : r)) };

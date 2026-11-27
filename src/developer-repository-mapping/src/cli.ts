@@ -12,7 +12,7 @@
  *   mw-repomap serve [<path>] [--port <n>] [--host <address>] [--local]
  *   mw-repomap wheel [<path>] [--local]
  *   mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]
- *   mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--achieves <words>] [--stage <stage> [--stage-grounding <evidence>,…]] [--specification <path|rise://…>,…] [--issue <owner/repo#n>,…] [--path <app folder>] [--deployed-by <who> --hosting-grounding <evidence>,… [--hosted-at <url>,…] [--authored-in <where>] [--change <words>]] [--episode <miadi-chronicle://n>,…] [--clone <path>]
+ *   mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--achieves <words>] [--stage <stage> [--stage-grounding <evidence>,…]] [--specification <path|rise://…>,…] [--system <rise://…sysdf.json>,…] [--component <miadi-capability://…>,…] [--issue <owner/repo#n>,…] [--path <app or plugin folder>] [--deployed-by <who> --hosting-grounding <evidence>,… [--hosted-at <url>,…] [--authored-in <where>] [--change <words>]] [--episode <miadi-chronicle://n>,…] [--clone <path>]
  *   mw-repomap capabilities show [<clone>] [--ref <ref>] [--repository <owner/name>] [--json]
  *   mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]
  *
@@ -62,7 +62,7 @@ const USAGE = [
   '       mw-repomap serve [<path>] [--port <n>] [--host <address>] [--local]',
   '       mw-repomap wheel [<path>] [--local]',
   '       mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]',
-  '       mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--achieves <words>] [--stage <stage> [--stage-grounding <evidence>,…]] [--specification <path|rise://…>,…] [--issue <owner/repo#n>,…] [--path <app folder>] [--deployed-by <who> --hosting-grounding <evidence>,… [--hosted-at <url>,…] [--authored-in <where>] [--change <words>]] [--episode <miadi-chronicle://n>,…] [--clone <path>]',
+  '       mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--achieves <words>] [--stage <stage> [--stage-grounding <evidence>,…]] [--specification <path|rise://…>,…] [--system <rise://…sysdf.json>,…] [--component <miadi-capability://…>,…] [--issue <owner/repo#n>,…] [--path <app or plugin folder>] [--deployed-by <who> --hosting-grounding <evidence>,… [--hosted-at <url>,…] [--authored-in <where>] [--change <words>]] [--episode <miadi-chronicle://n>,…] [--clone <path>]',
   '       mw-repomap capabilities show [<clone>] [--ref <ref>] [--repository <owner/name>] [--json]',
   '       mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]',
 ].join('\n');
@@ -76,7 +76,7 @@ const COMMAND_FLAGS: Record<string, readonly string[]> = {
   list: ['lifecycle', 'drift', 'revision', 'field', 'local', 'json'],
   show: ['local', 'json'],
   observe: ['dir', 'by', 'write'],
-  capabilities: ['write', 'check', 'ref', 'repository', 'by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'issue', 'path', 'hosted-at', 'deployed-by', 'authored-in', 'change', 'hosting-grounding', 'episode', 'root', 'list', 'out', 'packages', 'json'],
+  capabilities: ['write', 'check', 'ref', 'repository', 'by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'system', 'component', 'issue', 'path', 'hosted-at', 'deployed-by', 'authored-in', 'change', 'hosting-grounding', 'episode', 'root', 'list', 'out', 'packages', 'json'],
   move: ['by', 'grounding'],
   hub: ['json'],
   serve: ['port', 'host', 'local'],
@@ -368,7 +368,7 @@ const SCAN_OBSERVER = () => `mw-repomap capabilities (${os.userInfo().username}@
 /** The flags each capabilities subcommand takes: a flag another subcommand takes is a usage error here, never ignored. */
 const CAPABILITY_FLAGS: Record<string, readonly string[]> = {
   scan: ['write', 'check', 'ref', 'repository'],
-  state: ['by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'issue', 'path', 'hosted-at', 'deployed-by', 'authored-in', 'change', 'hosting-grounding', 'episode'],
+  state: ['by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'system', 'component', 'issue', 'path', 'hosted-at', 'deployed-by', 'authored-in', 'change', 'hosting-grounding', 'episode'],
   show: ['ref', 'repository', 'json'],
   map: ['root', 'list', 'out', 'packages', 'ref', 'json'],
 };
@@ -391,7 +391,13 @@ async function capabilitiesScan(positional: string[], flags: Record<string, stri
   const clone = positional[2] ?? '.';
   // The commit being worked on: a person writes the file on the branch they will commit it to.
   const repository = text(flags, 'repository');
-  const scan = await scanRepository(clone, { ref: text(flags, 'ref') ?? 'HEAD', ...(repository ? { repository } : {}), observedBy: SCAN_OBSERVER() });
+  const ref = text(flags, 'ref') ?? 'HEAD';
+  const scan = await scanRepository(clone, {
+    ref,
+    ...(repository ? { repository } : {}),
+    ...(ref === 'HEAD' ? { includeWorkingPluginEnrollments: true } : {}),
+    observedBy: SCAN_OBSERVER(),
+  });
   printCapabilityIssues(scan.issues);
   const result = await writeCapabilityFile(clone, scan, { write: flags.write === true, ...(repository ? { repository } : {}) });
   const origin = scan.repository.replace(/^repository:/, '');
@@ -429,8 +435,10 @@ async function capabilitiesState(positional: string[], flags: Record<string, str
   const stageGrounding = items('stage-grounding');
   if (stageGrounding && stage === undefined) throw new UsageError('--stage-grounding says what shows a --stage: give the stage');
   const specifications = items('specification');
+  const systems = items('system');
+  const components = items('component');
   const issues = items('issue');
-  const appPath = text(flags, 'path');
+  const providedPath = text(flags, 'path');
   const deployedBy = text(flags, 'deployed-by');
   const hostedAt = items('hosted-at');
   const authoredIn = text(flags, 'authored-in');
@@ -450,8 +458,10 @@ async function capabilitiesState(positional: string[], flags: Record<string, str
     ...(stage !== undefined ? { stage: stage as CapabilityStage } : {}),
     ...(stageGrounding ? { stageGrounding } : {}),
     ...(specifications ? { specifications } : {}),
+    ...(systems ? { systems } : {}),
+    ...(components ? { components } : {}),
     ...(issues ? { issues } : {}),
-    ...(appPath !== undefined ? { path: appPath } : {}),
+    ...(providedPath !== undefined ? { path: providedPath } : {}),
     ...(deployedBy
       ? { hosting: { deployedBy, grounding: hostingGrounding ?? [], ...(hostedAt ? { urls: hostedAt } : {}), ...(authoredIn !== undefined ? { authoredIn } : {}), ...(change !== undefined ? { change } : {}) } }
       : {}),
@@ -462,6 +472,8 @@ async function capabilitiesState(positional: string[], flags: Record<string, str
     row.stage ? `stage ${row.stage.stage}` : '',
     row.achieves ? 'achieves stated' : '',
     row.specifications ? `${row.specifications.length} specification(s)` : '',
+    row.systems ? `${row.systems.length} system(s)` : '',
+    row.components ? `${row.components.length} component(s)` : '',
     row.issues ? `issues ${row.issues.join(', ')}` : '',
     row.hosting ? `hosted by ${row.hosting.deployedBy}` : '',
     row.episodes ? `episodes ${row.episodes.join(', ')}` : '',
@@ -488,6 +500,9 @@ async function capabilitiesShow(positional: string[], flags: Record<string, stri
     console.log(printable(`  ${kind.padEnd(8)} ${c.name}${c.stage ? ` (${c.stage.stage})` : ''}${c.statement ? ` — ${c.statement}` : ` [${c.status}]`}${realizes.length ? `  (realizes ${realizes.join(', ')})` : ''}`));
     if (c.achieves) console.log(printable(`           achieves: ${c.achieves.statement} (${c.achieves.statedBy})`));
     for (const spec of c.specifications ?? []) console.log(printable(`           specified in ${spec}`));
+    for (const system of c.systems ?? []) console.log(printable(`           drawn in ${system}`));
+    for (const component of c.components ?? []) console.log(printable(`           contains ${component}`));
+    if (c.plugin) console.log(printable(`           carried by ${c.plugin}`));
     if (c.issues?.length) console.log(printable(`           tracked by ${c.issues.join(', ')}`));
     for (const line of hostingLines(c)) console.log(printable(`           ${line}`));
     if (c.episodes?.length) console.log(printable(`           held by ${c.episodes.join(', ')}`));
@@ -539,8 +554,9 @@ async function capabilitiesMap(positional: string[], flags: Record<string, strin
         continue;
       }
       const c = r.counts!;
+      const plugins = c.plugin ? ` ${c.plugin} plugin${c.plugin === 1 ? '' : 's'}` : '';
       const stale = r.drift && (r.drift.added.length || r.drift.removed.length) ? `  file behind by ${r.drift.added.length + r.drift.removed.length}` : '';
-      console.log(`  ${r.repository!.replace(/^repository:/, '').padEnd(36)} ${r.source!.padEnd(5)} ${String(c.package).padStart(3)} packages ${String(c.cli).padStart(3)} CLIs ${String(c.skill).padStart(3)} skills  @${r.commit!.slice(0, 12)}${stale}`);
+      console.log(`  ${r.repository!.replace(/^repository:/, '').padEnd(36)} ${r.source!.padEnd(5)} ${String(c.package).padStart(3)} packages ${String(c.cli).padStart(3)} CLIs ${String(c.skill).padStart(3)} skills${plugins}  @${r.commit!.slice(0, 12)}${stale}`);
       printCapabilityIssues(r.issues, r.repository!.replace(/^repository:/, ''));
     }
     for (const c of map.collisions) console.error(printable(`warning: ${c.names.join(' and ')} share the id ${c.nodeId}, so one wheel node stands for both`));

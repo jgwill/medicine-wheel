@@ -1,0 +1,610 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unpkg.com/@medicine-wheel/developer-repository-mapping/schema/repository-capabilities.v4.schema.json",
+  "title": "A repository's own capability file, .miadi/capabilities.jsonl, format version 4",
+  "description": "One JSON value per line (JSON Lines). The first line is the header; every other line is one capability the repository provides. This schema validates one line. Version 4 adds plugins, their components and links to Stateloom systems (jgwill/medicine-wheel#181). A writer puts the lowest version its rows need in the header. A reader reads a file of a later version and skips what it does not know; a writer refuses to rewrite it. The statement word limit and agreement between references and the header repository are checked by the reader. Spec: rispecs/developer-suite/repository-mapping/capabilities.spec.md.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/header"
+    },
+    {
+      "$ref": "#/$defs/row"
+    }
+  ],
+  "$defs": {
+    "printable": {
+      "type": "string",
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f\\u061c\\u200e\\u200f\\u2028\\u2029\\u202a-\\u202e\\u2066-\\u2069]*$",
+      "description": "No control character, bidirectional control, or line or paragraph separator. Lengths are counted in code points."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "T\\d{2}:\\d{2}:\\d{2}",
+      "description": "RFC 3339, with its seconds and its offset."
+    },
+    "header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "version",
+        "repository"
+      ],
+      "properties": {
+        "schema": {
+          "const": "medicine-wheel/repository-capabilities"
+        },
+        "version": {
+          "enum": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "description": "4 when a row is a plugin or plugin component (other than a plain skill), or holds systems, components, declaredComponents or plugin. Otherwise 3 when a row is an app or holds hosting or episodes, 2 when a row holds achieves, stage, specifications or issues, and 1 otherwise."
+        },
+        "repository": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,99}/(?![^/]*\\.git$)[A-Za-z0-9][A-Za-z0-9._-]{0,99}$",
+          "description": "owner/name, as an address names it, as the repository was known when the file was written. A fork keeps it until someone adopts the file with --repository."
+        }
+      }
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "name",
+        "address",
+        "status",
+        "statedBy",
+        "statedAt",
+        "grounding",
+        "revision"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "package",
+            "cli",
+            "skill",
+            "decision",
+            "app",
+            "plugin",
+            "agent",
+            "command",
+            "hook",
+            "mcp-server"
+          ],
+          "description": "A plugin is enrolled from its manifest. Agent, command, hook and mcp-server are plugin component kinds. An app is enrolled from its package.json."
+        },
+        "name": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/printable"
+            },
+            {
+              "minLength": 1,
+              "maxLength": 214,
+              "pattern": "[A-Za-z0-9]"
+            }
+          ]
+        },
+        "address": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/printable"
+            },
+            {
+              "minLength": 1,
+              "maxLength": 600
+            }
+          ],
+          "description": "miadi-capability://<header repository>/<kind>/<name>. A reader computes it and warns when a row says otherwise."
+        },
+        "statement": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/printable"
+            },
+            {
+              "minLength": 1,
+              "maxLength": 1200
+            }
+          ],
+          "description": "What the files, or a person, say it is: at most 55 words."
+        },
+        "status": {
+          "enum": [
+            "clear",
+            "unclear",
+            "needs-resolution",
+            "undefinable"
+          ]
+        },
+        "package": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/printable"
+            },
+            {
+              "minLength": 1,
+              "maxLength": 214
+            }
+          ],
+          "description": "For a CLI: the package that ships it."
+        },
+        "realizes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "capability",
+              "statedBy",
+              "statedAt"
+            ],
+            "properties": {
+              "capability": {
+                "type": "string",
+                "pattern": "^capability:[a-z0-9]+(?:-[a-z0-9]+)*$"
+              },
+              "statedBy": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/printable"
+                  },
+                  {
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "not": {
+                      "const": "mw-repomap scan"
+                    }
+                  }
+                ]
+              },
+              "statedAt": {
+                "$ref": "#/$defs/timestamp"
+              }
+            }
+          },
+          "description": "The platform capabilities this one serves (capabilities.spec.md), each with who said so and when. Said by a person or an agent, never by the scan, and kept by every rescan."
+        },
+        "achieves": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "statement",
+            "statedBy",
+            "statedAt"
+          ],
+          "description": "Version 2. What the capability achieves for someone, at most 55 words, and who said it. Kept through every rescan.",
+          "properties": {
+            "statement": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/printable"
+                },
+                {
+                  "minLength": 1,
+                  "maxLength": 1200
+                }
+              ]
+            },
+            "statedBy": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/printable"
+                },
+                {
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "not": {
+                    "const": "mw-repomap scan"
+                  }
+                }
+              ],
+              "description": "A person or an agent: what a capability achieves is never the scan's to say."
+            },
+            "statedAt": {
+              "$ref": "#/$defs/timestamp"
+            }
+          }
+        },
+        "stage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "stage",
+            "statedBy",
+            "statedAt",
+            "grounding"
+          ],
+          "description": "Version 2. Where the capability stands in its life, who said so, when, and from what. A reader reads a row at stage specified or retired even when the commit provides no such thing. Kept through every rescan.",
+          "properties": {
+            "stage": {
+              "enum": [
+                "specified",
+                "prototype",
+                "implementation",
+                "released",
+                "retired"
+              ]
+            },
+            "statedBy": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/printable"
+                },
+                {
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "not": {
+                    "const": "mw-repomap scan"
+                  }
+                }
+              ],
+              "description": "A person or an agent: where a capability stands is never the scan's to say."
+            },
+            "statedAt": {
+              "$ref": "#/$defs/timestamp"
+            },
+            "grounding": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 32,
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/printable"
+                  },
+                  {
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                ]
+              },
+              "description": "What shows the stage: a specification, a commit, npm:<package>@<version>, owner/repo#n."
+            }
+          }
+        },
+        "specifications": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "description": "Version 2. Its specifications: a path in this repository (a reader opens it as rise://<owner>/<name>/<path>), a rise:// address, or an https:// URL. Kept through every rescan.",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/printable"
+              },
+              {
+                "minLength": 1,
+                "maxLength": 1024
+              },
+              {
+                "anyOf": [
+                  {
+                    "pattern": "^rise://[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*/\\S+$"
+                  },
+                  {
+                    "pattern": "^https://\\S+$"
+                  },
+                  {
+                    "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?!/)(?!(?:.*/)?\\.\\.(?:/|$))\\S+$"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "issues": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "description": "Version 2. The issues that track it, owner/repo#n. Kept through every rescan.",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*#[1-9][0-9]*$"
+          }
+        },
+        "hosting": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "deployedBy",
+            "statedBy",
+            "statedAt",
+            "grounding"
+          ],
+          "description": "Version 3. Where the capability runs, who deploys it, where its code is written when not in this repository, and how a change reaches it, with who said so, when and from what. Kept through every rescan.",
+          "properties": {
+            "urls": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "description": "Where people open it or services call it.",
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/printable"
+                  },
+                  {
+                    "minLength": 1,
+                    "maxLength": 1024
+                  },
+                  {
+                    "pattern": "^https?://\\S+$"
+                  }
+                ]
+              }
+            },
+            "deployedBy": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/printable"
+                },
+                {
+                  "minLength": 1,
+                  "maxLength": 200
+                }
+              ],
+              "description": "Who or what deploys it: 'v0, on Vercel', 'npm publish from this repository'."
+            },
+            "authoredIn": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/printable"
+                },
+                {
+                  "minLength": 1,
+                  "maxLength": 200
+                }
+              ],
+              "description": "Where its code is written when that is not this repository: the copy here is replaced at the next import."
+            },
+            "change": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/printable"
+                },
+                {
+                  "minLength": 1,
+                  "maxLength": 1200
+                }
+              ],
+              "description": "How a change reaches it: at most 55 words."
+            },
+            "statedBy": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/printable"
+                },
+                {
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "not": {
+                    "const": "mw-repomap scan"
+                  }
+                }
+              ],
+              "description": "A person or an agent: where a capability is hosted is never the scan's to say."
+            },
+            "statedAt": {
+              "$ref": "#/$defs/timestamp"
+            },
+            "grounding": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 32,
+              "items": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/printable"
+                  },
+                  {
+                    "minLength": 1,
+                    "maxLength": 1024
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "episodes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "description": "Version 3. The chronicle episodes that hold it, miadi-chronicle://<n>. Kept through every rescan.",
+          "items": {
+            "type": "string",
+            "pattern": "^miadi-chronicle:(?://)?[A-Za-z0-9][A-Za-z0-9._-]{0,199}$"
+          }
+        },
+        "systems": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/systemRef"
+          },
+          "description": "Version 4. Stateloom systems cited by this capability."
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/componentRef"
+          },
+          "description": "Version 4. Scanned and explicitly declared component capability addresses."
+        },
+        "declaredComponents": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/componentRef"
+          },
+          "description": "Version 4. Explicit component links kept through every rescan."
+        },
+        "plugin": {
+          "$ref": "#/$defs/pluginRef",
+          "description": "Version 4. Capability address of the plugin that carries this component."
+        },
+        "statedBy": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/printable"
+            },
+            {
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ],
+          "description": "\"mw-repomap scan\" for a row the scan wrote; any other name is a person's, and a rescan keeps its words."
+        },
+        "statedAt": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "grounding": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/printable"
+              },
+              {
+                "minLength": 1,
+                "maxLength": 1024
+              }
+            ]
+          },
+          "description": "The files that say so, relative to the repository. A reader adds the commit it read: owner/name@commit:path."
+        },
+        "revision": {
+          "enum": [
+            "pending",
+            "revised",
+            "affirmed"
+          ]
+        },
+        "revisedBy": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/printable"
+            },
+            {
+              "minLength": 1,
+              "maxLength": 200
+            }
+          ]
+        },
+        "revisedAt": {
+          "$ref": "#/$defs/timestamp"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "clear",
+                  "unclear"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "statement"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "revision": {
+                "enum": [
+                  "revised",
+                  "affirmed"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "revisedBy",
+              "revisedAt"
+            ]
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "required": [
+                  "components"
+                ]
+              },
+              {
+                "required": [
+                  "declaredComponents"
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "const": "plugin"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "plugin"
+            ]
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "skill",
+                  "agent",
+                  "command",
+                  "hook",
+                  "mcp-server"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "systemRef": {
+      "type": "string",
+      "maxLength": 1024,
+      "pattern": "^rise://(?!(?:[^/]+/)?[^/]*\\.\\.[^/]*/)[A-Za-z0-9][A-Za-z0-9._-]{0,99}/(?![^/]*\\.git/)[A-Za-z0-9][A-Za-z0-9._-]{0,99}/(?:[A-Za-z0-9_~-][A-Za-z0-9._~-]{0,127}/){0,16}[A-Za-z0-9_~-][A-Za-z0-9._~-]{0,116}\\.sysdf\\.json(?:@[A-Za-z0-9._/-]{1,80})?$(?![\\s\\S])"
+    },
+    "componentRef": {
+      "type": "string",
+      "maxLength": 419,
+      "pattern": "^miadi-capability://[A-Za-z0-9][A-Za-z0-9._-]{0,99}/(?![^/]*\\.git/)[A-Za-z0-9][A-Za-z0-9._-]{0,99}/(?:skill|agent|command|hook|mcp-server)/(?:(?!\\.{1,2}(?:/|$))[A-Za-z0-9_@.~+-]{1,214}/)*(?!\\.{1,2}(?:/|$))[A-Za-z0-9_@.~+-]{1,214}$(?![\\s\\S])"
+    },
+    "pluginRef": {
+      "type": "string",
+      "maxLength": 419,
+      "pattern": "^miadi-capability://[A-Za-z0-9][A-Za-z0-9._-]{0,99}/(?![^/]*\\.git/)[A-Za-z0-9][A-Za-z0-9._-]{0,99}/plugin/(?:(?!\\.{1,2}(?:/|$))[A-Za-z0-9_@.~+-]{1,214}/)*(?!\\.{1,2}(?:/|$))[A-Za-z0-9_@.~+-]{1,214}$(?![\\s\\S])"
+    }
+  }
+}

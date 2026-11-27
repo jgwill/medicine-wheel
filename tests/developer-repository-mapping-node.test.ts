@@ -24,6 +24,10 @@ import {
   readActivity,
   readHub,
   readMappingDir,
+  readRepositoryCapabilities,
+  scanRepository,
+  stateCapability,
+  writeCapabilityFile,
   writeMappingDir,
 } from "../src/developer-repository-mapping/src/node/index";
 import type { RepositoryFacet } from "../src/developer-repository-mapping/src/index";
@@ -177,6 +181,95 @@ describe("reading a clone", () => {
     git(empty, {}, "init", "-q", "-b", "main");
     expect(await readActivity(empty, { observedBy: "test" })).toMatchObject({ commits: 0, tags: 0 });
     await expect(readActivity(path.join(root, "nowhere"), { observedBy: "test" })).rejects.toThrow(/not a git clone/);
+  });
+
+  it("enrolls a plugin and projects its components from the selected commit", async () => {
+    const clone = path.join(root, "plugins");
+    fs.mkdirSync(clone);
+    git(clone, {}, "init", "-q", "-b", "main");
+    git(clone, {}, "remote", "add", "origin", "git@github.com:jgwill/plugins.git");
+    const write = (file: string, content: string) => {
+      const target = path.join(clone, file);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.writeFileSync(target, content);
+    };
+    const commit = (message: string) => {
+      git(clone, {}, "add", ".");
+      git(clone, {}, "commit", "-qm", message);
+    };
+    const options = { ref: "HEAD", observedBy: "test", now: new Date("2026-11-27T10:00:00Z") };
+    const state = { kind: "plugin" as const, name: "pilot", by: "Iris", now: options.now };
+    const scan = () => scanRepository(clone, options);
+    const read = () => readRepositoryCapabilities(clone, options);
+    const address = (key: string) => `miadi-capability://jgwill/plugins/${key}`;
+    const systems = ["rise://jgwill/plugins/rispecs/pilot/pilot.sysdf.json"];
+    write("claude/pilot/.claude-plugin/plugin.json", '{"name":"pilot","description":"Companions a review."}');
+    write("claude/pilot/skills/pilot/SKILL.md", "---\nname: pilot\ndescription: Review a draft.\n---\n");
+    write("claude/pilot/agents/reviewer.md", "---\nname: reviewer\ndescription: Read the draft.\n---\n");
+    write("claude/pilot/commands/check.md", "---\ndescription: Check a draft.\n---\n");
+    write("claude/pilot/hooks/hooks.json", '{"hooks":{"SessionStart":[{"hooks":[{"type":"command","command":"echo ready"}]}]}}');
+    write("claude/pilot/.mcp.json", '{"mcpServers":{"desk":{"command":"node"}}}');
+    write("claude/other/.claude-plugin/plugin.json", '{"name":"other"}');
+    write("ordinary/package.json", '{"name":"ordinary"}');
+    write("pi/bridge/package.json", '{"name":"@example/bridge","pi":{"extensions":["./extensions/bridge.ts"]}}');
+    write("pi/bridge/extensions/bridge.ts", "export default function bridge() {}\n");
+    commit("plugin sources");
+    const initial = await scan();
+    expect(initial.fileRows.map((r) => r.address)).not.toContain(address("plugin/pilot"));
+    expect((await writeCapabilityFile(clone, initial, { write: true })).wrote).toBe(true);
+    const before = fs.readFileSync(path.join(clone, ".miadi/capabilities.jsonl"), "utf8");
+    await expect(stateCapability(clone, { ...state, path: "claude/other" })).rejects.toThrow(/manifest naming "pilot"/);
+    await expect(stateCapability(clone, { ...state, name: "ordinary", path: "ordinary" })).rejects.toThrow(/plugin manifest/);
+    await expect(stateCapability(clone, { ...state, path: "../plugins/claude/pilot" })).rejects.toThrow(/plugin manifest/);
+    expect(fs.readFileSync(path.join(clone, ".miadi/capabilities.jsonl"), "utf8")).toBe(before);
+
+    await stateCapability(clone, { ...state, path: "claude/pilot", systems });
+    await stateCapability(clone, { ...state, name: "@example/bridge", path: "pi/bridge" });
+    write("claude/pilot/commands/local.md", "This command is not committed.\n");
+    expect((await read()).capabilities.some((c) => c.nodeId === "capability:plugin-pilot")).toBe(false);
+    const enrolled = await scanRepository(clone, { ...options, includeWorkingPluginEnrollments: true });
+    const componentKeys = ["agent/pilot/reviewer", "command/pilot/check", "hook/pilot/SessionStart", "mcp-server/pilot/desk", "skill/pilot"];
+    expect(enrolled.issues).toEqual([]);
+    expect(enrolled.fileRows.find((r) => r.address === address("plugin/pilot"))?.components).toEqual(componentKeys.map(address));
+    expect(enrolled.fileRows.find((r) => r.address === address("plugin/@example/bridge"))?.grounding).toEqual(["pi/bridge/package.json"]);
+    expect(enrolled.fileRows.map((r) => r.address)).not.toContain(address("plugin/other"));
+    expect(enrolled.fileRows.map((r) => r.address)).not.toContain(address("command/pilot/local"));
+    for (const key of componentKeys) {
+      expect(enrolled.fileRows.find((r) => r.address === address(key))?.plugin).toBe(address("plugin/pilot"));
+    }
+    expect((await writeCapabilityFile(clone, enrolled, { write: true })).wrote).toBe(true);
+    expect((await writeCapabilityFile(clone, enrolled, { write: false })).differs).toBe(false);
+    git(clone, {}, "add", ".miadi/capabilities.jsonl");
+    git(clone, {}, "commit", "-qm", "enroll the pilot and Pi package with their inventories");
+
+    const registered = await read();
+    const plugin = registered.capabilities.find((r) => r.nodeId === "capability:plugin-pilot");
+    expect(plugin).toMatchObject({ components: componentKeys.map(address), systems });
+    const forkAddress = `miadi-capability://fork/plugins/`;
+    const fork = await readRepositoryCapabilities(clone, { ...options, repository: "fork/plugins" });
+    expect(fork.capabilities.find((r) => r.nodeId === "capability:plugin-pilot")?.components).toEqual(componentKeys.map((key) => forkAddress + key));
+    expect(fork.capabilities.find((r) => r.nodeId === "capability:skill-pilot")?.plugin).toBe(forkAddress + "plugin/pilot");
+    expect((await writeCapabilityFile(clone, await scan(), { write: false, repository: "fork/plugins" })).text).toContain(forkAddress + "plugin/pilot");
+
+    fs.rmSync(path.join(clone, "claude/pilot/commands/check.md"));
+    git(clone, {}, "add", "-u", "claude/pilot/commands/check.md");
+    git(clone, {}, "commit", "-qm", "remove command");
+    const removed = await read();
+    expect(removed.capabilities.find((r) => r.nodeId === "capability:plugin-pilot")?.components).not.toContain(address("command/pilot/check"));
+
+    write("claude/pilot/.claude-plugin/plugin.json", '{"name":"pilot","agents":"./other/reviewer.md"}');
+    git(clone, {}, "add", "claude/pilot/.claude-plugin/plugin.json");
+    git(clone, {}, "commit", "-qm", "override the default agents directory");
+    const overridden = await scan();
+    expect(overridden.fileRows.map((r) => r.address)).not.toContain(address("agent/pilot/reviewer"));
+    expect(overridden.issues).toContainEqual(expect.objectContaining({ severity: "warning", message: expect.stringContaining("custom agents declarations") }));
+
+    write("claude/pilot/.claude-plugin/plugin.json", "{");
+    git(clone, {}, "add", "claude/pilot/.claude-plugin/plugin.json");
+    git(clone, {}, "commit", "-qm", "break manifest");
+    const broken = await scan();
+    expect(broken.issues).toContainEqual(expect.objectContaining({ severity: "error", file: "claude/pilot/.claude-plugin/plugin.json" }));
+    await expect(writeCapabilityFile(clone, broken, { write: true })).rejects.toThrow(/nothing was written/);
   });
 });
 

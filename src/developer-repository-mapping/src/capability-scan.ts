@@ -20,10 +20,14 @@ import { checkStatement, type CapabilityFacet } from "@medicine-wheel/capabiliti
  * named by its package.json. A person names its folder in the repository's own
  * file; the scan reads that package.json at each commit and never guesses an
  * app (Guillaume, jgwill/medicine-wheel#177, 2026-11-19).
+ *
+ * A `plugin` is an installable unit named by a manifest. Its agents, commands,
+ * hooks and MCP servers are scoped by plugin name. Skills keep their existing
+ * capability addresses.
  */
-export type CapabilityKind = "package" | "cli" | "skill" | "decision" | "app";
+export type CapabilityKind = "package" | "cli" | "skill" | "decision" | "app" | "plugin" | "agent" | "command" | "hook" | "mcp-server";
 
-export const CAPABILITY_KINDS: readonly CapabilityKind[] = ["package", "cli", "skill", "decision", "app"];
+export const CAPABILITY_KINDS: readonly CapabilityKind[] = ["package", "cli", "skill", "decision", "app", "plugin", "agent", "command", "hook", "mcp-server"];
 
 const KIND_PREFIX = new RegExp(`^capability:(${CAPABILITY_KINDS.join("|")})-`);
 
@@ -54,6 +58,8 @@ export interface Artefact {
   path: string;
   /** for a CLI: the package that ships it */
   package?: string;
+  components?: string[];
+  plugin?: string;
 }
 
 /** The fields of a package.json the scan reads. Never throws: an unreadable manifest has no name. */
@@ -298,6 +304,8 @@ export function capabilityRows(artefacts: readonly Artefact[], ctx: CapabilityRo
       ...(statement ? { statement } : {}),
       status: statement ? "clear" : "needs-resolution",
       providedBy: [ctx.repository],
+      ...(a.components?.length ? { components: a.components } : {}),
+      ...(a.plugin ? { plugin: a.plugin } : {}),
       statedBy: ctx.observedBy,
       statedAt: ctx.observedAt,
       grounding: [grounding],
