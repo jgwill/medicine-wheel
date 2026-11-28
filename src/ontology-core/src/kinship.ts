@@ -198,6 +198,19 @@ export const KINSHIP_EDGE_TYPES = {
       'A repository depends on what another publishes — a package, an API, a schema — and moves when it moves.',
     defaultObligations: ['human'],
   },
+  // ── Design edges (#151) ───────────────────────────────────────────────────
+  'member-of': {
+    name: 'member-of',
+    symmetry: 'asymmetric',
+    inverse: 'has-member',
+    description: 'A design system lists this drawing as one of its members.',
+  },
+  'drawn-by': {
+    name: 'drawn-by',
+    symmetry: 'asymmetric',
+    inverse: 'draws',
+    description: 'A capability names the design system whose drawings describe it.',
+  },
 } as const satisfies Record<string, KinshipEdgeType>;
 
 /** Union of governed kinship-edge names — the value stored on a Relation. */

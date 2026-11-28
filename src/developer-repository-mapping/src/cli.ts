@@ -14,7 +14,7 @@
  *   mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]
  *   mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--achieves <words>] [--stage <stage> [--stage-grounding <evidence>,…]] [--specification <path|rise://…>,…] [--system <rise://…sysdf.json>,…] [--component <miadi-capability://…>,…] [--issue <owner/repo#n>,…] [--path <app or plugin folder>] [--deployed-by <who> --hosting-grounding <evidence>,… [--hosted-at <url>,…] [--authored-in <where>] [--change <words>]] [--episode <miadi-chronicle://n>,…] [--clone <path>]
  *   mw-repomap capabilities show [<clone>] [--ref <ref>] [--repository <owner/name>] [--json]
- *   mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]
+ *   mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--design] [--npm-consumer <owner/repo:folder>] [--package-evidence <jsonl>] [--json]
  *
  * <path> is a mapping folder, or an owner hub clone holding
  * .miadi/repository-mapping/; the current directory when absent. A meta hub
@@ -50,6 +50,8 @@ import { LOOPBACK_HOSTS, createMappingServer } from './node/server';
 import { CAPABILITY_KINDS, UNSAFE_CHARACTER, kindOf, type CapabilityKind } from './capability-scan';
 import { CAPABILITY_FILE, CapabilityInputError } from './capability-file';
 import { buildCapabilityMap, findClones, readRepositoryCapabilities, scanRepository, stateCapability, writeCapabilityFile } from './node/capability-scan';
+import { buildDesignProjection } from './node/design-projection';
+import { readNpmLockEvidence, readPackageEvidenceFile } from './node/package-evidence';
 
 const USAGE = [
   'usage: mw-repomap init [<hub-dir>] --owner <login> [--meta] [--description <text>]',
@@ -64,10 +66,10 @@ const USAGE = [
   '       mw-repomap capabilities scan [<clone>] [--write|--check] [--ref <ref>] [--repository <owner/name>]',
   '       mw-repomap capabilities state <kind>/<name> [<statement>] --by <who> [--realizes <capability:slug>,…] [--achieves <words>] [--stage <stage> [--stage-grounding <evidence>,…]] [--specification <path|rise://…>,…] [--system <rise://…sysdf.json>,…] [--component <miadi-capability://…>,…] [--issue <owner/repo#n>,…] [--path <app or plugin folder>] [--deployed-by <who> --hosting-grounding <evidence>,… [--hosted-at <url>,…] [--authored-in <where>] [--change <words>]] [--episode <miadi-chronicle://n>,…] [--clone <path>]',
   '       mw-repomap capabilities show [<clone>] [--ref <ref>] [--repository <owner/name>] [--json]',
-  '       mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--json]',
+  '       mw-repomap capabilities map [<clone>...] [--root <dir>] [--list <file>] [--out <file>] [--packages <file>] [--ref <ref>] [--design] [--npm-consumer <owner/repo:folder>] [--package-evidence <jsonl>] [--json]',
 ].join('\n');
 
-const BOOLEAN_FLAGS = new Set(['meta', 'local', 'json', 'write', 'check', 'help']);
+const BOOLEAN_FLAGS = new Set(['meta', 'local', 'json', 'write', 'check', 'design', 'help']);
 
 /** The flags each command takes. Any other flag is a usage error, so a misspelling never passes silently. */
 const COMMAND_FLAGS: Record<string, readonly string[]> = {
@@ -76,7 +78,7 @@ const COMMAND_FLAGS: Record<string, readonly string[]> = {
   list: ['lifecycle', 'drift', 'revision', 'field', 'local', 'json'],
   show: ['local', 'json'],
   observe: ['dir', 'by', 'write'],
-  capabilities: ['write', 'check', 'ref', 'repository', 'by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'system', 'component', 'issue', 'path', 'hosted-at', 'deployed-by', 'authored-in', 'change', 'hosting-grounding', 'episode', 'root', 'list', 'out', 'packages', 'json'],
+  capabilities: ['write', 'check', 'ref', 'repository', 'by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'system', 'component', 'issue', 'path', 'hosted-at', 'deployed-by', 'authored-in', 'change', 'hosting-grounding', 'episode', 'root', 'list', 'out', 'packages', 'design', 'npm-consumer', 'package-evidence', 'json'],
   move: ['by', 'grounding'],
   hub: ['json'],
   serve: ['port', 'host', 'local'],
@@ -370,7 +372,7 @@ const CAPABILITY_FLAGS: Record<string, readonly string[]> = {
   scan: ['write', 'check', 'ref', 'repository'],
   state: ['by', 'clone', 'realizes', 'achieves', 'stage', 'stage-grounding', 'specification', 'system', 'component', 'issue', 'path', 'hosted-at', 'deployed-by', 'authored-in', 'change', 'hosting-grounding', 'episode'],
   show: ['ref', 'repository', 'json'],
-  map: ['root', 'list', 'out', 'packages', 'ref', 'json'],
+  map: ['root', 'list', 'out', 'packages', 'ref', 'design', 'npm-consumer', 'package-evidence', 'json'],
 };
 
 /** Text from a file someone else committed, printable: a control or bidirectional character never reaches the terminal. */
@@ -539,6 +541,30 @@ async function capabilitiesMap(positional: string[], flags: Record<string, strin
   if (!unique.length) throw new UsageError('capabilities map needs clones: name them, or --root <dir>, or --list <file>');
   // Each clone's default branch as it was last fetched: fetch first for today's.
   const map = await buildCapabilityMap(unique, { ...(text(flags, 'ref') ? { ref: text(flags, 'ref') } : {}), observedBy: SCAN_OBSERVER() });
+  const consumer = text(flags, 'npm-consumer');
+  const evidenceFile = text(flags, 'package-evidence');
+  let lockedEvidence;
+  if (consumer !== undefined) {
+    const match = /^([^:]+):(.+)$/.exec(consumer);
+    if (!match) throw new UsageError('--npm-consumer needs owner/repo:folder');
+    const repository = `repository:${match[1]}`;
+    const sources = map.repositories.filter((entry) => entry.repository?.toLowerCase() === repository.toLowerCase());
+    const [source] = sources;
+    if (sources.length !== 1 || !source?.commit) {
+      throw new UsageError(`--npm-consumer must name exactly one mapped repository: ${match[1]}`);
+    }
+    lockedEvidence = readNpmLockEvidence(source.clone, { ref: source.commit, repository: source.repository, consumerPath: match[2]! });
+  }
+  const [design, receipts, npm] = await Promise.all([
+    flags.design ? buildDesignProjection(map) : undefined,
+    evidenceFile ? readPackageEvidenceFile(evidenceFile) : undefined,
+    lockedEvidence,
+  ]);
+  const packageEvidence = receipts || npm ? {
+    rows: [...(npm?.rows ?? []), ...(receipts?.rows ?? [])],
+    issues: [...(npm?.issues ?? []), ...(receipts?.issues ?? [])],
+  } : undefined;
+
   const out = text(flags, 'out');
   if (out) writeFileSync(out, map.capabilities.map((c) => JSON.stringify(c)).join('\n') + '\n', 'utf8');
   const packages = text(flags, 'packages');
@@ -546,7 +572,7 @@ async function capabilitiesMap(positional: string[], flags: Record<string, strin
   const failed = map.repositories.filter((r) => r.error);
   const erred = map.repositories.filter((r) => r.issues.some((i) => i.severity === 'error'));
   if (flags.json) {
-    console.log(JSON.stringify({ ...map, skipped }, null, 2));
+    console.log(JSON.stringify({ ...map, skipped, ...(design ? { design } : {}), ...(packageEvidence ? { packageEvidence } : {}) }, null, 2));
   } else {
     for (const r of map.repositories) {
       if (r.error) {
@@ -562,8 +588,16 @@ async function capabilitiesMap(positional: string[], flags: Record<string, strin
     for (const c of map.collisions) console.error(printable(`warning: ${c.names.join(' and ')} share the id ${c.nodeId}, so one wheel node stands for both`));
     for (const s of map.shared) console.error(printable(`note: ${s.nodeId} is provided by ${s.repositories.map((r) => r.replace(/^repository:/, '')).join(' and ')}; each speaks for its own`));
     console.log(`${map.capabilities.length} capabilities from ${map.repositories.length - failed.length} repositories, ${map.consumes.length} consumes relations between their packages${map.realizes.length ? `, ${map.realizes.length} realizes` : ''}${failed.length ? `, ${failed.length} could not be read` : ''}${skipped.length ? `, ${skipped.length} folders skipped` : ''}`);
+    if (design) {
+      console.log(`${design.nodes.length} design projection nodes and ${design.edges.length} relations`);
+      printCapabilityIssues(design.issues);
+    }
+    if (packageEvidence) {
+      console.log(`${packageEvidence.rows.length} package evidence rows (--json shows their sources)`);
+      printCapabilityIssues(packageEvidence.issues);
+    }
   }
-  return failed.length || erred.length ? 1 : 0;
+  return failed.length || erred.length || hasErrors(design?.issues ?? []) || hasErrors(packageEvidence?.issues ?? []) ? 1 : 0;
 }
 
 async function capabilities(positional: string[], flags: Record<string, string | true>): Promise<number> {
